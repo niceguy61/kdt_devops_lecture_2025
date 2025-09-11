@@ -116,8 +116,8 @@ graph TB
     CT --> RC
     
     style DM fill:#e3f2fd,stroke:#2196f3
-    style CT fill=#e8f5e8,stroke:#4caf50
-    style RC fill=#fff3e0,stroke:#ff9800
+    style CT fill:#e8f5e8,stroke:#4caf50
+    style RC fill:#fff3e0,stroke:#ff9800
 ```
 
 ### 런타임 계층 구조
@@ -175,7 +175,7 @@ graph TB
     style A fill:#e8f5e8,stroke:#4caf50
     style E fill:#e1f5fe,stroke:#0277bd
     style G fill:#f3e5f5,stroke:#7b1fa2
-    style H fill=#fff3e0,stroke=#ff9800
+    style H fill:#fff3e0,stroke:#ff9800
 ```
 
 ### Docker Hub
