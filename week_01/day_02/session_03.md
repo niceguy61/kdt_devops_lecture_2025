@@ -48,39 +48,7 @@ timeline
 ### 클라이언트-서버 아키텍처
 **Docker는 클라이언트-서버 모델을 기반**으로 동작합니다:
 
-```mermaid
-graph TB
-    subgraph "Docker Host"
-        subgraph "Docker Engine"
-            D[Docker Daemon<br/>dockerd]
-            A[REST API]
-        end
-        
-        subgraph "Objects"
-            I[Images]
-            C[Containers]
-            N[Networks]
-            V[Volumes]
-        end
-        
-        D --> I
-        D --> C
-        D --> N
-        D --> V
-    end
-    
-    CLI[Docker CLI<br/>docker] --> A
-    
-    subgraph "Registry"
-        R[Docker Hub<br/>Private Registry]
-    end
-    
-    D -.-> R
-    
-    style D fill:#e3f2fd,stroke:#2196f3
-    style CLI fill:#e8f5e8,stroke:#4caf50
-    style R fill:#fff3e0,stroke:#ff9800
-```
+![Docker Architecture](../images/docker-architecture.svg)
 
 ### 핵심 구성 요소
 

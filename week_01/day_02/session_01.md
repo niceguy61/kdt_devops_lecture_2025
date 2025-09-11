@@ -13,19 +13,7 @@
 ### 컨테이너란?
 **애플리케이션과 그 실행에 필요한 모든 것을 하나의 패키지로 묶는 기술**입니다.
 
-```mermaid
-graph TB
-    A[애플리케이션] --> B[컨테이너]
-    C[라이브러리] --> B
-    D[의존성] --> B
-    E[설정 파일] --> B
-    F[런타임] --> B
-    
-    B --> G[어디서든 동일하게 실행]
-    
-    style B fill:#e1f5fe,stroke:#0277bd
-    style G fill:#e8f5e8,stroke:#4caf50
-```
+![Container Components](../images/container-components.svg)
 
 ### 핵심 특징
 1. **격리성(Isolation)**: 각 컨테이너는 독립적인 실행 환경
@@ -40,22 +28,7 @@ graph TB
 ### 물리 서버 시대의 문제
 **하나의 서버에 여러 애플리케이션을 함께 실행**할 때 발생하는 문제들:
 
-```mermaid
-graph TB
-    subgraph "물리 서버"
-        A[App A<br/>Java 8] 
-        B[App B<br/>Java 11]
-        C[App C<br/>Python 3.8]
-        D[App D<br/>Node.js 14]
-    end
-    
-    E[충돌 발생!] --> A
-    E --> B
-    E --> C
-    E --> D
-    
-    style E fill:#ffebee,stroke:#f44336
-```
+![Physical Server Problems](../images/physical-server-problems.svg)
 
 #### 주요 문제점
 1. **의존성 충돌**: 서로 다른 버전의 라이브러리 요구

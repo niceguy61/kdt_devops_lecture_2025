@@ -79,28 +79,7 @@ graph TB
 ### 컨테이너 아키텍처
 **OS 커널을 공유하는 경량 가상화**:
 
-```mermaid
-graph TB
-    subgraph "물리 서버"
-        subgraph "Container 1"
-            A[App A]
-            B[Libraries]
-        end
-        subgraph "Container 2"
-            C[App B]
-            D[Libraries]
-        end
-        subgraph "Container 3"
-            E[App C]
-            F[Libraries]
-        end
-        G[Container Runtime]
-        H[Host OS Kernel]
-        I[Physical Hardware]
-    end
-    
-    style G fill="#e8f5e8",stroke="#4caf50"
-```
+![VM vs Container Architecture](../images/vm-vs-container-architecture.svg)
 
 ### 핵심 기술 요소
 **Linux 커널의 기본 기능을 활용**:

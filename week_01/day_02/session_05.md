@@ -13,23 +13,7 @@
 ### 컨테이너 상태 다이어그램
 **컨테이너가 거치는 모든 상태와 전환 과정**:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Created : docker create
-    Created --> Running : docker start
-    Running --> Paused : docker pause
-    Paused --> Running : docker unpause
-    Running --> Stopped : docker stop
-    Stopped --> Running : docker start
-    Running --> Killed : docker kill
-    Killed --> [*] : docker rm
-    Stopped --> [*] : docker rm
-    Created --> [*] : docker rm
-    
-    note right of Running : 메인 프로세스 실행 중
-    note right of Stopped : 정상 종료 상태
-    note right of Killed : 강제 종료 상태
-```
+![Container Lifecycle](../images/container-lifecycle.svg)
 
 ### 주요 상태 설명
 **각 상태의 특징과 의미**:

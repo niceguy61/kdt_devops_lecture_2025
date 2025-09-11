@@ -13,29 +13,7 @@
 ### 기본 개념
 **이미지는 설계도, 컨테이너는 실제 건물**과 같은 관계입니다:
 
-```mermaid
-graph LR
-    subgraph "Docker Image"
-        A[읽기 전용 템플릿]
-        B[애플리케이션 코드]
-        C[런타임 환경]
-        D[라이브러리]
-        E[설정 파일]
-    end
-    
-    subgraph "Docker Container"
-        F[실행 중인 인스턴스]
-        G[읽기/쓰기 레이어]
-        H[프로세스]
-        I[네트워크]
-        J[볼륨]
-    end
-    
-    A --> F
-    
-    style A fill:#e1f5fe,stroke:#0277bd
-    style F fill:#e8f5e8,stroke:#4caf50
-```
+![Image Container Relationship](../images/image-container-relationship.svg)
 
 ### 이미지의 특징
 **불변성(Immutable)과 재사용성**이 핵심:
@@ -55,30 +33,7 @@ graph LR
 ### Union File System 개념
 **여러 레이어를 하나의 파일 시스템으로 통합**하는 기술:
 
-```mermaid
-graph TB
-    subgraph "Container Layer"
-        CL[Container Layer<br/>읽기/쓰기]
-    end
-    
-    subgraph "Image Layers"
-        L4[Layer 4: App Code<br/>읽기 전용]
-        L3[Layer 3: Dependencies<br/>읽기 전용]
-        L2[Layer 2: Runtime<br/>읽기 전용]
-        L1[Layer 1: Base OS<br/>읽기 전용]
-    end
-    
-    CL --> L4
-    L4 --> L3
-    L3 --> L2
-    L2 --> L1
-    
-    style CL fill:#ffebee,stroke:#f44336
-    style L4 fill:#e8f5e8,stroke:#4caf50
-    style L3 fill:#e3f2fd,stroke:#2196f3
-    style L2 fill:#f3e5f5,stroke:#7b1fa2
-    style L1 fill:#fff3e0,stroke:#ff9800
-```
+![Container Layer Structure](../images/container-layer-structure.svg)
 
 ### 레이어 생성 과정
 **Dockerfile의 각 명령어가 새로운 레이어를 생성**:
