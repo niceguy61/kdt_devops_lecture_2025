@@ -258,8 +258,8 @@ graph TB
     E --> C
     
     style A fill:#e8f5e8,stroke:#4caf50
-    style B fill=#e1f5fe,stroke=#0277bd
-    style C fill=#fff3e0,stroke=#ff9800
+    style B fill:#e1f5fe,stroke:#0277bd
+    style C fill:#fff3e0,stroke:#ff9800
 ```
 
 #### 이미지 품질 지표
