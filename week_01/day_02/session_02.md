@@ -170,8 +170,8 @@ graph TB
     style E fill:#ffebee,stroke:#f44336
     style A fill:#e8f5e8,stroke:#4caf50
     style B fill:#e8f5e8,stroke:#4caf50
-    style C fill=#e8f5e8,stroke=#4caf50
-    style D fill=#e8f5e8,stroke=#4caf50
+    style C fill:#e8f5e8,stroke:#4caf50
+    style D fill:#e8f5e8,stroke:#4caf50
 ```
 
 ## 실습: 비교 분석 (7분)
