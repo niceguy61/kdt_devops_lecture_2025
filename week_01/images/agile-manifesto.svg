@@ -1,0 +1,31 @@
+<svg width="700" height="300" xmlns="http://www.w3.org/2000/svg">
+  <text x="350" y="30" text-anchor="middle" font-size="16" font-weight="bold">애자일 선언문 (2001)</text>
+  
+  <!-- Left side - Values -->
+  <rect x="50" y="60" width="280" height="200" fill="#e8f5e8" stroke="#4caf50" stroke-width="2" rx="10"/>
+  <text x="190" y="85" text-anchor="middle" font-size="14" font-weight="bold">우리가 중요하게 여기는 것</text>
+  
+  <text x="70" y="110" font-size="12" font-weight="bold">개인과 상호작용</text>
+  <text x="70" y="130" font-size="12" font-weight="bold">작동하는 소프트웨어</text>
+  <text x="70" y="150" font-size="12" font-weight="bold">고객과의 협력</text>
+  <text x="70" y="170" font-size="12" font-weight="bold">변화에 대한 대응</text>
+  
+  <!-- Right side - Traditional -->
+  <rect x="370" y="60" width="280" height="200" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="10"/>
+  <text x="510" y="85" text-anchor="middle" font-size="14" font-weight="bold">전통적으로 중요했던 것</text>
+  
+  <text x="390" y="110" font-size="12">프로세스와 도구</text>
+  <text x="390" y="130" font-size="12">포괄적인 문서</text>
+  <text x="390" y="150" font-size="12">계약 협상</text>
+  <text x="390" y="170" font-size="12">계획을 따르기</text>
+  
+  <!-- VS arrows -->
+  <text x="350" y="115" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff5722">vs</text>
+  <text x="350" y="135" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff5722">vs</text>
+  <text x="350" y="155" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff5722">vs</text>
+  <text x="350" y="175" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff5722">vs</text>
+  
+  <text x="350" y="220" text-anchor="middle" font-size="11" style="font-style: italic">
+    "오른쪽도 가치가 있지만, 우리는 왼쪽을 더 가치있게 여긴다"
+  </text>
+</svg>

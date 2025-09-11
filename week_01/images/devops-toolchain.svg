@@ -1,0 +1,105 @@
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-size="18" font-weight="bold">DevOps 도구 생태계</text>
+  
+  <!-- Pipeline stages -->
+  <rect x="50" y="60" width="100" height="40" fill="#e8f5e8" stroke="#4caf50" stroke-width="2" rx="5"/>
+  <text x="100" y="85" text-anchor="middle" font-size="12" font-weight="bold">Plan</text>
+  
+  <rect x="170" y="60" width="100" height="40" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+  <text x="220" y="85" text-anchor="middle" font-size="12" font-weight="bold">Code</text>
+  
+  <rect x="290" y="60" width="100" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+  <text x="340" y="85" text-anchor="middle" font-size="12" font-weight="bold">Build</text>
+  
+  <rect x="410" y="60" width="100" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+  <text x="460" y="85" text-anchor="middle" font-size="12" font-weight="bold">Test</text>
+  
+  <rect x="530" y="60" width="100" height="40" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+  <text x="580" y="85" text-anchor="middle" font-size="12" font-weight="bold">Deploy</text>
+  
+  <rect x="650" y="60" width="100" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+  <text x="700" y="85" text-anchor="middle" font-size="12" font-weight="bold">Monitor</text>
+  
+  <!-- Tools for each stage -->
+  <!-- Plan Tools -->
+  <rect x="30" y="120" width="140" height="80" fill="#f1f8e9" stroke="#8bc34a" stroke-width="1" rx="3"/>
+  <text x="100" y="135" text-anchor="middle" font-size="10" font-weight="bold">계획 도구</text>
+  <text x="100" y="150" text-anchor="middle" font-size="9">• Jira</text>
+  <text x="100" y="165" text-anchor="middle" font-size="9">• Azure DevOps</text>
+  <text x="100" y="180" text-anchor="middle" font-size="9">• Trello</text>
+  <text x="100" y="195" text-anchor="middle" font-size="9">• Confluence</text>
+  
+  <!-- Code Tools -->
+  <rect x="180" y="120" width="140" height="80" fill="#e8eaf6" stroke="#3f51b5" stroke-width="1" rx="3"/>
+  <text x="250" y="135" text-anchor="middle" font-size="10" font-weight="bold">코드 관리</text>
+  <text x="250" y="150" text-anchor="middle" font-size="9">• Git</text>
+  <text x="250" y="165" text-anchor="middle" font-size="9">• GitHub</text>
+  <text x="250" y="180" text-anchor="middle" font-size="9">• GitLab</text>
+  <text x="250" y="195" text-anchor="middle" font-size="9">• Bitbucket</text>
+  
+  <!-- Build Tools -->
+  <rect x="330" y="120" width="140" height="80" fill="#fff8e1" stroke="#ffc107" stroke-width="1" rx="3"/>
+  <text x="400" y="135" text-anchor="middle" font-size="10" font-weight="bold">빌드 도구</text>
+  <text x="400" y="150" text-anchor="middle" font-size="9">• Maven</text>
+  <text x="400" y="165" text-anchor="middle" font-size="9">• Gradle</text>
+  <text x="400" y="180" text-anchor="middle" font-size="9">• npm</text>
+  <text x="400" y="195" text-anchor="middle" font-size="9">• Docker</text>
+  
+  <!-- Test Tools -->
+  <rect x="480" y="120" width="140" height="80" fill="#fce4ec" stroke="#e91e63" stroke-width="1" rx="3"/>
+  <text x="550" y="135" text-anchor="middle" font-size="10" font-weight="bold">테스트 도구</text>
+  <text x="550" y="150" text-anchor="middle" font-size="9">• JUnit</text>
+  <text x="550" y="165" text-anchor="middle" font-size="9">• Selenium</text>
+  <text x="550" y="180" text-anchor="middle" font-size="9">• Jest</text>
+  <text x="550" y="195" text-anchor="middle" font-size="9">• SonarQube</text>
+  
+  <!-- Deploy Tools -->
+  <rect x="630" y="120" width="140" height="80" fill="#e0f7fa" stroke="#00bcd4" stroke-width="1" rx="3"/>
+  <text x="700" y="135" text-anchor="middle" font-size="10" font-weight="bold">배포 도구</text>
+  <text x="700" y="150" text-anchor="middle" font-size="9">• Jenkins</text>
+  <text x="700" y="165" text-anchor="middle" font-size="9">• GitHub Actions</text>
+  <text x="700" y="180" text-anchor="middle" font-size="9">• GitLab CI</text>
+  <text x="700" y="195" text-anchor="middle" font-size="9">• Azure Pipelines</text>
+  
+  <!-- Infrastructure Tools -->
+  <rect x="180" y="220" width="200" height="80" fill="#f3e5f5" stroke="#673ab7" stroke-width="1" rx="3"/>
+  <text x="280" y="235" text-anchor="middle" font-size="10" font-weight="bold">인프라 관리</text>
+  <text x="280" y="250" text-anchor="middle" font-size="9">• Terraform</text>
+  <text x="280" y="265" text-anchor="middle" font-size="9">• Ansible</text>
+  <text x="280" y="280" text-anchor="middle" font-size="9">• CloudFormation</text>
+  <text x="280" y="295" text-anchor="middle" font-size="9">• Kubernetes</text>
+  
+  <!-- Monitoring Tools -->
+  <rect x="400" y="220" width="200" height="80" fill="#e8f5e8" stroke="#4caf50" stroke-width="1" rx="3"/>
+  <text x="500" y="235" text-anchor="middle" font-size="10" font-weight="bold">모니터링</text>
+  <text x="500" y="250" text-anchor="middle" font-size="9">• Prometheus</text>
+  <text x="500" y="265" text-anchor="middle" font-size="9">• Grafana</text>
+  <text x="500" y="280" text-anchor="middle" font-size="9">• ELK Stack</text>
+  <text x="500" y="295" text-anchor="middle" font-size="9">• Datadog</text>
+  
+  <!-- Container Platform -->
+  <rect x="620" y="220" width="140" height="80" fill="#ffebee" stroke="#f44336" stroke-width="1" rx="3"/>
+  <text x="690" y="235" text-anchor="middle" font-size="10" font-weight="bold">컨테이너</text>
+  <text x="690" y="250" text-anchor="middle" font-size="9">• Docker</text>
+  <text x="690" y="265" text-anchor="middle" font-size="9">• Kubernetes</text>
+  <text x="690" y="280" text-anchor="middle" font-size="9">• OpenShift</text>
+  <text x="690" y="295" text-anchor="middle" font-size="9">• Rancher</text>
+  
+  <!-- Cloud Platforms -->
+  <rect x="250" y="320" width="300" height="60" fill="#e1f5fe" stroke="#0277bd" stroke-width="2" rx="5"/>
+  <text x="400" y="340" text-anchor="middle" font-size="12" font-weight="bold">클라우드 플랫폼</text>
+  <text x="400" y="360" text-anchor="middle" font-size="10">AWS • Azure • Google Cloud • IBM Cloud</text>
+  
+  <!-- Arrows showing flow -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  <path d="M 150 80 L 170 80" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 270 80 L 290 80" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 390 80 L 410 80" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 510 80 L 530 80" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 630 80 L 650 80" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+</svg>
