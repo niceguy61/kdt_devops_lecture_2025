@@ -17,51 +17,8 @@
 - **결정**: 클라우드 전환 및 DevOps 도입
 
 #### DevOps 전략
-```svg
-<svg width="700" height="350" xmlns="http://www.w3.org/2000/svg">
-  <text x="350" y="30" text-anchor="middle" font-size="16" font-weight="bold">Netflix DevOps 아키텍처</text>
-  
-  <!-- Microservices -->
-  <rect x="50" y="60" width="600" height="80" fill="#e8f5e8" stroke="#4caf50" stroke-width="2" rx="10"/>
-  <text x="350" y="85" text-anchor="middle" font-size="14" font-weight="bold">마이크로서비스 아키텍처 (700+ 서비스)</text>
-  
-  <!-- Individual services -->
-  <circle cx="120" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="120" y="125" text-anchor="middle" font-size="8">User</text>
-  
-  <circle cx="200" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="200" y="125" text-anchor="middle" font-size="8">Catalog</text>
-  
-  <circle cx="280" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="280" y="125" text-anchor="middle" font-size="8">Billing</text>
-  
-  <circle cx="360" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="360" y="125" text-anchor="middle" font-size="8">Streaming</text>
-  
-  <circle cx="440" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="440" y="125" text-anchor="middle" font-size="8">Recommend</text>
-  
-  <text x="520" y="125" text-anchor="middle" font-size="12">...</text>
-  
-  <circle cx="580" cy="120" r="20" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-  <text x="580" y="125" text-anchor="middle" font-size="8">Analytics</text>
-  
-  <!-- CI/CD Pipeline -->
-  <rect x="50" y="160" width="600" height="60" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="10"/>
-  <text x="350" y="185" text-anchor="middle" font-size="14" font-weight="bold">Spinnaker CI/CD 플랫폼</text>
-  <text x="350" y="205" text-anchor="middle" font-size="12">하루 수천 번 배포, 자동 카나리 배포</text>
-  
-  <!-- Chaos Engineering -->
-  <rect x="50" y="240" width="280" height="60" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="10"/>
-  <text x="190" y="265" text-anchor="middle" font-size="12" font-weight="bold">Chaos Engineering</text>
-  <text x="190" y="285" text-anchor="middle" font-size="10">Chaos Monkey, Simian Army</text>
-  
-  <!-- Monitoring -->
-  <rect x="370" y="240" width="280" height="60" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="10"/>
-  <text x="510" y="265" text-anchor="middle" font-size="12" font-weight="bold">실시간 모니터링</text>
-  <text x="510" y="285" text-anchor="middle" font-size="10">Atlas, Kayenta</text>
-</svg>
-```
+
+![Netflix DevOps Architecture](../images/netflix-devops-architecture.svg)
 
 #### 주요 성과
 - **배포 빈도**: 하루 수천 번
