@@ -138,6 +138,7 @@ mkdir docker-basics docker-images docker-compose docker-networking
 ```
 
 ### 첫 번째 Docker 컨테이너 실행 (실습)
+**실제 Docker를 체험**해보는 첫 번째 실습:
 ```bash
 # Nginx 웹 서버 실행
 docker run -d -p 8080:80 --name my-nginx nginx
@@ -160,6 +161,7 @@ docker rm my-nginx
 ### 핵심 개념 복습
 
 #### DevOps 정의
+**7주 과정의 기초가 되는 핵심 개념**:
 - Development + Operations
 - 협업 문화와 자동화 방법론
 - CALMS 모델 (Culture, Automation, Lean, Measurement, Sharing)
