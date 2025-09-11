@@ -81,9 +81,9 @@ graph LR
     B -.-> D
     
     style A fill:#e1f5fe,stroke:#0277bd
-    style B fill=#e8f5e8,stroke=#4caf50
-    style C fill=#f3e5f5,stroke=#7b1fa2
-    style D fill=#fff3e0,stroke=#f57c00
+    style B fill:#e8f5e8,stroke:#4caf50
+    style C fill:#f3e5f5,stroke:#7b1fa2
+    style D fill:#fff3e0,stroke:#f57c00
 ```
 
 ## 3. Docker Engine 상세 분석 (12분)
