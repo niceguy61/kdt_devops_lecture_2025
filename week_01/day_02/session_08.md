@@ -11,18 +11,53 @@
 ## 1. Docker 설치 상태 점검 (15분)
 
 ### 기본 설치 확인
-**Docker가 정상적으로 설치되고 실행되는지 확인**:
+**Docker 설치 상태 진단**은 **시스템의 여러 계층에서 체계적으로 확인**해야 합니다.
+
+#### Docker 버전 정보 확인
+**설치된 Docker의 버전과 구성 요소 확인**
 
 ```bash
-# Docker 버전 확인
+# Docker Client 및 Server 버전 확인
 docker --version
+# 출력 예시: Docker version 24.0.7, build afdd53b
+
+docker version
+# 상세 버전 정보:
+# Client: Docker Engine - Community
+#  Version:           24.0.7
+#  API version:       1.43
+# Server: Docker Engine - Community
+#  Engine:
+#   Version:          24.0.7
+#   API version:      1.43 (minimum version 1.12)
+
+# Docker Compose 버전 확인
 docker-compose --version
+# 출력 예시: Docker Compose version v2.21.0
+```
 
-# Docker 시스템 정보
+#### 시스템 정보 확인
+**Docker 엔진의 상세 구성과 상태 확인**
+
+```bash
+# Docker 시스템 전체 정보
 docker system info
+# 주요 확인 항목:
+# - Server Version: Docker 엔진 버전
+# - Storage Driver: 사용 중인 스토리지 드라이버 (overlay2 권장)
+# - Logging Driver: 로깅 드라이버 (json-file 기본값)
+# - Cgroup Driver: cgroup 드라이버 (systemd 권장)
+# - Runtimes: 사용 가능한 런타임 (runc 기본값)
+# - CPUs: 사용 가능한 CPU 코어 수
+# - Total Memory: 전체 메모리 용량
 
-# Docker 서비스 상태 확인
+# Docker 리소스 사용량 확인
 docker system df
+# 확인 항목:
+# - Images: 이미지 개수와 사용 중인 이미지
+# - Containers: 컨테이너 개수와 상태
+# - Local Volumes: 로컬 볼륨 사용량
+# - Build Cache: 빌드 캐시 사용량
 ```
 
 ### 권한 설정 확인
