@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="layerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="containerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffebee;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffcdd2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="600" height="400" fill="#f5f5f5"/>
+  
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">Docker 이미지 레이어 구조</text>
+  
+  <!-- Image Layers -->
+  <g id="imageLayers">
+    <!-- Base Layer -->
+    <rect x="50" y="300" width="200" height="40" fill="url(#layerGradient)" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="150" y="325" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">Base Layer (Ubuntu)</text>
+    
+    <!-- OS Layer -->
+    <rect x="50" y="250" width="200" height="40" fill="url(#layerGradient)" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="150" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">OS Packages</text>
+    
+    <!-- Runtime Layer -->
+    <rect x="50" y="200" width="200" height="40" fill="url(#layerGradient)" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="150" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">Runtime (Node.js)</text>
+    
+    <!-- App Layer -->
+    <rect x="50" y="150" width="200" height="40" fill="url(#layerGradient)" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="150" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">Application Code</text>
+    
+    <!-- Read-Only Label -->
+    <text x="150" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1976d2">읽기 전용 레이어</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M 270 220 L 320 220" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Container Layer -->
+  <g id="containerLayer">
+    <rect x="350" y="150" width="200" height="40" fill="url(#containerGradient)" stroke="#d32f2f" stroke-width="2" rx="5"/>
+    <text x="450" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">Container Layer</text>
+    <text x="450" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#d32f2f">읽기/쓰기 레이어</text>
+  </g>
+  
+  <!-- Union File System -->
+  <rect x="350" y="220" width="200" height="120" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" rx="10"/>
+  <text x="450" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#4caf50">Union File System</text>
+  <text x="450" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#4caf50">통합된 파일시스템 뷰</text>
+  
+  <!-- Copy-on-Write indicator -->
+  <circle cx="450" cy="290" r="30" fill="#fff3e0" stroke="#f57c00" stroke-width="2"/>
+  <text x="450" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#f57c00">CoW</text>
+  <text x="450" y="298" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#f57c00">메커니즘</text>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="50" y="360" width="500" height="30" fill="#fff" stroke="#ccc" stroke-width="1" rx="5"/>
+    <circle cx="70" cy="375" r="5" fill="#e3f2fd"/>
+    <text x="85" y="379" font-family="Arial, sans-serif" font-size="10" fill="#333">이미지 레이어 (읽기 전용)</text>
+    
+    <circle cx="250" cy="375" r="5" fill="#ffebee"/>
+    <text x="265" y="379" font-family="Arial, sans-serif" font-size="10" fill="#333">컨테이너 레이어 (읽기/쓰기)</text>
+    
+    <circle cx="450" cy="375" r="5" fill="#fff3e0"/>
+    <text x="465" y="379" font-family="Arial, sans-serif" font-size="10" fill="#333">Copy-on-Write</text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+</svg>
