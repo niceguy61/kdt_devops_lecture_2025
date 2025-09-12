@@ -1,39 +1,101 @@
-# Week 3: Kubernetes 기초
+# Week 3: Docker 심화 및 Compose (실습 중심)
 
-## 학습 목표
-- Kubernetes 아키텍처 및 핵심 개념 이해
-- 클러스터 구성 및 기본 오브젝트 학습
-- kubectl 명령어 마스터
-- Pod, Service, Deployment 실습
+## 📅 일정 개요
+- **학습 방식**: 이론 40% + 실습 60%
+- **전제 조건**: Week 2 Docker 기초 실습 완료
+- **목표**: Docker Compose와 고급 기능을 활용한 실무 프로젝트
 
-## 주간 일정
+## 🎯 학습 목표
+- Docker Compose를 활용한 멀티 컨테이너 애플리케이션 구축
+- 볼륨 및 네트워킹 고급 기능 실습
+- 실무 환경에서의 Docker 활용 패턴 학습
+- 컨테이너 보안 및 최적화 기법 적용
 
-### Day 1: Kubernetes 개념 및 아키텍처
-**세션 1-2**: Kubernetes란 무엇인가? Docker와의 차이점
-**세션 3-4**: 마스터 노드와 워커 노드 아키텍처
-**세션 5-6**: etcd, API Server, Scheduler, Controller Manager
-**세션 7-8**: kubelet, kube-proxy, Container Runtime
+## 🔄 Week 2 → Week 3 연결
+```
+Week 2 기초 → Week 3 심화:
+├── 단일 컨테이너 → 멀티 컨테이너 오케스트레이션
+├── 기본 네트워킹 → 고급 네트워크 구성
+├── 간단한 볼륨 → 복잡한 데이터 관리
+└── 개별 명령어 → 선언적 구성 (YAML)
+```
 
-### Day 2: 로컬 Kubernetes 환경 구성
-**세션 1-2**: Minikube 설치 및 설정
-**세션 3-4**: kubectl 설치 및 기본 명령어
-**세션 5-6**: Kind, k3s 등 대안 도구 소개
-**세션 7-8**: 실습: 첫 번째 클러스터 생성 및 접근
+## 📚 주간 일정
 
-### Day 3: Pod와 기본 오브젝트
-**세션 1-2**: Pod 개념 및 생명주기
-**세션 3-4**: YAML 매니페스트 작성법
-**세션 5-6**: 라벨과 셀렉터 활용
-**세션 7-8**: 실습: Pod 생성, 수정, 삭제
+### Day 1: Docker Compose 기초
+**세션 1-2**: Docker Compose 개념 및 설치
+**세션 3-4**: YAML 문법 및 docker-compose.yml 작성
+**세션 5-6**: 서비스 정의 및 네트워크 설정
+**세션 7-8**: 실습: 워드프레스 + MySQL 구성
 
-### Day 4: Service와 네트워킹
-**세션 1-2**: Service 타입별 특징 (ClusterIP, NodePort, LoadBalancer)
-**세션 3-4**: Endpoint와 서비스 디스커버리
-**세션 5-6**: DNS 및 네트워크 정책
-**세션 7-8**: 실습: 서비스를 통한 Pod 노출
+### Day 2: Docker Compose 심화
+**세션 1-2**: 환경별 설정 관리 (dev/staging/prod)
+**세션 3-4**: 스케일링 및 로드밸런싱
+**세션 5-6**: 헬스체크 및 의존성 관리
+**세션 7-8**: 실습: 마이크로서비스 아키텍처 구성
 
-### Day 5: Deployment와 ReplicaSet
-**세션 1-2**: Deployment 개념 및 롤링 업데이트
-**세션 3-4**: ReplicaSet과 스케일링
-**세션 5-6**: 롤백 및 히스토리 관리
-**세션 7-8**: 종합 실습: 완전한 애플리케이션 배포
+### Day 3: 고급 네트워킹 및 보안
+**세션 1-2**: 네트워크 드라이버 심화 (overlay, macvlan)
+**세션 3-4**: 컨테이너 보안 스캐닝 및 정책
+**세션 5-6**: 시크릿 관리 및 환경 변수 보안
+**세션 7-8**: 실습: 보안 강화된 애플리케이션 구성
+
+### Day 4: 데이터 관리 및 백업 전략
+**세션 1-2**: 볼륨 타입별 특징 및 사용 사례
+**세션 3-4**: 데이터 백업 및 복원 전략
+**세션 5-6**: 데이터베이스 클러스터링
+**세션 7-8**: 실습: 고가용성 데이터베이스 구성
+
+### Day 5: 실무 프로젝트 및 최신 트렌드
+**세션 1-2**: CI/CD와 Docker 통합
+**세션 3-4**: 모니터링 및 로깅 (Prometheus, Grafana)
+**세션 5-6**: Podman, Buildah 등 대안 도구 소개
+**세션 7-8**: 종합 프로젝트: E-commerce 애플리케이션 구축
+
+## 🛠 주요 실습 프로젝트
+
+### 1. 마이크로서비스 아키텍처 구현
+- **구성**: Frontend, API Gateway, 여러 Backend 서비스, Database
+- **기술**: React, Node.js, Redis, PostgreSQL
+- **학습 요소**: 서비스 간 통신, 로드 밸런싱, 데이터 일관성
+
+### 2. 모니터링 스택 구축
+- **구성**: Prometheus, Grafana, AlertManager, Node Exporter
+- **목표**: 컨테이너 및 애플리케이션 모니터링
+- **학습 요소**: 메트릭 수집, 대시보드 구성, 알림 설정
+
+### 3. E-commerce 플랫폼
+- **구성**: 웹 프론트엔드, 상품 서비스, 주문 서비스, 결제 서비스
+- **기술**: 다양한 언어/프레임워크 조합
+- **학습 요소**: 복잡한 서비스 오케스트레이션, 데이터 관리
+
+## 📊 학습 방식 (이론 40% + 실습 60%)
+```
+각 세션 구성 (50분):
+├── 개념 설명 및 이론 (20분) - 40%
+├── 실습 및 프로젝트 (25분) - 50%
+└── 트러블슈팅 및 Q&A (5분) - 10%
+```
+
+## 🎯 핵심 학습 성과
+- **멀티 컨테이너 관리**: Docker Compose 마스터
+- **실무 패턴**: 환경별 설정, 보안, 모니터링
+- **문제 해결**: 복잡한 구성에서의 디버깅 능력
+- **최적화**: 성능 및 리소스 최적화 기법
+
+## 📋 평가 방법
+- **일일 실습**: 30%
+- **주간 프로젝트**: 40%
+- **최종 통합 프로젝트**: 30%
+
+## 🔗 Week 4 준비
+Week 3 완료 후 Kubernetes 기초로 이어집니다. Docker Compose 경험이 Kubernetes 이해에 도움이 됩니다.
+
+## 📚 참고 자료
+- [Docker Compose 공식 문서](https://docs.docker.com/compose/)
+- [Docker 보안 가이드](https://docs.docker.com/engine/security/)
+- [컨테이너 모니터링 패턴](https://prometheus.io/docs/guides/dockerswarm/)
+
+---
+**이전**: [Week 2 - Docker 기초 실습](../week_02/README.md)  
+**다음**: [Week 4 - Kubernetes 기초](../week_04/README.md)

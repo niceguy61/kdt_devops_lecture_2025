@@ -1,39 +1,70 @@
-# Week 4: Kubernetes 심화 및 운영
+# Week 4: Kubernetes 기초 (실습 중심)
 
-## 학습 목표
-- ConfigMap과 Secret을 활용한 설정 관리
-- Ingress를 통한 외부 트래픽 관리
-- 모니터링 및 로깅 시스템 구축
-- 트러블슈팅 기법 습득
+## 📅 일정 개요
+- **학습 방식**: 이론 40% + 실습 60%
+- **전제 조건**: Week 3 Docker Compose 완료
+- **목표**: Kubernetes 기본 개념과 오브젝트 실습
 
-## 주간 일정
+## 🎯 학습 목표
+- Kubernetes 아키텍처 및 핵심 개념 이해
+- 클러스터 구성 및 기본 오브젝트 학습
+- kubectl 명령어 마스터
+- Pod, Service, Deployment 실습
 
-### Day 1: ConfigMap과 Secret
-**세션 1-2**: ConfigMap 생성 및 활용법
-**세션 3-4**: Secret 타입별 사용법
-**세션 5-6**: 환경변수 및 볼륨 마운트
-**세션 7-8**: 실습: 설정 기반 애플리케이션 배포
+## 🔄 Docker → Kubernetes 전환
+```
+Docker Compose → Kubernetes:
+├── docker-compose.yml → YAML 매니페스트
+├── 서비스 정의 → Pod, Service, Deployment
+├── 네트워크 → Kubernetes 네트워킹
+└── 볼륨 → PersistentVolume, PVC
+```
 
-### Day 2: 볼륨과 스토리지
-**세션 1-2**: PersistentVolume과 PersistentVolumeClaim
-**세션 3-4**: StorageClass와 동적 프로비저닝
-**세션 5-6**: 스테이트풀 애플리케이션 관리
-**세션 7-8**: 실습: 데이터베이스 클러스터 구성
+## 📚 주간 일정
 
-### Day 3: Ingress와 네트워크 관리
-**세션 1-2**: Ingress Controller 설치 및 설정
-**세션 3-4**: 호스트 기반 및 경로 기반 라우팅
-**세션 5-6**: TLS/SSL 인증서 관리
-**세션 7-8**: 실습: 멀티 서비스 웹 애플리케이션 노출
+### Day 1: Kubernetes 개념 및 아키텍처
+**세션 1-2**: Kubernetes란 무엇인가? Docker와의 차이점
+**세션 3-4**: 마스터 노드와 워커 노드 아키텍처
+**세션 5-6**: etcd, API Server, Scheduler, Controller Manager
+**세션 7-8**: kubelet, kube-proxy, Container Runtime
 
-### Day 4: 모니터링 및 로깅
-**세션 1-2**: Prometheus 설치 및 메트릭 수집
-**세션 3-4**: Grafana 대시보드 구성
-**세션 5-6**: ELK 스택을 활용한 로그 관리
-**세션 7-8**: 실습: 종합 모니터링 시스템 구축
+### Day 2: 로컬 Kubernetes 환경 구성
+**세션 1-2**: Minikube 설치 및 설정
+**세션 3-4**: kubectl 설치 및 기본 명령어
+**세션 5-6**: Kind, k3s 등 대안 도구 소개
+**세션 7-8**: 실습: 첫 번째 클러스터 생성 및 접근
 
-### Day 5: 트러블슈팅 및 운영
-**세션 1-2**: kubectl을 활용한 디버깅 기법
-**세션 3-4**: 리소스 사용량 분석 및 최적화
-**세션 5-6**: 클러스터 업그레이드 및 백업
-**세션 7-8**: 실전 트러블슈팅 시나리오 실습
+### Day 3: Pod와 기본 오브젝트
+**세션 1-2**: Pod 개념 및 생명주기
+**세션 3-4**: YAML 매니페스트 작성법
+**세션 5-6**: 라벨과 셀렉터 활용
+**세션 7-8**: 실습: Pod 생성, 수정, 삭제
+
+### Day 4: Service와 네트워킹
+**세션 1-2**: Service 타입별 특징 (ClusterIP, NodePort, LoadBalancer)
+**세션 3-4**: Endpoint와 서비스 디스커버리
+**세션 5-6**: DNS 및 네트워크 정책
+**세션 7-8**: 실습: 서비스를 통한 Pod 노출
+
+### Day 5: Deployment와 ReplicaSet
+**세션 1-2**: Deployment 개념 및 롤링 업데이트
+**세션 3-4**: ReplicaSet과 스케일링
+**세션 5-6**: 롤백 및 히스토리 관리
+**세션 7-8**: 종합 실습: 완전한 애플리케이션 배포
+
+## 🛠 실습 환경
+- **로컬 클러스터**: Minikube, Kind, 또는 Docker Desktop Kubernetes
+- **클라우드 옵션**: AWS EKS, Google GKE (선택사항)
+- **도구**: kubectl, Helm (기초)
+
+## 📊 학습 방식 (이론 40% + 실습 60%)
+```
+각 세션 구성 (50분):
+├── 개념 설명 (20분) - 40%
+├── 실습 진행 (25분) - 50%
+└── 문제 해결 및 Q&A (5분) - 10%
+```
+
+---
+**이전**: [Week 3 - Docker 심화 및 Compose](../week_03/README.md)  
+**다음**: [Week 5 - Kubernetes 심화 및 운영](../week_05/README.md)
