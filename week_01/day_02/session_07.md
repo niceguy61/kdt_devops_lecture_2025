@@ -67,7 +67,7 @@ graph TB
     style C fill:#ffebee,stroke:#f44336
     style D fill:#ffebee,stroke:#f44336
     style E fill:#ffebee,stroke:#f44336
-    style F fill=#ffebee,stroke=#f44336
+    style F fill:#ffebee,stroke:#f44336
 ```
 
 ### 전통적 보안 vs 컨테이너 보안
@@ -102,7 +102,7 @@ graph TB
     style B fill:#e3f2fd,stroke:#2196f3
     style C fill:#fff3e0,stroke:#ff9800
     style D fill:#f3e5f5,stroke:#7b1fa2
-    style E fill=#ffebee,stroke=#f44336
+    style E fill:#ffebee,stroke:#f44336
 ```
 
 ## 2. 이미지 보안 (18분)
@@ -171,7 +171,7 @@ graph LR
     style A fill:#e8f5e8,stroke:#4caf50
     style B fill:#e3f2fd,stroke:#2196f3
     style C fill:#fff3e0,stroke:#ff9800
-    style D fill=#f3e5f5,stroke=#7b1fa2
+    style D fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### 이미지 서명과 검증
@@ -253,7 +253,7 @@ graph TB
     
     style A fill:#e8f5e8,stroke:#4caf50
     style B fill:#e3f2fd,stroke:#2196f3
-    style C fill=#ffebee,stroke=#f44336
+    style C fill:#ffebee,stroke:#f44336
 ```
 
 ## 4. 보안 모범 사례 (8분)

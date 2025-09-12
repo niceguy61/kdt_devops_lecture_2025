@@ -106,7 +106,7 @@ graph TB
     style C1 fill:#e8f5e8,stroke:#4caf50
     style C2 fill:#e8f5e8,stroke:#4caf50
     style C3 fill:#e8f5e8,stroke:#4caf50
-    style C4 fill=#e8f5e8,stroke=#4caf50
+    style C4 fill:#e8f5e8,stroke:#4caf50
 ```
 
 ### 주요 기능들
@@ -184,7 +184,7 @@ graph TB
     style A fill:#e8f5e8,stroke:#4caf50
     style E fill:#fff3e0,stroke:#ff9800
     style F fill:#fff3e0,stroke:#ff9800
-    style G fill=#fff3e0,stroke=#ff9800
+    style G fill:#fff3e0,stroke:#ff9800
 ```
 
 ### 도구별 특징 비교
@@ -255,7 +255,7 @@ graph TB
     style A fill:#e1f5fe,stroke:#0277bd
     style B fill:#e1f5fe,stroke:#0277bd
     style C fill:#e1f5fe,stroke:#0277bd
-    style D fill=#e1f5fe,stroke=#0277bd
+    style D fill:#e1f5fe,stroke:#0277bd
 ```
 
 ### 핵심 개념들
