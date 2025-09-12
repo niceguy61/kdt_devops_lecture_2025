@@ -1,52 +1,94 @@
-# Session 8: 실습 환경 구성 및 Q&A
+# Session 8: 이론 정리 및 토론
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 1 > Day 1**의 마지막 세션으로, 이후 7주간의 실습을 위한 필수 환경을 구성합니다. Docker Desktop 설치부터 개발 환경 설정까지, 전체 과정에서 사용할 도구들을 준비하고 1일차 학습 내용을 정리합니다.
+이 세션은 **Week 1 > Day 1**의 마지막 세션으로, DevOps 개념과 문화에 대한 하루 학습 내용을 종합 정리하고 토론을 통해 이해를 심화합니다. 이론 중심의 Week 1 특성에 맞게 개념 정리와 토론에 집중합니다.
 
-## 학습 목표 (5분)
-- Docker Desktop 설치 및 설정
-- 필수 계정 생성 및 설정
-- 개발 환경 구성
-- 1일차 학습 내용 정리 및 질의응답
+## 2. 전통적 개발 vs DevOps 비교 분석 (15분)
 
-## 1. Docker Desktop 설치 (15분)
+### 개발 방식 비교표
 
-### 시스템 요구사항 확인
+| 구분 | 전통적 개발 | DevOps 개발 |
+|------|-------------|-------------|
+| **조직 구조** | 사일로 조직 | 크로스 펑셔널 팀 |
+| **배포 주기** | 월/분기 단위 | 일/주 단위 |
+| **품질 관리** | 단계별 검증 | 지속적 테스팅 |
+| **장애 대응** | 사후 대응 | 예방적 모니터링 |
+| **책임 소재** | 역할별 분리 | 공동 책임 |
 
-#### Windows
-- **OS**: Windows 10 64-bit Pro, Enterprise, Education (Build 19041 이상)
-- **기능**: WSL 2 또는 Hyper-V 활성화
-- **메모리**: 최소 4GB RAM (권장 8GB)
-- **저장공간**: 최소 4GB
+### 변화 관리 관점
+- **문화적 변화**: 개인 성과 → 팀 성과
+- **프로세스 변화**: 순차적 → 병렬적
+- **도구 변화**: 수동 → 자동화
 
-#### macOS
-- **OS**: macOS 10.15 이상
-- **하드웨어**: 2010년 이후 Mac 모델
-- **메모리**: 최소 4GB RAM
+## 3. DevOps 도구 생태계 이해 (10분)
 
-#### Linux
-- **배포판**: Ubuntu, Debian, CentOS, Fedora 등
-- **커널**: 3.10 이상
-
-### 설치 과정 (실습)
-
-#### Windows 설치
-```bash
-# 1. WSL 2 활성화 (PowerShell 관리자 권한)
-dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-
-# 2. 재부팅 후 WSL 2를 기본값으로 설정
-wsl --set-default-version 2
-
-# 3. Docker Desktop 다운로드 및 설치
-# https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
+### 도구 카테고리별 분류
+```mermaid
+graph TB
+    A[DevOps 도구 생태계] --> B[소스 코드 관리]
+    A --> C[CI/CD]
+    A --> D[컨테이너화]
+    A --> E[오케스트레이션]
+    A --> F[모니터링]
+    
+    B --> B1[Git, SVN]
+    C --> C1[Jenkins, GitHub Actions]
+    D --> D1[Docker, Podman]
+    E --> E1[Kubernetes, Docker Swarm]
+    F --> F1[Prometheus, Grafana]
 ```
 
-#### macOS 설치
-```bash
-# 1. Docker Desktop 다운로드
-# https://desktop.docker.com/mac/main/amd64/Docker.dmg
+## 4. 그룹 토론: DevOps 도입 전략 (10분)
+
+### 토론 주제
+**"우리 조직에 DevOps를 도입한다면 어떤 순서로 진행할 것인가?"**
+
+### 토론 가이드라인
+1. **현재 상황 분석** (2분)
+   - 조직 구조와 문화
+   - 기존 개발 프로세스
+   - 기술 스택과 인프라
+
+2. **우선순위 설정** (3분)
+   - 가장 시급한 문제점
+   - 빠른 성과를 낼 수 있는 영역
+   - 저항이 적을 것으로 예상되는 부분
+
+3. **단계별 로드맵** (3분)
+   - 1단계: 문화 변화 (3-6개월)
+   - 2단계: 도구 도입 (6-12개월)
+   - 3단계: 프로세스 최적화 (12-18개월)
+
+4. **성공 지표 정의** (2분)
+   - 배포 빈도 증가
+   - 장애 복구 시간 단축
+   - 개발자 만족도 향상
+
+### 토론 결과 공유
+각 그룹별 3분씩 발표 및 피드백
+
+## 5. 다음 학습 준비 (5분)
+
+### Day 2 학습 내용 미리보기
+- **컨테이너 기술 이론**: 가상화 기술의 발전사
+- **아키텍처 비교**: 하이퍼바이저 vs 컨테이너
+- **Linux 기반 기술**: 네임스페이스와 cgroups 개념
+
+### 사전 학습 권장사항
+- 가상화 기술에 대한 기본 이해
+- Linux 운영체제 기초 개념
+- 클라우드 컴퓨팅 기본 개념
+
+## 📚 참고 자료
+- [DevOps 핸드북](https://www.amazon.com/DevOps-Handbook-World-Class-Reliability-Organizations/dp/1942788002)
+- [State of DevOps Report 2023](https://cloud.google.com/devops/state-of-devops)
+- [DORA Metrics 가이드](https://www.devops-research.com/research.html)
+
+## 💡 핵심 키워드
+- **DevOps 문화**: 협업, 자동화, 측정, 공유
+- **CALMS 모델**: Culture, Automation, Lean, Measurement, Sharing
+- **지속적 개선**: 빠른 피드백 루프를 통한 점진적 발전
+- **크로스 펑셔널 팀**: 다양한 역할이 협업하는 팀 구조
 
 # 2. 설치 후 Applications 폴더로 이동
 # 3. Docker Desktop 실행

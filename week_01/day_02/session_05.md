@@ -90,15 +90,20 @@ graph TB
 ### 컨테이너 시작 과정
 **Created 상태에서 Running 상태로의 전환**:
 
-```bash
-# 컨테이너 생성만 (시작하지 않음)
-docker create --name my-nginx nginx
-
-# 생성된 컨테이너 시작
-docker start my-nginx
-
-# 생성과 시작을 동시에
-docker run --name my-nginx2 nginx
+```mermaid
+stateDiagram-v2
+    [*] --> Created: docker create
+    Created --> Running: docker start
+    Running --> Paused: docker pause
+    Paused --> Running: docker unpause
+    Running --> Stopped: docker stop
+    Stopped --> Running: docker start
+    Stopped --> [*]: docker rm
+    
+    note right of Created: 컨테이너 생성됨<br/>프로세스 미실행
+    note right of Running: 메인 프로세스 실행 중
+    note right of Paused: 프로세스 일시정지
+    note right of Stopped: 프로세스 종료됨
 ```
 
 ## 3. 컨테이너 실행 중 관리 (12분)

@@ -69,14 +69,17 @@ timeline
 - **플랫폼 독립적**: Windows, macOS, Linux에서 동일한 명령어 사용
 
 **동작 원리**:
-```bash
-# 사용자가 명령어 입력
-docker run nginx
-# ↓
-# Docker Client가 REST API 호출로 변환
-# POST /containers/create
-# ↓  
-# Docker Daemon이 요청 처리
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant Client as Docker Client
+    participant Daemon as Docker Daemon
+    
+    User->>Client: docker run nginx
+    Client->>Daemon: POST /containers/create
+    Daemon->>Daemon: 컨테이너 생성 및 실행
+    Daemon->>Client: 응답 반환
+    Client->>User: 결과 출력
 ```
 
 #### 2. Docker Daemon (dockerd)

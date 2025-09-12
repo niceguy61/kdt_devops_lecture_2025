@@ -19,8 +19,16 @@
 #### 기본 명령어 패턴
 **Docker 명령어는 다음과 같은 일관된 패턴을 따릅니다:**
 
-```bash
-docker [OPTIONS] COMMAND [ARG...]
+```
+Docker CLI 구조:
+docker [전역옵션] 명령어 [명령어옵션] [인수...]
+
+예시 구조:
+docker --host tcp://remote:2376 container run --name web nginx
+│      │                        │         │   │          │
+│      └─ 전역옵션               │         │   └─ 인수    │
+└─ 기본명령어                   │         └─ 명령어옵션  │
+                                └─ 관리명령어 + 하위명령어
 ```
 
 **구성 요소 설명:**
@@ -89,22 +97,45 @@ export DOCKER_CONFIG=~/.docker-custom
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
 ```
 
-## 2. 도움말 시스템 활용 (12분)
+## 2. 도움말 시스템 구조 (12분)
 
-### 계층적 도움말 구조
-**Docker는 계층적 도움말 시스템을 제공합니다:**
+### 계층적 도움말 아키텍처
+**Docker는 3단계 계층적 도움말 시스템을 제공합니다:**
 
-#### 1단계: 전체 명령어 개요
-```bash
-# Docker 전체 명령어 목록과 기본 사용법
-docker --help
-# 또는
-docker help
+```mermaid
+graph TD
+    A[docker --help] --> B[전체 명령어 개요]
+    A --> C[Management Commands]
+    A --> D[Legacy Commands]
+    
+    C --> E[docker container --help]
+    C --> F[docker image --help]
+    C --> G[docker network --help]
+    
+    E --> H[docker container run --help]
+    F --> I[docker image build --help]
+    G --> J[docker network create --help]
+```
 
-# 출력 예시:
-# Usage:  docker [OPTIONS] COMMAND
-# 
-# A self-sufficient runtime for containers
+### 도움말 구조 분석
+```
+1단계: 전체 개요 (docker --help)
+├── Usage 패턴
+├── Management Commands 목록
+├── Legacy Commands 목록
+└── Global Options
+
+2단계: 관리 명령어 그룹 (docker container --help)
+├── 하위 명령어 목록
+├── 각 명령어 간단 설명
+└── 사용 예시
+
+3단계: 특정 명령어 (docker container run --help)
+├── 상세 사용법
+├── 모든 옵션 설명
+├── 예제 코드
+└── 관련 명령어 참조
+```
 # 
 # Options:
 #       --config string      Location of client config files (default "/home/user/.docker")
