@@ -20,7 +20,7 @@ Docker 이미지 태그는 **레지스트리/네임스페이스/리포지토리:
 ```mermaid
 graph LR
     subgraph "이미지 태그 구조"
-        A[registry.company.com] --> B[/team/project]
+        A[registry.company.com] --> B[//team//project]
         B --> C[:v1.2.3-alpine]
     end
     
