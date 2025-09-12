@@ -20,7 +20,7 @@
 - **Week 1**: 이론 중심 (80% 이론 + 20% 개념 예시)
 - **Week 2+**: 실습 중심 (40% 이론 + 60% 실습)
 
-## 📖 주차별 커리큘럼 (개편)
+## 📖 주차별 커리큘럼 (7주 이론 과정)
 
 ### [Week 1: DevOps 기초 및 Docker 이론](./week_01/README.md) ✅ 완성
 - **학습 방식**: 이론 80% + 개념 예시 20%
@@ -29,43 +29,47 @@
 - Docker 아키텍처 및 구조 분석
 - 네트워킹, 스토리지, 보안 이론
 
-### [Week 2: Docker 기초 실습](./week_02/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- Docker 설치 및 환경 구성
-- 기본 명령어 실습
-- 이미지 빌드 및 관리
-- 컨테이너 네트워킹 실습
+### [Week 2: Docker 심화 이론 및 컨테이너 생태계](./week_02/README.md) 🔄 재구성 중
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- Docker 고급 개념 및 최적화 이론
+- 컨테이너 오케스트레이션 개념
+- Docker Compose 아키텍처 분석
+- 컨테이너 보안 및 모범 사례
 
-### [Week 3: Docker 심화 및 Compose](./week_03/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- Docker Compose 활용
-- 볼륨 및 데이터 관리
-- 멀티 컨테이너 애플리케이션
-- 실무 프로젝트 구축
+### [Week 3: Kubernetes 아키텍처 및 핵심 개념](./week_03/README.md) 🆕 신규 구성
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- Kubernetes 아키텍처 심화 분석
+- 핵심 오브젝트 (Pod, Service, Deployment) 이론
+- 클러스터 네트워킹 및 스토리지 개념
+- 스케줄링 및 리소스 관리 이론
 
-### [Week 4: Kubernetes 기초](./week_04/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- Kubernetes 아키텍처 실습
-- 기본 오브젝트 (Pod, Service, Deployment)
-- 로컬 환경 구성 및 배포
+### [Week 4: CI/CD 파이프라인 이론 및 설계](./week_04/README.md) 🆕 신규 구성
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- CI/CD 개념 및 파이프라인 설계 원리
+- Git 워크플로우 및 브랜치 전략
+- 테스트 자동화 이론 및 전략
+- 배포 패턴 및 릴리스 관리
 
-### [Week 5: Kubernetes 심화 및 운영](./week_05/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- ConfigMap, Secret, Ingress
-- 모니터링 및 로깅
-- 트러블슈팅 기법
+### [Week 5: Infrastructure as Code 및 클라우드 네이티브](./week_05/README.md) 🆕 신규 구성
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- IaC 개념 및 Terraform 아키텍처
+- 클라우드 네이티브 설계 원칙
+- 마이크로서비스 아키텍처 패턴
+- 서비스 메시 및 API Gateway 이론
 
-### [Week 6: CI/CD 파이프라인](./week_06/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- CI/CD 개념 및 도구
-- GitHub Actions 실습
-- 배포 전략 및 자동화
+### [Week 6: 클라우드 보안 및 거버넌스](./week_06/README.md) 🆕 신규 구성
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- DevSecOps 개념 및 보안 통합 전략
+- 클라우드 보안 모델 및 컴플라이언스
+- 접근 제어 및 권한 관리 (IAM)
+- 보안 모니터링 및 감사 체계
 
-### [Week 7: Infrastructure as Code 및 통합 프로젝트](./week_07/README.md) 🔄 재구성 필요
-- **학습 방식**: 이론 40% + 실습 60%
-- IaC 개념 및 Terraform 실습
-- 전체 DevOps 파이프라인 구축
-- 최신 트렌드 및 미래 전망
+### [Week 7: AWS Cloud 기초 및 DevOps 통합](./week_07/README.md) 🆕 신규 구성
+- **학습 방식**: 이론 80% + 개념 예시 20%
+- AWS 핵심 서비스 아키텍처 분석
+- AWS DevOps 서비스 생태계
+- 클라우드 비용 최적화 전략
+- 미래 DevOps 트렌드 및 전망
 
 ## 🛠 실습 환경
 - **운영체제**: Windows/Linux/macOS 지원

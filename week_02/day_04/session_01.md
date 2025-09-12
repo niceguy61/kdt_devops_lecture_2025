@@ -1,617 +1,469 @@
-# Session 1: Docker Compose 기초
+# Session 1: 클러스터 운영 및 관리 전략
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 4 > Session 1**로, Day 3에서 학습한 개별 컨테이너 관리를 바탕으로 Docker Compose를 통한 선언적 멀티 컨테이너 관리 방법을 학습합니다.
+이 세션은 **Week 2 > Day 4 > Session 1**로, Day 3에서 학습한 Kubernetes 오케스트레이션 이론을 바탕으로 실제 프로덕션 환경에서의 클러스터 운영 및 관리 전략을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **Docker Compose** 개념과 **YAML 문법** 이해
-- **서비스 정의** 기본 구조 및 **명령어** 활용
-- **개별 컨테이너 vs Compose** 비교 및 **장점** 파악
+- **클러스터 생명주기 관리** 전략과 **운영 프로세스** 수립
+- **노드 관리** 및 **유지보수** 방법론 이해
+- **클러스터 모니터링** 및 **헬스 체크** 시스템 구축
 
-## 1. 이론: Docker Compose 개념 (20분)
+## 1. 이론: 클러스터 생명주기 관리 (20분)
 
-### Compose의 필요성과 장점
+### 클러스터 운영 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "개별 컨테이너 관리"
-        A[복잡한 명령어] --> B[수동 네트워크 설정]
-        B --> C[의존성 관리 어려움]
-        C --> D[환경 재현 어려움]
+    subgraph "Cluster Lifecycle"
+        A[Planning] --> B[Provisioning]
+        B --> C[Configuration]
+        C --> D[Operation]
+        D --> E[Monitoring]
+        E --> F[Maintenance]
+        F --> G[Scaling]
+        G --> H[Upgrade]
+        H --> I[Decommission]
     end
     
-    subgraph "Docker Compose"
-        E[선언적 설정] --> F[자동 네트워크 생성]
-        F --> G[의존성 자동 관리]
-        G --> H[환경 일관성]
+    subgraph "Management Tools"
+        J[Infrastructure as Code] --> K[Configuration Management]
+        K --> L[Monitoring Stack]
+        L --> M[Automation Tools]
     end
     
-    subgraph "장점"
-        I[코드로 인프라 관리]
-        J[버전 관리 가능]
-        K[팀 협업 향상]
-        L[배포 자동화]
+    subgraph "Operational Concerns"
+        N[High Availability] --> O[Security]
+        O --> P[Performance]
+        P --> Q[Cost Optimization]
     end
     
-    E --> I
-    F --> J
-    G --> K
-    H --> L
+    A --> J
+    D --> N
 ```
 
-### YAML 기본 문법
+### 클러스터 설계 및 계획
+
+```
+클러스터 생명주기 단계:
+
+1. 계획 및 설계 (Planning & Design):
+├── 요구사항 분석:
+│   ├── 워크로드 특성 분석 (CPU/메모리 집약적)
+│   ├── 트래픽 패턴 및 확장성 요구사항
+│   ├── 가용성 및 복구 목표 (RTO/RPO)
+│   ├── 보안 및 컴플라이언스 요구사항
+│   ├── 네트워크 및 스토리지 요구사항
+│   └── 예산 및 비용 제약사항
+├── 아키텍처 설계:
+│   ├── 멀티 마스터 고가용성 구성
+│   ├── 워커 노드 풀 설계 (용도별 분리)
+│   ├── 네트워크 토폴로지 및 보안 영역
+│   ├── 스토리지 아키텍처 및 백업 전략
+│   ├── 모니터링 및 로깅 아키텍처
+│   └── 재해 복구 및 비즈니스 연속성
+├── 용량 계획:
+│   ├── 현재 및 예상 워크로드 분석
+│   ├── 리소스 사용률 예측 모델링
+│   ├── 피크 시간대 및 계절성 고려
+│   ├── 확장 임계값 및 트리거 설정
+│   └── 비용 최적화 시나리오 분석
+└── 기술 스택 선택:
+    ├── Kubernetes 배포판 선택
+    ├── CNI 플러그인 선택
+    ├── CSI 드라이버 선택
+    ├── 모니터링 도구 선택
+    └── 보안 도구 및 정책 선택
+
+2. 프로비저닝 (Provisioning):
+├── 인프라 프로비저닝:
+│   ├── Infrastructure as Code (Terraform, Pulumi)
+│   ├── 클라우드 리소스 자동 생성
+│   ├── 네트워크 및 보안 그룹 설정
+│   ├── 로드 밸런서 및 DNS 구성
+│   └── 스토리지 및 백업 인프라
+├── 클러스터 부트스트래핑:
+│   ├── kubeadm, kops, 또는 관리형 서비스
+│   ├── 마스터 노드 초기화 및 구성
+│   ├── 워커 노드 조인 및 검증
+│   ├── 네트워크 플러그인 설치
+│   └── 기본 시스템 컴포넌트 배포
+└── 초기 구성:
+    ├── RBAC 정책 설정
+    ├── 네임스페이스 및 리소스 쿼터
+    ├── 보안 정책 적용
+    ├── 모니터링 에이전트 배포
+    └── 백업 시스템 구성
+
+3. 운영 및 관리 (Operation & Management):
+├── 일상 운영 작업:
+│   ├── 클러스터 상태 모니터링
+│   ├── 리소스 사용률 추적
+│   ├── 보안 이벤트 모니터링
+│   ├── 백업 상태 확인
+│   ├── 성능 메트릭 분석
+│   └── 용량 계획 업데이트
+├── 변경 관리:
+│   ├── 애플리케이션 배포 승인
+│   ├── 설정 변경 검토 및 적용
+│   ├── 보안 패치 계획 및 적용
+│   ├── 스케일링 결정 및 실행
+│   └── 변경 사항 문서화 및 추적
+└── 인시던트 대응:
+    ├── 알림 및 에스컬레이션 절차
+    ├── 근본 원인 분석 (RCA)
+    ├── 임시 조치 및 영구 해결책
+    ├── 포스트모템 및 개선 사항
+    └── 플레이북 업데이트
+```
+
+### 노드 관리 전략
+
+```
+노드 생명주기 관리:
+
+노드 프로비저닝:
+├── 자동 노드 프로비저닝:
+│   ├── Cluster Autoscaler 구성
+│   ├── 노드 그룹별 스케일링 정책
+│   ├── 스팟 인스턴스 활용 전략
+│   ├── 다중 가용성 영역 분산
+│   └── 비용 최적화 스케줄링
+├── 노드 초기화:
+│   ├── 부트스트랩 스크립트 실행
+│   ├── 컨테이너 런타임 설치
+│   ├── kubelet 구성 및 시작
+│   ├── 네트워크 플러그인 설정
+│   └── 모니터링 에이전트 배포
+└── 노드 검증:
+    ├── 헬스 체크 및 준비 상태 확인
+    ├── 네트워크 연결성 테스트
+    ├── 스토리지 마운트 검증
+    ├── 보안 정책 적용 확인
+    └── 성능 벤치마크 실행
+
+노드 유지보수:
+├── 정기 유지보수:
+│   ├── OS 패치 및 보안 업데이트
+│   ├── 컨테이너 런타임 업데이트
+│   ├── kubelet 및 kube-proxy 업데이트
+│   ├── 시스템 로그 로테이션
+│   └── 디스크 정리 및 최적화
+├── 노드 드레인 및 코든:
+│   ├── 계획된 유지보수를 위한 드레인
+│   ├── 워크로드 안전한 이동
+│   ├── 유지보수 완료 후 언코든
+│   ├── 노드 준비 상태 검증
+│   └── 워크로드 재분산 확인
+└── 노드 교체:
+    ├── 불변 인프라 원칙 적용
+    ├── 새 노드 프로비저닝
+    ├── 기존 노드 그레이스풀 제거
+    ├── 워크로드 자동 재스케줄링
+    └── 설정 및 상태 검증
+
+노드 모니터링:
+├── 시스템 메트릭:
+│   ├── CPU, 메모리, 디스크 사용률
+│   ├── 네트워크 I/O 및 연결 상태
+│   ├── 파일시스템 사용량 및 inode
+│   ├── 시스템 로드 및 프로세스 수
+│   └── 하드웨어 상태 (온도, 팬 등)
+├── Kubernetes 메트릭:
+│   ├── kubelet 상태 및 성능
+│   ├── Pod 스케줄링 성공률
+│   ├── 컨테이너 런타임 메트릭
+│   ├── 네트워크 플러그인 상태
+│   └── 볼륨 마운트 상태
+└── 알림 및 대응:
+    ├── 임계값 기반 알림 설정
+    ├── 자동 복구 액션 정의
+    ├── 에스컬레이션 매트릭스
+    ├── 온콜 로테이션 관리
+    └── 인시던트 추적 시스템
+```
+
+## 2. 이론: 클러스터 모니터링 및 관찰가능성 (15분)
+
+### 모니터링 아키텍처
+
+```mermaid
+sequenceDiagram
+    participant Workload as Workloads
+    participant Metrics as Metrics Server
+    participant Prometheus as Prometheus
+    participant Grafana as Grafana
+    participant AlertManager as AlertManager
+    participant OnCall as On-Call Engineer
+    
+    Workload->>Metrics: Expose metrics
+    Metrics->>Prometheus: Scrape metrics
+    Prometheus->>Grafana: Query metrics
+    Prometheus->>AlertManager: Trigger alerts
+    AlertManager->>OnCall: Send notifications
+    OnCall->>Grafana: Investigate dashboard
+```
+
+### 종합 모니터링 전략
+
+```
+클러스터 모니터링 체계:
+
+메트릭 수집 계층:
+├── 인프라 메트릭:
+│   ├── 노드 리소스 사용률 (CPU, 메모리, 디스크)
+│   ├── 네트워크 트래픽 및 연결 상태
+│   ├── 스토리지 성능 및 용량
+│   ├── 하드웨어 상태 및 온도
+│   └── 시스템 이벤트 및 로그
+├── Kubernetes 메트릭:
+│   ├── API 서버 성능 및 가용성
+│   ├── etcd 클러스터 상태 및 성능
+│   ├── 스케줄러 효율성 및 지연시간
+│   ├── 컨트롤러 매니저 상태
+│   └── kubelet 및 kube-proxy 메트릭
+├── 워크로드 메트릭:
+│   ├── Pod 리소스 사용률 및 상태
+│   ├── 컨테이너 성능 및 재시작 횟수
+│   ├── 서비스 응답 시간 및 처리량
+│   ├── 애플리케이션 비즈니스 메트릭
+│   └── 사용자 경험 메트릭
+└── 보안 메트릭:
+    ├── 인증 실패 및 권한 위반
+    ├── 네트워크 정책 위반
+    ├── 보안 스캔 결과
+    ├── 취약점 및 패치 상태
+    └── 감사 로그 이벤트
+
+로깅 및 추적:
+├── 구조화된 로깅:
+│   ├── JSON 형식 로그 표준화
+│   ├── 로그 레벨 및 카테고리 분류
+│   ├── 컨텍스트 정보 포함 (요청 ID, 사용자 ID)
+│   ├── 타임스탬프 및 메타데이터
+│   └── 민감 정보 마스킹
+├── 중앙집중식 로그 관리:
+│   ├── 로그 수집 및 전송 (Fluentd, Fluent Bit)
+│   ├── 로그 저장 및 인덱싱 (Elasticsearch)
+│   ├── 로그 검색 및 분석 (Kibana)
+│   ├── 로그 보관 및 아카이빙
+│   └── 로그 기반 알림 및 대시보드
+└── 분산 추적:
+    ├── 요청 흐름 추적 (Jaeger, Zipkin)
+    ├── 서비스 간 의존성 분석
+    ├── 성능 병목 지점 식별
+    ├── 에러 전파 경로 추적
+    └── 사용자 경험 분석
+
+알림 및 대응:
+├── 지능형 알림 시스템:
+│   ├── 다중 조건 기반 알림 규칙
+│   ├── 알림 그룹핑 및 중복 제거
+│   ├── 동적 임계값 및 이상 탐지
+│   ├── 비즈니스 시간 고려 알림
+│   └── 알림 피로도 관리
+├── 에스컬레이션 매트릭스:
+│   ├── 심각도별 대응 절차
+│   ├── 온콜 로테이션 관리
+│   ├── 자동 티켓 생성 및 할당
+│   ├── SLA 기반 에스컬레이션
+│   └── 경영진 보고 체계
+└── 자동 복구:
+    ├── 알려진 문제 자동 해결
+    ├── 자가 치유 메커니즘
+    ├── 예방적 조치 실행
+    ├── 복구 액션 로깅 및 추적
+    └── 수동 개입 최소화
+```
+
+## 3. 이론: 운영 자동화 및 GitOps (10분)
+
+### GitOps 운영 모델
+
+```
+GitOps 기반 운영:
+
+GitOps 원칙:
+├── 선언적 구성:
+│   ├── 모든 시스템 상태를 Git에 저장
+│   ├── YAML/JSON 형식의 구성 파일
+│   ├── 버전 관리 및 변경 이력 추적
+│   ├── 코드 리뷰를 통한 변경 승인
+│   └── 롤백 및 감사 가능성
+├── 버전 관리:
+│   ├── Git을 단일 진실 소스로 활용
+│   ├── 브랜치 전략 및 머지 정책
+│   ├── 태그를 통한 릴리스 관리
+│   ├── 변경 사항 추적 및 문서화
+│   └── 협업 및 코드 리뷰 프로세스
+├── 자동 배포:
+│   ├── Git 커밋 기반 자동 배포
+│   ├── 지속적 동기화 (Continuous Sync)
+│   ├── 드리프트 감지 및 자동 수정
+│   ├── 배포 상태 모니터링
+│   └── 실패 시 자동 롤백
+└── 관찰가능성:
+    ├── 배포 상태 실시간 모니터링
+    ├── 변경 사항 영향 분석
+    ├── 성능 및 안정성 메트릭
+    ├── 알림 및 대시보드
+    └── 감사 로그 및 컴플라이언스
+
+운영 자동화 도구:
+├── ArgoCD:
+│   ├── Kubernetes 네이티브 GitOps
+│   ├── 멀티 클러스터 지원
+│   ├── 웹 UI 및 CLI 제공
+│   ├── RBAC 및 SSO 통합
+│   └── 헬름 차트 지원
+├── Flux:
+│   ├── CNCF 졸업 프로젝트
+│   ├── GitOps Toolkit 기반
+│   ├── 헬름 및 Kustomize 지원
+│   ├── 이미지 자동 업데이트
+│   └── 알림 및 웹훅 지원
+└── Jenkins X:
+    ├── 클라우드 네이티브 CI/CD
+    ├── GitOps 기본 내장
+    ├── 프리뷰 환경 자동 생성
+    ├── 프로모션 파이프라인
+    └── Tekton 기반 파이프라인
+```
+
+## 4. 개념 예시: 클러스터 운영 구성 (12분)
+
+### 클러스터 모니터링 스택 구성 예시
 
 ```yaml
-# Docker Compose 파일 구조
-version: '3.8'  # Compose 파일 버전
-
-services:       # 서비스 정의 섹션
-  web:          # 서비스 이름
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    
-  database:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-
-networks:       # 네트워크 정의 (선택사항)
-  default:
-    driver: bridge
-
-volumes:        # 볼륨 정의 (선택사항)
-  db_data:
-    driver: local
+# Prometheus 모니터링 스택 (개념 예시)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.40.0
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: storage
+          mountPath: /prometheus
+        args:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--storage.tsdb.retention.time=30d'
+        - '--web.enable-lifecycle'
+        - '--web.enable-admin-api'
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prometheus-storage
 ```
 
-### Compose 파일 구조 분석
-
-```
-Compose 파일 주요 섹션:
-
-version (필수):
-├── Compose 파일 스키마 버전
-├── 3.8 (권장, Docker 19.03+)
-├── 기능 호환성 결정
-└── 예: version: '3.8'
-
-services (필수):
-├── 애플리케이션 구성 요소 정의
-├── 각 서비스는 컨테이너 하나
-├── 이미지, 포트, 볼륨 등 설정
-└── 서비스 간 의존성 정의
-
-networks (선택):
-├── 커스텀 네트워크 정의
-├── 서비스 간 통신 제어
-├── 외부 네트워크 연결
-└── 기본값: 프로젝트별 브리지 네트워크
-
-volumes (선택):
-├── 데이터 영속성 관리
-├── 서비스 간 데이터 공유
-├── 외부 볼륨 마운트
-└── 기본값: 익명 볼륨
-
-configs/secrets (선택):
-├── 설정 파일 관리
-├── 민감한 정보 보호
-├── 런타임 주입
-└── Swarm 모드에서 주로 사용
-```
-
-## 2. 실습: 첫 번째 Compose 파일 작성 (15분)
-
-### 간단한 웹 애플리케이션
+### 노드 관리 자동화 예시
 
 ```bash
-# 프로젝트 디렉토리 생성
-mkdir -p compose-basics && cd compose-basics
+# 노드 드레인 및 유지보수 스크립트 (개념 예시)
+#!/bin/bash
 
-# 첫 번째 Compose 파일
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
+NODE_NAME=$1
+MAINTENANCE_REASON=${2:-"Scheduled maintenance"}
 
-services:
-  web:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./html:/usr/share/nginx/html:ro
-    
-  api:
-    image: node:alpine
-    working_dir: /app
-    volumes:
-      - ./api:/app
-    ports:
-      - "3000:3000"
-    command: sh -c "npm install && npm start"
-EOF
+echo "Starting maintenance for node: $NODE_NAME"
 
-# 웹 콘텐츠 생성
-mkdir -p html
-cat > html/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Docker Compose Demo</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; }
-        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; margin: 10px; }
-        #result { margin: 20px; padding: 20px; background: #f5f5f5; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Docker Compose 기초 실습</h1>
-        <p>웹 서버와 API 서버가 Compose로 관리됩니다</p>
-        
-        <button onclick="testAPI()">API 테스트</button>
-        <button onclick="getTime()">현재 시간</button>
-        
-        <div id="result"></div>
-    </div>
+# 1. 노드 코든 (새로운 Pod 스케줄링 방지)
+kubectl cordon $NODE_NAME
 
-    <script>
-        async function testAPI() {
-            try {
-                const response = await fetch('http://localhost:3000/api/test');
-                const data = await response.json();
-                document.getElementById('result').innerHTML = 
-                    `<strong>API 응답:</strong><br>${JSON.stringify(data, null, 2)}`;
-            } catch (error) {
-                document.getElementById('result').innerHTML = 
-                    `<strong>오류:</strong> ${error.message}`;
-            }
-        }
-        
-        async function getTime() {
-            try {
-                const response = await fetch('http://localhost:3000/api/time');
-                const data = await response.json();
-                document.getElementById('result').innerHTML = 
-                    `<strong>서버 시간:</strong><br>${data.time}`;
-            } catch (error) {
-                document.getElementById('result').innerHTML = 
-                    `<strong>오류:</strong> ${error.message}`;
-            }
-        }
-    </script>
-</body>
-</html>
-EOF
+# 2. 노드 드레인 (기존 Pod 안전하게 이동)
+kubectl drain $NODE_NAME \
+  --ignore-daemonsets \
+  --delete-emptydir-data \
+  --force \
+  --grace-period=300
 
-# API 서버 코드
-mkdir -p api
-cat > api/package.json << 'EOF'
-{
-  "name": "compose-api",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
-  }
-}
-EOF
+# 3. 유지보수 작업 수행
+echo "Performing maintenance tasks..."
+# OS 패치, 재부팅 등
 
-cat > api/server.js << 'EOF'
-const express = require('express');
-const cors = require('cors');
-const app = express();
+# 4. 노드 준비 상태 확인
+kubectl wait --for=condition=Ready node/$NODE_NAME --timeout=600s
 
-app.use(cors());
-app.use(express.json());
+# 5. 노드 언코든 (스케줄링 재개)
+kubectl uncordon $NODE_NAME
 
-app.get('/api/test', (req, res) => {
-    res.json({
-        message: 'Docker Compose API 테스트 성공!',
-        timestamp: new Date().toISOString(),
-        service: 'api-server'
-    });
-});
-
-app.get('/api/time', (req, res) => {
-    res.json({
-        time: new Date().toLocaleString('ko-KR'),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-});
-
-app.listen(3000, '0.0.0.0', () => {
-    console.log('API 서버가 포트 3000에서 실행 중입니다');
-});
-EOF
-
-# Compose 실행
-docker-compose up -d
-
-# 서비스 상태 확인
-docker-compose ps
+echo "Maintenance completed for node: $NODE_NAME"
 ```
 
-### 기본 Compose 명령어
+### GitOps 구성 예시
 
-```bash
-# Compose 명령어 실습
-echo "=== Docker Compose 기본 명령어 ==="
-
-# 서비스 시작 (백그라운드)
-docker-compose up -d
-
-# 서비스 상태 확인
-docker-compose ps
-
-# 로그 확인
-docker-compose logs web
-docker-compose logs api
-
-# 실시간 로그 추적
-docker-compose logs -f api &
-LOG_PID=$!
-
-# 서비스 테스트
-sleep 5
-curl -s http://localhost:8080 | grep -q "Docker Compose" && echo "✓ 웹 서비스 정상"
-curl -s http://localhost:3000/api/test | jq && echo "✓ API 서비스 정상"
-
-# 로그 추적 중단
-kill $LOG_PID 2>/dev/null
-
-# 서비스 중지
-docker-compose stop
-
-# 서비스 재시작
-docker-compose restart
-
-# 서비스 제거 (볼륨 보존)
-docker-compose down
-
-# 서비스 제거 (볼륨 포함)
-docker-compose down -v
+```yaml
+# ArgoCD 애플리케이션 (개념 예시)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: production-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/company/k8s-manifests
+    targetRevision: HEAD
+    path: production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
 ```
 
-## 3. 실습: Compose vs 개별 컨테이너 비교 (10분)
+## 5. 토론 및 정리 (8분)
 
-### 개별 컨테이너 방식
+### 핵심 개념 정리
+- **클러스터 생명주기 관리**를 통한 체계적 운영
+- **노드 관리 자동화**와 **무중단 유지보수** 전략
+- **종합 모니터링**을 통한 **관찰가능성** 확보
+- **GitOps 기반 운영**을 통한 **자동화 및 표준화**
 
-```bash
-# 개별 컨테이너로 동일한 환경 구성
-echo "=== 개별 컨테이너 방식 ==="
-
-# 네트워크 생성
-docker network create app-network
-
-# 웹 서버 실행
-docker run -d --name individual-web \
-    --network app-network \
-    -p 8081:80 \
-    -v $(pwd)/html:/usr/share/nginx/html:ro \
-    nginx:alpine
-
-# API 서버 실행
-docker run -d --name individual-api \
-    --network app-network \
-    -p 3001:3000 \
-    -v $(pwd)/api:/app \
-    -w /app \
-    node:alpine sh -c "npm install && npm start"
-
-# 상태 확인
-docker ps --filter network=app-network
-
-# 개별 관리의 복잡성 시연
-echo "개별 컨테이너 관리 명령어들:"
-echo "docker run -d --name individual-web --network app-network -p 8081:80 -v \$(pwd)/html:/usr/share/nginx/html:ro nginx:alpine"
-echo "docker run -d --name individual-api --network app-network -p 3001:3000 -v \$(pwd)/api:/app -w /app node:alpine sh -c 'npm install && npm start'"
-echo "docker stop individual-web individual-api"
-echo "docker rm individual-web individual-api"
-echo "docker network rm app-network"
-
-# 정리
-docker stop individual-web individual-api
-docker rm individual-web individual-api
-docker network rm app-network
-```
-
-### Compose 방식의 장점 비교
-
-```bash
-# Compose 방식 재실행
-echo "=== Compose 방식 ==="
-
-# 한 줄로 전체 스택 실행
-docker-compose up -d
-
-echo "Compose 관리 명령어들:"
-echo "docker-compose up -d     # 전체 스택 시작"
-echo "docker-compose ps        # 상태 확인"
-echo "docker-compose logs      # 로그 확인"
-echo "docker-compose down      # 전체 스택 정리"
-
-# 장점 비교표 생성
-cat > comparison.md << 'EOF'
-# 개별 컨테이너 vs Docker Compose 비교
-
-| 항목 | 개별 컨테이너 | Docker Compose |
-|------|---------------|----------------|
-| **설정 복잡도** | 높음 (긴 명령어) | 낮음 (YAML 파일) |
-| **네트워크 관리** | 수동 생성/연결 | 자동 생성/연결 |
-| **의존성 관리** | 수동 순서 제어 | 자동 의존성 해결 |
-| **환경 재현** | 어려움 | 쉬움 (파일 공유) |
-| **버전 관리** | 불가능 | 가능 (Git 등) |
-| **팀 협업** | 어려움 | 쉬움 |
-| **스케일링** | 수동 | 명령어 하나 |
-| **모니터링** | 개별 관리 | 통합 관리 |
-
-## Compose의 주요 장점
-1. **Infrastructure as Code**: 인프라를 코드로 관리
-2. **선언적 설정**: 원하는 상태를 선언하면 Compose가 구현
-3. **환경 일관성**: 개발/테스트/운영 환경 동일하게 구성
-4. **자동화**: 복잡한 설정을 자동으로 처리
-5. **협업**: 팀원 간 환경 공유 용이
-EOF
-
-echo "비교 분석 완료: comparison.md"
-
-# 테스트 및 정리
-curl -s http://localhost:8080 | grep -q "Docker Compose" && echo "✓ Compose 웹 서비스 정상"
-curl -s http://localhost:3000/api/test | jq '.message' && echo "✓ Compose API 서비스 정상"
-
-docker-compose down
-```
-
-## 4. 실습: Compose 파일 구조 심화 (10분)
-
-### 고급 서비스 정의
-
-```bash
-# 고급 Compose 파일 작성
-cat > docker-compose.advanced.yml << 'EOF'
-version: '3.8'
-
-services:
-  web:
-    image: nginx:alpine
-    container_name: advanced-web
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    volumes:
-      - ./html:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api
-    networks:
-      - frontend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`localhost`)"
-    
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    container_name: advanced-api
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - API_PORT=3000
-      - DB_HOST=database
-    volumes:
-      - ./api:/app
-      - /app/node_modules
-    depends_on:
-      database:
-        condition: service_healthy
-    networks:
-      - frontend
-      - backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-  
-  database:
-    image: mysql:8.0
-    container_name: advanced-db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: appdb
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppassword
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - "3306:3306"
-
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-    internal: true
-
-volumes:
-  db_data:
-    driver: local
-EOF
-
-# Dockerfile 생성 (API용)
-cat > api/Dockerfile << 'EOF'
-FROM node:alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-
-CMD ["npm", "start"]
-EOF
-
-# 헬스체크 엔드포인트 추가
-cat >> api/server.js << 'EOF'
-
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-EOF
-
-# 데이터베이스 초기화 스크립트
-cat > init.sql << 'EOF'
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO users (name, email) VALUES 
-('John Doe', 'john@example.com'),
-('Jane Smith', 'jane@example.com');
-EOF
-
-# Nginx 설정 파일
-cat > nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream api_backend {
-        server api:3000;
-    }
-    
-    server {
-        listen 80;
-        
-        location / {
-            root /usr/share/nginx/html;
-            index index.html;
-        }
-        
-        location /api/ {
-            proxy_pass http://api_backend/api/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-        }
-    }
-}
-EOF
-
-# 고급 Compose 실행
-docker-compose -f docker-compose.advanced.yml up -d
-
-# 서비스 상태 및 헬스체크 확인
-docker-compose -f docker-compose.advanced.yml ps
-sleep 30
-docker-compose -f docker-compose.advanced.yml exec api curl -s http://localhost:3000/api/health | jq
-
-# 정리
-docker-compose -f docker-compose.advanced.yml down -v
-```
-
-## 5. Q&A 및 정리 (5분)
-
-### Compose 파일 검증 및 디버깅
-
-```bash
-# Compose 파일 검증 도구
-echo "=== Compose 파일 검증 ==="
-
-# 문법 검증
-docker-compose config
-
-# 서비스 구성 확인
-docker-compose config --services
-
-# 볼륨 구성 확인
-docker-compose config --volumes
-
-# 네트워크 구성 확인
-docker-compose config --networks
-
-# 환경 변수 확인
-docker-compose config --resolve-envvars
-
-# 디버깅을 위한 상세 출력
-docker-compose --verbose config
-
-# 최종 정리 및 체크리스트
-cat > session1-checklist.md << 'EOF'
-# Session 1 체크리스트
-
-## 학습 완료 항목
-- [ ] Docker Compose 개념 이해
-- [ ] YAML 기본 문법 숙지
-- [ ] 기본 Compose 파일 작성
-- [ ] 주요 Compose 명령어 실습
-- [ ] 개별 컨테이너 vs Compose 비교
-- [ ] 고급 서비스 정의 구조 이해
-
-## 핵심 명령어
-```bash
-docker-compose up -d        # 서비스 시작
-docker-compose ps           # 상태 확인
-docker-compose logs         # 로그 확인
-docker-compose down         # 서비스 정리
-docker-compose config       # 설정 검증
-```
-
-## 다음 세션 준비사항
-- 네트워킹 개념 복습
-- 서비스 간 통신 방법 예습
-- 멀티 서비스 아키텍처 설계 고민
-EOF
-
-echo "Session 1 완료! 체크리스트: session1-checklist.md"
-```
+### 토론 주제
+"대규모 프로덕션 환경에서 클러스터 운영의 안정성과 효율성을 동시에 보장하는 최적의 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **선언적 관리**: YAML 파일로 인프라 정의
-- **서비스 오케스트레이션**: 멀티 컨테이너 자동 관리
-- **Infrastructure as Code**: 코드로 인프라 관리
-- **환경 일관성**: 개발부터 운영까지 동일한 환경
+- **생명주기 관리**: 계획, 프로비저닝, 운영, 유지보수
+- **노드 관리**: 드레인, 코든, 자동 스케일링, 유지보수
+- **모니터링**: 메트릭, 로깅, 알림, 관찰가능성
+- **운영 자동화**: GitOps, ArgoCD, 지속적 배포
 
 ## 📚 참고 자료
-- [Compose 파일 레퍼런스](https://docs.docker.com/compose/compose-file/)
-- [YAML 문법 가이드](https://yaml.org/spec/1.2/spec.html)
-- [Compose 명령어](https://docs.docker.com/compose/reference/)
-
-## 🔧 실습 체크리스트
-- [ ] 기본 Compose 파일 작성 및 실행
-- [ ] 주요 Compose 명령어 숙지
-- [ ] 개별 컨테이너 관리와 비교 분석
-- [ ] 고급 서비스 정의 구조 이해
-- [ ] Compose 파일 검증 및 디버깅
+- [Kubernetes 클러스터 관리](https://kubernetes.io/docs/tasks/administer-cluster/)
+- [GitOps 가이드](https://www.gitops.tech/)
+- [Prometheus 모니터링](https://prometheus.io/docs/)

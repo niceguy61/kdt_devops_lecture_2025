@@ -1,204 +1,268 @@
-# Session 1: Docker 설치 및 환경 설정 (Windows)
+# Session 1: Docker Engine 아키텍처 심화 분석
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 1**로, Week 1에서 학습한 Docker 이론을 실제로 구현하는 첫 번째 실습입니다. Windows 환경에서 Docker Desktop을 설치하고 설정하는 과정을 단계별로 진행합니다.
+이 세션은 **Week 2 > Day 1 > Session 1**로, Week 1에서 학습한 Docker 기본 개념을 바탕으로 Docker Engine의 내부 아키텍처를 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **Docker Desktop** 아키텍처와 **설치 요구사항** 이해
-- **Windows 환경**에서 Docker 설치 및 **초기 설정** 완료
-- **WSL 2** 연동 및 **가상화 기술** 활성화
+- **Docker Engine** 내부 구조와 **컴포넌트** 완전 이해
+- **Client-Server 아키텍처** 및 **API 통신** 방식 분석
+- **Docker Daemon** 역할과 **프로세스 관리** 메커니즘
 
-## 1. 이론: Docker Desktop 아키텍처 (20분)
+## 1. 이론: Docker Engine 전체 아키텍처 (20분)
 
-### Windows에서의 Docker 구조
+### Docker Engine 구성 요소
 
 ```mermaid
 graph TB
-    subgraph "Windows Host"
-        A[Docker Desktop] --> B[Docker Engine]
-        B --> C[WSL 2 Backend]
-        C --> D[Linux VM]
-        
-        A --> E[Docker CLI]
-        A --> F[Docker Compose]
-        A --> G[Kubernetes]
+    subgraph "Docker Client"
+        A[Docker CLI] --> B[REST API Calls]
     end
     
-    subgraph "Container Runtime"
-        D --> H[containerd]
-        H --> I[runc]
-        I --> J[Containers]
+    subgraph "Docker Host"
+        C[Docker Daemon] --> D[containerd]
+        D --> E[runc]
+        E --> F[Container Process]
+        
+        C --> G[Images]
+        C --> H[Containers]
+        C --> I[Networks]
+        C --> J[Volumes]
     end
+    
+    subgraph "Registry"
+        K[Docker Hub]
+        L[Private Registry]
+    end
+    
+    B --> C
+    C --> K
+    C --> L
 ```
 
-### 설치 요구사항 분석
+### 핵심 컴포넌트 분석
+
+#### Docker Daemon (dockerd)
 ```
-Windows 시스템 요구사항:
+Docker Daemon 역할:
+├── REST API 서버 역할
+├── 이미지 관리 (빌드, 태그, 푸시/풀)
+├── 컨테이너 라이프사이클 관리
+├── 네트워크 및 볼륨 관리
+├── 보안 및 권한 제어
+└── 플러그인 시스템 관리
 
-필수 조건:
-├── Windows 10 64-bit Pro/Enterprise/Education
-├── Build 19041 이상 (Version 2004)
-├── BIOS에서 가상화 기술 활성화
-└── 최소 4GB RAM (권장 8GB)
-
-선택 사항:
-├── WSL 2 (권장)
-├── Hyper-V (대안)
-└── Windows Subsystem for Linux
-
-성능 고려사항:
-├── SSD 권장 (빠른 I/O)
-├── 충분한 디스크 공간 (20GB+)
-└── 네트워크 연결 (이미지 다운로드)
+통신 방식:
+├── Unix Socket: /var/run/docker.sock
+├── TCP Socket: 2376 (TLS), 2375 (비보안)
+├── Named Pipe: Windows 환경
+└── REST API: HTTP/HTTPS 프로토콜
 ```
 
-### WSL 2 vs Hyper-V 비교
+#### containerd
+```
+containerd 특징:
+├── 컨테이너 런타임 관리
+├── 이미지 전송 및 저장
+├── 컨테이너 실행 및 감독
+├── 네트워크 인터페이스 관리
+└── OCI 표준 준수
 
-| 특성 | WSL 2 | Hyper-V |
-|------|-------|---------|
-| **성능** | 높음 | 중간 |
-| **리소스 사용** | 효율적 | 많음 |
-| **시작 시간** | 빠름 | 느림 |
-| **파일 공유** | 빠름 | 느림 |
-| **호환성** | Windows 10 Home 지원 | Pro 이상만 |
-
-## 2. 실습: Docker Desktop 설치 (25분)
-
-### 단계 1: 시스템 준비 (5분)
-
-```powershell
-# PowerShell을 관리자 권한으로 실행
-# Windows 기능 확인
-Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
-Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
-
-# WSL 2 활성화
-dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+아키텍처:
+├── gRPC API 제공
+├── 플러그인 아키텍처
+├── CRI (Container Runtime Interface) 지원
+└── Kubernetes와 직접 통합 가능
 ```
 
-### 단계 2: Docker Desktop 다운로드 및 설치 (10분)
+#### runc
+```
+runc 역할:
+├── OCI Runtime Specification 구현
+├── 컨테이너 프로세스 실제 실행
+├── 네임스페이스 및 cgroups 설정
+├── 보안 컨텍스트 적용
+└── 컨테이너 격리 보장
 
-```bash
-# 1. Docker Desktop 다운로드
-# URL: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
-
-# 2. 설치 프로그램 실행
-# - "Use WSL 2 instead of Hyper-V" 옵션 선택
-# - "Add shortcut to desktop" 옵션 선택
-
-# 3. 설치 완료 후 재부팅
+기술적 특징:
+├── Go 언어로 구현
+├── libcontainer 라이브러리 사용
+├── 경량화된 바이너리
+└── 표준 준수로 호환성 보장
 ```
 
-### 단계 3: WSL 2 설정 (5분)
+## 2. 이론: Docker API 및 통신 메커니즘 (15분)
 
-```powershell
-# WSL 2를 기본 버전으로 설정
-wsl --set-default-version 2
+### REST API 구조 분석
 
-# Ubuntu 배포판 설치 (선택사항)
-wsl --install -d Ubuntu
+```
+Docker Engine API v1.41:
 
-# WSL 2 상태 확인
-wsl --list --verbose
+컨테이너 관리:
+├── POST /containers/create
+├── POST /containers/{id}/start
+├── POST /containers/{id}/stop
+├── GET /containers/json
+└── DELETE /containers/{id}
+
+이미지 관리:
+├── GET /images/json
+├── POST /images/create
+├── POST /build
+├── DELETE /images/{name}
+└── POST /images/{name}/push
+
+시스템 정보:
+├── GET /info
+├── GET /version
+├── GET /events
+└── GET /_ping
 ```
 
-### 단계 4: Docker Desktop 초기 설정 (5분)
-
-```bash
-# Docker Desktop 시작 후 설정
-# 1. Docker Desktop 실행
-# 2. 라이선스 동의
-# 3. 계정 로그인 (선택사항)
-# 4. 설정 확인:
-#    - General > Use WSL 2 based engine 체크
-#    - Resources > WSL Integration 설정
-```
-
-## 3. 설치 검증 및 테스트 (5분)
-
-### 기본 동작 확인
-
-```bash
-# Docker 버전 확인
-docker --version
-docker-compose --version
-
-# Docker 시스템 정보
-docker system info
-
-# 첫 번째 테스트 실행
-docker run hello-world
-```
-
-### 예상 출력 결과
-```
-Docker version 24.0.6, build ed223bc
-Docker Compose version v2.21.0
-
-Hello from Docker!
-This message shows that your installation appears to be working correctly.
-```
-
-## 4. 트러블슈팅 가이드 (10분)
-
-### 일반적인 문제와 해결책
+### 클라이언트-서버 통신 흐름
 
 ```mermaid
-flowchart TD
-    A[설치 문제 발생] --> B{어떤 문제?}
-    B -->|WSL 2 오류| C[WSL 2 재설치]
-    B -->|가상화 비활성화| D[BIOS 설정 확인]
-    B -->|권한 문제| E[관리자 권한 실행]
-    B -->|네트워크 문제| F[방화벽/프록시 확인]
+sequenceDiagram
+    participant CLI as Docker CLI
+    participant API as Docker API
+    participant Daemon as Docker Daemon
+    participant containerd as containerd
+    participant runc as runc
     
-    C --> G[해결 완료]
-    D --> G
-    E --> G
-    F --> G
+    CLI->>API: docker run nginx
+    API->>Daemon: POST /containers/create
+    Daemon->>containerd: Create container
+    containerd->>runc: Execute container
+    runc-->>containerd: Container started
+    containerd-->>Daemon: Success response
+    Daemon-->>API: HTTP 201 Created
+    API-->>CLI: Container ID
 ```
 
-### 주요 해결 방법
+## 3. 이론: 프로세스 격리 및 보안 모델 (10분)
 
-```powershell
-# WSL 2 문제 해결
-wsl --update
-wsl --shutdown
-# Docker Desktop 재시작
+### Linux 네임스페이스 활용
 
-# 가상화 확인
-systeminfo | findstr /i "hyper-v"
+```
+네임스페이스 종류:
 
-# Docker 서비스 재시작
-net stop com.docker.service
-net start com.docker.service
+PID Namespace:
+├── 프로세스 ID 격리
+├── 컨테이너 내부에서 PID 1부터 시작
+├── 호스트 프로세스와 완전 분리
+└── 프로세스 트리 격리
+
+Network Namespace:
+├── 네트워크 인터페이스 격리
+├── IP 주소 및 라우팅 테이블 분리
+├── 포트 번호 공간 격리
+└── 방화벽 규칙 독립성
+
+Mount Namespace:
+├── 파일시스템 마운트 포인트 격리
+├── 루트 파일시스템 변경 가능
+├── 볼륨 마운트 독립성
+└── 파일시스템 보안 강화
+
+UTS Namespace:
+├── 호스트명 및 도메인명 격리
+├── 컨테이너별 독립적 식별
+└── 네트워크 식별자 분리
+
+IPC Namespace:
+├── 프로세스 간 통신 격리
+├── 공유 메모리 세그먼트 분리
+├── 세마포어 및 메시지 큐 격리
+└── 시스템 V IPC 객체 분리
+
+User Namespace:
+├── 사용자 및 그룹 ID 매핑
+├── 권한 격리 및 보안 강화
+├── 루트 권한 제한
+└── 호스트 시스템 보호
 ```
 
-## 5. Q&A 및 정리 (5분)
+### cgroups 리소스 제어
 
-### 핵심 포인트 정리
-- ✅ Docker Desktop = Docker Engine + 관리 도구
-- ✅ WSL 2가 Hyper-V보다 성능상 유리
-- ✅ 가상화 기술 활성화 필수
-- ✅ hello-world 컨테이너로 설치 검증
+```
+Control Groups (cgroups) 기능:
 
-### 다음 세션 준비
-- Linux/macOS 사용자를 위한 설치 방법
-- 크로스 플랫폼 호환성 고려사항
+CPU 제어:
+├── CPU 사용률 제한
+├── CPU 가중치 설정
+├── CPU 코어 할당
+└── 실시간 스케줄링
+
+메모리 제어:
+├── 메모리 사용량 제한
+├── 스왑 메모리 제어
+├── OOM (Out of Memory) 관리
+└── 메모리 통계 수집
+
+블록 I/O 제어:
+├── 디스크 읽기/쓰기 제한
+├── IOPS 제한
+├── 대역폭 제어
+└── I/O 우선순위 설정
+
+네트워크 제어:
+├── 네트워크 대역폭 제한
+├── 패킷 우선순위 설정
+├── 트래픽 셰이핑
+└── QoS 정책 적용
+```
+
+## 4. 개념 예시: 아키텍처 분석 (7분)
+
+### Docker 시스템 정보 분석 예시
+
+```bash
+# Docker 시스템 정보 확인 (개념 예시)
+docker system info
+
+# 예상 출력 분석:
+# Server Version: 20.10.21
+# Storage Driver: overlay2
+# Logging Driver: json-file
+# Cgroup Driver: cgroupfs
+# Plugins:
+#  Volume: local
+#  Network: bridge host ipvlan macvlan null overlay
+#  Log: awslogs fluentd gcplogs gelf journald json-file local
+```
+
+### 프로세스 구조 분석 예시
+
+```bash
+# Docker 관련 프로세스 확인 (개념 예시)
+ps aux | grep docker
+
+# 예상 프로세스 구조:
+# dockerd (Docker Daemon)
+# ├── containerd (Container Runtime)
+# │   ├── containerd-shim (Container Shim)
+# │   │   └── runc (OCI Runtime)
+# │   │       └── nginx (Container Process)
+# └── docker-proxy (Port Forwarding)
+```
+
+## 5. 토론 및 정리 (3분)
+
+### 핵심 개념 정리
+- Docker Engine은 **모듈러 아키텍처**로 구성
+- **containerd**와 **runc**의 분리로 표준화 달성
+- **네임스페이스**와 **cgroups**를 통한 완전한 격리
+- **REST API**를 통한 표준화된 인터페이스 제공
+
+### 토론 주제
+"Docker Engine의 모듈러 아키텍처가 가져다주는 장점과 Kubernetes 생태계에서의 의미는 무엇인가?"
 
 ## 💡 핵심 키워드
-- **Docker Desktop**: Windows용 Docker 통합 환경
-- **WSL 2**: Windows Subsystem for Linux 2
-- **가상화**: Hyper-V, VT-x/AMD-V 기술
-- **컨테이너 런타임**: containerd, runc
+- **Docker Engine**: dockerd, containerd, runc
+- **아키텍처**: Client-Server, REST API, 모듈러 설계
+- **격리 기술**: Namespace, cgroups, 보안 모델
+- **표준화**: OCI, CRI, 호환성
 
 ## 📚 참고 자료
-- [Docker Desktop for Windows](https://docs.docker.com/desktop/windows/)
-- [WSL 2 설치 가이드](https://docs.microsoft.com/en-us/windows/wsl/install)
-- [Docker Desktop 시스템 요구사항](https://docs.docker.com/desktop/windows/install/)
-
-## 🔧 실습 체크리스트
-- [ ] Docker Desktop 설치 완료
-- [ ] WSL 2 활성화 및 연동
-- [ ] docker --version 명령어 실행 성공
-- [ ] hello-world 컨테이너 실행 성공
+- [Docker Engine 아키텍처](https://docs.docker.com/get-started/overview/)
+- [containerd 아키텍처](https://containerd.io/docs/)
+- [OCI Runtime Specification](https://github.com/opencontainers/runtime-spec)

@@ -1,841 +1,602 @@
-# Session 7: 컨테이너 모니터링과 로깅
+# Session 7: 보안 및 정책 관리
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 3 > Session 7**로, 컨테이너 관리와 스토리지 구성을 마친 후 운영 환경에서 필수적인 모니터링과 로깅 시스템을 구축합니다.
+이 세션은 **Week 2 > Day 3 > Session 7**로, 워크로드 스케줄링 이해를 바탕으로 Kubernetes 클러스터의 보안 아키텍처와 정책 기반 접근 제어 메커니즘을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **컨테이너 모니터링** 시스템 구축 및 **메트릭 수집**
-- **로그 드라이버** 활용 및 **중앙 집중식 로깅** 구현
-- **알림 시스템** 구성 및 **운영 대시보드** 구축
+- **Kubernetes 보안 모델** 및 **다층 보안 아키텍처** 이해
+- **RBAC 시스템**과 **접근 제어** 메커니즘 분석
+- **Pod Security Standards** 및 **네트워크 정책** 설계 전략
 
-## 1. 이론: 컨테이너 관찰성 (Observability) (20분)
+## 1. 이론: Kubernetes 보안 아키텍처 (20분)
 
-### 관찰성의 3대 요소
+### 다층 보안 모델
 
 ```mermaid
 graph TB
-    subgraph "Observability Pillars"
-        A[Metrics] --> D[시계열 데이터]
-        B[Logs] --> E[이벤트 기록]
-        C[Traces] --> F[요청 추적]
+    subgraph "Security Layers"
+        A[API Server Security] --> B[Authentication]
+        B --> C[Authorization]
+        C --> D[Admission Control]
+        D --> E[Pod Security]
+        E --> F[Network Security]
+        F --> G[Runtime Security]
     end
     
-    subgraph "Docker Monitoring"
-        D --> G[CPU, Memory, Network]
-        E --> H[Container Logs]
-        F --> I[Application Traces]
+    subgraph "Security Components"
+        H[RBAC] --> I[Service Accounts]
+        I --> J[Pod Security Standards]
+        J --> K[Network Policies]
+        K --> L[Security Contexts]
     end
     
-    subgraph "Tools & Solutions"
-        G --> J[Prometheus + Grafana]
-        H --> K[ELK Stack]
-        I --> L[Jaeger, Zipkin]
+    subgraph "External Security"
+        M[Image Scanning] --> N[Secret Management]
+        N --> O[Audit Logging]
+        O --> P[Compliance]
     end
+    
+    A --> H
+    E --> M
 ```
 
-### 모니터링 메트릭 분류
+### 인증 및 권한 부여 체계
 
 ```
-시스템 메트릭:
-├── CPU 사용률 (%)
-├── 메모리 사용량 (MB/GB)
-├── 디스크 I/O (IOPS, MB/s)
-├── 네트워크 I/O (packets/s, MB/s)
-└── 파일 디스크립터 수
+Kubernetes 보안 계층:
 
-컨테이너 메트릭:
-├── 컨테이너 상태 (running/stopped/failed)
-├── 재시작 횟수
-├── 이미지 크기
-├── 볼륨 사용량
-└── 네트워크 연결 수
+1. API 서버 보안:
+├── TLS 암호화 통신
+├── 클라이언트 인증서 검증
+├── API 서버 인증서 관리
+├── 보안 포트 및 프로토콜
+├── 감사 로깅 활성화
+└── API 버전 및 기능 게이트 제어
 
-애플리케이션 메트릭:
-├── 응답 시간 (ms)
-├── 처리량 (requests/s)
-├── 에러율 (%)
-├── 큐 길이
-└── 비즈니스 메트릭
+2. 인증 (Authentication):
+├── X.509 클라이언트 인증서:
+│   ├── 사용자 및 서비스 계정 인증
+│   ├── CN (Common Name)을 사용자명으로 사용
+│   ├── O (Organization)를 그룹으로 사용
+│   ├── 인증서 만료 및 갱신 관리
+│   └── CA (Certificate Authority) 신뢰 체인
+├── 서비스 어카운트 토큰:
+│   ├── JWT (JSON Web Token) 기반
+│   ├── 자동 마운트 및 로테이션
+│   ├── 네임스페이스 범위 제한
+│   ├── 토큰 만료 시간 설정
+│   └── 바운드 서비스 어카운트 토큰
+├── OpenID Connect (OIDC):
+│   ├── 외부 ID 제공업체 통합
+│   ├── SSO (Single Sign-On) 지원
+│   ├── 그룹 멤버십 정보 포함
+│   ├── 토큰 갱신 및 만료 처리
+│   └── 엔터프라이즈 인증 시스템 연동
+├── 웹훅 토큰 인증:
+│   ├── 외부 인증 서비스 호출
+│   ├── 커스텀 인증 로직 구현
+│   ├── 토큰 검증 및 사용자 정보 반환
+│   └── 레거시 시스템 통합
+└── 프록시 인증:
+    ├── 리버스 프록시를 통한 인증
+    ├── 헤더 기반 사용자 정보 전달
+    ├── 기존 인증 인프라 활용
+    └── 네트워크 레벨 보안 강화
 
-인프라 메트릭:
-├── 호스트 리소스
-├── 네트워크 지연시간
-├── 스토리지 성능
-├── 서비스 가용성
-└── 보안 이벤트
+3. 권한 부여 (Authorization):
+├── RBAC (Role-Based Access Control):
+│   ├── 역할 기반 접근 제어
+│   ├── 최소 권한 원칙 적용
+│   ├── 세밀한 권한 제어
+│   ├── 네임스페이스 및 클러스터 범위
+│   └── 동적 권한 관리
+├── ABAC (Attribute-Based Access Control):
+│   ├── 속성 기반 접근 제어
+│   ├── 복잡한 정책 표현 가능
+│   ├── 컨텍스트 기반 결정
+│   ├── 정적 정책 파일 기반
+│   └── 고급 보안 요구사항 지원
+├── 웹훅 권한 부여:
+│   ├── 외부 권한 부여 서비스
+│   ├── 실시간 정책 결정
+│   ├── 비즈니스 로직 통합
+│   └── 감사 및 로깅 강화
+└── 노드 권한 부여:
+    ├── kubelet 전용 권한 부여
+    ├── 노드별 리소스 접근 제한
+    ├── Pod 및 서비스 범위 제한
+    └── 노드 보안 강화
+
+4. 승인 제어 (Admission Control):
+├── 변형 승인 컨트롤러 (Mutating):
+│   ├── 요청 객체 수정
+│   ├── 기본값 설정 및 라벨 추가
+│   ├── 보안 컨텍스트 강제 적용
+│   ├── 리소스 제한 자동 설정
+│   └── 정책 기반 객체 변형
+├── 검증 승인 컨트롤러 (Validating):
+│   ├── 요청 객체 검증
+│   ├── 정책 준수 확인
+│   ├── 보안 규칙 적용
+│   ├── 리소스 제약 검사
+│   └── 거부 또는 승인 결정
+├── 동적 승인 제어:
+│   ├── 웹훅 기반 확장
+│   ├── 외부 정책 엔진 통합
+│   ├── 실시간 정책 평가
+│   └── 커스텀 비즈니스 로직
+└── 내장 승인 컨트롤러:
+    ├── NamespaceLifecycle
+    ├── ResourceQuota
+    ├── LimitRanger
+    ├── ServiceAccount
+    └── PodSecurityPolicy (deprecated)
 ```
 
-### 로그 레벨 및 구조화
+### RBAC 시스템 상세
 
 ```
-로그 레벨 체계:
+RBAC 구성 요소:
 
-FATAL (0): 시스템 중단
-├── 복구 불가능한 오류
-├── 즉시 대응 필요
-└── 예: 데이터베이스 연결 실패
+Role과 ClusterRole:
+├── Role (네임스페이스 범위):
+│   ├── 특정 네임스페이스 내 리소스 권한
+│   ├── Pod, Service, ConfigMap 등 접근 제어
+│   ├── 세밀한 동작 권한 (get, list, create, update, delete)
+│   ├── 리소스 이름별 제한 가능
+│   └── 서브리소스 접근 제어 (logs, exec, portforward)
+├── ClusterRole (클러스터 범위):
+│   ├── 클러스터 전체 리소스 권한
+│   ├── 노드, PV, 네임스페이스 등 클러스터 리소스
+│   ├── 비리소스 URL 접근 제어 (/api, /healthz)
+│   ├── 집계 규칙을 통한 역할 조합
+│   └── 네임스페이스 리소스에 대한 전역 권한
 
-ERROR (1): 오류 발생
-├── 기능 동작 실패
-├── 빠른 대응 필요
-└── 예: API 호출 실패
+RoleBinding과 ClusterRoleBinding:
+├── RoleBinding:
+│   ├── Role을 사용자/그룹/서비스어카운트에 바인딩
+│   ├── 네임스페이스 범위 권한 부여
+│   ├── ClusterRole을 네임스페이스 범위로 바인딩 가능
+│   └── 상속 및 위임 권한 관리
+├── ClusterRoleBinding:
+│   ├── ClusterRole을 전역적으로 바인딩
+│   ├── 클러스터 관리자 권한
+│   ├── 시스템 컴포넌트 권한
+│   └── 크로스 네임스페이스 권한
 
-WARN (2): 경고
-├── 잠재적 문제
-├── 모니터링 필요
-└── 예: 메모리 사용량 증가
+서비스 어카운트:
+├── Pod에서 사용하는 ID
+├── 네임스페이스별 기본 서비스 어카운트
+├── 자동 토큰 마운트 및 갱신
+├── RBAC 권한 바인딩 대상
+├── 이미지 풀 시크릿 연결
+├── 감사 로깅 및 추적
+└── 최소 권한 원칙 적용
 
-INFO (3): 정보
-├── 일반적인 동작
-├── 비즈니스 로직 추적
-└── 예: 사용자 로그인
-
-DEBUG (4): 디버그
-├── 상세한 실행 정보
-├── 개발/테스트 환경
-└── 예: 변수 값, 함수 호출
-
-구조화된 로그 형식:
-{
-  "timestamp": "2024-01-01T12:00:00Z",
-  "level": "INFO",
-  "service": "web-api",
-  "container_id": "abc123",
-  "message": "User login successful",
-  "user_id": "12345",
-  "ip_address": "192.168.1.100",
-  "response_time": 150
-}
+RBAC 모범 사례:
+├── 최소 권한 원칙 (Principle of Least Privilege)
+├── 역할 기반 책임 분리
+├── 정기적인 권한 검토 및 감사
+├── 임시 권한 및 만료 정책
+├── 그룹 기반 권한 관리
+├── 네임스페이스별 권한 격리
+└── 자동화된 권한 프로비저닝
 ```
 
-## 2. 실습: Docker 기본 모니터링 (15분)
+## 2. 이론: Pod Security Standards (15분)
 
-### 실시간 메트릭 수집
+### Pod 보안 정책 진화
 
-```bash
-# 모니터링 대상 컨테이너 실행
-docker run -d --name web-server nginx:alpine
-docker run -d --name database -e MYSQL_ROOT_PASSWORD=secret mysql:8.0
-docker run -d --name cache redis:alpine
+```
+Pod Security 발전 과정:
 
-# 기본 모니터링 명령어
-echo "=== Basic Docker Monitoring ==="
+PodSecurityPolicy (PSP) - Deprecated:
+├── 클러스터 전체 Pod 보안 정책
+├── 승인 컨트롤러 기반 구현
+├── 복잡한 설정 및 디버깅
+├── RBAC과의 복잡한 상호작용
+├── Kubernetes 1.21에서 deprecated
+└── 1.25에서 완전 제거
 
-# 실시간 통계
-docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
+Pod Security Standards (PSS) - Current:
+├── 표준화된 보안 프로파일
+├── 네임스페이스 레벨 적용
+├── 간단한 설정 및 관리
+├── 점진적 보안 강화 지원
+├── 내장 승인 컨트롤러
+└── 모니터링 및 경고 모드 지원
 
-# 개별 컨테이너 상세 정보
-docker inspect web-server --format '{{json .State}}' | jq
-
-# 시스템 전체 정보
-docker system df
-docker system events --since "1m" &
-EVENTS_PID=$!
-
-sleep 10
-kill $EVENTS_PID
+Pod Security Admission:
+├── 내장 승인 컨트롤러
+├── 네임스페이스 라벨 기반 정책
+├── 실시간 정책 적용
+├── 경고 및 감사 모드
+├── 버전별 정책 지원
+└── 마이그레이션 도구 제공
 ```
 
-### 커스텀 모니터링 스크립트
+### Pod Security Standards 프로파일
 
-```bash
-# 고급 모니터링 스크립트 생성
-cat > container-monitor.sh << 'EOF'
-#!/bin/bash
+```
+보안 프로파일 상세:
 
-LOG_FILE="/tmp/container-monitor.log"
-ALERT_THRESHOLD_CPU=80
-ALERT_THRESHOLD_MEM=80
+Privileged:
+├── 제한 없는 정책 (기본값과 동일)
+├── 모든 권한 및 기능 허용
+├── 호스트 네임스페이스 접근 허용
+├── 특권 컨테이너 실행 허용
+├── 호스트 경로 마운트 허용
+├── 모든 볼륨 타입 허용
+├── 시스템 관리 워크로드용
+└── 최대 유연성, 최소 보안
 
-# 로그 함수
-log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a $LOG_FILE
-}
+Baseline:
+├── 기본적인 보안 강화
+├── 알려진 권한 에스컬레이션 방지
+├── 특권 컨테이너 금지
+├── 호스트 네임스페이스 접근 제한
+├── 호스트 경로 볼륨 제한
+├── 위험한 capabilities 제거
+├── 일반적인 애플리케이션 워크로드
+└── 보안과 호환성의 균형
 
-# 메트릭 수집 함수
-collect_metrics() {
-    local container=$1
-    
-    # CPU 사용률 추출
-    local cpu_percent=$(docker stats --no-stream --format "{{.CPUPerc}}" $container | sed 's/%//')
-    
-    # 메모리 사용률 추출
-    local mem_usage=$(docker stats --no-stream --format "{{.MemPerc}}" $container | sed 's/%//')
-    
-    # 네트워크 I/O
-    local net_io=$(docker stats --no-stream --format "{{.NetIO}}" $container)
-    
-    # 블록 I/O
-    local block_io=$(docker stats --no-stream --format "{{.BlockIO}}" $container)
-    
-    # 컨테이너 상태
-    local status=$(docker inspect $container --format '{{.State.Status}}')
-    
-    # 메트릭 로깅
-    log_message "METRICS - Container: $container, CPU: ${cpu_percent}%, Memory: ${mem_usage}%, Status: $status"
-    
-    # 알림 체크
-    if (( $(echo "$cpu_percent > $ALERT_THRESHOLD_CPU" | bc -l) )); then
-        log_message "ALERT - High CPU usage in $container: ${cpu_percent}%"
-    fi
-    
-    if (( $(echo "$mem_usage > $ALERT_THRESHOLD_MEM" | bc -l) )); then
-        log_message "ALERT - High memory usage in $container: ${mem_usage}%"
-    fi
-}
+Restricted:
+├── 강화된 보안 정책
+├── 보안 모범 사례 강제 적용
+├── 비루트 사용자 실행 필수
+├── 읽기 전용 루트 파일시스템 권장
+├── 모든 capabilities 제거
+├── seccomp 프로파일 적용
+├── 높은 보안이 필요한 워크로드
+└── 최대 보안, 제한된 유연성
 
-# 헬스체크 함수
-health_check() {
-    local container=$1
-    
-    # 컨테이너 실행 상태 확인
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container}$"; then
-        log_message "ALERT - Container $container is not running"
-        return 1
-    fi
-    
-    # 프로세스 확인
-    local process_count=$(docker exec $container ps aux | wc -l)
-    log_message "HEALTH - Container $container has $process_count processes"
-    
-    return 0
-}
+적용 모드:
+├── enforce: 정책 위반 시 거부
+├── audit: 감사 로그에 위반 기록
+├── warn: 클라이언트에 경고 메시지
+├── 다중 모드 동시 적용 가능
+├── 점진적 보안 강화 지원
+└── 마이그레이션 및 테스트 지원
 
-# 메인 모니터링 루프
-log_message "Starting container monitoring..."
-
-for i in {1..10}; do
-    echo "=== Monitoring Cycle $i ==="
-    
-    for container in $(docker ps --format "{{.Names}}"); do
-        collect_metrics $container
-        health_check $container
-    done
-    
-    echo "Cycle $i completed, sleeping..."
-    sleep 5
-done
-
-log_message "Monitoring completed"
-EOF
-
-chmod +x container-monitor.sh
-
-# 모니터링 실행
-./container-monitor.sh
-
-# 로그 확인
-echo "=== Monitoring Log ==="
-tail -20 /tmp/container-monitor.log
+보안 컨텍스트:
+├── Pod 레벨 보안 설정:
+│   ├── runAsUser/runAsGroup: 사용자/그룹 ID
+│   ├── runAsNonRoot: 비루트 사용자 강제
+│   ├── fsGroup: 파일시스템 그룹 설정
+│   ├── seccompProfile: seccomp 프로파일
+│   └── supplementalGroups: 추가 그룹
+├── 컨테이너 레벨 보안 설정:
+│   ├── allowPrivilegeEscalation: 권한 에스컬레이션 제어
+│   ├── capabilities: Linux capabilities 관리
+│   ├── privileged: 특권 컨테이너 여부
+│   ├── readOnlyRootFilesystem: 읽기 전용 루트 FS
+│   ├── runAsUser/runAsGroup: 컨테이너별 사용자
+│   └── seccompProfile: 컨테이너별 seccomp
+└── 상속 및 오버라이드 규칙
 ```
 
-### 리소스 사용량 분석
+## 3. 이론: 네트워크 보안 및 정책 (10분)
 
-```bash
-# 리소스 분석 스크립트
-cat > resource-analyzer.sh << 'EOF'
-#!/bin/bash
+### 네트워크 정책 아키텍처
 
-echo "=== Container Resource Analysis ==="
+```
+네트워크 보안 계층:
 
-# 컨테이너별 리소스 사용량 수집
-declare -A cpu_usage
-declare -A mem_usage
-declare -A net_io
+NetworkPolicy:
+├── Pod 간 트래픽 제어
+├── 네임스페이스 범위 정책
+├── 라벨 셀렉터 기반 대상 선택
+├── Ingress/Egress 트래픽 규칙
+├── 포트 및 프로토콜 제어
+├── IP 블록 기반 제어
+├── 기본 거부 정책 구현
+└── CNI 플러그인 지원 필요
 
-for container in $(docker ps --format "{{.Names}}"); do
-    # 5초간 평균 사용량 측정
-    total_cpu=0
-    total_mem=0
-    
-    for i in {1..5}; do
-        cpu=$(docker stats --no-stream --format "{{.CPUPerc}}" $container | sed 's/%//')
-        mem=$(docker stats --no-stream --format "{{.MemPerc}}" $container | sed 's/%//')
-        
-        total_cpu=$(echo "$total_cpu + $cpu" | bc -l)
-        total_mem=$(echo "$total_mem + $mem" | bc -l)
-        
-        sleep 1
-    done
-    
-    avg_cpu=$(echo "scale=2; $total_cpu / 5" | bc -l)
-    avg_mem=$(echo "scale=2; $total_mem / 5" | bc -l)
-    
-    cpu_usage[$container]=$avg_cpu
-    mem_usage[$container]=$avg_mem
-    
-    echo "Container: $container"
-    echo "  Average CPU: ${avg_cpu}%"
-    echo "  Average Memory: ${avg_mem}%"
-    echo ""
-done
+정책 타입:
+├── Ingress 정책:
+│   ├── 들어오는 트래픽 제어
+│   ├── 소스 Pod/네임스페이스 선택
+│   ├── IP 주소 범위 제한
+│   ├── 포트 및 프로토콜 지정
+│   └── 화이트리스트 방식
+├── Egress 정책:
+│   ├── 나가는 트래픽 제어
+│   ├── 대상 Pod/네임스페이스 선택
+│   ├── 외부 서비스 접근 제한
+│   ├── DNS 트래픽 허용 규칙
+│   └── 데이터 유출 방지
+└── 혼합 정책:
+    ├── Ingress + Egress 동시 적용
+    ├── 완전한 트래픽 제어
+    ├── 마이크로세그멘테이션
+    └── 제로 트러스트 네트워킹
 
-# 리소스 사용량 순위
-echo "=== Resource Usage Ranking ==="
-echo "Top CPU consumers:"
-for container in "${!cpu_usage[@]}"; do
-    echo "${cpu_usage[$container]} $container"
-done | sort -nr | head -3
-
-echo ""
-echo "Top Memory consumers:"
-for container in "${!mem_usage[@]}"; do
-    echo "${mem_usage[$container]} $container"
-done | sort -nr | head -3
-EOF
-
-chmod +x resource-analyzer.sh
-./resource-analyzer.sh
+네트워크 보안 패턴:
+├── 기본 거부 (Default Deny):
+│   ├── 모든 트래픽 차단 후 필요한 것만 허용
+│   ├── 보안 우선 접근법
+│   ├── 명시적 허용 규칙 필요
+│   └── 높은 보안 수준
+├── 네임스페이스 격리:
+│   ├── 네임스페이스 간 트래픽 차단
+│   ├── 멀티 테넌시 지원
+│   ├── 환경별 격리 (dev, staging, prod)
+│   └── 팀별 리소스 격리
+├── 계층별 분리:
+│   ├── 프론트엔드, 백엔드, 데이터베이스 분리
+│   ├── 티어별 접근 제어
+│   ├── 북-남 트래픽 제어
+│   └── 동-서 트래픽 제어
+└── 서비스 메시 통합:
+    ├── Istio, Linkerd 정책 연동
+    ├── L7 트래픽 제어
+    ├── 상호 TLS 인증
+    └── 고급 보안 기능
 ```
 
-## 3. 실습: 로그 드라이버 및 중앙 집중식 로깅 (15분)
+## 4. 개념 예시: 보안 정책 구성 분석 (12분)
 
-### 로그 드라이버 설정
+### RBAC 구성 예시
 
-```bash
-# 다양한 로그 드라이버로 컨테이너 실행
-echo "=== Log Driver Configuration ==="
+```yaml
+# 네임스페이스별 개발자 역할 (개념 예시)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: development
+  name: developer
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log", "pods/exec"]
+  verbs: ["get", "create"]
 
-# JSON 파일 로그 드라이버 (기본)
-docker run -d --name app-json \
-    --log-driver json-file \
-    --log-opt max-size=10m \
-    --log-opt max-file=3 \
-    alpine sh -c 'while true; do echo "JSON log: $(date)"; sleep 2; done'
+---
+# 클러스터 읽기 전용 역할
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-reader
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "persistentvolumes"]
+  verbs: ["get", "list"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+- nonResourceURLs: ["/healthz", "/version", "/metrics"]
+  verbs: ["get"]
 
-# Syslog 드라이버
-docker run -d --name app-syslog \
-    --log-driver syslog \
-    --log-opt syslog-address=udp://localhost:514 \
-    alpine sh -c 'while true; do echo "Syslog: $(date)"; sleep 2; done' || echo "Syslog not available"
+---
+# 역할 바인딩
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: development
+subjects:
+- kind: User
+  name: john.doe
+  apiGroup: rbac.authorization.k8s.io
+- kind: Group
+  name: developers
+  apiGroup: rbac.authorization.k8s.io
+- kind: ServiceAccount
+  name: dev-service-account
+  namespace: development
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
 
-# 로그 없음 (성능 최적화)
-docker run -d --name app-none \
-    --log-driver none \
-    alpine sh -c 'while true; do echo "No logs: $(date)"; sleep 2; done'
-
-# 로그 확인
-echo "JSON file logs:"
-docker logs app-json | head -5
-
-echo "Syslog logs (if available):"
-docker logs app-syslog | head -5 || echo "Syslog logs not accessible via docker logs"
-
-echo "No logs:"
-docker logs app-none || echo "No logs available (expected)"
+---
+# 서비스 어카운트
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-service-account
+  namespace: production
+automountServiceAccountToken: false
+imagePullSecrets:
+- name: registry-secret
 ```
 
-### ELK Stack 구성
+### Pod Security Standards 적용 예시
 
-```bash
-# ELK Stack 네트워크 생성
-docker network create elk-network
+```yaml
+# 네임스페이스 보안 정책 (개념 예시)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-namespace
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/enforce-version: v1.28
+    pod-security.kubernetes.io/audit-version: v1.28
+    pod-security.kubernetes.io/warn-version: v1.28
 
-# Elasticsearch
-docker run -d --name elasticsearch \
-    --network elk-network \
-    -p 9200:9200 \
-    -e "discovery.type=single-node" \
-    -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-    elasticsearch:7.17.0
-
-# Kibana
-docker run -d --name kibana \
-    --network elk-network \
-    -p 5601:5601 \
-    -e "ELASTICSEARCH_HOSTS=http://elasticsearch:9200" \
-    kibana:7.17.0
-
-# Logstash 설정 파일 생성
-mkdir -p elk-config
-cat > elk-config/logstash.conf << 'EOF'
-input {
-  beats {
-    port => 5044
-  }
-  tcp {
-    port => 5000
-    codec => json
-  }
-}
-
-filter {
-  if [docker] {
-    mutate {
-      add_field => { "container_name" => "%{[docker][container][name]}" }
-    }
-  }
-  
-  date {
-    match => [ "timestamp", "ISO8601" ]
-  }
-}
-
-output {
-  elasticsearch {
-    hosts => ["elasticsearch:9200"]
-    index => "docker-logs-%{+YYYY.MM.dd}"
-  }
-  
-  stdout {
-    codec => rubydebug
-  }
-}
-EOF
-
-# Logstash
-docker run -d --name logstash \
-    --network elk-network \
-    -p 5000:5000 \
-    -p 5044:5044 \
-    -v $(pwd)/elk-config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf \
-    logstash:7.17.0
-
-# 로그 생성 애플리케이션
-docker run -d --name log-generator \
-    --network elk-network \
-    --log-driver json-file \
-    alpine sh -c '
-        counter=1
-        while true; do
-            level=$(shuf -n1 -e INFO WARN ERROR DEBUG)
-            echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"level\":\"$level\",\"message\":\"Log entry $counter\",\"service\":\"log-generator\"}"
-            counter=$((counter + 1))
-            sleep 1
-        done
-    '
-
-echo "ELK Stack is starting up... (this may take a few minutes)"
-echo "Elasticsearch: http://localhost:9200"
-echo "Kibana: http://localhost:5601"
+---
+# 보안 강화된 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app
+  namespace: secure-namespace
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: secure-app
+  template:
+    metadata:
+      labels:
+        app: secure-app
+    spec:
+      serviceAccountName: app-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: app
+        image: nginx:1.21-alpine
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: cache-volume
+          mountPath: /var/cache/nginx
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+      - name: cache-volume
+        emptyDir: {}
 ```
 
-### Fluentd 로그 수집
+### 네트워크 정책 예시
 
-```bash
-# Fluentd 설정 파일
-mkdir -p fluentd-config
-cat > fluentd-config/fluent.conf << 'EOF'
-<source>
-  @type forward
-  port 24224
-  bind 0.0.0.0
-</source>
+```yaml
+# 기본 거부 정책 (개념 예시)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
 
-<match docker.**>
-  @type elasticsearch
-  host elasticsearch
-  port 9200
-  index_name docker-logs
-  type_name _doc
-  
-  <buffer>
-    flush_interval 1s
-  </buffer>
-</match>
+---
+# 웹 애플리케이션 네트워크 정책
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-app-netpol
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: web-app
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-system
+    - podSelector:
+        matchLabels:
+          app: load-balancer
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: backend-api
+    ports:
+    - protocol: TCP
+      port: 8080
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
 
-<match **>
-  @type stdout
-</match>
-EOF
-
-# Fluentd 컨테이너
-docker run -d --name fluentd \
-    --network elk-network \
-    -p 24224:24224 \
-    -v $(pwd)/fluentd-config:/fluentd/etc \
-    fluent/fluentd:v1.14-1
-
-# Fluentd 로그 드라이버로 애플리케이션 실행
-docker run -d --name app-fluentd \
-    --log-driver fluentd \
-    --log-opt fluentd-address=localhost:24224 \
-    --log-opt tag=docker.app \
-    alpine sh -c '
-        while true; do
-            echo "Fluentd log: $(date) - Random number: $RANDOM"
-            sleep 3
-        done
-    '
-
-# 로그 확인
-sleep 10
-docker logs fluentd | tail -10
+---
+# 네임스페이스 간 격리 정책
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: namespace-isolation
+  namespace: development
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: development
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: development
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 443
 ```
 
-## 4. 실습: Prometheus와 Grafana 모니터링 (10분)
+## 5. 토론 및 정리 (8분)
 
-### Prometheus 설정
+### 핵심 개념 정리
+- **다층 보안 아키텍처**를 통한 종합적 보안 강화
+- **RBAC 시스템**을 통한 세밀한 접근 제어 및 권한 관리
+- **Pod Security Standards**를 통한 표준화된 Pod 보안 정책
+- **네트워크 정책**을 통한 마이크로세그멘테이션 구현
 
-```bash
-# Prometheus 설정 파일
-mkdir -p prometheus-config
-cat > prometheus-config/prometheus.yml << 'EOF'
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-  
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
-  
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-EOF
-
-# 모니터링 네트워크
-docker network create monitoring
-
-# Prometheus
-docker run -d --name prometheus \
-    --network monitoring \
-    -p 9090:9090 \
-    -v $(pwd)/prometheus-config/prometheus.yml:/etc/prometheus/prometheus.yml \
-    prom/prometheus
-
-# cAdvisor (컨테이너 메트릭)
-docker run -d --name cadvisor \
-    --network monitoring \
-    -p 8080:8080 \
-    --volume=/:/rootfs:ro \
-    --volume=/var/run:/var/run:ro \
-    --volume=/sys:/sys:ro \
-    --volume=/var/lib/docker/:/var/lib/docker:ro \
-    --volume=/dev/disk/:/dev/disk:ro \
-    gcr.io/cadvisor/cadvisor:latest
-
-# Node Exporter (시스템 메트릭)
-docker run -d --name node-exporter \
-    --network monitoring \
-    -p 9100:9100 \
-    prom/node-exporter
-
-# Grafana
-docker run -d --name grafana \
-    --network monitoring \
-    -p 3000:3000 \
-    -e "GF_SECURITY_ADMIN_PASSWORD=admin" \
-    grafana/grafana
-
-echo "Monitoring stack is starting up..."
-echo "Prometheus: http://localhost:9090"
-echo "Grafana: http://localhost:3000 (admin/admin)"
-echo "cAdvisor: http://localhost:8080"
-```
-
-### 커스텀 메트릭 수집
-
-```bash
-# 애플리케이션 메트릭 생성기
-cat > metrics-generator.py << 'EOF'
-#!/usr/bin/env python3
-import time
-import random
-import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
-
-class MetricsHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/metrics':
-            # Prometheus 형식 메트릭
-            metrics = f"""
-# HELP app_requests_total Total number of requests
-# TYPE app_requests_total counter
-app_requests_total {random.randint(1000, 5000)}
-
-# HELP app_response_time_seconds Response time in seconds
-# TYPE app_response_time_seconds histogram
-app_response_time_seconds_bucket{{le="0.1"}} {random.randint(10, 50)}
-app_response_time_seconds_bucket{{le="0.5"}} {random.randint(50, 100)}
-app_response_time_seconds_bucket{{le="1.0"}} {random.randint(100, 200)}
-app_response_time_seconds_bucket{{le="+Inf"}} {random.randint(200, 300)}
-
-# HELP app_memory_usage_bytes Memory usage in bytes
-# TYPE app_memory_usage_bytes gauge
-app_memory_usage_bytes {random.randint(50000000, 100000000)}
-"""
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(metrics.encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-if __name__ == '__main__':
-    server = HTTPServer(('0.0.0.0', 8000), MetricsHandler)
-    print("Metrics server starting on port 8000...")
-    server.serve_forever()
-EOF
-
-# 메트릭 생성기 컨테이너
-docker run -d --name metrics-app \
-    --network monitoring \
-    -p 8000:8000 \
-    -v $(pwd)/metrics-generator.py:/app/metrics.py \
-    python:3.9-alpine sh -c 'cd /app && python metrics.py'
-
-# 메트릭 확인
-sleep 5
-curl -s http://localhost:8000/metrics | head -10
-```
-
-## 5. 실습: 알림 및 대시보드 구성 (10분)
-
-### 알림 시스템 구성
-
-```bash
-# Alertmanager 설정
-mkdir -p alertmanager-config
-cat > alertmanager-config/alertmanager.yml << 'EOF'
-global:
-  smtp_smarthost: 'localhost:587'
-  smtp_from: 'alerts@example.com'
-
-route:
-  group_by: ['alertname']
-  group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 1h
-  receiver: 'web.hook'
-
-receivers:
-- name: 'web.hook'
-  webhook_configs:
-  - url: 'http://webhook-receiver:8080/webhook'
-EOF
-
-# Prometheus 알림 규칙
-cat > prometheus-config/alert-rules.yml << 'EOF'
-groups:
-- name: container.rules
-  rules:
-  - alert: HighCPUUsage
-    expr: rate(container_cpu_usage_seconds_total[5m]) * 100 > 80
-    for: 2m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High CPU usage detected"
-      description: "Container {{ $labels.name }} CPU usage is above 80%"
-  
-  - alert: HighMemoryUsage
-    expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 80
-    for: 2m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High memory usage detected"
-      description: "Container {{ $labels.name }} memory usage is above 80%"
-EOF
-
-# Alertmanager
-docker run -d --name alertmanager \
-    --network monitoring \
-    -p 9093:9093 \
-    -v $(pwd)/alertmanager-config/alertmanager.yml:/etc/alertmanager/alertmanager.yml \
-    prom/alertmanager
-
-# 웹훅 수신기 (알림 테스트용)
-cat > webhook-receiver.py << 'EOF'
-#!/usr/bin/env python3
-import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
-
-class WebhookHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        
-        try:
-            alert_data = json.loads(post_data.decode('utf-8'))
-            print(f"ALERT RECEIVED: {json.dumps(alert_data, indent=2)}")
-        except:
-            print(f"RAW ALERT: {post_data.decode('utf-8')}")
-        
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'OK')
-
-if __name__ == '__main__':
-    server = HTTPServer(('0.0.0.0', 8080), WebhookHandler)
-    print("Webhook receiver starting on port 8080...")
-    server.serve_forever()
-EOF
-
-docker run -d --name webhook-receiver \
-    --network monitoring \
-    -v $(pwd)/webhook-receiver.py:/app/webhook.py \
-    python:3.9-alpine sh -c 'cd /app && python webhook.py'
-```
-
-### 대시보드 자동화
-
-```bash
-# Grafana 대시보드 설정 스크립트
-cat > setup-dashboard.sh << 'EOF'
-#!/bin/bash
-
-# Grafana API를 통한 대시보드 설정
-GRAFANA_URL="http://localhost:3000"
-GRAFANA_USER="admin"
-GRAFANA_PASS="admin"
-
-# 데이터소스 추가
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Prometheus",
-    "type": "prometheus",
-    "url": "http://prometheus:9090",
-    "access": "proxy",
-    "isDefault": true
-  }' \
-  http://admin:admin@localhost:3000/api/datasources
-
-# 간단한 대시보드 생성
-cat > dashboard.json << 'DASHBOARD_EOF'
-{
-  "dashboard": {
-    "title": "Docker Container Monitoring",
-    "panels": [
-      {
-        "title": "Container CPU Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(container_cpu_usage_seconds_total[5m]) * 100",
-            "legendFormat": "{{ name }}"
-          }
-        ]
-      },
-      {
-        "title": "Container Memory Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "container_memory_usage_bytes / 1024 / 1024",
-            "legendFormat": "{{ name }}"
-          }
-        ]
-      }
-    ]
-  }
-}
-DASHBOARD_EOF
-
-# 대시보드 업로드
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d @dashboard.json \
-  http://admin:admin@localhost:3000/api/dashboards/db
-
-echo "Dashboard setup completed"
-EOF
-
-chmod +x setup-dashboard.sh
-
-# 대시보드 설정 (Grafana가 완전히 시작된 후)
-sleep 30
-./setup-dashboard.sh || echo "Dashboard setup will be available once Grafana is fully started"
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### 모니터링 시스템 검증
-
-```bash
-# 모니터링 스택 상태 확인
-echo "=== Monitoring Stack Status ==="
-
-# 모든 모니터링 컨테이너 상태
-docker ps --filter network=monitoring --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-docker ps --filter network=elk-network --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-# 서비스 헬스체크
-echo ""
-echo "Service Health Checks:"
-
-# Prometheus
-curl -s http://localhost:9090/-/healthy && echo "✓ Prometheus is healthy" || echo "✗ Prometheus is not responding"
-
-# Grafana
-curl -s http://localhost:3000/api/health && echo "✓ Grafana is healthy" || echo "✗ Grafana is not responding"
-
-# Elasticsearch
-curl -s http://localhost:9200/_cluster/health && echo "✓ Elasticsearch is healthy" || echo "✗ Elasticsearch is not responding"
-
-# 메트릭 수집 확인
-echo ""
-echo "Metrics Collection:"
-curl -s http://localhost:9090/api/v1/query?query=up | jq '.data.result | length' && echo "targets are being monitored"
-
-# 로그 수집 확인
-echo ""
-echo "Log Collection:"
-docker logs log-generator | tail -3
-docker logs app-fluentd | tail -3
-
-# 최종 정리 가이드
-cat > monitoring-summary.md << 'EOF'
-# Docker Monitoring & Logging Summary
-
-## 구축된 시스템
-1. **메트릭 수집**: Prometheus + cAdvisor + Node Exporter
-2. **로그 수집**: ELK Stack + Fluentd
-3. **시각화**: Grafana 대시보드
-4. **알림**: Alertmanager + Webhook
-
-## 접속 정보
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (admin/admin)
-- Kibana: http://localhost:5601
-- Elasticsearch: http://localhost:9200
-- Alertmanager: http://localhost:9093
-
-## 주요 메트릭
-- CPU 사용률: container_cpu_usage_seconds_total
-- 메모리 사용량: container_memory_usage_bytes
-- 네트워크 I/O: container_network_*
-- 디스크 I/O: container_fs_*
-
-## 로그 드라이버
-- json-file: 기본, 로테이션 지원
-- fluentd: 중앙 집중식 수집
-- syslog: 시스템 로그 통합
-- none: 성능 최적화
-
-## 운영 권장사항
-1. 로그 로테이션 설정 필수
-2. 메트릭 보존 기간 정책 수립
-3. 알림 임계값 환경별 조정
-4. 대시보드 정기적 업데이트
-EOF
-
-echo "Monitoring summary created: monitoring-summary.md"
-echo ""
-echo "✓ Monitoring and logging system setup completed!"
-```
+### 토론 주제
+"제로 트러스트 보안 모델을 Kubernetes 환경에 적용할 때 고려해야 할 핵심 요소와 구현 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **관찰성**: Metrics, Logs, Traces
-- **모니터링 스택**: Prometheus, Grafana, ELK Stack
-- **로그 드라이버**: json-file, fluentd, syslog
-- **알림 시스템**: Alertmanager, 임계값, 웹훅
+- **보안 아키텍처**: 인증, 권한 부여, 승인 제어, 다층 보안
+- **RBAC**: Role, ClusterRole, RoleBinding, 서비스 어카운트
+- **Pod 보안**: Security Standards, Security Context, 보안 프로파일
+- **네트워크 보안**: NetworkPolicy, 마이크로세그멘테이션, 제로 트러스트
 
 ## 📚 참고 자료
-- [Docker 로깅 드라이버](https://docs.docker.com/config/containers/logging/)
-- [Prometheus 모니터링](https://prometheus.io/docs/)
-- [ELK Stack 가이드](https://www.elastic.co/guide/)
-
-## 🔧 실습 체크리스트
-- [ ] Docker 기본 모니터링 구현
-- [ ] 로그 드라이버 설정 및 활용
-- [ ] ELK Stack 중앙 집중식 로깅
-- [ ] Prometheus + Grafana 메트릭 수집
-- [ ] 알림 시스템 구성 및 테스트
+- [Kubernetes 보안](https://kubernetes.io/docs/concepts/security/)
+- [RBAC 가이드](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)

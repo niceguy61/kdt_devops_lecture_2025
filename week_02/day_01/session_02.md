@@ -1,290 +1,275 @@
-# Session 2: Docker 설치 및 환경 설정 (Linux/macOS)
+# Session 2: Docker 이미지 레이어 시스템 심화
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 2**로, Linux와 macOS 환경에서 Docker를 설치하고 설정하는 과정을 다룹니다. Windows와는 다른 설치 방법과 네이티브 환경의 장점을 실습합니다.
+이 세션은 **Week 2 > Day 1 > Session 2**로, Docker Engine 아키텍처 이해를 바탕으로 이미지 레이어 시스템의 내부 동작 원리를 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **Linux/macOS** 환경에서 Docker Engine 설치 방법 학습
-- **패키지 매니저**를 활용한 설치 과정 실습
-- **사용자 권한** 설정 및 **보안 고려사항** 이해
+- **Union File System** 개념과 **레이어 구조** 완전 이해
+- **Copy-on-Write** 메커니즘과 **스토리지 드라이버** 분석
+- **이미지 최적화** 전략과 **레이어 캐싱** 원리
 
-## 1. 이론: Linux/macOS Docker 아키텍처 (20분)
+## 1. 이론: Union File System과 레이어 아키텍처 (20분)
 
-### Linux에서의 Docker 구조
-
-```mermaid
-graph TB
-    subgraph "Linux Host"
-        A[Docker CLI] --> B[Docker Daemon]
-        B --> C[containerd]
-        C --> D[runc]
-        D --> E[Linux Containers]
-        
-        F[systemd] --> B
-        G[cgroups] --> E
-        H[namespaces] --> E
-    end
-    
-    subgraph "Network"
-        I[iptables] --> J[Docker Networks]
-        K[bridge] --> J
-    end
-```
-
-### macOS에서의 Docker 구조
+### Docker 이미지 레이어 구조
 
 ```mermaid
 graph TB
-    subgraph "macOS Host"
-        A[Docker Desktop] --> B[HyperKit VM]
-        B --> C[Linux VM]
-        C --> D[Docker Engine]
-        D --> E[Containers]
-        
-        F[Docker CLI] --> A
-        G[File Sharing] --> C
+    subgraph "Docker Image Layers"
+        A[Application Layer] --> B[Dependencies Layer]
+        B --> C[Runtime Layer]
+        C --> D[OS Libraries Layer]
+        D --> E[Base OS Layer]
     end
+    
+    subgraph "Container Layer"
+        F[Writable Container Layer]
+    end
+    
+    subgraph "Union Mount"
+        G[Unified View]
+    end
+    
+    A --> F
+    F --> G
+    E --> G
 ```
 
-### 플랫폼별 특징 비교
+### Union File System 동작 원리
 
-| 특성 | Linux | macOS | Windows |
-|------|-------|-------|---------|
-| **네이티브 지원** | ✅ | ❌ (VM 필요) | ❌ (WSL/Hyper-V) |
-| **성능** | 최고 | 중간 | 중간 |
-| **설치 복잡도** | 중간 | 낮음 | 높음 |
-| **리소스 사용** | 최소 | 중간 | 높음 |
+```
+Union File System 특징:
 
-## 2. 실습: Linux Docker 설치 (Ubuntu 기준) (12분)
+레이어 스택:
+├── 읽기 전용 이미지 레이어들
+├── 최상위 쓰기 가능 컨테이너 레이어
+├── 통합된 단일 파일시스템 뷰 제공
+└── 레이어 간 투명한 오버레이
 
-### 단계 1: 시스템 업데이트 및 준비
+파일 접근 순서:
+├── 1. 컨테이너 레이어에서 파일 검색
+├── 2. 상위 이미지 레이어부터 순차 검색
+├── 3. 첫 번째 발견된 파일 반환
+└── 4. 하위 레이어의 동일 파일은 숨김 처리
 
-```bash
-# 시스템 패키지 업데이트
-sudo apt update
-sudo apt upgrade -y
-
-# 필수 패키지 설치
-sudo apt install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release
+레이어 공유:
+├── 동일한 베이스 이미지 레이어 공유
+├── 스토리지 공간 효율성 극대화
+├── 이미지 다운로드 시간 단축
+└── 메모리 사용량 최적화
 ```
 
-### 단계 2: Docker 공식 GPG 키 및 저장소 추가
+### 스토리지 드라이버 비교 분석
 
-```bash
-# Docker 공식 GPG 키 추가
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+```
+주요 스토리지 드라이버:
 
-# Docker 저장소 추가
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+overlay2 (권장):
+├── 현재 기본 드라이버
+├── 최고 성능과 안정성
+├── 2개 레이어만 사용 (lower, upper)
+├── 메모리 효율성 우수
+├── 파일 복사 최소화
+└── 대부분 Linux 배포판 지원
+
+aufs (레거시):
+├── 초기 Docker 기본 드라이버
+├── 다중 레이어 지원
+├── 복잡한 구조로 성능 저하
+├── 메인라인 커널 미포함
+└── Ubuntu에서만 주로 사용
+
+devicemapper:
+├── Red Hat 계열 기본 드라이버
+├── 블록 레벨 스토리지
+├── 스냅샷 기반 레이어 관리
+├── 설정 복잡성 높음
+└── 성능 최적화 어려움
+
+btrfs:
+├── Copy-on-Write 파일시스템
+├── 네이티브 스냅샷 지원
+├── 압축 및 중복 제거 기능
+├── 안정성 이슈 존재
+└── 특수 용도로 제한적 사용
+
+zfs:
+├── 고급 파일시스템 기능
+├── 데이터 무결성 보장
+├── 압축 및 암호화 지원
+├── 높은 메모리 요구사항
+└── 엔터프라이즈 환경 적합
 ```
 
-### 단계 3: Docker Engine 설치
+## 2. 이론: Copy-on-Write 메커니즘 (15분)
 
-```bash
-# 패키지 목록 업데이트
-sudo apt update
-
-# Docker Engine 설치
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Docker 서비스 시작 및 활성화
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-### 단계 4: 사용자 권한 설정
-
-```bash
-# docker 그룹에 현재 사용자 추가
-sudo usermod -aG docker $USER
-
-# 그룹 변경사항 적용 (재로그인 또는 newgrp 사용)
-newgrp docker
-
-# 권한 확인
-groups $USER
-```
-
-## 3. 실습: macOS Docker 설치 (8분)
-
-### 방법 1: Docker Desktop 설치
-
-```bash
-# Homebrew를 사용한 설치 (권장)
-brew install --cask docker
-
-# 또는 직접 다운로드
-# https://desktop.docker.com/mac/main/amd64/Docker.dmg (Intel)
-# https://desktop.docker.com/mac/main/arm64/Docker.dmg (Apple Silicon)
-```
-
-### 방법 2: Homebrew로 Docker Engine 설치
-
-```bash
-# Docker 설치
-brew install docker
-
-# Docker Machine 설치 (VM 관리용)
-brew install docker-machine
-
-# VirtualBox 설치 (VM 드라이버)
-brew install --cask virtualbox
-
-# Docker Machine으로 VM 생성
-docker-machine create --driver virtualbox default
-eval $(docker-machine env default)
-```
-
-## 4. 설치 검증 및 테스트 (5분)
-
-### 공통 검증 명령어
-
-```bash
-# Docker 버전 확인
-docker --version
-docker compose version
-
-# Docker 시스템 정보
-docker system info
-
-# Docker 서비스 상태 확인 (Linux)
-sudo systemctl status docker
-
-# 첫 번째 컨테이너 실행
-docker run hello-world
-
-# 실행 중인 컨테이너 확인
-docker ps
-
-# 모든 컨테이너 확인 (중지된 것 포함)
-docker ps -a
-```
-
-### 예상 출력 예시
-
-```bash
-$ docker --version
-Docker version 24.0.6, build ed223bc
-
-$ docker run hello-world
-Unable to find image 'hello-world:latest' locally
-latest: Pulling from library/hello-world
-2db29710123e: Pull complete 
-Digest: sha256:7d91b69e04a9029b99f3585aaaccae2baa80bcf318f4a5d2165a9898cd2dc0a1
-Status: Downloaded newer image for hello-world:latest
-
-Hello from Docker!
-This message shows that your installation appears to be working correctly.
-```
-
-## 5. 트러블슈팅 및 최적화 (10분)
-
-### Linux 트러블슈팅
+### CoW 동작 원리 분석
 
 ```mermaid
-flowchart TD
-    A[Linux 설치 문제] --> B{문제 유형}
-    B -->|권한 오류| C[사용자 그룹 확인]
-    B -->|서비스 오류| D[systemctl 상태 확인]
-    B -->|네트워크 오류| E[방화벽 설정 확인]
-    B -->|저장소 오류| F[GPG 키 재설정]
+sequenceDiagram
+    participant App as Application
+    participant Container as Container Layer
+    participant Image as Image Layer
+    participant Storage as Storage Driver
     
-    C --> G[sudo usermod -aG docker $USER]
-    D --> H[sudo systemctl restart docker]
-    E --> I[sudo ufw allow 2376]
-    F --> J[GPG 키 재추가]
+    App->>Container: Read file request
+    Container->>Image: File not in container layer
+    Image-->>Container: Return file content
+    Container-->>App: File content
+    
+    App->>Container: Write file request
+    Container->>Storage: Copy file from image layer
+    Storage-->>Container: File copied to container layer
+    Container->>Container: Modify copied file
+    Container-->>App: Write complete
 ```
 
-### 일반적인 문제 해결
+### CoW 최적화 전략
+
+```
+Copy-on-Write 최적화:
+
+파일 수정 시나리오:
+├── 첫 번째 수정: 전체 파일 복사 (비용 높음)
+├── 후속 수정: 컨테이너 레이어에서 직접 수정
+├── 대용량 파일: 블록 단위 복사 (드라이버별 상이)
+└── 작은 파일: 전체 파일 복사
+
+성능 고려사항:
+├── 첫 번째 쓰기 지연 (Copy-up 비용)
+├── 대용량 파일 수정 시 스토리지 사용량 증가
+├── 레이어 깊이에 따른 읽기 성능 영향
+└── 메모리 사용량 증가 가능성
+
+최적화 방법:
+├── 자주 수정되는 파일은 볼륨 사용
+├── 이미지 레이어 수 최소화
+├── 대용량 파일은 별도 볼륨으로 분리
+└── 멀티 스테이지 빌드로 레이어 최적화
+```
+
+## 3. 이론: 이미지 빌드 최적화 전략 (10분)
+
+### Dockerfile 레이어 최적화
+
+```
+레이어 최적화 원칙:
+
+명령어 통합:
+├── RUN 명령어 체이닝으로 레이어 수 감소
+├── 패키지 설치와 정리를 한 번에 처리
+├── 임시 파일 생성과 삭제를 동일 레이어에서
+└── 불필요한 중간 파일 제거
+
+캐시 활용:
+├── 자주 변경되지 않는 명령어를 상위에 배치
+├── 종속성 설치를 애플리케이션 코드보다 먼저
+├── .dockerignore로 불필요한 파일 제외
+└── 레이어 캐시 무효화 최소화
+
+멀티 스테이지 빌드:
+├── 빌드 도구와 런타임 환경 분리
+├── 최종 이미지에 불필요한 파일 제외
+├── 보안 취약점 감소
+└── 이미지 크기 대폭 감소
+```
+
+### 이미지 크기 최적화 기법
+
+```
+크기 최적화 전략:
+
+베이스 이미지 선택:
+├── Alpine Linux: 최소 크기 (5MB)
+├── Distroless: 보안 강화된 최소 이미지
+├── Scratch: 정적 바이너리용 빈 이미지
+└── 공식 slim 태그: 균형잡힌 선택
+
+불필요한 요소 제거:
+├── 패키지 매니저 캐시 정리
+├── 임시 파일 및 로그 파일 삭제
+├── 개발 도구 및 헤더 파일 제거
+└── 문서 및 매뉴얼 페이지 제거
+
+압축 및 최적화:
+├── 바이너리 스트리핑 (디버그 정보 제거)
+├── 파일 압축 활용
+├── 심볼릭 링크 최적화
+└── 중복 파일 제거
+```
+
+## 4. 개념 예시: 레이어 분석 실습 (7분)
+
+### 이미지 레이어 구조 분석 예시
 
 ```bash
-# Docker 데몬이 실행되지 않는 경우
-sudo systemctl start docker
-sudo systemctl status docker
+# 이미지 히스토리 확인 (개념 예시)
+docker history nginx:alpine
 
-# 권한 거부 오류
-sudo chmod 666 /var/run/docker.sock
-# 또는
-sudo usermod -aG docker $USER
-
-# 디스크 공간 부족
-docker system prune -a
-docker volume prune
-
-# 네트워크 문제
-sudo systemctl restart docker
-docker network ls
+# 예상 출력 분석:
+# IMAGE          CREATED       SIZE      COMMENT
+# f6d0b4767a6c   2 weeks ago   23.4MB    
+# <missing>      2 weeks ago   0B        CMD ["nginx" "-g" "daemon off;"]
+# <missing>      2 weeks ago   0B        EXPOSE 80
+# <missing>      2 weeks ago   1.27MB    RUN apk add --no-cache nginx
+# <missing>      2 weeks ago   0B        WORKDIR /var/www/html
+# <missing>      2 weeks ago   5.61MB    ADD file:9a4f77dfaba7fd2aa78186e4ef0e7486ad55101cefc1fabbc1b385601bb38920
 ```
 
-### 성능 최적화 설정
+### 레이어 캐시 동작 예시
+
+```dockerfile
+# 최적화 전 (개념 예시)
+FROM node:alpine
+COPY . /app
+WORKDIR /app
+RUN npm install
+CMD ["npm", "start"]
+
+# 최적화 후 (개념 예시)
+FROM node:alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
+
+# 캐시 효과:
+# - package.json 변경 시에만 npm install 재실행
+# - 소스 코드 변경 시 종속성 설치 캐시 유지
+```
+
+### 스토리지 사용량 분석 예시
 
 ```bash
-# Docker 데몬 설정 파일 생성/편집
-sudo nano /etc/docker/daemon.json
+# Docker 시스템 사용량 확인 (개념 예시)
+docker system df
 
-# 최적화 설정 예시
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  },
-  "storage-driver": "overlay2",
-  "storage-opts": [
-    "overlay2.override_kernel_check=true"
-  ]
-}
-
-# 설정 적용
-sudo systemctl restart docker
+# 예상 출력:
+# TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+# Images          15        5         2.1GB     1.2GB (57%)
+# Containers      8         2         45MB      32MB (71%)
+# Local Volumes   3         1         156MB     78MB (50%)
+# Build Cache     0         0         0B        0B
 ```
 
-## 6. Q&A 및 정리 (5분)
+## 5. 토론 및 정리 (3분)
 
-### 플랫폼별 장단점 정리
+### 핵심 개념 정리
+- **Union File System**을 통한 효율적인 레이어 관리
+- **Copy-on-Write** 메커니즘으로 스토리지 최적화
+- **레이어 캐싱**을 활용한 빌드 성능 향상
+- **멀티 스테이지 빌드**로 이미지 크기 최소화
 
-```
-Linux:
-✅ 네이티브 성능, 최소 오버헤드
-✅ 완전한 기능 지원
-❌ 초기 설정 복잡
-
-macOS:
-✅ 간단한 설치 (Docker Desktop)
-✅ 개발자 친화적 환경
-❌ VM 오버헤드, 파일 공유 성능
-
-Windows:
-✅ WSL 2로 성능 개선
-✅ 통합 개발 환경
-❌ 복잡한 설정, 높은 리소스 사용
-```
-
-### 다음 세션 준비
-- 모든 플랫폼에서 Docker 설치 완료
-- 첫 번째 컨테이너 실행 준비
+### 토론 주제
+"컨테이너 환경에서 레이어 시스템이 가져다주는 효율성과 성능 최적화 방안은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **Docker Engine**: Linux 네이티브 Docker 런타임
-- **containerd**: 컨테이너 런타임 인터페이스
-- **사용자 그룹**: docker 그룹 권한 관리
-- **systemd**: Linux 서비스 관리
+- **레이어 시스템**: Union FS, overlay2, 스토리지 드라이버
+- **Copy-on-Write**: CoW, 파일 복사, 성능 최적화
+- **이미지 최적화**: 멀티 스테이지, 캐싱, 크기 최소화
+- **스토리지 효율성**: 레이어 공유, 중복 제거
 
 ## 📚 참고 자료
-- [Docker Engine 설치 (Ubuntu)](https://docs.docker.com/engine/install/ubuntu/)
-- [Docker Desktop for Mac](https://docs.docker.com/desktop/mac/)
-- [Docker 보안 가이드](https://docs.docker.com/engine/security/)
-
-## 🔧 실습 체크리스트
-- [ ] 운영체제별 Docker 설치 완료
-- [ ] 사용자 권한 설정 완료
-- [ ] docker --version 명령어 성공
-- [ ] hello-world 컨테이너 실행 성공
-- [ ] Docker 서비스 자동 시작 설정
+- [Docker 스토리지 드라이버](https://docs.docker.com/storage/storagedriver/)
+- [이미지 레이어 관리](https://docs.docker.com/develop/dev-best-practices/)
+- [Dockerfile 최적화](https://docs.docker.com/develop/dockerfile_best-practices/)

@@ -1,331 +1,172 @@
-# Session 4: 기본 명령어 실습 - 이미지 관리
+# Session 4: Docker 볼륨 및 스토리지 관리 심화
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 4**로, Docker 이미지 관리의 핵심 명령어들을 실습합니다. Week 1에서 학습한 이미지 레이어 이론을 바탕으로 실제 이미지 검색, 다운로드, 관리 과정을 체험합니다.
+이 세션은 **Week 2 > Day 1 > Session 4**로, Docker 네트워킹 이해를 바탕으로 데이터 영속성과 스토리지 관리의 내부 메커니즘을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **이미지 검색, 다운로드, 관리** 개념 이해
-- **pull, images, rmi** 명령어 실습
-- **이미지 태그**와 **버전 관리** 실무 적용
+- **Docker 스토리지 아키텍처**와 **데이터 영속성** 메커니즘 이해
+- **볼륨 드라이버**와 **마운트 타입** 비교 분석
+- **스토리지 성능 최적화**와 **백업 전략** 설계 원리
 
-## 1. 이론: 이미지 관리 개념 (20분)
+## 1. 이론: Docker 스토리지 아키텍처 (20분)
 
-### Docker 이미지 생태계
+### 스토리지 계층 구조
 
 ```mermaid
 graph TB
-    subgraph "Docker Hub"
-        A[공식 이미지] --> B[ubuntu, nginx, mysql]
-        C[사용자 이미지] --> D[username/imagename]
-        E[조직 이미지] --> F[company/product]
+    subgraph "Container Layer"
+        A[Application Data]
+        B[Temporary Files]
+        C[Runtime Data]
     end
     
-    subgraph "로컬 시스템"
-        G[이미지 저장소] --> H[레이어 캐시]
-        I[이미지 메타데이터] --> J[태그, 크기, 생성일]
+    subgraph "Mount Points"
+        D[Volumes]
+        E[Bind Mounts]
+        F[tmpfs Mounts]
     end
     
-    A --> G
-    C --> G
-    E --> G
+    subgraph "Storage Backends"
+        G[Local Storage]
+        H[Network Storage]
+        I[Cloud Storage]
+        J[Memory]
+    end
+    
+    A --> D
+    A --> E
+    B --> F
+    D --> G
+    D --> H
+    D --> I
+    F --> J
 ```
 
-### 이미지 네이밍 규칙
+### 마운트 타입 상세 분석
 
 ```
-이미지 이름 구조:
-[registry]/[namespace]/[repository]:[tag]
+Docker 스토리지 마운트 타입:
 
-예시:
-├── nginx:latest                    # 공식 이미지, 최신 태그
-├── nginx:1.21-alpine              # 특정 버전, Alpine 기반
-├── docker.io/library/nginx:latest # 전체 경로 명시
-├── myregistry.com/myapp:v1.0      # 프라이빗 레지스트리
-└── username/myapp:dev             # 사용자 이미지, 개발 태그
+Volumes (권장):
+├── Docker가 완전히 관리하는 스토리지
+├── /var/lib/docker/volumes/ 경로에 저장
+├── 호스트 파일시스템과 독립적
+├── 여러 컨테이너 간 안전한 공유
+├── 볼륨 드라이버를 통한 확장성
+├── 백업 및 마이그레이션 용이
+├── Docker CLI/API로 완전한 관리
+└── 프로덕션 환경 권장 방식
 
-태그 규칙:
-├── latest: 기본 태그 (생략 가능)
-├── 버전: 1.0, 2.1.3, v1.0.0
-├── 환경: dev, staging, prod
-└── 플랫폼: alpine, ubuntu, slim
+Bind Mounts:
+├── 호스트 파일시스템 직접 마운트
+├── 절대 경로 또는 상대 경로 지정
+├── 호스트 파일 시스템 구조에 의존
+├── 개발 환경에서 소스 코드 공유
+├── 설정 파일 및 로그 파일 접근
+├── 보안 위험 증가 (호스트 접근)
+├── 플랫폼 종속성 높음
+└── 개발 및 디버깅 용도
+
+tmpfs Mounts:
+├── 메모리 기반 임시 파일시스템
+├── 컨테이너 종료 시 데이터 소멸
+├── 민감한 데이터 임시 저장
+├── 고성능 임시 작업 공간
+├── 디스크 I/O 없는 최고 성능
+├── 메모리 사용량 증가
+├── 데이터 영속성 없음
+└── 캐시 및 임시 데이터 용도
 ```
 
-### 이미지 레이어와 공유
+## 2. 이론: 데이터 영속성 및 생명주기 관리 (15분)
+
+### 데이터 생명주기 패턴
 
 ```mermaid
-graph LR
-    subgraph "베이스 이미지"
-        A[ubuntu:20.04] --> B[Layer 1: OS]
-    end
+sequenceDiagram
+    participant App as Application
+    participant Container as Container
+    participant Volume as Volume
+    participant Storage as Storage Backend
     
-    subgraph "애플리케이션 이미지들"
-        C[nginx:latest] --> B
-        D[python:3.9] --> B
-        E[node:16] --> B
-    end
+    App->>Container: Write data
+    Container->>Volume: Mount point write
+    Volume->>Storage: Persist data
     
-    subgraph "공유 효과"
-        F[디스크 공간 절약]
-        G[다운로드 시간 단축]
-        H[캐시 효율성]
-    end
+    Note over Container: Container stops
+    Note over Volume: Data persists
     
-    B --> F
-    B --> G
-    B --> H
+    App->>Container: New container starts
+    Container->>Volume: Mount existing volume
+    Volume-->>Container: Restore data
+    Container-->>App: Data available
 ```
 
-## 2. 실습: 이미지 검색 및 정보 확인 (12분)
+### 스토리지 성능 최적화
 
-### Docker Hub에서 이미지 검색
+```
+성능 최적화 전략:
+
+I/O 최적화:
+├── SSD vs HDD 선택 기준
+├── 파일시스템 튜닝 (ext4, xfs)
+├── 마운트 옵션 최적화
+├── 블록 크기 및 정렬
+├── 다중 볼륨 I/O 분산
+└── tmpfs 활용 임시 데이터
+
+백업 전략:
+├── 볼륨 스냅샷 생성
+├── 애플리케이션 일관성 백업
+├── 증분 백업 구현
+├── 클라우드 동기화
+├── 재해 복구 계획
+└── 자동화된 복구 프로세스
+```
+
+## 3. 개념 예시: 스토리지 구성 분석 (12분)
+
+### 볼륨 관리 예시
 
 ```bash
-# 이미지 검색 (Docker Hub)
-docker search nginx
-
-# 검색 결과 필터링 (공식 이미지만)
-docker search --filter is-official=true nginx
-
-# 검색 결과 제한 (상위 5개)
-docker search --limit 5 python
-
-# 별점 기준 필터링 (25개 이상)
-docker search --filter stars=25 redis
-```
-
-### 예상 검색 결과 분석
-
-```
-NAME                DESCRIPTION                     STARS     OFFICIAL   AUTOMATED
-nginx               Official build of Nginx.        15000+    [OK]       
-nginx/nginx-ingress NGINX Ingress Controller...     500+                 [OK]
-jwilder/nginx-proxy Automated Nginx reverse proxy   2000+                [OK]
-```
-
-### 이미지 상세 정보 확인
-
-```bash
-# Docker Hub API를 통한 태그 확인 (curl 사용)
-curl -s "https://registry.hub.docker.com/v2/repositories/library/nginx/tags/" | jq '.results[].name'
-
-# 또는 웹 브라우저에서 확인
-# https://hub.docker.com/_/nginx
-```
-
-## 3. 실습: 이미지 다운로드 (pull) (8분)
-
-### 기본 이미지 다운로드
-
-```bash
-# 최신 버전 다운로드 (latest 태그)
-docker pull nginx
-
-# 특정 버전 다운로드
-docker pull nginx:1.21-alpine
-
-# 여러 태그 동시 다운로드
-docker pull ubuntu:20.04
-docker pull ubuntu:22.04
-docker pull python:3.9
-docker pull python:3.10-slim
-```
-
-### 다운로드 과정 분석
-
-```bash
-# 다운로드 진행 상황 확인
-docker pull redis:latest
+# 볼륨 생성 및 관리 (개념 예시)
+docker volume create mydata
+docker volume inspect mydata
 
 # 예상 출력:
-# latest: Pulling from library/redis
-# a2abf6c4d29d: Pull complete 
-# c7063460b523: Pull complete 
-# 4f4fb700ef54: Pull complete 
-# 5d63b154079e: Pull complete 
-# 6b199dea92a8: Pull complete 
-# 8f3cf4c4d6c2: Pull complete 
-# Digest: sha256:b6124ab2e45cc332e16398022a411d7e37181f21e849924e1ebe2a8a2c2f38e5
-# Status: Downloaded newer image for redis:latest
+# "Mountpoint": "/var/lib/docker/volumes/mydata/_data"
 ```
 
-### 플랫폼별 이미지 다운로드
+### 마운트 타입 비교 예시
 
 ```bash
-# 특정 아키텍처 이미지 다운로드
-docker pull --platform linux/amd64 nginx:alpine
-docker pull --platform linux/arm64 nginx:alpine
+# 볼륨 마운트 (개념 예시)
+docker run -v mydata:/app/data nginx
 
-# 현재 플랫폼 확인
-docker version --format '{{.Server.Arch}}'
+# 바인드 마운트 (개념 예시)
+docker run -v /host/path:/app/data nginx
+
+# tmpfs 마운트 (개념 예시)
+docker run --tmpfs /app/temp nginx
 ```
 
-## 4. 실습: 이미지 목록 및 관리 (10분)
+## 4. 토론 및 정리 (8분)
 
-### 로컬 이미지 목록 확인
+### 핵심 개념 정리
+- **볼륨 시스템**을 통한 데이터 영속성 보장
+- **마운트 타입별** 특성과 적절한 사용 사례
+- **성능 최적화**를 위한 스토리지 계층 설계
+- **백업 및 재해 복구** 전략의 중요성
 
-```bash
-# 모든 이미지 목록
-docker images
-
-# 특정 이미지만 필터링
-docker images nginx
-
-# 이미지 크기순 정렬
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | sort -k3 -h
-
-# 댕글링 이미지 확인 (태그가 없는 이미지)
-docker images -f dangling=true
-
-# 이미지 상세 정보 (JSON 형식)
-docker images --format json
-```
-
-### 이미지 정보 상세 분석
-
-```bash
-# 특정 이미지 상세 정보
-docker inspect nginx:latest
-
-# 이미지 히스토리 (레이어 정보)
-docker history nginx:latest
-
-# 이미지 크기 분석
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
-```
-
-### 이미지 태그 관리
-
-```bash
-# 기존 이미지에 새 태그 추가
-docker tag nginx:latest my-nginx:v1.0
-docker tag nginx:latest localhost:5000/nginx:latest
-
-# 태그 확인
-docker images nginx
-docker images my-nginx
-
-# 이미지 ID로 태그 추가
-docker tag <image_id> my-app:production
-```
-
-## 5. 실습: 이미지 삭제 및 정리 (10분)
-
-### 개별 이미지 삭제
-
-```bash
-# 태그로 이미지 삭제
-docker rmi nginx:1.21-alpine
-
-# 이미지 ID로 삭제
-docker rmi <image_id>
-
-# 강제 삭제 (컨테이너가 사용 중인 경우)
-docker rmi -f nginx:latest
-
-# 여러 이미지 동시 삭제
-docker rmi ubuntu:20.04 ubuntu:22.04 python:3.9
-```
-
-### 대량 이미지 정리
-
-```bash
-# 사용하지 않는 이미지 모두 삭제
-docker image prune
-
-# 댕글링 이미지만 삭제
-docker image prune -f
-
-# 모든 미사용 이미지 삭제 (태그된 것 포함)
-docker image prune -a
-
-# 특정 기간 이전 이미지 삭제
-docker image prune -a --filter "until=24h"
-```
-
-### 시스템 전체 정리
-
-```bash
-# 전체 시스템 정리 (이미지, 컨테이너, 네트워크, 볼륨)
-docker system prune
-
-# 모든 것 삭제 (사용 중이지 않은 모든 리소스)
-docker system prune -a
-
-# 볼륨까지 포함하여 정리
-docker system prune -a --volumes
-
-# 정리 전 예상 공간 확인
-docker system df
-```
-
-## 6. 실습 과제 및 문제 해결 (5분)
-
-### 종합 실습 과제
-
-```bash
-# 과제 1: 이미지 관리 워크플로우
-# 1. Python 3.9와 3.10 이미지 다운로드
-docker pull python:3.9
-docker pull python:3.10-slim
-
-# 2. 이미지 크기 비교
-docker images python
-
-# 3. 커스텀 태그 생성
-docker tag python:3.9 my-python:stable
-docker tag python:3.10-slim my-python:latest
-
-# 4. 불필요한 이미지 정리
-docker rmi python:3.9
-docker image prune
-```
-
-### 일반적인 문제 해결
-
-```mermaid
-flowchart TD
-    A[이미지 관리 문제] --> B{문제 유형}
-    B -->|다운로드 실패| C[네트워크 연결 확인]
-    B -->|삭제 불가| D[컨테이너 사용 여부 확인]
-    B -->|공간 부족| E[이미지 정리 실행]
-    B -->|태그 오류| F[이미지명 형식 확인]
-    
-    C --> G[docker pull 재시도]
-    D --> H[docker ps -a 확인]
-    E --> I[docker system prune]
-    F --> J[올바른 태그 형식 사용]
-```
-
-### 유용한 팁과 트릭
-
-```bash
-# 이미지 크기 최적화 확인
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(alpine|slim)"
-
-# 최근 생성된 이미지 확인
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedSince}}" | head -10
-
-# 특정 패턴의 이미지 일괄 삭제
-docker rmi $(docker images --format "{{.Repository}}:{{.Tag}}" | grep "my-app")
-
-# 이미지 레이어 공유 현황 확인
-docker system df -v
-```
+### 토론 주제
+"컨테이너 환경에서 데이터 영속성과 성능을 동시에 만족하는 스토리지 아키텍처 설계 방안은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **docker pull**: 이미지 다운로드 명령어
-- **docker images**: 로컬 이미지 목록 확인
-- **docker rmi**: 이미지 삭제 명령어
-- **이미지 태그**: 버전 및 변형 관리 시스템
+- **스토리지 타입**: Volume, Bind Mount, tmpfs
+- **볼륨 드라이버**: local, NFS, 클라우드 스토리지
+- **성능 최적화**: I/O 튜닝, 캐싱, 네트워크 스토리지
+- **데이터 관리**: 백업, 복구, 마이그레이션
 
 ## 📚 참고 자료
-- [Docker Hub](https://hub.docker.com/)
-- [docker pull 레퍼런스](https://docs.docker.com/engine/reference/commandline/pull/)
-- [이미지 관리 가이드](https://docs.docker.com/engine/reference/commandline/images/)
-
-## 🔧 실습 체크리스트
-- [ ] Docker Hub에서 이미지 검색 성공
-- [ ] 다양한 태그의 이미지 다운로드
-- [ ] 로컬 이미지 목록 확인 및 분석
-- [ ] 이미지 태그 생성 및 관리
-- [ ] 불필요한 이미지 정리 실습
+- [Docker 스토리지 개요](https://docs.docker.com/storage/)
+- [볼륨 관리](https://docs.docker.com/storage/volumes/)

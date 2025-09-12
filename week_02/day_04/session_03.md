@@ -1,669 +1,578 @@
-# Session 3: 볼륨과 환경 변수 관리
+# Session 3: 성능 튜닝 및 최적화
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 4 > Session 3**으로, Session 2의 서비스 네트워킹을 바탕으로 데이터 영속성과 설정 관리를 학습합니다.
+이 세션은 **Week 2 > Day 4 > Session 3**으로, 업그레이드 및 마이그레이션 전략 이해를 바탕으로 Kubernetes 클러스터의 성능 분석, 튜닝 및 최적화 기법을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **Compose 볼륨** 관리 및 **데이터 영속성** 보장
-- **환경 변수** 및 **설정 파일** 외부화 전략
-- **시크릿 관리** 및 **보안** 모범 사례
+- **클러스터 성능 분석** 방법론과 **병목 지점 식별** 기법
+- **리소스 최적화** 전략과 **비용 효율성** 개선 방안
+- **네트워크 및 스토리지** 성능 튜닝 기법 습득
 
-## 1. 이론: 데이터와 설정 관리 (20분)
+## 1. 이론: 클러스터 성능 분석 및 진단 (20분)
 
-### 볼륨 관리 전략
+### 성능 분석 프레임워크
+
+```mermaid
+graph TB
+    subgraph "Performance Analysis"
+        A[Metrics Collection] --> B[Baseline Establishment]
+        B --> C[Bottleneck Identification]
+        C --> D[Root Cause Analysis]
+        D --> E[Optimization Planning]
+    end
+    
+    subgraph "Performance Layers"
+        F[Application Layer] --> G[Kubernetes Layer]
+        G --> H[Container Layer]
+        H --> I[OS Layer]
+        I --> J[Hardware Layer]
+    end
+    
+    subgraph "Optimization Areas"
+        K[CPU Optimization] --> L[Memory Optimization]
+        L --> M[Network Optimization]
+        M --> N[Storage Optimization]
+    end
+    
+    A --> F
+    E --> K
+```
+
+### 성능 메트릭 체계
+
+```
+Kubernetes 성능 메트릭:
+
+클러스터 레벨 메트릭:
+├── API 서버 성능:
+│   ├── 요청 처리 시간 (P50, P95, P99)
+│   ├── 요청 처리량 (RPS)
+│   ├── 에러율 및 타임아웃
+│   ├── 인증/권한 부여 지연시간
+│   ├── etcd 통신 지연시간
+│   └── 웹훅 처리 시간
+├── etcd 성능:
+│   ├── 읽기/쓰기 지연시간
+│   ├── 디스크 동기화 시간
+│   ├── 네트워크 라운드트립 시간
+│   ├── 리더 선출 시간
+│   ├── 압축 및 조각 모음 시간
+│   └── 백엔드 커밋 지연시간
+├── 스케줄러 성능:
+│   ├── 스케줄링 지연시간
+│   ├── 스케줄링 처리량
+│   ├── 스케줄링 실패율
+│   ├── 필터링 단계 시간
+│   ├── 점수 매기기 시간
+│   └── 바인딩 지연시간
+└── 컨트롤러 성능:
+    ├── 조정 루프 지연시간
+    ├── 워크큐 깊이 및 처리율
+    ├── 이벤트 처리 지연시간
+    ├── 리소스 동기화 시간
+    └── 에러 및 재시도 비율
+
+노드 레벨 메트릭:
+├── 시스템 리소스:
+│   ├── CPU 사용률 (user, system, iowait, steal)
+│   ├── 메모리 사용률 (used, available, cached, buffer)
+│   ├── 디스크 I/O (IOPS, 처리량, 지연시간, 큐 깊이)
+│   ├── 네트워크 I/O (패킷/바이트 송수신, 에러, 드롭)
+│   ├── 파일시스템 사용률 (용량, inode)
+│   └── 로드 애버리지 및 컨텍스트 스위치
+├── kubelet 성능:
+│   ├── Pod 시작 시간
+│   ├── 이미지 풀링 시간
+│   ├── 볼륨 마운트 시간
+│   ├── 컨테이너 런타임 통신 지연
+│   ├── cAdvisor 메트릭 수집 시간
+│   └── 가비지 컬렉션 시간
+├── 컨테이너 런타임:
+│   ├── 컨테이너 생성/시작/중지 시간
+│   ├── 이미지 레이어 다운로드 시간
+│   ├── 오버레이 파일시스템 성능
+│   ├── 네트워크 네임스페이스 생성 시간
+│   └── 리소스 제한 적용 오버헤드
+└── 네트워크 성능:
+    ├── CNI 플러그인 성능
+    ├── kube-proxy 규칙 업데이트 시간
+    ├── 서비스 디스커버리 지연시간
+    ├── 로드 밸런싱 성능
+    └── 네트워크 정책 적용 오버헤드
+
+워크로드 레벨 메트릭:
+├── 애플리케이션 성능:
+│   ├── 응답 시간 및 처리량
+│   ├── 에러율 및 가용성
+│   ├── 리소스 사용 효율성
+│   ├── 스케일링 반응성
+│   └── 사용자 경험 메트릭
+├── Pod 성능:
+│   ├── 시작 시간 및 준비 시간
+│   ├── 리소스 사용률 vs 요청/제한
+│   ├── 재시작 빈도 및 원인
+│   ├── 네트워크 연결 성능
+│   └── 스토리지 I/O 성능
+└── 서비스 성능:
+    ├── 엔드포인트 업데이트 지연
+    ├── 로드 밸런싱 분산 효율성
+    ├── 세션 어피니티 성능
+    ├── 헬스 체크 응답 시간
+    └── 서비스 메시 오버헤드
+```
+
+### 성능 병목 지점 식별
+
+```
+병목 지점 분석 방법론:
+
+CPU 병목 분석:
+├── CPU 사용률 패턴 분석:
+│   ├── 시간대별 CPU 사용률 추이
+│   ├── 프로세스별 CPU 소비 분석
+│   ├── 컨텍스트 스위치 빈도 측정
+│   ├── 인터럽트 처리 오버헤드
+│   └── CPU 스로틀링 발생 여부
+├── CPU 바운드 워크로드 식별:
+│   ├── CPU 집약적 애플리케이션 분류
+│   ├── 배치 작업 vs 대화형 워크로드
+│   ├── CPU 요청량 vs 실제 사용량
+│   ├── 노드별 CPU 분산 상태
+│   └── CPU 어피니티 최적화 기회
+└── 최적화 전략:
+    ├── CPU 리소스 할당 조정
+    ├── 워크로드 분산 개선
+    ├── CPU 어피니티 설정
+    ├── 프로세스 우선순위 조정
+    └── 하드웨어 업그레이드 고려
+
+메모리 병목 분석:
+├── 메모리 사용 패턴:
+│   ├── 메모리 사용률 및 압박 상태
+│   ├── 페이지 폴트 및 스왑 사용량
+│   ├── 캐시 및 버퍼 효율성
+│   ├── 메모리 누수 탐지
+│   └── OOM 이벤트 분석
+├── 메모리 최적화:
+│   ├── 메모리 요청/제한 조정
+│   ├── JVM 힙 크기 최적화
+│   ├── 캐시 계층 최적화
+│   ├── 메모리 압축 활용
+│   └── 스왑 정책 조정
+└── 가비지 컬렉션 최적화:
+    ├── GC 알고리즘 선택
+    ├── 힙 크기 및 세대 비율 조정
+    ├── GC 일시 정지 시간 최소화
+    ├── 메모리 할당 패턴 분석
+    └── 오프힙 메모리 활용
+
+I/O 병목 분석:
+├── 디스크 I/O 성능:
+│   ├── IOPS 및 처리량 분석
+│   ├── I/O 대기 시간 측정
+│   ├── 큐 깊이 및 병목 지점
+│   ├── 순차 vs 랜덤 I/O 패턴
+│   └── 파일시스템 성능 분석
+├── 네트워크 I/O 성능:
+│   ├── 네트워크 처리량 및 지연시간
+│   ├── 패킷 드롭 및 재전송율
+│   ├── 연결 수 및 연결 풀 효율성
+│   ├── DNS 해석 성능
+│   └── 로드 밸런서 성능
+└── 스토리지 최적화:
+    ├── 스토리지 클래스 선택
+    ├── 볼륨 성능 튜닝
+    ├── 캐시 계층 구성
+    ├── 압축 및 중복제거
+    └── 백업 및 스냅샷 최적화
+```
+
+## 2. 이론: 리소스 최적화 전략 (15분)
+
+### 리소스 효율성 개선
+
+```
+리소스 최적화 방법론:
+
+CPU 최적화:
+├── 리소스 요청 최적화:
+│   ├── VPA를 통한 자동 크기 조정
+│   ├── 과거 사용량 기반 요청량 설정
+│   ├── 버스트 패턴 고려한 제한 설정
+│   ├── QoS 클래스 최적화
+│   └── CPU 어피니티 및 토폴로지 고려
+├── 스케줄링 최적화:
+│   ├── 노드 어피니티 규칙 설정
+│   ├── Pod 안티어피니티로 분산 배치
+│   ├── 토폴로지 분산 제약 활용
+│   ├── 우선순위 클래스 설정
+│   └── 테인트 및 톨러레이션 활용
+└── 워크로드 최적화:
+    ├── CPU 집약적 작업 분리
+    ├── 배치 작업 스케줄링 최적화
+    ├── 멀티스레딩 효율성 개선
+    ├── 알고리즘 및 데이터 구조 최적화
+    └── 컴파일러 최적화 옵션 활용
+
+메모리 최적화:
+├── 메모리 할당 최적화:
+│   ├── 메모리 요청량 정확한 설정
+│   ├── 메모리 제한으로 OOM 방지
+│   ├── 메모리 오버커밋 정책 조정
+│   ├── 스왑 사용 최소화
+│   └── NUMA 토폴로지 고려
+├── 애플리케이션 메모리 최적화:
+│   ├── 메모리 풀링 및 재사용
+│   ├── 객체 생성 최소화
+│   ├── 캐시 크기 최적화
+│   ├── 메모리 매핑 파일 활용
+│   └── 압축 알고리즘 적용
+└── 가비지 컬렉션 튜닝:
+    ├── GC 알고리즘 선택 (G1, ZGC, Shenandoah)
+    ├── 힙 크기 및 세대 비율 조정
+    ├── GC 트리거 임계값 설정
+    ├── 병렬 GC 스레드 수 조정
+    └── 오프힙 스토리지 활용
+
+스토리지 최적화:
+├── 볼륨 성능 튜닝:
+│   ├── 스토리지 클래스 선택 최적화
+│   ├── IOPS 및 처리량 프로비저닝
+│   ├── 볼륨 크기 및 성능 비례 고려
+│   ├── 로컬 SSD vs 네트워크 스토리지
+│   └── 읽기 전용 볼륨 활용
+├── 파일시스템 최적화:
+│   ├── 파일시스템 선택 (ext4, xfs, btrfs)
+│   ├── 마운트 옵션 튜닝 (noatime, relatime)
+│   ├── 블록 크기 최적화
+│   ├── 저널링 모드 설정
+│   └── 압축 및 중복제거 활용
+└── 캐싱 전략:
+    ├── 애플리케이션 레벨 캐시
+    ├── 분산 캐시 시스템 (Redis, Memcached)
+    ├── CDN 및 엣지 캐싱
+    ├── 데이터베이스 쿼리 캐시
+    └── 파일시스템 캐시 최적화
+
+네트워크 최적화:
+├── 네트워크 토폴로지 최적화:
+│   ├── 지역별 클러스터 배치
+│   ├── 가용성 영역 분산 전략
+│   ├── 네트워크 지연시간 최소화
+│   ├── 대역폭 사용량 최적화
+│   └── 네트워크 홉 수 최소화
+├── 서비스 메시 최적화:
+│   ├── 사이드카 프록시 성능 튜닝
+│   ├── 서킷 브레이커 및 재시도 정책
+│   ├── 연결 풀링 최적화
+│   ├── 압축 및 프로토콜 최적화
+│   └── 트래픽 라우팅 최적화
+└── 로드 밸런싱 최적화:
+    ├── 로드 밸런싱 알고리즘 선택
+    ├── 헬스 체크 최적화
+    ├── 세션 어피니티 설정
+    ├── 연결 드레이닝 최적화
+    └── 글로벌 로드 밸런싱
+```
+
+## 3. 이론: 비용 최적화 전략 (10분)
+
+### 클라우드 비용 최적화
+
+```
+비용 효율성 개선:
+
+리소스 사용률 최적화:
+├── 리소스 모니터링 및 분석:
+│   ├── 실제 vs 요청 리소스 비교
+│   ├── 유휴 리소스 식별 및 회수
+│   ├── 피크 시간대 분석
+│   ├── 계절성 패턴 고려
+│   └── 리소스 사용률 목표 설정
+├── 자동 스케일링 최적화:
+│   ├── HPA 메트릭 및 임계값 조정
+│   ├── VPA를 통한 적정 크기 조정
+│   ├── 클러스터 오토스케일러 정책
+│   ├── 스케일 다운 지연 최적화
+│   └── 예측적 스케일링 구현
+└── 워크로드 최적화:
+    ├── 배치 작업 스케줄링 최적화
+    ├── 스팟 인스턴스 활용
+    ├── 예약 인스턴스 계획
+    ├── 멀티 클라우드 비용 비교
+    └── 서버리스 워크로드 전환
+
+인스턴스 최적화:
+├── 인스턴스 타입 선택:
+│   ├── 워크로드 특성별 최적 인스턴스
+│   ├── CPU vs 메모리 집약적 분류
+│   ├── 네트워크 성능 요구사항
+│   ├── 스토리지 성능 요구사항
+│   └── 가격 대비 성능 분석
+├── 스팟 인스턴스 활용:
+│   ├── 내결함성 워크로드 식별
+│   ├── 스팟 인스턴스 혼합 전략
+│   ├── 인터럽션 처리 메커니즘
+│   ├── 다중 인스턴스 타입 활용
+│   └── 비용 절감 효과 측정
+└── 예약 인스턴스 계획:
+    ├── 베이스라인 용량 분석
+    ├── 예약 기간 및 결제 옵션
+    ├── 인스턴스 패밀리 유연성
+    ├── 가용성 영역 유연성
+    └── ROI 계산 및 추적
+
+스토리지 비용 최적화:
+├── 스토리지 계층화:
+│   ├── 핫, 웜, 콜드 데이터 분류
+│   ├── 자동 계층화 정책 설정
+│   ├── 아카이빙 및 삭제 정책
+│   ├── 압축 및 중복제거
+│   └── 백업 보관 정책 최적화
+├── 볼륨 최적화:
+│   ├── 볼륨 크기 적정화
+│   ├── IOPS 프로비저닝 최적화
+│   ├── 스냅샷 관리 정책
+│   ├── 미사용 볼륨 정리
+│   └── 스토리지 클래스 최적화
+└── 네트워크 비용:
+    ├── 데이터 전송 비용 최소화
+    ├── CDN 활용을 통한 비용 절감
+    ├── 지역 간 트래픽 최적화
+    ├── 압축을 통한 대역폭 절약
+    └── 캐싱을 통한 반복 전송 방지
+```
+
+## 4. 개념 예시: 성능 튜닝 구성 (12분)
+
+### 성능 모니터링 대시보드 구성 예시
 
 ```yaml
-# Named Volume
-services:
-  db:
-    image: postgres
-    volumes:
-      - db_data:/var/lib/postgresql/data
-volumes:
-  db_data:
-
-# Bind Mount
-services:
-  web:
-    image: nginx
-    volumes:
-      - ./config:/etc/nginx/conf.d:ro
-      - ./logs:/var/log/nginx
-
-# tmpfs Mount
-services:
-  cache:
-    image: redis
-    tmpfs:
-      - /tmp:rw,size=100m
+# Grafana 성능 대시보드 (개념 예시)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: performance-dashboard
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Kubernetes Performance Dashboard",
+        "panels": [
+          {
+            "title": "API Server Performance",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.99, apiserver_request_duration_seconds_bucket)",
+                "legendFormat": "99th percentile"
+              },
+              {
+                "expr": "rate(apiserver_request_total[5m])",
+                "legendFormat": "Request Rate"
+              }
+            ]
+          },
+          {
+            "title": "etcd Performance",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.99, etcd_disk_wal_fsync_duration_seconds_bucket)",
+                "legendFormat": "WAL fsync 99th percentile"
+              }
+            ]
+          },
+          {
+            "title": "Node Resource Usage",
+            "targets": [
+              {
+                "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+                "legendFormat": "CPU Usage %"
+              },
+              {
+                "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+                "legendFormat": "Memory Usage %"
+              }
+            ]
+          }
+        ]
+      }
+    }
 ```
 
-### 환경 변수 관리 패턴
+### 리소스 최적화 정책 예시
 
 ```yaml
-# 직접 정의
-services:
-  app:
-    image: myapp
-    environment:
-      - NODE_ENV=production
-      - DB_HOST=database
+# VPA 구성 (개념 예시)
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: performance-optimized-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-application
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: web-app
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 2
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
 
-# .env 파일 사용
-services:
-  app:
-    image: myapp
-    env_file:
-      - .env
-      - .env.local
-
-# 환경별 파일
-services:
-  app:
-    image: myapp
-    env_file:
-      - .env.${ENVIRONMENT:-development}
+---
+# HPA 구성
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: performance-optimized-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-application
+  minReplicas: 3
+  maxReplicas: 100
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
 ```
 
-## 2. 실습: 볼륨 관리 구현 (15분)
-
-### 데이터 영속성 설정
+### 성능 벤치마크 스크립트 예시
 
 ```bash
-mkdir -p volume-demo && cd volume-demo
-
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
-
-services:
-  # 웹 애플리케이션
-  web:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./web-content:/usr/share/nginx/html:ro
-      - ./nginx-config:/etc/nginx/conf.d:ro
-      - web-logs:/var/log/nginx
-    depends_on:
-      - api
-
-  # API 서버
-  api:
-    build: ./api
-    volumes:
-      - ./api:/app
-      - /app/node_modules
-      - api-uploads:/app/uploads
-    environment:
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-    depends_on:
-      - postgres
-      - redis
-
-  # PostgreSQL 데이터베이스
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./db-init:/docker-entrypoint-initdb.d:ro
-      - ./db-backup:/backup
-
-  # Redis 캐시
-  redis:
-    image: redis:alpine
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-
-  # 백업 서비스
-  backup:
-    image: postgres:13
-    volumes:
-      - postgres-data:/source:ro
-      - ./backups:/backup
-    command: >
-      sh -c "
-        while true; do
-          pg_dump -h postgres -U user -d appdb > /backup/backup-$$(date +%Y%m%d-%H%M%S).sql
-          sleep 3600
-        done
-      "
-    depends_on:
-      - postgres
-
-volumes:
-  postgres-data:
-    driver: local
-  redis-data:
-    driver: local
-  web-logs:
-    driver: local
-  api-uploads:
-    driver: local
-EOF
-
-# 디렉토리 구조 생성
-mkdir -p {web-content,nginx-config,api,db-init,backups}
-```
-
-### 설정 파일 외부화
-
-```bash
-# Nginx 설정
-cat > nginx-config/default.conf << 'EOF'
-server {
-    listen 80;
-    server_name localhost;
-    
-    # 로그 설정
-    access_log /var/log/nginx/access.log;
-    error_log /var/log/nginx/error.log;
-    
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-    }
-    
-    location /api/ {
-        proxy_pass http://api:3000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-    
-    # 파일 업로드
-    location /uploads/ {
-        alias /app/uploads/;
-    }
-}
-EOF
-
-# 웹 콘텐츠
-cat > web-content/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>볼륨 관리 데모</title>
-</head>
-<body>
-    <h1>Docker Compose 볼륨 관리</h1>
-    <p>이 파일은 바인드 마운트로 관리됩니다.</p>
-    <button onclick="testAPI()">API 테스트</button>
-    <div id="result"></div>
-    
-    <script>
-        async function testAPI() {
-            const response = await fetch('/api/data');
-            const data = await response.json();
-            document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
-        }
-    </script>
-</body>
-</html>
-EOF
-
-# API 서버
-cat > api/package.json << 'EOF'
-{
-  "name": "volume-api",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2",
-    "multer": "^1.4.5",
-    "pg": "^8.8.0",
-    "redis": "^4.5.0"
-  }
-}
-EOF
-
-cat > api/server.js << 'EOF'
-const express = require('express');
-const multer = require('multer');
-const { Client } = require('pg');
-const redis = require('redis');
-const fs = require('fs');
-const path = require('path');
-
-const app = express();
-app.use(express.json());
-
-// 업로드 디렉토리 확인
-const uploadDir = '/app/uploads';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 파일 업로드 설정
-const upload = multer({ dest: uploadDir });
-
-// 데이터베이스 연결
-const db = new Client({
-    host: process.env.DB_HOST,
-    database: 'appdb',
-    user: 'user',
-    password: 'password'
-});
-
-// Redis 연결
-const redisClient = redis.createClient({
-    host: process.env.REDIS_HOST
-});
-
-db.connect().catch(console.error);
-redisClient.connect().catch(console.error);
-
-app.get('/data', async (req, res) => {
-    try {
-        // 캐시 확인
-        const cached = await redisClient.get('app_data');
-        if (cached) {
-            return res.json({ source: 'cache', data: JSON.parse(cached) });
-        }
-        
-        // 데이터베이스 조회
-        const result = await db.query('SELECT NOW() as timestamp, \'Hello from DB\' as message');
-        const data = result.rows[0];
-        
-        // 캐시 저장
-        await redisClient.setEx('app_data', 60, JSON.stringify(data));
-        
-        res.json({ source: 'database', data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/upload', upload.single('file'), (req, res) => {
-    res.json({
-        message: 'File uploaded successfully',
-        filename: req.file.filename,
-        path: `/uploads/${req.file.filename}`
-    });
-});
-
-app.listen(3000, '0.0.0.0', () => {
-    console.log('API server running on port 3000');
-});
-EOF
-
-cat > api/Dockerfile << 'EOF'
-FROM node:alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-EOF
-
-# 데이터베이스 초기화
-cat > db-init/init.sql << 'EOF'
-CREATE TABLE IF NOT EXISTS app_data (
-    id SERIAL PRIMARY KEY,
-    message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO app_data (message) VALUES 
-('Initial data from volume'),
-('Persistent data example');
-EOF
-```
-
-## 3. 실습: 환경 변수 관리 (15분)
-
-### 환경별 설정 파일
-
-```bash
-# 기본 환경 변수
-cat > .env << 'EOF'
-# 기본 설정
-COMPOSE_PROJECT_NAME=volume-demo
-NODE_ENV=development
-LOG_LEVEL=debug
-
-# 데이터베이스 설정
-POSTGRES_DB=appdb
-POSTGRES_USER=user
-POSTGRES_PASSWORD=password
-
-# Redis 설정
-REDIS_PASSWORD=
-
-# 애플리케이션 설정
-API_PORT=3000
-WEB_PORT=8080
-EOF
-
-# 개발 환경
-cat > .env.development << 'EOF'
-NODE_ENV=development
-LOG_LEVEL=debug
-DB_POOL_SIZE=5
-REDIS_TTL=60
-BACKUP_ENABLED=false
-EOF
-
-# 프로덕션 환경
-cat > .env.production << 'EOF'
-NODE_ENV=production
-LOG_LEVEL=info
-DB_POOL_SIZE=20
-REDIS_TTL=3600
-BACKUP_ENABLED=true
-POSTGRES_PASSWORD=super_secure_password
-EOF
-
-# 환경별 Compose 파일
-cat > docker-compose.override.yml << 'EOF'
-version: '3.8'
-
-services:
-  api:
-    env_file:
-      - .env
-      - .env.${NODE_ENV:-development}
-    environment:
-      - DEBUG=true
-    volumes:
-      - ./api:/app
-      - /app/node_modules
-
-  postgres:
-    env_file:
-      - .env
-    ports:
-      - "5432:5432"  # 개발 환경에서만 포트 노출
-
-  redis:
-    ports:
-      - "6379:6379"  # 개발 환경에서만 포트 노출
-EOF
-
-# 프로덕션용 Compose 파일
-cat > docker-compose.prod.yml << 'EOF'
-version: '3.8'
-
-services:
-  api:
-    env_file:
-      - .env
-      - .env.production
-    environment:
-      - DEBUG=false
-    # 프로덕션에서는 소스 마운트 제거
-
-  postgres:
-    env_file:
-      - .env.production
-    # 프로덕션에서는 포트 노출 안함
-
-  redis:
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    # 프로덕션에서는 포트 노출 안함
-
-  # 프로덕션 전용 서비스
-  monitoring:
-    image: prom/prometheus
-    volumes:
-      - ./monitoring:/etc/prometheus
-    ports:
-      - "9090:9090"
-EOF
-```
-
-### 시크릿 관리
-
-```bash
-# 시크릿 파일 생성 (실제로는 안전한 곳에 저장)
-mkdir -p secrets
-echo "super_secret_db_password" > secrets/db_password.txt
-echo "redis_auth_token_12345" > secrets/redis_password.txt
-echo "jwt_secret_key_abcdef" > secrets/jwt_secret.txt
-
-# 시크릿을 사용하는 Compose 파일
-cat > docker-compose.secrets.yml << 'EOF'
-version: '3.8'
-
-services:
-  api:
-    image: node:alpine
-    secrets:
-      - db_password
-      - jwt_secret
-    environment:
-      - DB_PASSWORD_FILE=/run/secrets/db_password
-      - JWT_SECRET_FILE=/run/secrets/jwt_secret
-    command: >
-      sh -c "
-        export DB_PASSWORD=$$(cat /run/secrets/db_password)
-        export JWT_SECRET=$$(cat /run/secrets/jwt_secret)
-        node server.js
-      "
-
-  postgres:
-    image: postgres:13
-    secrets:
-      - db_password
-    environment:
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  jwt_secret:
-    file: ./secrets/jwt_secret.txt
-EOF
-
-# 환경 변수 검증 스크립트
-cat > validate-env.sh << 'EOF'
 #!/bin/bash
+# Kubernetes 성능 벤치마크 스크립트 (개념 예시)
 
-echo "=== 환경 변수 검증 ==="
+echo "Starting Kubernetes performance benchmark..."
 
-# 필수 환경 변수 체크
-required_vars=("POSTGRES_DB" "POSTGRES_USER" "NODE_ENV")
+# 1. API 서버 성능 테스트
+echo "Testing API Server performance..."
+kubectl get --raw /metrics | grep apiserver_request_duration_seconds
 
-for var in "${required_vars[@]}"; do
-    if [ -z "${!var}" ]; then
-        echo "❌ $var is not set"
-        exit 1
-    else
-        echo "✅ $var = ${!var}"
-    fi
-done
+# 2. etcd 성능 테스트
+echo "Testing etcd performance..."
+kubectl exec -n kube-system etcd-master -- etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  endpoint status --write-out=table
 
-# 환경별 설정 확인
-echo ""
-echo "현재 환경: ${NODE_ENV:-development}"
-echo "로그 레벨: ${LOG_LEVEL:-info}"
-echo "백업 활성화: ${BACKUP_ENABLED:-false}"
+# 3. 노드 리소스 사용률 확인
+echo "Checking node resource utilization..."
+kubectl top nodes
 
-# 보안 검증
-if [ "$NODE_ENV" = "production" ]; then
-    if [ "$POSTGRES_PASSWORD" = "password" ]; then
-        echo "⚠️  프로덕션에서 기본 패스워드 사용 중!"
-    fi
-fi
-EOF
+# 4. Pod 리소스 사용률 확인
+echo "Checking pod resource utilization..."
+kubectl top pods --all-namespaces --sort-by=cpu
 
-chmod +x validate-env.sh
+# 5. 네트워크 성능 테스트
+echo "Testing network performance..."
+kubectl run network-test --image=nicolaka/netshoot --rm -it -- \
+  iperf3 -c iperf-server.default.svc.cluster.local
+
+# 6. 스토리지 성능 테스트
+echo "Testing storage performance..."
+kubectl run storage-test --image=alpine --rm -it -- \
+  dd if=/dev/zero of=/tmp/test bs=1M count=1000 oflag=direct
+
+echo "Performance benchmark completed!"
 ```
 
-## 4. 실습: 데이터 백업 및 복원 (10분)
+### 비용 최적화 분석 예시
 
-### 자동 백업 시스템
-
-```bash
-# 백업 스크립트
-cat > backup-script.sh << 'EOF'
-#!/bin/bash
-
-BACKUP_DIR="/backup"
-DATE=$(date +%Y%m%d-%H%M%S)
-
-echo "Starting backup at $DATE"
-
-# PostgreSQL 백업
-pg_dump -h postgres -U user -d appdb > "$BACKUP_DIR/postgres-$DATE.sql"
-
-# Redis 백업
-redis-cli -h redis --rdb "$BACKUP_DIR/redis-$DATE.rdb"
-
-# 볼륨 백업
-tar -czf "$BACKUP_DIR/volumes-$DATE.tar.gz" /source
-
-# 오래된 백업 정리 (7일 이상)
-find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
-find $BACKUP_DIR -name "*.rdb" -mtime +7 -delete
-find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
-
-echo "Backup completed: $DATE"
-EOF
-
-# 백업 서비스 추가
-cat >> docker-compose.yml << 'EOF'
-
-  # 백업 서비스
-  backup-service:
-    image: postgres:13
-    volumes:
-      - postgres-data:/source:ro
-      - redis-data:/redis-source:ro
-      - ./backups:/backup
-      - ./backup-script.sh:/backup-script.sh:ro
-    environment:
-      - PGPASSWORD=password
-    command: >
-      sh -c "
-        apk add --no-cache redis
-        while true; do
-          /backup-script.sh
-          sleep 3600
-        done
-      "
-    depends_on:
-      - postgres
-      - redis
-EOF
-
-# 복원 스크립트
-cat > restore-script.sh << 'EOF'
-#!/bin/bash
-
-BACKUP_FILE=$1
-
-if [ -z "$BACKUP_FILE" ]; then
-    echo "Usage: $0 <backup_file>"
-    echo "Available backups:"
-    ls -la ./backups/
-    exit 1
-fi
-
-echo "Restoring from $BACKUP_FILE"
-
-# 서비스 중지
-docker-compose stop postgres redis
-
-# 볼륨 정리
-docker-compose down -v
-
-# 새 볼륨으로 서비스 시작
-docker-compose up -d postgres redis
-
-# 백업 복원 대기
-sleep 10
-
-# PostgreSQL 복원
-if [[ $BACKUP_FILE == *.sql ]]; then
-    docker-compose exec -T postgres psql -U user -d appdb < "./backups/$BACKUP_FILE"
-fi
-
-echo "Restore completed"
-EOF
-
-chmod +x restore-script.sh
+```yaml
+# 비용 최적화 분석 도구 (개념 예시)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cost-optimization-analyzer
+spec:
+  schedule: "0 6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cost-analyzer
+            image: cost-analyzer:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # 리소스 사용률 분석
+              kubectl top nodes --no-headers | awk '{
+                cpu_usage = $3; mem_usage = $5;
+                if (cpu_usage < 50 || mem_usage < 50) {
+                  print "Underutilized node: " $1 " CPU:" cpu_usage "% Memory:" mem_usage "%"
+                }
+              }'
+              
+              # 유휴 리소스 식별
+              kubectl get pods --all-namespaces -o json | jq -r '
+                .items[] | select(.status.phase == "Running") |
+                select(.spec.containers[].resources.requests.cpu == null or 
+                       .spec.containers[].resources.requests.memory == null) |
+                "\(.metadata.namespace)/\(.metadata.name) - Missing resource requests"
+              '
+              
+              # 스팟 인스턴스 후보 식별
+              kubectl get nodes -l node.kubernetes.io/instance-type -o json | jq -r '
+                .items[] | select(.spec.taints == null or 
+                (.spec.taints | map(.key) | index("node.kubernetes.io/not-ready") == null)) |
+                "\(.metadata.name) - Candidate for spot instance"
+              '
+          restartPolicy: OnFailure
 ```
 
-## 5. Q&A 및 정리 (5분)
+## 5. 토론 및 정리 (8분)
 
-### 볼륨 및 환경 관리 검증
+### 핵심 개념 정리
+- **체계적 성능 분석**을 통한 **병목 지점 식별** 및 **최적화 우선순위** 설정
+- **리소스 효율성 개선**을 통한 **성능 향상**과 **비용 절감** 동시 달성
+- **자동화된 최적화** 도구 활용을 통한 **지속적 성능 개선**
+- **모니터링 기반** 데이터 드리븐 **최적화 의사결정**
 
-```bash
-# 전체 시스템 실행
-docker-compose up -d
-
-# 볼륨 상태 확인
-echo "=== 볼륨 상태 ==="
-docker volume ls | grep volume-demo
-docker-compose exec postgres df -h /var/lib/postgresql/data
-docker-compose exec redis redis-cli info persistence
-
-# 환경 변수 확인
-echo "=== 환경 변수 ==="
-docker-compose exec api printenv | grep -E "(NODE_ENV|DB_HOST|REDIS_HOST)"
-
-# 데이터 영속성 테스트
-echo "=== 데이터 영속성 테스트 ==="
-curl -s http://localhost:8080/api/data | jq
-
-# 컨테이너 재시작 후 데이터 확인
-docker-compose restart postgres redis
-sleep 10
-curl -s http://localhost:8080/api/data | jq
-
-# 정리
-cat > session3-summary.md << 'EOF'
-# Session 3 요약: 볼륨과 환경 변수 관리
-
-## 구현한 기능
-1. **Named Volume**: 데이터베이스 데이터 영속성
-2. **Bind Mount**: 설정 파일 외부화
-3. **환경 변수**: 환경별 설정 관리
-4. **시크릿 관리**: 민감한 정보 보호
-5. **자동 백업**: 데이터 보호 및 복원
-
-## 볼륨 전략
-- **데이터베이스**: Named Volume (영속성)
-- **설정 파일**: Bind Mount (수정 가능)
-- **로그**: Named Volume (수집 및 분석)
-- **업로드**: Named Volume (파일 저장)
-
-## 환경 관리
-- **.env**: 기본 설정
-- **.env.{environment}**: 환경별 설정
-- **docker-compose.override.yml**: 개발 환경
-- **docker-compose.prod.yml**: 프로덕션 환경
-
-## 보안 고려사항
-- 시크릿 파일 분리
-- 환경별 패스워드 관리
-- 프로덕션 포트 노출 제한
-- 백업 데이터 암호화
-EOF
-
-echo "Session 3 완료! 요약: session3-summary.md"
-```
+### 토론 주제
+"클라우드 네이티브 환경에서 성능 최적화와 비용 효율성을 동시에 달성하기 위한 균형잡힌 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **데이터 영속성**: Named Volume, 백업/복원
-- **설정 외부화**: 환경 변수, .env 파일
-- **시크릿 관리**: 민감한 정보 보호
-- **환경 분리**: 개발/스테이징/프로덕션
+- **성능 분석**: 메트릭 수집, 병목 식별, 근본 원인 분석
+- **리소스 최적화**: CPU/메모리/스토리지/네트워크 튜닝
+- **비용 최적화**: 스팟 인스턴스, 자동 스케일링, 리소스 효율성
+- **자동화**: VPA/HPA, 성능 모니터링, 지속적 최적화
 
 ## 📚 참고 자료
-- [Compose 볼륨](https://docs.docker.com/compose/compose-file/#volumes)
-- [환경 변수](https://docs.docker.com/compose/environment-variables/)
-- [시크릿 관리](https://docs.docker.com/compose/compose-file/#secrets)
-
-## 🔧 실습 체크리스트
-- [ ] Named Volume 데이터 영속성 구현
-- [ ] Bind Mount 설정 파일 외부화
-- [ ] 환경별 설정 관리 체계 구축
-- [ ] 시크릿 관리 시스템 적용
-- [ ] 자동 백업 및 복원 시스템 구현
+- [Kubernetes 성능 튜닝](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/)
+- [리소스 관리 모범 사례](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [클라우드 비용 최적화](https://www.cncf.io/blog/2021/06/29/kubernetes-cost-optimization/)

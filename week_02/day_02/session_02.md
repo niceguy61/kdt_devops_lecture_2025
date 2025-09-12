@@ -1,505 +1,370 @@
-# Session 2: 베이스 이미지 선택과 FROM 명령어
+# Session 2: 이미지 최적화 및 빌드 전략
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 2**로, Dockerfile의 첫 번째 명령어인 FROM을 심화 학습합니다. Week 1에서 학습한 이미지 레이어 이론과 Session 1의 기본 Dockerfile 작성을 바탕으로 베이스 이미지 선택 전략을 실습합니다.
+이 세션은 **Week 2 > Day 2 > Session 2**로, 컨테이너 리소스 관리 이해를 바탕으로 Docker 이미지 최적화와 효율적인 빌드 전략을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **베이스 이미지 선택** 전략과 **고려사항** 이해
-- **다양한 베이스 이미지**로 **빌드 비교** 실습
-- **이미지 크기**와 **보안성** 최적화 방법 학습
+- **멀티 스테이지 빌드** 고급 기법과 **이미지 최적화** 전략
+- **빌드 캐시 메커니즘**과 **레이어 최적화** 기법
+- **보안 강화**와 **성능 향상**을 위한 이미지 설계 원리
 
-## 1. 이론: 베이스 이미지 선택 전략과 고려사항 (20분)
+## 1. 이론: 멀티 스테이지 빌드 아키텍처 (20분)
 
-### 베이스 이미지 분류 체계
+### 멀티 스테이지 빌드 구조 분석
 
 ```mermaid
 graph TB
-    subgraph "베이스 이미지 유형"
-        A[공식 이미지] --> B[언어별<br/>python, node, java]
-        A --> C[OS별<br/>ubuntu, alpine, debian]
-        A --> D[애플리케이션별<br/>nginx, mysql, redis]
-        
-        E[커뮤니티 이미지] --> F[특화된 용도]
-        E --> G[조합 이미지]
-        
-        H[스크래치 이미지] --> I[최소 크기]
-        H --> J[보안 최적화]
+    subgraph "Build Stage"
+        A[Source Code] --> B[Build Tools]
+        B --> C[Dependencies]
+        C --> D[Compiled Binary]
     end
     
-    subgraph "선택 기준"
-        K[크기] --> L[보안]
-        L --> M[성능]
-        M --> N[호환성]
-        N --> O[유지보수성]
+    subgraph "Runtime Stage"
+        E[Minimal Base Image] --> F[Runtime Dependencies]
+        F --> G[Application Binary]
+        G --> H[Final Image]
     end
+    
+    D --> G
+    
+    subgraph "Benefits"
+        I[Reduced Size]
+        J[Enhanced Security]
+        K[Faster Deployment]
+        L[Clean Runtime]
+    end
+    
+    H --> I
+    H --> J
+    H --> K
+    H --> L
 ```
 
-### 주요 베이스 이미지 비교
-
-| 이미지 | 크기 | 보안 | 패키지 매니저 | 사용 사례 |
-|--------|------|------|---------------|-----------|
-| **ubuntu:20.04** | ~72MB | 중간 | apt | 개발, 테스트 환경 |
-| **alpine:latest** | ~5MB | 높음 | apk | 프로덕션, 마이크로서비스 |
-| **debian:slim** | ~69MB | 중간 | apt | 안정성 중시 환경 |
-| **scratch** | 0MB | 최고 | 없음 | 정적 바이너리 전용 |
-| **distroless** | ~20MB | 높음 | 없음 | 보안 중시 프로덕션 |
-
-### 언어별 베이스 이미지 전략
-
-```
-Python 애플리케이션:
-├── python:3.9 (기본, 개발용)
-├── python:3.9-slim (크기 최적화)
-├── python:3.9-alpine (최소 크기)
-└── python:3.9-slim-bullseye (특정 OS 버전)
-
-Node.js 애플리케이션:
-├── node:16 (기본, 모든 도구 포함)
-├── node:16-alpine (경량화)
-├── node:16-slim (중간 크기)
-└── node:16-bullseye-slim (특정 버전)
-
-Java 애플리케이션:
-├── openjdk:11 (기본 JDK)
-├── openjdk:11-jre (런타임만)
-├── openjdk:11-jre-slim (최적화)
-└── eclipse-temurin:11-jre-alpine (Eclipse 배포판)
-```
-
-### 보안 고려사항
-
-```
-베이스 이미지 보안 체크리스트:
-├── 공식 이미지 사용 (Docker Official Images)
-├── 최신 버전 사용 (보안 패치 적용)
-├── 취약점 스캔 결과 확인
-├── 불필요한 패키지 최소화
-├── 정기적인 업데이트 계획
-└── 신뢰할 수 있는 레지스트리 사용
-```
-
-## 2. 실습: 다양한 베이스 이미지 비교 (15분)
-
-### 동일 애플리케이션, 다른 베이스 이미지
-
-```bash
-# 실습 디렉토리 준비
-mkdir -p ~/docker-practice/day2/session2
-cd ~/docker-practice/day2/session2
-
-# 공통 Python 애플리케이션 작성
-cat > app.py << 'EOF'
-import sys
-import platform
-import os
-from datetime import datetime
-
-def get_system_info():
-    return {
-        'python_version': sys.version,
-        'platform': platform.platform(),
-        'architecture': platform.architecture(),
-        'hostname': platform.node(),
-        'timestamp': datetime.now().isoformat(),
-        'base_image': os.environ.get('BASE_IMAGE', 'unknown')
-    }
-
-if __name__ == '__main__':
-    info = get_system_info()
-    print("=== System Information ===")
-    for key, value in info.items():
-        print(f"{key}: {value}")
-EOF
-```
-
-### 1. 표준 Python 이미지
+### 고급 멀티 스테이지 패턴
 
 ```dockerfile
-# Dockerfile.standard
-cat > Dockerfile.standard << 'EOF'
-FROM python:3.9
+# 고급 멀티 스테이지 빌드 예시 (개념 예시)
 
-LABEL base_image="python:3.9"
-ENV BASE_IMAGE="python:3.9"
-
+# 1. 의존성 캐시 스테이지
+FROM node:16-alpine AS deps
 WORKDIR /app
-COPY app.py .
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-CMD ["python", "app.py"]
-EOF
-
-# 빌드 및 크기 확인
-docker build -f Dockerfile.standard -t python-app:standard .
-docker images python-app:standard
-```
-
-### 2. Slim 이미지
-
-```dockerfile
-# Dockerfile.slim
-cat > Dockerfile.slim << 'EOF'
-FROM python:3.9-slim
-
-LABEL base_image="python:3.9-slim"
-ENV BASE_IMAGE="python:3.9-slim"
-
+# 2. 개발 의존성 스테이지
+FROM node:16-alpine AS dev-deps
 WORKDIR /app
-COPY app.py .
+COPY package*.json ./
+RUN npm ci
 
-CMD ["python", "app.py"]
-EOF
-
-# 빌드 및 크기 확인
-docker build -f Dockerfile.slim -t python-app:slim .
-docker images python-app:slim
-```
-
-### 3. Alpine 이미지
-
-```dockerfile
-# Dockerfile.alpine
-cat > Dockerfile.alpine << 'EOF'
-FROM python:3.9-alpine
-
-LABEL base_image="python:3.9-alpine"
-ENV BASE_IMAGE="python:3.9-alpine"
-
-WORKDIR /app
-COPY app.py .
-
-CMD ["python", "app.py"]
-EOF
-
-# 빌드 및 크기 확인
-docker build -f Dockerfile.alpine -t python-app:alpine .
-docker images python-app:alpine
-```
-
-### 4. Ubuntu 기반 커스텀 이미지
-
-```dockerfile
-# Dockerfile.ubuntu
-cat > Dockerfile.ubuntu << 'EOF'
-FROM ubuntu:20.04
-
-LABEL base_image="ubuntu:20.04"
-ENV BASE_IMAGE="ubuntu:20.04"
-
-# 패키지 업데이트 및 Python 설치
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-COPY app.py .
-
-CMD ["python3", "app.py"]
-EOF
-
-# 빌드 및 크기 확인
-docker build -f Dockerfile.ubuntu -t python-app:ubuntu .
-docker images python-app:ubuntu
-```
-
-### 이미지 크기 비교 및 실행 테스트
-
-```bash
-# 모든 이미지 크기 비교
-echo "=== Image Size Comparison ==="
-docker images python-app --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
-
-# 각 이미지 실행 및 결과 비교
-echo -e "\n=== Standard Python Image ==="
-docker run --rm python-app:standard
-
-echo -e "\n=== Slim Python Image ==="
-docker run --rm python-app:slim
-
-echo -e "\n=== Alpine Python Image ==="
-docker run --rm python-app:alpine
-
-echo -e "\n=== Ubuntu Python Image ==="
-docker run --rm python-app:ubuntu
-
-# 빌드 시간 비교 (재빌드)
-echo -e "\n=== Build Time Comparison ==="
-time docker build -f Dockerfile.standard -t python-app:standard . --no-cache
-time docker build -f Dockerfile.slim -t python-app:slim . --no-cache
-time docker build -f Dockerfile.alpine -t python-app:alpine . --no-cache
-time docker build -f Dockerfile.ubuntu -t python-app:ubuntu . --no-cache
-```
-
-## 3. 실습: 웹 서버 베이스 이미지 비교 (10분)
-
-### Nginx 기반 정적 웹사이트
-
-```bash
-# HTML 파일 준비
-cat > index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Base Image Comparison</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .comparison { display: flex; gap: 20px; flex-wrap: wrap; }
-        .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-width: 200px; }
-        .standard { background-color: #e3f2fd; }
-        .alpine { background-color: #f3e5f5; }
-        .slim { background-color: #e8f5e8; }
-    </style>
-</head>
-<body>
-    <h1>🐳 Docker Base Image Comparison</h1>
-    <div class="comparison">
-        <div class="card standard">
-            <h3>Standard Image</h3>
-            <p>Full-featured base image</p>
-            <p>Size: Large (~900MB)</p>
-            <p>Use: Development</p>
-        </div>
-        <div class="card alpine">
-            <h3>Alpine Image</h3>
-            <p>Minimal Linux distribution</p>
-            <p>Size: Small (~50MB)</p>
-            <p>Use: Production</p>
-        </div>
-        <div class="card slim">
-            <h3>Slim Image</h3>
-            <p>Reduced package set</p>
-            <p>Size: Medium (~150MB)</p>
-            <p>Use: Balanced approach</p>
-        </div>
-    </div>
-</body>
-</html>
-EOF
-```
-
-### 다양한 Nginx 베이스 이미지
-
-```dockerfile
-# Dockerfile.nginx-standard
-cat > Dockerfile.nginx-standard << 'EOF'
-FROM nginx:latest
-
-COPY index.html /usr/share/nginx/html/
-EXPOSE 80
-EOF
-
-# Dockerfile.nginx-alpine
-cat > Dockerfile.nginx-alpine << 'EOF'
-FROM nginx:alpine
-
-COPY index.html /usr/share/nginx/html/
-EXPOSE 80
-EOF
-
-# 빌드 및 비교
-docker build -f Dockerfile.nginx-standard -t web-app:nginx-standard .
-docker build -f Dockerfile.nginx-alpine -t web-app:nginx-alpine .
-
-# 크기 비교
-docker images web-app
-
-# 실행 테스트
-docker run -d -p 8082:80 --name web-standard web-app:nginx-standard
-docker run -d -p 8083:80 --name web-alpine web-app:nginx-alpine
-
-# 접근 테스트
-curl -I http://localhost:8082
-curl -I http://localhost:8083
-```
-
-## 4. 실습: 멀티 아키텍처 이미지 (10분)
-
-### 플랫폼별 이미지 확인
-
-```bash
-# 현재 플랫폼 확인
-docker version --format '{{.Server.Os}}/{{.Server.Arch}}'
-
-# 멀티 아키텍처 이미지 정보 확인
-docker manifest inspect nginx:alpine
-
-# 특정 플랫폼 이미지 빌드
-docker build --platform linux/amd64 -f Dockerfile.alpine -t python-app:alpine-amd64 .
-docker build --platform linux/arm64 -f Dockerfile.alpine -t python-app:alpine-arm64 . 2>/dev/null || echo "ARM64 not supported on this system"
-
-# 플랫폼별 이미지 확인
-docker images python-app | grep alpine
-```
-
-### 베이스 이미지 선택 가이드라인
-
-```dockerfile
-# 개발 환경용 Dockerfile
-cat > Dockerfile.dev << 'EOF'
-# 개발 시에는 편의성을 위해 full 이미지 사용
-FROM python:3.9
-
-# 개발 도구 설치
-RUN pip install --no-cache-dir \
-    pytest \
-    black \
-    flake8 \
-    mypy
-
-WORKDIR /app
+# 3. 빌드 스테이지
+FROM dev-deps AS builder
 COPY . .
+RUN npm run build && npm run test
 
-# 개발 서버 실행
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--debug"]
-EOF
-
-# 프로덕션 환경용 Dockerfile
-cat > Dockerfile.prod << 'EOF'
-# 프로덕션에서는 보안과 크기를 위해 alpine 사용
-FROM python:3.9-alpine
-
-# 필수 패키지만 설치
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    && pip install --no-cache-dir flask gunicorn \
-    && apk del gcc musl-dev
-
+# 4. 런타임 스테이지
+FROM node:16-alpine AS runtime
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 WORKDIR /app
-COPY app.py .
-
-# 프로덕션 서버 실행
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
-EOF
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
+USER nextjs
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
 ```
 
-## 5. 베이스 이미지 보안 및 최적화 (10분)
+### 이미지 크기 최적화 전략
 
-### 이미지 취약점 스캔
+```
+이미지 최적화 기법:
 
-```bash
-# Docker Scout를 사용한 취약점 스캔 (Docker Desktop 포함)
-docker scout cves python-app:standard
-docker scout cves python-app:alpine
+베이스 이미지 선택:
+├── Alpine Linux: 최소 크기 (5MB)
+├── Distroless: Google의 보안 강화 이미지
+├── Scratch: 정적 바이너리용 빈 이미지
+├── Slim 태그: 공식 이미지의 경량 버전
+├── 특정 언어 런타임: node:alpine, python:slim
+└── 보안 패치 주기 고려
 
-# 또는 Trivy 사용 (별도 설치 필요)
-# docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-#   aquasec/trivy:latest image python-app:standard
+레이어 최적화:
+├── RUN 명령어 체이닝으로 레이어 수 감소
+├── 패키지 설치와 정리를 동일 레이어에서
+├── 임시 파일 생성과 삭제 통합
+├── .dockerignore로 불필요한 파일 제외
+├── COPY 명령어 순서 최적화
+└── 자주 변경되지 않는 레이어를 하위에 배치
+
+불필요한 요소 제거:
+├── 패키지 매니저 캐시 정리
+├── 개발 도구 및 헤더 파일 제거
+├── 문서 및 매뉴얼 페이지 삭제
+├── 로그 파일 및 임시 파일 정리
+├── 테스트 파일 및 예제 코드 제외
+└── 바이너리 스트리핑 (디버그 정보 제거)
+
+압축 및 최적화:
+├── 이미지 압축 알고리즘 활용
+├── 중복 파일 제거 및 하드링크
+├── 심볼릭 링크 최적화
+├── 파일 권한 최소화
+├── 환경 변수 최적화
+└── 메타데이터 정리
 ```
 
-### 최적화된 베이스 이미지 선택
+## 2. 이론: 빌드 캐시 최적화 메커니즘 (15분)
 
-```dockerfile
-# 최적화된 Python 이미지 예시
-cat > Dockerfile.optimized << 'EOF'
-# 1단계: 빌드 환경 (필요한 도구 포함)
-FROM python:3.9-alpine as builder
-
-# 빌드 의존성 설치
-RUN apk add --no-cache gcc musl-dev
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# 2단계: 런타임 환경 (최소한의 패키지만)
-FROM python:3.9-alpine
-
-# 빌드된 패키지만 복사
-COPY --from=builder /root/.local /root/.local
-COPY app.py /app/
-
-WORKDIR /app
-
-# PATH에 사용자 설치 경로 추가
-ENV PATH=/root/.local/bin:$PATH
-
-CMD ["python", "app.py"]
-EOF
-
-# 최적화된 이미지 빌드
-echo "flask==2.3.3" > requirements.txt
-docker build -f Dockerfile.optimized -t python-app:optimized .
-
-# 크기 비교
-docker images python-app --format "table {{.Tag}}\t{{.Size}}"
-```
-
-### 베이스 이미지 업데이트 전략
-
-```bash
-# 이미지 태그 전략 예시
-cat > update-strategy.md << 'EOF'
-베이스 이미지 업데이트 전략:
-
-1. 고정 버전 사용 (권장)
-   FROM python:3.9.18-alpine3.18
-   
-2. 마이너 버전 고정
-   FROM python:3.9-alpine
-   
-3. 메이저 버전만 고정 (주의 필요)
-   FROM python:3-alpine
-   
-4. 최신 버전 (비권장)
-   FROM python:alpine
-
-보안 업데이트 주기:
-- 월 1회 베이스 이미지 업데이트 확인
-- 중요 보안 패치 시 즉시 업데이트
-- 자동화된 취약점 스캔 설정
-EOF
-
-cat update-strategy.md
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### 베이스 이미지 선택 결정 트리
+### Docker 빌드 캐시 동작 원리
 
 ```mermaid
-flowchart TD
-    A[베이스 이미지 선택] --> B{용도는?}
-    B -->|개발/테스트| C[편의성 우선]
-    B -->|프로덕션| D[보안/크기 우선]
+sequenceDiagram
+    participant Client as Docker Client
+    participant Daemon as Docker Daemon
+    participant Cache as Build Cache
+    participant Registry as Image Registry
     
-    C --> E[표준 이미지<br/>python:3.9]
-    D --> F{크기 중요?}
+    Client->>Daemon: docker build
+    Daemon->>Cache: Check layer cache
     
-    F -->|Yes| G[Alpine 기반<br/>python:3.9-alpine]
-    F -->|No| H[Slim 이미지<br/>python:3.9-slim]
+    alt Cache hit
+        Cache-->>Daemon: Return cached layer
+        Daemon-->>Client: Use cached layer
+    else Cache miss
+        Daemon->>Daemon: Execute instruction
+        Daemon->>Cache: Store new layer
+        Daemon-->>Client: New layer created
+    end
     
-    G --> I[최소 크기 달성]
-    H --> J[균형잡힌 선택]
-    E --> K[개발 편의성 확보]
+    Daemon->>Registry: Push final image
 ```
 
-### 실습 결과 정리
+### 캐시 무효화 최소화 전략
+
+```
+빌드 캐시 최적화:
+
+레이어 순서 최적화:
+├── 자주 변경되지 않는 명령어를 상위에 배치
+├── 종속성 설치를 소스 코드 복사보다 먼저
+├── 설정 파일을 애플리케이션 코드와 분리
+├── 환경별 설정을 마지막에 적용
+├── 빌드 인수(ARG)를 적절한 위치에 배치
+└── 조건부 빌드 로직 최적화
+
+파일 변경 감지 최적화:
+├── .dockerignore를 통한 불필요한 파일 제외
+├── COPY 명령어의 세밀한 제어
+├── 파일 체크섬 기반 캐시 무효화
+├── 타임스탬프 변경 최소화
+├── 빌드 컨텍스트 크기 최소화
+└── 네트워크 리소스 캐싱
+
+외부 캐시 활용:
+├── Docker BuildKit 고급 캐시 기능
+├── 레지스트리 기반 캐시 공유
+├── 로컬 캐시 볼륨 활용
+├── CI/CD 파이프라인 캐시 통합
+├── 분산 빌드 캐시 시스템
+└── 캐시 정책 및 만료 관리
+
+BuildKit 고급 기능:
+├── --cache-from: 외부 이미지에서 캐시 가져오기
+├── --cache-to: 캐시를 외부로 내보내기
+├── 병렬 빌드 및 의존성 해결
+├── 마운트 캐시 (RUN --mount=type=cache)
+├── 시크릿 마운트 (RUN --mount=type=secret)
+└── SSH 에이전트 포워딩
+```
+
+## 3. 이론: 보안 강화 이미지 설계 (10분)
+
+### 보안 중심 이미지 구성
+
+```
+보안 강화 전략:
+
+최소 권한 원칙:
+├── 비특권 사용자로 실행 (USER 지시어)
+├── 필요한 권한만 부여 (Linux Capabilities)
+├── 읽기 전용 루트 파일시스템
+├── 임시 파일용 tmpfs 볼륨 사용
+├── 불필요한 setuid/setgid 비트 제거
+└── 파일 권한 최소화 (chmod 644/755)
+
+취약점 최소화:
+├── 최신 베이스 이미지 사용
+├── 보안 패치 정기 적용
+├── 불필요한 패키지 설치 금지
+├── 개발 도구 제거 (컴파일러, 디버거)
+├── 네트워크 서비스 최소화
+└── 기본 계정 및 패스워드 변경
+
+시크릿 관리:
+├── 이미지에 시크릿 정보 포함 금지
+├── 빌드 시 시크릿 마운트 활용
+├── 환경 변수 대신 파일 기반 시크릿
+├── 런타임 시크릿 주입
+├── 시크릿 로테이션 지원
+└── 접근 로그 및 감사
+
+이미지 서명 및 검증:
+├── Docker Content Trust (DCT) 활용
+├── Notary를 통한 이미지 서명
+├── 공급망 보안 강화
+├── 이미지 스캔 자동화
+├── 취약점 데이터베이스 연동
+└── 정책 기반 이미지 승인
+```
+
+### Distroless 및 Scratch 이미지 활용
+
+```dockerfile
+# Distroless 이미지 예시 (개념 예시)
+FROM golang:1.19-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+
+FROM gcr.io/distroless/static-debian11
+COPY --from=builder /app/main /
+USER 65534:65534
+EXPOSE 8080
+ENTRYPOINT ["/main"]
+
+# Scratch 이미지 예시 (개념 예시)
+FROM golang:1.19-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o main .
+
+FROM scratch
+COPY --from=builder /app/main /main
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+USER 1000:1000
+EXPOSE 8080
+ENTRYPOINT ["/main"]
+```
+
+## 4. 개념 예시: 최적화 기법 적용 (12분)
+
+### Node.js 애플리케이션 최적화 예시
+
+```dockerfile
+# 최적화된 Node.js Dockerfile (개념 예시)
+# 1. 베이스 이미지 선택
+FROM node:18-alpine AS base
+RUN apk add --no-cache dumb-init
+WORKDIR /app
+COPY package*.json ./
+
+# 2. 의존성 설치 (프로덕션)
+FROM base AS deps
+RUN npm ci --only=production && npm cache clean --force
+
+# 3. 개발 의존성 및 빌드
+FROM base AS build
+RUN npm ci
+COPY . .
+RUN npm run build && npm run test
+
+# 4. 최종 런타임 이미지
+FROM node:18-alpine AS runtime
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001 && \
+    apk add --no-cache dumb-init
+WORKDIR /app
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=build --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=build --chown=nextjs:nodejs /app/package.json ./package.json
+USER nextjs
+EXPOSE 3000
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/server.js"]
+```
+
+### Python 애플리케이션 최적화 예시
+
+```dockerfile
+# 최적화된 Python Dockerfile (개념 예시)
+FROM python:3.11-slim AS base
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 시스템 의존성 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Python 의존성 설치
+FROM base AS deps
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
+# 애플리케이션 빌드
+FROM base AS build
+COPY . .
+RUN python -m compileall .
+
+# 최종 런타임 이미지
+FROM python:3.11-slim AS runtime
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/home/appuser/.local/bin:$PATH"
+
+RUN useradd --create-home --shell /bin/bash appuser
+WORKDIR /app
+COPY --from=deps --chown=appuser:appuser /root/.local /home/appuser/.local
+COPY --from=build --chown=appuser:appuser /app .
+USER appuser
+EXPOSE 8000
+CMD ["python", "app.py"]
+```
+
+### 빌드 성능 측정 예시
 
 ```bash
-# 최종 이미지 크기 비교 요약
-echo "=== Final Image Size Summary ==="
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(python-app|web-app)"
+# 빌드 시간 측정 (개념 예시)
+time docker build -t myapp:optimized .
 
-# 정리: 테스트 컨테이너 중지 및 삭제
-docker stop web-standard web-alpine 2>/dev/null || true
-docker rm web-standard web-alpine 2>/dev/null || true
+# 이미지 크기 비교 (개념 예시)
+docker images | grep myapp
+# myapp:optimized    latest    abc123    50MB
+# myapp:original     latest    def456    200MB
+
+# 레이어 분석 (개념 예시)
+docker history myapp:optimized --no-trunc
+
+# 빌드 캐시 효과 확인 (개념 예시)
+docker build -t myapp:cached . --progress=plain
+# => CACHED [2/8] COPY package*.json ./
+# => CACHED [3/8] RUN npm ci --only=production
 ```
 
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **멀티 스테이지 빌드**를 통한 이미지 크기 최소화
+- **빌드 캐시 최적화**로 빌드 시간 단축
+- **보안 강화** 이미지 설계 원칙
+- **성능과 보안**의 균형잡힌 최적화
+
+### 토론 주제
+"이미지 최적화에서 크기, 보안, 빌드 시간의 트레이드오프를 어떻게 균형있게 관리할 것인가?"
+
 ## 💡 핵심 키워드
-- **베이스 이미지**: FROM 명령어로 지정하는 기반 이미지
-- **Alpine Linux**: 보안과 크기에 최적화된 경량 배포판
-- **Slim 이미지**: 불필요한 패키지를 제거한 중간 크기 이미지
-- **멀티 아키텍처**: 다양한 CPU 아키텍처 지원 이미지
+- **멀티 스테이지**: 빌드 분리, 크기 최적화, 보안 강화
+- **빌드 캐시**: 레이어 캐싱, 무효화 최소화, BuildKit
+- **이미지 최적화**: Alpine, Distroless, Scratch, 레이어 최적화
+- **보안 설계**: 최소 권한, 취약점 관리, 시크릿 보호
 
 ## 📚 참고 자료
-- [Docker Official Images](https://hub.docker.com/search?q=&type=image&image_filter=official)
-- [Alpine Linux](https://alpinelinux.org/)
-- [Distroless Images](https://github.com/GoogleContainerTools/distroless)
-
-## 🔧 실습 체크리스트
-- [ ] 다양한 베이스 이미지로 동일 앱 빌드
-- [ ] 이미지 크기 비교 및 분석
-- [ ] Alpine vs Slim vs Standard 특성 이해
-- [ ] 멀티 아키텍처 이미지 확인
-- [ ] 보안 및 최적화 고려사항 적용
+- [Docker 멀티 스테이지 빌드](https://docs.docker.com/develop/dockerfile_best-practices/)
+- [BuildKit 고급 기능](https://docs.docker.com/engine/reference/builder/)

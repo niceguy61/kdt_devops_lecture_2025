@@ -1,636 +1,431 @@
-# Session 4: 패키지 설치와 RUN 명령어 최적화
+# Session 4: 스토리지 성능 튜닝
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 4**로, Dockerfile에서 가장 많이 사용되는 RUN 명령어를 최적화하는 방법을 실습합니다. Session 3의 파일 구조 설정을 바탕으로 실제 애플리케이션 환경을 구성하는 과정을 학습합니다.
+이 세션은 **Week 2 > Day 2 > Session 4**로, 네트워크 성능 최적화 이해를 바탕으로 컨테이너 스토리지 시스템의 성능 튜닝과 I/O 최적화 기법을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **RUN 명령어 최적화**와 **레이어 관리** 기법 습득
-- **Node.js/Python 애플리케이션** 환경 구성 실습
-- **패키지 매니저** 활용과 **캐시 전략** 이해
+- **스토리지 드라이버별 성능 특성** 비교 분석
+- **I/O 성능 최적화** 기법과 **파일시스템 튜닝** 전략
+- **데이터 백업 및 복구** 성능 최적화 방법론
 
-## 1. 이론: RUN 명령어 최적화와 레이어 관리 (20분)
+## 1. 이론: 스토리지 드라이버 성능 분석 (20분)
 
-### RUN 명령어 최적화 원칙
+### 스토리지 드라이버 성능 비교
 
 ```mermaid
 graph TB
-    subgraph "RUN 최적화 전략"
-        A[명령어 체이닝] --> B[캐시 무효화 최소화]
-        B --> C[패키지 캐시 정리]
-        C --> D[임시 파일 제거]
-        D --> E[레이어 수 최소화]
+    subgraph "Storage Driver Performance"
+        A[overlay2] --> B[최고 성능<br/>권장 드라이버]
+        C[aufs] --> D[레거시<br/>성능 저하]
+        E[devicemapper] --> F[블록 레벨<br/>복잡한 설정]
+        G[btrfs] --> H[CoW 기능<br/>안정성 이슈]
+        I[zfs] --> J[고급 기능<br/>높은 메모리 요구]
     end
     
-    subgraph "안티패턴"
-        F[개별 RUN 명령어] --> G[캐시 미정리]
-        G --> H[불필요한 패키지]
-        H --> I[임시 파일 방치]
+    subgraph "Performance Metrics"
+        K[Sequential I/O<br/>순차 I/O]
+        L[Random I/O<br/>랜덤 I/O]
+        M[Metadata Ops<br/>메타데이터 연산]
+        N[Memory Usage<br/>메모리 사용량]
     end
-```
-
-### 레이어 최적화 비교
-
-```dockerfile
-# ❌ 비효율적인 방법 (여러 레이어)
-FROM ubuntu:20.04
-RUN apt-get update
-RUN apt-get install -y python3
-RUN apt-get install -y python3-pip
-RUN apt-get install -y curl
-RUN apt-get install -y git
-RUN rm -rf /var/lib/apt/lists/*
-
-# ✅ 효율적인 방법 (단일 레이어)
-FROM ubuntu:20.04
-RUN apt-get update && \
-    apt-get install -y \
-        python3 \
-        python3-pip \
-        curl \
-        git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-```
-
-### 패키지 매니저별 최적화 패턴
-
-```
-APT (Ubuntu/Debian):
-├── apt-get update && apt-get install -y packages
-├── apt-get clean
-├── rm -rf /var/lib/apt/lists/*
-└── --no-install-recommends 옵션 사용
-
-YUM/DNF (RHEL/CentOS/Fedora):
-├── yum install -y packages
-├── yum clean all
-└── rm -rf /var/cache/yum
-
-APK (Alpine):
-├── apk add --no-cache packages
-├── apk del build-dependencies
-└── 자동 캐시 정리
-
-NPM (Node.js):
-├── npm ci --only=production
-├── npm cache clean --force
-└── node_modules 최적화
-
-PIP (Python):
-├── pip install --no-cache-dir packages
-├── pip install --user (권한 최소화)
-└── requirements.txt 활용
-```
-
-## 2. 실습: Node.js 애플리케이션 환경 구성 (15분)
-
-### Express.js API 서버 구축
-
-```bash
-# 실습 디렉토리 생성
-mkdir -p ~/docker-practice/day2/session4/nodejs-api
-cd ~/docker-practice/day2/session4/nodejs-api
-
-# package.json 생성
-cat > package.json << 'EOF'
-{
-  "name": "nodejs-docker-api",
-  "version": "1.0.0",
-  "description": "Node.js API server in Docker",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "test": "jest"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.0.0",
-    "morgan": "^1.10.0",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1",
-    "jest": "^29.6.2"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  }
-}
-EOF
-
-# Express 서버 코드
-cat > server.js << 'EOF'
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// 미들웨어
-app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json());
-
-// 라우트
-app.get('/', (req, res) => {
-  res.json({
-    message: '🚀 Node.js API Server in Docker',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    version: process.env.npm_package_version,
-    node_version: process.version
-  });
-});
-
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get('/api/users', (req, res) => {
-  const users = [
-    { id: 1, name: 'Docker User', email: 'docker@example.com' },
-    { id: 2, name: 'Container User', email: 'container@example.com' }
-  ];
-  res.json(users);
-});
-
-// 에러 핸들링
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🐳 Container: ${process.env.HOSTNAME || 'localhost'}`);
-});
-EOF
-
-# 환경 변수 파일
-cat > .env << 'EOF'
-NODE_ENV=production
-PORT=3000
-API_VERSION=v1
-EOF
-```
-
-### 최적화된 Node.js Dockerfile
-
-```dockerfile
-# Dockerfile.optimized
-cat > Dockerfile.optimized << 'EOF'
-FROM node:18-alpine
-
-# 메타데이터
-LABEL maintainer="student@example.com"
-LABEL description="Optimized Node.js API server"
-
-# 보안 업데이트 및 필수 도구 설치
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache \
-        dumb-init \
-        curl && \
-    rm -rf /var/cache/apk/*
-
-# 비root 사용자 생성
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S -u 1001 -G nodejs nodejs
-
-# 애플리케이션 디렉토리 생성
-RUN mkdir -p /app && \
-    chown -R nodejs:nodejs /app
-
-WORKDIR /app
-
-# 의존성 파일 복사 (캐시 최적화)
-COPY --chown=nodejs:nodejs package*.json ./
-
-# 사용자 전환 후 의존성 설치
-USER nodejs
-
-# 프로덕션 의존성만 설치 및 캐시 정리
-RUN npm ci --only=production --silent && \
-    npm cache clean --force
-
-# 소스 코드 복사
-COPY --chown=nodejs:nodejs . .
-
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
-
-EXPOSE 3000
-
-# dumb-init으로 시그널 처리 개선
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["npm", "start"]
-EOF
-```
-
-### 개발용 vs 프로덕션용 Dockerfile 비교
-
-```dockerfile
-# Dockerfile.dev (개발용)
-cat > Dockerfile.dev << 'EOF'
-FROM node:18
-
-WORKDIR /app
-
-# 모든 의존성 설치 (개발 도구 포함)
-COPY package*.json ./
-RUN npm install
-
-# 소스 코드 복사
-COPY . .
-
-# 개발 서버 실행 (nodemon 사용)
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
-EOF
-
-# Dockerfile.prod (프로덕션용)
-cat > Dockerfile.prod << 'EOF'
-FROM node:18-alpine as builder
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-
-FROM node:18-alpine
-
-# 보안 강화
-RUN apk add --no-cache dumb-init && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S -u 1001 -G nodejs nodejs
-
-WORKDIR /app
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --chown=nodejs:nodejs . .
-
-USER nodejs
-EXPOSE 3000
-
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
-EOF
-```
-
-## 3. 실습: Python 애플리케이션 환경 구성 (10분)
-
-### Flask REST API 서버
-
-```bash
-# Python 프로젝트 디렉토리
-mkdir -p python-api && cd python-api
-
-# requirements.txt
-cat > requirements.txt << 'EOF'
-Flask==2.3.3
-Flask-CORS==4.0.0
-gunicorn==21.2.0
-python-dotenv==1.0.0
-requests==2.31.0
-psycopg2-binary==2.9.7
-redis==4.6.0
-EOF
-
-# Flask 애플리케이션
-cat > app.py << 'EOF'
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import os
-import sys
-import platform
-from datetime import datetime
-import socket
-
-app = Flask(__name__)
-CORS(app)
-
-@app.route('/')
-def home():
-    return jsonify({
-        'message': '🐍 Python Flask API in Docker',
-        'timestamp': datetime.now().isoformat(),
-        'python_version': sys.version,
-        'platform': platform.platform(),
-        'hostname': socket.gethostname(),
-        'environment': os.environ.get('FLASK_ENV', 'production')
-    })
-
-@app.route('/health')
-def health():
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0'
-    })
-
-@app.route('/api/data')
-def get_data():
-    return jsonify({
-        'data': [
-            {'id': 1, 'name': 'Docker', 'type': 'Container'},
-            {'id': 2, 'name': 'Python', 'type': 'Language'},
-            {'id': 3, 'name': 'Flask', 'type': 'Framework'}
-        ],
-        'count': 3,
-        'timestamp': datetime.now().isoformat()
-    })
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
-    app.run(host='0.0.0.0', port=port, debug=debug)
-EOF
-```
-
-### 최적화된 Python Dockerfile
-
-```dockerfile
-# Python Dockerfile
-cat > Dockerfile << 'EOF'
-FROM python:3.11-slim
-
-# 메타데이터
-LABEL maintainer="student@example.com"
-LABEL description="Optimized Python Flask API"
-
-# 시스템 업데이트 및 필수 패키지 설치
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        gcc \
-        libc6-dev \
-        curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 비root 사용자 생성
-RUN useradd --create-home --shell /bin/bash app
-
-WORKDIR /app
-
-# 의존성 파일 복사 및 설치
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    apt-get purge -y gcc libc6-dev && \
-    apt-get autoremove -y
-
-# 소스 코드 복사 및 권한 설정
-COPY --chown=app:app . .
-
-# 사용자 전환
-USER app
-
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
-
-EXPOSE 5000
-
-# Gunicorn으로 프로덕션 서버 실행
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]
-EOF
-```
-
-## 4. 실습: 빌드 도구 분리 패턴 (10분)
-
-### 컴파일이 필요한 애플리케이션 (Go 예시)
-
-```bash
-# Go 애플리케이션 예시
-mkdir -p go-api && cd go-api
-
-# Go 소스 코드
-cat > main.go << 'EOF'
-package main
-
-import (
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
-    "runtime"
-    "time"
-)
-
-type Response struct {
-    Message   string `json:"message"`
-    Timestamp string `json:"timestamp"`
-    GoVersion string `json:"go_version"`
-    OS        string `json:"os"`
-    Arch      string `json:"arch"`
-    Hostname  string `json:"hostname"`
-}
-
-func main() {
-    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        hostname, _ := os.Hostname()
-        
-        response := Response{
-            Message:   "🚀 Go API in Docker",
-            Timestamp: time.Now().Format(time.RFC3339),
-            GoVersion: runtime.Version(),
-            OS:        runtime.GOOS,
-            Arch:      runtime.GOARCH,
-            Hostname:  hostname,
-        }
-        
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(response)
-    })
     
-    http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(map[string]string{
-            "status": "healthy",
-            "timestamp": time.Now().Format(time.RFC3339),
-        })
-    })
-    
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
-    
-    fmt.Printf("🚀 Server starting on port %s\n", port)
-    log.Fatal(http.ListenAndServe(":"+port, nil))
-}
-EOF
-
-# go.mod 파일
-cat > go.mod << 'EOF'
-module go-api
-
-go 1.21
-EOF
+    B --> K
+    D --> L
+    F --> M
+    J --> N
 ```
 
-### 멀티 스테이지 빌드로 크기 최적화
+### 스토리지 드라이버별 성능 특성
 
-```dockerfile
-# Go 멀티 스테이지 Dockerfile
-cat > Dockerfile << 'EOF'
-# 빌드 스테이지
-FROM golang:1.21-alpine AS builder
+```
+스토리지 드라이버 성능 분석:
 
-# 빌드 도구 설치
-RUN apk add --no-cache git ca-certificates
+overlay2 (권장):
+├── 순차 읽기: 95-98% (네이티브 대비)
+├── 순차 쓰기: 90-95% (CoW 오버헤드)
+├── 랜덤 읽기: 85-90% (레이어 탐색)
+├── 랜덤 쓰기: 80-85% (첫 쓰기 비용)
+├── 메타데이터 연산: 매우 빠름
+├── 메모리 사용량: 낮음
+├── CPU 오버헤드: 최소
+└── 디스크 사용량: 효율적
 
-WORKDIR /app
+aufs (레거시):
+├── 순차 읽기: 80-85% (다중 레이어)
+├── 순차 쓰기: 70-75% (복잡한 CoW)
+├── 랜덤 읽기: 60-70% (레이어 순회)
+├── 랜덤 쓰기: 50-60% (성능 저하)
+├── 메타데이터 연산: 느림
+├── 메모리 사용량: 높음
+├── CPU 오버헤드: 높음
+└── 디스크 사용량: 비효율적
 
-# 의존성 파일 복사
-COPY go.mod go.sum ./
-RUN go mod download
+devicemapper:
+├── 순차 읽기: 85-90% (블록 레벨)
+├── 순차 쓰기: 75-80% (스냅샷 오버헤드)
+├── 랜덤 읽기: 70-80% (블록 매핑)
+├── 랜덤 쓰기: 60-70% (메타데이터 업데이트)
+├── 메타데이터 연산: 보통
+├── 메모리 사용량: 높음 (메타데이터)
+├── CPU 오버헤드: 보통
+└── 디스크 사용량: 설정에 따라 가변
 
-# 소스 코드 복사 및 빌드
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+btrfs:
+├── 순차 읽기: 90-95% (네이티브 CoW)
+├── 순차 쓰기: 80-85% (CoW 특성)
+├── 랜덤 읽기: 75-85% (B-tree 구조)
+├── 랜덤 쓰기: 70-80% (프래그멘테이션)
+├── 메타데이터 연산: 빠름 (B-tree)
+├── 메모리 사용량: 보통
+├── CPU 오버헤드: 보통
+└── 디스크 사용량: 압축 지원
 
-# 런타임 스테이지
-FROM alpine:latest
-
-# 보안 업데이트 및 CA 인증서
-RUN apk --no-cache add ca-certificates tzdata && \
-    adduser -D -s /bin/sh appuser
-
-WORKDIR /root/
-
-# 빌드된 바이너리만 복사
-COPY --from=builder /app/main .
-
-# 비root 사용자로 실행
-USER appuser
-
-EXPOSE 8080
-
-CMD ["./main"]
-EOF
-
-# 빌드 및 크기 비교
-docker build -t go-api:multistage .
-docker images go-api
-
-# 단일 스테이지와 비교 (참고용)
-cat > Dockerfile.single << 'EOF'
-FROM golang:1.21-alpine
-
-WORKDIR /app
-COPY . .
-RUN go build -o main .
-
-EXPOSE 8080
-CMD ["./main"]
-EOF
-
-docker build -f Dockerfile.single -t go-api:single .
-docker images go-api
+zfs:
+├── 순차 읽기: 95-98% (ARC 캐시)
+├── 순차 쓰기: 85-90% (ZIL 최적화)
+├── 랜덤 읽기: 90-95% (L2ARC)
+├── 랜덤 쓰기: 80-85% (CoW + 압축)
+├── 메타데이터 연산: 매우 빠름
+├── 메모리 사용량: 매우 높음 (ARC)
+├── CPU 오버헤드: 높음 (압축/체크섬)
+└── 디스크 사용량: 압축 및 중복제거
 ```
 
-## 5. 실습: 패키지 캐시 최적화 (10분)
+### I/O 패턴 최적화 전략
 
-### 캐시 전략 비교
+```
+I/O 성능 최적화:
 
-```dockerfile
-# 캐시 최적화 테스트
-cat > Dockerfile.cache-test << 'EOF'
-FROM node:18-alpine
+파일시스템 레벨 최적화:
+├── 마운트 옵션 튜닝 (noatime, relatime)
+├── 블록 크기 최적화 (4K, 8K, 16K)
+├── 저널링 모드 선택 (ordered, writeback)
+├── 읽기 전용 마운트 활용
+├── 압축 및 중복제거 설정
+└── 예약 블록 비율 조정
 
-WORKDIR /app
+I/O 스케줄러 최적화:
+├── noop: SSD 및 가상화 환경
+├── deadline: 실시간 응답성 중요
+├── cfq: 공정한 I/O 분배
+├── mq-deadline: 멀티큐 환경
+├── kyber: 지연시간 기반 스케줄링
+└── bfq: 대화형 워크로드
 
-# ❌ 비효율적: 소스 변경 시 npm install 재실행
-# COPY . .
-# RUN npm install
+블록 디바이스 튜닝:
+├── 큐 깊이 (queue depth) 조정
+├── 읽기 전방 (read-ahead) 설정
+├── I/O 병합 (merge) 최적화
+├── 디스크 스케줄러 파라미터
+├── 블록 크기 정렬 (alignment)
+└── 디바이스별 최적화 설정
 
-# ✅ 효율적: package.json 변경 시만 npm install 재실행
-COPY package*.json ./
-RUN npm ci --only=production
-
-# 소스 코드는 나중에 복사
-COPY . .
-
-CMD ["npm", "start"]
-EOF
+애플리케이션 레벨 최적화:
+├── 버퍼링 전략 최적화
+├── 비동기 I/O (AIO) 활용
+├── 메모리 매핑 (mmap) 사용
+├── 배치 I/O 처리
+├── 캐싱 계층 구현
+└── I/O 패턴 분석 및 최적화
 ```
 
-### 빌드 시간 측정
+## 2. 이론: 볼륨 성능 최적화 (15분)
 
-```bash
-# 초기 빌드 시간 측정
-echo "=== Initial Build ==="
-time docker build -f Dockerfile.optimized -t nodejs-api:v1 .
-
-# 소스 코드 수정 후 재빌드
-echo "console.log('Updated');" >> server.js
-
-echo "=== Rebuild after source change ==="
-time docker build -f Dockerfile.optimized -t nodejs-api:v2 .
-
-# 의존성 변경 후 재빌드
-echo '"lodash": "^4.17.21",' >> package.json
-
-echo "=== Rebuild after dependency change ==="
-time docker build -f Dockerfile.optimized -t nodejs-api:v3 .
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### RUN 명령어 최적화 체크리스트
+### 볼륨 타입별 성능 특성
 
 ```mermaid
-flowchart TD
-    A[RUN 최적화] --> B{명령어 체이닝}
-    B -->|Yes| C[패키지 캐시 정리]
-    B -->|No| D[개별 RUN 사용]
+sequenceDiagram
+    participant App as Application
+    participant Container as Container Layer
+    participant Volume as Volume Mount
+    participant Storage as Storage Backend
     
-    C --> E[임시 파일 제거]
-    E --> F[레이어 수 최소화]
-    F --> G[최적화 완료]
+    App->>Container: Write request
     
-    D --> H[레이어 증가]
-    H --> I[이미지 크기 증가]
+    alt Bind Mount
+        Container->>Storage: Direct file access
+        Storage-->>Container: Native performance
+    else Named Volume
+        Container->>Volume: Volume driver
+        Volume->>Storage: Managed access
+        Storage-->>Volume: Controlled performance
+        Volume-->>Container: Optimized response
+    else tmpfs Mount
+        Container->>Container: Memory access
+        Container-->>Container: Maximum performance
+    end
+    
+    Container-->>App: I/O complete
 ```
 
-### 실습 결과 비교
+### 볼륨 최적화 전략
+
+```
+볼륨 성능 최적화:
+
+로컬 볼륨 최적화:
+├── 전용 디스크 파티션 할당
+├── SSD 스토리지 활용
+├── RAID 구성 최적화 (RAID 0, 10)
+├── 파일시스템 선택 (ext4, xfs, btrfs)
+├── 마운트 옵션 튜닝
+└── 디렉토리 구조 최적화
+
+네트워크 볼륨 최적화:
+├── 고속 네트워크 인터페이스 (10GbE, InfiniBand)
+├── 네트워크 지연시간 최소화
+├── 대역폭 할당 및 QoS
+├── 로컬 캐싱 구현
+├── 압축 및 중복제거
+└── 멀티패스 I/O 구성
+
+클라우드 볼륨 최적화:
+├── 프로비저닝된 IOPS 활용
+├── 볼륨 타입 선택 (gp3, io2, st1)
+├── 볼륨 크기 및 성능 비례
+├── 스냅샷 최적화
+├── 암호화 성능 고려
+└── 지역별 배치 최적화
+
+메모리 기반 최적화:
+├── tmpfs 볼륨 활용
+├── 메모리 디스크 (ramdisk)
+├── 페이지 캐시 최적화
+├── 스왑 설정 최적화
+├── NUMA 토폴로지 고려
+└── 메모리 압축 기술
+```
+
+### 캐싱 전략
+
+```
+다층 캐싱 아키텍처:
+
+애플리케이션 캐시:
+├── 인메모리 캐시 (Redis, Memcached)
+├── 애플리케이션 레벨 캐시
+├── 쿼리 결과 캐싱
+├── 세션 캐시
+├── 정적 콘텐츠 캐시
+└── CDN 통합
+
+파일시스템 캐시:
+├── 페이지 캐시 최적화
+├── 디렉토리 엔트리 캐시 (dcache)
+├── 아이노드 캐시 (icache)
+├── 버퍼 캐시 관리
+├── 읽기 전방 (readahead)
+└── 쓰기 지연 (write-behind)
+
+스토리지 캐시:
+├── SSD 캐시 계층
+├── 하드웨어 RAID 캐시
+├── 스토리지 컨트롤러 캐시
+├── 네트워크 스토리지 캐시
+├── 분산 캐시 시스템
+└── 계층적 스토리지 관리 (HSM)
+
+캐시 정책:
+├── LRU (Least Recently Used)
+├── LFU (Least Frequently Used)
+├── ARC (Adaptive Replacement Cache)
+├── 2Q (Two Queue)
+├── CLOCK 알고리즘
+└── 사용자 정의 정책
+```
+
+## 3. 이론: 백업 및 복구 성능 최적화 (10분)
+
+### 고성능 백업 전략
+
+```
+백업 성능 최적화:
+
+증분 백업 최적화:
+├── 블록 레벨 변경 감지
+├── 파일 레벨 델타 백업
+├── 스냅샷 기반 백업
+├── 체인지 로그 활용
+├── 압축 및 중복제거
+└── 병렬 백업 처리
+
+스냅샷 기술 활용:
+├── 파일시스템 스냅샷 (LVM, Btrfs, ZFS)
+├── 스토리지 레벨 스냅샷
+├── 애플리케이션 일관성 스냅샷
+├── 크래시 일관성 vs 애플리케이션 일관성
+├── 스냅샷 체인 관리
+└── 자동 스냅샷 스케줄링
+
+네트워크 백업 최적화:
+├── 대역폭 스로틀링
+├── 압축 전송
+├── 암호화 오버헤드 최소화
+├── 멀티스트림 전송
+├── 재시도 및 체크포인트
+└── 네트워크 QoS 적용
+
+복구 성능 최적화:
+├── 병렬 복구 처리
+├── 우선순위 기반 복구
+├── 부분 복구 지원
+├── 인플레이스 복구
+├── 핫 스탠바이 시스템
+└── 자동 장애조치 (failover)
+```
+
+## 4. 개념 예시: 스토리지 튜닝 구성 (12분)
+
+### 고성능 스토리지 설정 예시
+
+```yaml
+# Docker Compose 스토리지 최적화 (개념 예시)
+version: '3.8'
+
+services:
+  database:
+    image: postgres:13
+    volumes:
+      # 고성능 로컬 볼륨
+      - db_data:/var/lib/postgresql/data:Z
+      # 로그용 tmpfs (휘발성)
+      - type: tmpfs
+        target: /var/log/postgresql
+        tmpfs:
+          size: 100M
+    environment:
+      # PostgreSQL 성능 튜닝
+      POSTGRES_INITDB_ARGS: "--data-checksums --wal-segsize=64"
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  app:
+    image: myapp:latest
+    volumes:
+      # 애플리케이션 캐시용 볼륨
+      - app_cache:/app/cache
+      # 임시 파일용 tmpfs
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 512M
+          mode: 1777
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: ext4
+      device: /dev/sdb1
+      o: "rw,noatime,data=writeback"
+  
+  app_cache:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=1G,uid=1000,gid=1000"
+```
+
+### 스토리지 성능 모니터링 예시
 
 ```bash
-# 최종 이미지 크기 비교
-echo "=== Final Image Sizes ==="
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(nodejs-api|python-api|go-api)"
+# I/O 성능 측정 (개념 예시)
+# 순차 쓰기 성능 테스트
+docker run --rm -v myvolume:/data alpine \
+  dd if=/dev/zero of=/data/testfile bs=1M count=1000 oflag=direct
 
-# 빌드 레이어 분석
-docker history nodejs-api:v1 --format "table {{.CreatedBy}}\t{{.Size}}" | head -10
+# 랜덤 I/O 성능 테스트
+docker run --rm -v myvolume:/data alpine \
+  fio --name=random-rw --ioengine=libaio --iodepth=4 \
+      --rw=randrw --bs=4k --direct=1 --size=1G \
+      --numjobs=1 --runtime=60 --group_reporting \
+      --filename=/data/fio-test
+
+# 실시간 I/O 모니터링
+docker run --rm --pid=host --privileged alpine \
+  iostat -x 1
+
+# 컨테이너별 I/O 통계
+docker stats --format "table {{.Container}}\t{{.BlockIO}}"
 ```
 
+### 백업 성능 최적화 예시
+
+```bash
+# 고성능 백업 스크립트 (개념 예시)
+#!/bin/bash
+
+# 병렬 압축 백업
+docker run --rm \
+  -v myvolume:/source:ro \
+  -v backup_storage:/backup \
+  alpine tar -I pigz -cf /backup/backup-$(date +%Y%m%d).tar.gz /source
+
+# 증분 백업 (rsync 기반)
+docker run --rm \
+  -v myvolume:/source:ro \
+  -v backup_storage:/backup \
+  alpine rsync -avz --delete --link-dest=/backup/previous /source/ /backup/current/
+
+# 스냅샷 기반 백업
+docker run --rm \
+  -v /var/lib/docker:/docker:ro \
+  -v backup_storage:/backup \
+  alpine sh -c "
+    # LVM 스냅샷 생성
+    lvcreate -L1G -s -n docker-snap /dev/vg0/docker
+    # 스냅샷 마운트 및 백업
+    mount /dev/vg0/docker-snap /mnt/snap
+    tar -czf /backup/docker-snap-$(date +%Y%m%d).tar.gz -C /mnt/snap .
+    # 정리
+    umount /mnt/snap
+    lvremove -f /dev/vg0/docker-snap
+  "
+```
+
+### 스토리지 드라이버 벤치마크 예시
+
+```bash
+# 스토리지 드라이버 성능 비교 (개념 예시)
+for driver in overlay2 aufs devicemapper; do
+  echo "Testing $driver driver..."
+  
+  # Docker 데몬 재시작 (드라이버 변경)
+  sudo systemctl stop docker
+  sudo dockerd --storage-driver=$driver &
+  
+  # 성능 테스트
+  time docker run --rm alpine dd if=/dev/zero of=/tmp/test bs=1M count=100
+  
+  # 결과 기록
+  echo "$driver: $(time)" >> benchmark_results.txt
+done
+```
+
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **스토리지 드라이버별** 성능 특성과 최적 선택 기준
+- **I/O 최적화** 기법과 파일시스템 튜닝 전략
+- **볼륨 성능** 최적화와 캐싱 계층 설계
+- **백업 및 복구** 성능 향상 방법론
+
+### 토론 주제
+"데이터 집약적 애플리케이션에서 스토리지 성능과 데이터 안정성을 동시에 보장하는 최적의 아키텍처는 무엇인가?"
+
 ## 💡 핵심 키워드
-- **RUN 최적화**: 명령어 체이닝, 캐시 정리, 레이어 최소화
-- **패키지 매니저**: apt, apk, npm, pip 최적화 패턴
-- **빌드 캐시**: 의존성 파일 우선 복사로 캐시 효율성 향상
-- **멀티 스테이지**: 빌드 도구와 런타임 분리로 크기 최적화
+- **스토리지 성능**: I/O 패턴, 드라이버 최적화, 파일시스템 튜닝
+- **볼륨 최적화**: 로컬/네트워크/클라우드 볼륨, 캐싱 전략
+- **백업 최적화**: 증분 백업, 스냅샷, 병렬 처리
+- **모니터링**: I/O 메트릭, 성능 벤치마크, 실시간 분석
 
 ## 📚 참고 자료
-- [Dockerfile 모범 사례](https://docs.docker.com/develop/dev-best-practices/)
-- [Node.js Docker 가이드](https://nodejs.org/en/docs/guides/nodejs-docker-webapp/)
-- [Python Docker 최적화](https://pythonspeed.com/articles/dockerizing-python-is-hard/)
-
-## 🔧 실습 체크리스트
-- [ ] RUN 명령어 체이닝으로 레이어 최적화
-- [ ] 패키지 매니저별 캐시 정리 적용
-- [ ] Node.js/Python 환경 구성 완료
-- [ ] 멀티 스테이지 빌드로 크기 최적화
-- [ ] 빌드 캐시 전략으로 빌드 시간 단축
+- [Docker 스토리지 드라이버](https://docs.docker.com/storage/storagedriver/)
+- [Linux I/O 성능 튜닝](https://www.kernel.org/doc/Documentation/block/)

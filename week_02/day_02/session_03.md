@@ -1,629 +1,400 @@
-# Session 3: 파일 복사와 작업 디렉토리 설정
+# Session 3: 컨테이너 네트워크 성능 최적화
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 3**으로, Dockerfile에서 파일을 관리하는 핵심 명령어들을 실습합니다. Session 2의 베이스 이미지 선택을 바탕으로 실제 애플리케이션 파일들을 컨테이너로 복사하고 구조화하는 방법을 학습합니다.
+이 세션은 **Week 2 > Day 2 > Session 3**으로, 이미지 최적화 이해를 바탕으로 컨테이너 네트워킹의 성능 최적화와 고급 네트워크 구성 기법을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **COPY, ADD, WORKDIR** 명령어 **차이점** 이해
-- **웹 애플리케이션 파일 구조** 구성 실습
-- **파일 권한**과 **소유권** 관리 방법 학습
+- **네트워크 드라이버별 성능 특성** 비교 분석
+- **트래픽 최적화** 및 **로드 밸런싱** 고급 기법
+- **네트워크 보안과 성능**의 균형잡힌 설계 전략
 
-## 1. 이론: COPY, ADD, WORKDIR 명령어 차이점 (20분)
+## 1. 이론: 네트워크 드라이버 성능 분석 (20분)
 
-### 파일 복사 명령어 비교
+### 네트워크 드라이버 성능 비교
 
 ```mermaid
 graph TB
-    subgraph "COPY vs ADD"
-        A[COPY] --> B[로컬 파일만]
-        A --> C[단순 복사]
-        A --> D[권장 사용]
-        
-        E[ADD] --> F[URL 다운로드]
-        E --> G[압축 파일 자동 해제]
-        E --> H[복잡한 기능]
+    subgraph "Performance Comparison"
+        A[host] --> B[최고 성능<br/>격리 없음]
+        C[bridge] --> D[균형잡힌 성능<br/>기본 격리]
+        E[overlay] --> F[분산 네트워킹<br/>암호화 오버헤드]
+        G[macvlan] --> H[네이티브 성능<br/>VLAN 지원]
     end
     
-    subgraph "WORKDIR"
-        I[작업 디렉토리 설정] --> J[RUN, CMD, COPY 기준점]
-        I --> K[디렉토리 자동 생성]
-        I --> L[상대 경로 기준]
+    subgraph "Performance Metrics"
+        I[Throughput<br/>처리량]
+        J[Latency<br/>지연시간]
+        K[CPU Overhead<br/>CPU 오버헤드]
+        L[Memory Usage<br/>메모리 사용량]
     end
-```
-
-### 명령어별 상세 기능
-
-| 명령어 | 기능 | 소스 | 대상 | 특수 기능 |
-|--------|------|------|------|-----------|
-| **COPY** | 파일/디렉토리 복사 | 로컬만 | 컨테이너 | 단순 복사 |
-| **ADD** | 파일/디렉토리 복사 | 로컬, URL | 컨테이너 | 압축 해제, URL 다운로드 |
-| **WORKDIR** | 작업 디렉토리 변경 | - | 컨테이너 | 디렉토리 생성 |
-
-### 파일 복사 패턴과 모범 사례
-
-```dockerfile
-# 모범 사례 예시
-FROM node:16-alpine
-
-# 1. 작업 디렉토리 설정 (먼저)
-WORKDIR /app
-
-# 2. 의존성 파일 먼저 복사 (캐시 최적화)
-COPY package*.json ./
-
-# 3. 의존성 설치
-RUN npm ci --only=production
-
-# 4. 소스 코드 복사 (나중에)
-COPY . .
-
-# 잘못된 예시 (캐시 비효율적)
-# COPY . .                    # 모든 파일을 먼저 복사
-# RUN npm install             # 소스 변경 시마다 재설치
-```
-
-### 파일 권한과 소유권 관리
-
-```
-파일 권한 관리 방법:
-
-1. COPY/ADD 시 권한 설정:
-   COPY --chown=user:group source dest
-   COPY --chmod=755 script.sh /usr/local/bin/
-
-2. RUN으로 권한 변경:
-   RUN chmod +x /app/start.sh
-   RUN chown -R app:app /app
-
-3. USER 명령어로 실행 사용자 변경:
-   USER app
-   
-보안 원칙:
-├── root 사용자로 실행 금지
-├── 필요한 최소 권한만 부여
-├── 실행 파일에만 실행 권한
-└── 민감한 파일은 읽기 전용
-```
-
-## 2. 실습: 웹 애플리케이션 파일 구조 구성 (15분)
-
-### React 프론트엔드 애플리케이션 구조
-
-```bash
-# 실습 디렉토리 생성
-mkdir -p ~/docker-practice/day2/session3/react-app
-cd ~/docker-practice/day2/session3/react-app
-
-# React 애플리케이션 파일 구조 생성
-mkdir -p src public build
-
-# package.json 생성
-cat > package.json << 'EOF'
-{
-  "name": "react-docker-app",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
-}
-EOF
-
-# public/index.html
-cat > public/index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>React Docker App</title>
-</head>
-<body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-</body>
-</html>
-EOF
-
-# src/index.js
-cat > src/index.js << 'EOF'
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
-EOF
-
-# src/App.js
-cat > src/App.js << 'EOF'
-import React from 'react';
-
-function App() {
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>🐳 React in Docker</h1>
-      <p>이 React 애플리케이션은 Docker 컨테이너에서 실행되고 있습니다.</p>
-      <div style={{ background: '#f0f0f0', padding: '15px', borderRadius: '5px', margin: '20px 0' }}>
-        <h3>파일 구조 최적화</h3>
-        <ul>
-          <li>package.json 먼저 복사 → 의존성 설치</li>
-          <li>소스 코드 나중에 복사 → 캐시 최적화</li>
-          <li>빌드 결과물만 프로덕션 이미지에 포함</li>
-        </ul>
-      </div>
-      <p>현재 시간: {new Date().toLocaleString()}</p>
-    </div>
-  );
-}
-
-export default App;
-EOF
-```
-
-### 개발용 Dockerfile (모든 파일 포함)
-
-```dockerfile
-# Dockerfile.dev
-cat > Dockerfile.dev << 'EOF'
-FROM node:16-alpine
-
-# 작업 디렉토리 설정
-WORKDIR /app
-
-# 의존성 파일 먼저 복사 (캐시 최적화)
-COPY package*.json ./
-
-# 의존성 설치
-RUN npm install
-
-# 소스 코드 복사
-COPY public/ public/
-COPY src/ src/
-
-# 개발 서버 포트 노출
-EXPOSE 3000
-
-# 개발 서버 실행
-CMD ["npm", "start"]
-EOF
-```
-
-### 프로덕션용 Dockerfile (빌드 결과물만)
-
-```dockerfile
-# Dockerfile.prod
-cat > Dockerfile.prod << 'EOF'
-# 빌드 스테이지
-FROM node:16-alpine as build
-
-WORKDIR /app
-
-# 의존성 설치
-COPY package*.json ./
-RUN npm ci --only=production --silent
-
-# 소스 코드 복사 및 빌드
-COPY public/ public/
-COPY src/ src/
-RUN npm run build
-
-# 프로덕션 스테이지
-FROM nginx:alpine
-
-# 빌드 결과물만 복사
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Nginx 설정 (선택사항)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-
-# Nginx 설정 파일
-cat > nginx.conf << 'EOF'
-server {
-    listen 80;
-    server_name localhost;
     
-    location / {
-        root /usr/share/nginx/html;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
-    }
-    
-    # 정적 파일 캐싱
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
+    B --> I
+    D --> J
+    F --> K
+    H --> L
 ```
 
-## 3. 실습: 복잡한 파일 구조 관리 (10분)
+### 네트워크 성능 특성 상세 분석
 
-### 다층 디렉토리 구조 애플리케이션
+```
+네트워크 드라이버별 성능 특성:
 
-```bash
-# 복잡한 프로젝트 구조 생성
-mkdir -p complex-app/{frontend,backend,database,docs,scripts}
-cd complex-app
+host 네트워크:
+├── 처리량: 네이티브 성능 (100% 기준)
+├── 지연시간: 최소 (< 0.1ms 추가 지연)
+├── CPU 오버헤드: 없음 (0% 추가)
+├── 메모리 사용량: 최소
+├── 격리 수준: 없음 (보안 위험)
+├── 포트 충돌: 가능성 높음
+├── 사용 사례: 고성능 네트워크 애플리케이션
+└── 제한사항: 단일 호스트, 보안 취약
 
-# 프론트엔드 파일들
-mkdir -p frontend/{src,public,build}
-echo "Frontend source code" > frontend/src/main.js
-echo "Frontend public files" > frontend/public/index.html
+bridge 네트워크:
+├── 처리량: 90-95% (NAT 오버헤드)
+├── 지연시간: 낮음 (0.1-0.5ms 추가)
+├── CPU 오버헤드: 낮음 (5-10%)
+├── 메모리 사용량: 보통
+├── 격리 수준: 네트워크 네임스페이스
+├── 포트 매핑: 유연한 포트 관리
+├── 사용 사례: 일반적인 컨테이너 애플리케이션
+└── 제한사항: 단일 호스트 네트워킹
 
-# 백엔드 파일들
-mkdir -p backend/{src,config,tests}
-echo "Backend application" > backend/src/app.py
-echo "Database config" > backend/config/database.yml
+overlay 네트워크:
+├── 처리량: 70-85% (VXLAN 캡슐화)
+├── 지연시간: 보통 (1-5ms 추가)
+├── CPU 오버헤드: 높음 (15-25%)
+├── 메모리 사용량: 높음
+├── 격리 수준: 멀티 호스트 격리
+├── 암호화: 기본 제공 (성능 영향)
+├── 사용 사례: 분산 마이크로서비스
+└── 제한사항: 복잡한 설정, 성능 오버헤드
 
-# 데이터베이스 스크립트
-mkdir -p database/{migrations,seeds}
-echo "CREATE TABLE users..." > database/migrations/001_create_users.sql
-echo "INSERT INTO users..." > database/seeds/users.sql
-
-# 문서 및 스크립트
-echo "# Project Documentation" > docs/README.md
-echo "#!/bin/bash\necho 'Setup script'" > scripts/setup.sh
-
-# 프로젝트 루트 파일들
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
-services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-  database:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: myapp
-EOF
-
-cat > .dockerignore << 'EOF'
-# 개발 도구
-.git
-.gitignore
-.vscode
-.idea
-
-# 로그 및 임시 파일
-*.log
-*.tmp
-.DS_Store
-Thumbs.db
-
-# 빌드 아티팩트
-node_modules
-dist
-build
-__pycache__
-*.pyc
-
-# 문서 (프로덕션에 불필요)
-docs/
-README.md
-*.md
-
-# 테스트 파일
-tests/
-*.test.js
-*.spec.py
-EOF
+macvlan 네트워크:
+├── 처리량: 95-98% (거의 네이티브)
+├── 지연시간: 매우 낮음 (< 0.2ms)
+├── CPU 오버헤드: 매우 낮음 (2-5%)
+├── 메모리 사용량: 낮음
+├── 격리 수준: VLAN 기반 격리
+├── MAC 주소: 컨테이너별 고유 MAC
+├── 사용 사례: 레거시 네트워크 통합
+└── 제한사항: 물리 네트워크 의존성
 ```
 
-### 선택적 파일 복사 Dockerfile
+### 네트워크 최적화 기법
 
-```dockerfile
-# 백엔드 Dockerfile
-cat > backend/Dockerfile << 'EOF'
-FROM python:3.9-slim
+```
+성능 최적화 전략:
 
-WORKDIR /app
+커널 바이패스 기술:
+├── DPDK (Data Plane Development Kit)
+├── SR-IOV (Single Root I/O Virtualization)
+├── 사용자 공간 네트워킹
+├── 하드웨어 오프로딩
+├── 제로 카피 네트워킹
+└── 인터럽트 코어스싱
 
-# 의존성 파일만 먼저 복사
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+네트워크 튜닝:
+├── TCP 윈도우 크기 최적화
+├── TCP 혼잡 제어 알고리즘 선택
+├── 네트워크 버퍼 크기 조정
+├── IRQ 밸런싱 및 CPU 어피니티
+├── NUMA 토폴로지 고려
+└── 네트워크 인터페이스 큐 설정
 
-# 설정 파일 복사
-COPY config/ config/
-
-# 소스 코드 복사 (테스트 파일 제외)
-COPY src/ src/
-
-# 데이터베이스 마이그레이션 파일 복사
-COPY --from=database-files ../database/migrations/ database/migrations/
-
-# 실행 권한 설정
-RUN chmod +x src/app.py
-
-# 비root 사용자 생성 및 전환
-RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 5000
-CMD ["python", "src/app.py"]
-EOF
-
-# requirements.txt 생성
-cat > backend/requirements.txt << 'EOF'
-flask==2.3.3
-psycopg2-binary==2.9.7
-python-dotenv==1.0.0
-EOF
+컨테이너 네트워크 최적화:
+├── 네트워크 네임스페이스 최적화
+├── veth 페어 성능 튜닝
+├── 브리지 설정 최적화
+├── iptables 규칙 최소화
+├── 네트워크 폴링 모드 설정
+└── 컨테이너별 네트워크 리소스 할당
 ```
 
-## 4. 실습: 파일 권한과 보안 (10분)
+## 2. 이론: 로드 밸런싱 및 트래픽 관리 (15분)
 
-### 보안 강화된 Dockerfile
-
-```dockerfile
-# 보안 강화 예시
-cat > Dockerfile.secure << 'EOF'
-FROM node:16-alpine
-
-# 보안 업데이트
-RUN apk update && apk upgrade && apk add --no-cache dumb-init
-
-# 비root 사용자 생성
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# 애플리케이션 디렉토리 생성 및 권한 설정
-RUN mkdir -p /app && chown -R nextjs:nodejs /app
-
-WORKDIR /app
-
-# 의존성 파일 복사 (root로)
-COPY --chown=nextjs:nodejs package*.json ./
-
-# 사용자 전환 후 의존성 설치
-USER nextjs
-RUN npm ci --only=production && npm cache clean --force
-
-# 소스 코드 복사 (올바른 권한으로)
-COPY --chown=nextjs:nodejs . .
-
-# 실행 스크립트 권한 설정
-USER root
-COPY --chmod=755 start.sh /usr/local/bin/start.sh
-USER nextjs
-
-EXPOSE 3000
-
-# dumb-init으로 PID 1 문제 해결
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["start.sh"]
-EOF
-
-# 시작 스크립트 생성
-cat > start.sh << 'EOF'
-#!/bin/sh
-echo "Starting application as user: $(whoami)"
-echo "Working directory: $(pwd)"
-echo "File permissions:"
-ls -la
-
-exec npm start
-EOF
-```
-
-### 파일 권한 테스트
-
-```bash
-# 권한 테스트용 Dockerfile
-cat > Dockerfile.permissions << 'EOF'
-FROM alpine:latest
-
-# 테스트 파일들 생성
-RUN echo "#!/bin/sh\necho 'Executable script'" > /test-executable.sh && \
-    echo "Regular file content" > /test-regular.txt && \
-    echo "Secret content" > /test-secret.txt
-
-# 다양한 권한 설정
-RUN chmod 755 /test-executable.sh && \
-    chmod 644 /test-regular.txt && \
-    chmod 600 /test-secret.txt
-
-# 사용자 생성 및 파일 소유권 변경
-RUN adduser -D testuser && \
-    chown testuser:testuser /test-secret.txt
-
-# 권한 확인 명령어
-CMD ["sh", "-c", "ls -la /test-* && echo '--- As testuser ---' && su testuser -c 'ls -la /test-*'"]
-EOF
-
-# 빌드 및 실행
-docker build -f Dockerfile.permissions -t permission-test .
-docker run --rm permission-test
-```
-
-## 5. 실습: .dockerignore 최적화 (10분)
-
-### 프로젝트별 .dockerignore 패턴
-
-```bash
-# Node.js 프로젝트용 .dockerignore
-cat > .dockerignore.nodejs << 'EOF'
-# 의존성 (package.json으로 재설치)
-node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# 빌드 아티팩트
-dist
-build
-.next
-out
-
-# 개발 도구
-.vscode
-.idea
-*.swp
-*.swo
-
-# 테스트 및 커버리지
-coverage
-.nyc_output
-*.lcov
-
-# 환경 설정 (보안)
-.env
-.env.local
-.env.*.local
-
-# OS 생성 파일
-.DS_Store
-Thumbs.db
-
-# Git
-.git
-.gitignore
-EOF
-
-# Python 프로젝트용 .dockerignore
-cat > .dockerignore.python << 'EOF'
-# Python 캐시
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# 가상환경
-venv
-env
-ENV
-
-# 테스트 및 커버리지
-.pytest_cache
-.coverage
-htmlcov
-.tox
-
-# IDE
-.vscode
-.idea
-*.swp
-
-# 빌드 아티팩트
-build
-dist
-*.egg-info
-
-# 문서
-docs/_build
-EOF
-
-# .dockerignore 효과 테스트
-echo "=== .dockerignore 테스트 ==="
-
-# 테스트 파일들 생성
-mkdir -p test-ignore/{node_modules,dist,docs}
-echo "dependency" > test-ignore/node_modules/package.js
-echo "build output" > test-ignore/dist/app.js
-echo "documentation" > test-ignore/docs/readme.md
-echo "source code" > test-ignore/app.js
-
-cd test-ignore
-
-# .dockerignore 없이 빌드
-cat > Dockerfile.no-ignore << 'EOF'
-FROM alpine:latest
-COPY . /app
-RUN ls -la /app
-EOF
-
-# .dockerignore 있이 빌드
-cp ../.dockerignore.nodejs .dockerignore
-cat > Dockerfile.with-ignore << 'EOF'
-FROM alpine:latest
-COPY . /app
-RUN ls -la /app
-EOF
-
-echo "--- Without .dockerignore ---"
-docker build -f Dockerfile.no-ignore -t test-no-ignore . 2>/dev/null | grep "COPY"
-
-echo "--- With .dockerignore ---"
-docker build -f Dockerfile.with-ignore -t test-with-ignore . 2>/dev/null | grep "COPY"
-
-cd ..
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### 파일 복사 최적화 체크리스트
+### 고급 로드 밸런싱 아키텍처
 
 ```mermaid
-flowchart TD
-    A[파일 복사 최적화] --> B{캐시 최적화}
-    B -->|Yes| C[의존성 파일 먼저 복사]
-    B -->|No| D[모든 파일 한번에 복사]
+sequenceDiagram
+    participant Client as Client
+    participant LB as Load Balancer
+    participant Proxy as Reverse Proxy
+    participant App1 as App Container 1
+    participant App2 as App Container 2
+    participant App3 as App Container 3
     
-    C --> E[소스 코드 나중에 복사]
-    E --> F[.dockerignore 활용]
-    F --> G[최적화 완료]
+    Client->>LB: HTTP Request
+    LB->>Proxy: Route to backend
     
-    D --> H[빌드 시간 증가]
-    H --> I[캐시 효율성 저하]
+    alt Round Robin
+        Proxy->>App1: Forward request
+        App1-->>Proxy: Response
+    else Least Connections
+        Proxy->>App2: Forward request
+        App2-->>Proxy: Response
+    else Health-based
+        Proxy->>App3: Forward request
+        App3-->>Proxy: Response
+    end
+    
+    Proxy-->>LB: Aggregated response
+    LB-->>Client: Final response
 ```
 
-### 실습 결과 정리
+### 로드 밸런싱 알고리즘 비교
+
+```
+로드 밸런싱 전략:
+
+기본 알고리즘:
+├── Round Robin: 순차적 요청 분산
+├── Weighted Round Robin: 가중치 기반 분산
+├── Least Connections: 최소 연결 수 기준
+├── Weighted Least Connections: 가중치 + 연결 수
+├── IP Hash: 클라이언트 IP 기반 해싱
+└── Random: 무작위 선택
+
+고급 알고리즘:
+├── Least Response Time: 응답 시간 기준
+├── Resource Based: 리소스 사용률 기준
+├── Adaptive: 동적 성능 지표 기반
+├── Geographic: 지리적 위치 기반
+├── Content-based: 요청 내용 기반
+└── Machine Learning: AI 기반 예측
+
+세션 지속성:
+├── Session Affinity (Sticky Sessions)
+├── 쿠키 기반 세션 관리
+├── IP 기반 세션 바인딩
+├── 외부 세션 스토어 활용
+├── 상태 비저장 설계 권장
+└── 세션 복제 및 동기화
+
+헬스 체크:
+├── HTTP/HTTPS 헬스 체크
+├── TCP 포트 연결 확인
+├── 사용자 정의 헬스 체크
+├── 다층 헬스 체크 (L4/L7)
+├── 장애 감지 및 복구 자동화
+└── 그레이스풀 셧다운 지원
+```
+
+### 트래픽 셰이핑 및 QoS
+
+```
+트래픽 관리 기법:
+
+대역폭 제어:
+├── 컨테이너별 대역폭 제한
+├── 서비스별 QoS 정책
+├── 우선순위 기반 트래픽 분류
+├── 버스트 트래픽 처리
+├── 공정한 대역폭 분배
+└── 동적 대역폭 할당
+
+트래픽 셰이핑:
+├── Token Bucket 알고리즘
+├── Leaky Bucket 알고리즘
+├── 계층적 토큰 버킷 (HTB)
+├── 클래스 기반 큐잉 (CBQ)
+├── 가중 공정 큐잉 (WFQ)
+└── 적응형 트래픽 제어
+
+혼잡 제어:
+├── TCP 혼잡 윈도우 관리
+├── 백프레셔 메커니즘
+├── 적응형 재전송 타이머
+├── 선택적 확인응답 (SACK)
+├── 명시적 혼잡 알림 (ECN)
+└── 버퍼 블로트 방지
+```
+
+## 3. 이론: 네트워크 보안과 성능 균형 (10분)
+
+### 보안 강화와 성능 최적화
+
+```
+보안-성능 균형 전략:
+
+암호화 최적화:
+├── 하드웨어 가속 암호화 (AES-NI)
+├── TLS 1.3 최신 프로토콜 사용
+├── 세션 재사용 및 티켓 활용
+├── OCSP 스테이플링
+├── 암호화 알고리즘 최적화
+└── 키 교환 최적화 (ECDHE)
+
+네트워크 격리:
+├── 마이크로세그멘테이션
+├── 네트워크 정책 엔진
+├── 서비스 메시 보안
+├── 제로 트러스트 네트워킹
+├── 동적 방화벽 규칙
+└── 트래픽 검사 최적화
+
+DDoS 방어:
+├── 레이트 리미팅
+├── 연결 제한
+├── SYN 쿠키 활용
+├── 트래픽 패턴 분석
+├── 자동 차단 메커니즘
+└── CDN 및 프록시 활용
+
+모니터링 및 감지:
+├── 실시간 트래픽 분석
+├── 이상 행동 탐지
+├── 네트워크 플로우 모니터링
+├── 침입 탐지 시스템 (IDS)
+├── 보안 이벤트 상관관계 분석
+└── 자동화된 대응 체계
+```
+
+## 4. 개념 예시: 네트워크 최적화 구성 (12분)
+
+### 고성능 네트워크 구성 예시
+
+```yaml
+# Docker Compose 네트워크 최적화 (개념 예시)
+version: '3.8'
+
+networks:
+  frontend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-frontend
+      com.docker.network.driver.mtu: 9000
+  backend:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.name: br-backend
+      com.docker.network.driver.mtu: 9000
+
+services:
+  nginx:
+    image: nginx:alpine
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    sysctls:
+      - net.core.somaxconn=65535
+      - net.ipv4.tcp_max_syn_backlog=65535
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  app:
+    image: myapp:latest
+    networks:
+      - frontend
+      - backend
+    deploy:
+      replicas: 3
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=600
+      - net.ipv4.tcp_keepalive_intvl=60
+```
+
+### 네트워크 성능 측정 예시
 
 ```bash
-# 빌드된 이미지들 크기 비교
-echo "=== Image Size Comparison ==="
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(react-app|permission-test)"
+# 네트워크 처리량 테스트 (개념 예시)
+# iperf3를 사용한 대역폭 측정
+docker run --rm --network host iperf3 -c target_host -t 30
 
-# 정리
-docker system prune -f
+# 지연시간 측정
+docker exec container_name ping -c 100 target_host
+
+# 네트워크 연결 상태 확인
+docker exec container_name ss -tuln
+
+# 네트워크 통계 확인
+docker exec container_name cat /proc/net/dev
 ```
 
+### 로드 밸런서 구성 예시
+
+```nginx
+# NGINX 로드 밸런서 설정 (개념 예시)
+upstream backend {
+    least_conn;
+    server app1:8080 weight=3 max_fails=3 fail_timeout=30s;
+    server app2:8080 weight=2 max_fails=3 fail_timeout=30s;
+    server app3:8080 weight=1 max_fails=3 fail_timeout=30s;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    
+    location / {
+        proxy_pass http://backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 10s;
+        proxy_read_timeout 10s;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+    }
+}
+```
+
+### 네트워크 모니터링 설정 예시
+
+```yaml
+# Prometheus 네트워크 모니터링 (개념 예시)
+version: '3.8'
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      - '--housekeeping_interval=10s'
+      - '--docker_only=true'
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points'
+      - '^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+```
+
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **네트워크 드라이버별** 성능 특성과 적절한 선택 기준
+- **로드 밸런싱** 알고리즘과 트래픽 관리 기법
+- **보안과 성능**의 균형잡힌 네트워크 설계
+- **모니터링 기반** 네트워크 최적화 전략
+
+### 토론 주제
+"마이크로서비스 아키텍처에서 네트워크 성능과 보안을 동시에 만족하는 최적의 네트워크 설계 전략은 무엇인가?"
+
 ## 💡 핵심 키워드
-- **COPY vs ADD**: 단순 복사 vs 고급 기능 (URL, 압축 해제)
-- **WORKDIR**: 작업 디렉토리 설정, 자동 생성
-- **파일 권한**: --chown, --chmod 옵션으로 보안 강화
-- **.dockerignore**: 불필요한 파일 제외로 빌드 최적화
+- **네트워크 성능**: 처리량, 지연시간, CPU 오버헤드
+- **로드 밸런싱**: 알고리즘, 세션 지속성, 헬스 체크
+- **트래픽 관리**: QoS, 대역폭 제어, 혼잡 제어
+- **보안 최적화**: 암호화, 격리, DDoS 방어, 모니터링
 
 ## 📚 참고 자료
-- [Dockerfile COPY 레퍼런스](https://docs.docker.com/engine/reference/builder/#copy)
-- [.dockerignore 가이드](https://docs.docker.com/engine/reference/builder/#dockerignore-file)
-- [Docker 보안 모범 사례](https://docs.docker.com/develop/security-best-practices/)
-
-## 🔧 실습 체크리스트
-- [ ] COPY와 ADD 명령어 차이점 이해
-- [ ] WORKDIR로 작업 디렉토리 구조화
-- [ ] 캐시 최적화를 위한 파일 복사 순서
-- [ ] 파일 권한과 소유권 보안 설정
-- [ ] .dockerignore로 빌드 최적화
+- [Docker 네트워킹 성능](https://docs.docker.com/network/drivers/)
+- [컨테이너 네트워크 최적화](https://kubernetes.io/docs/concepts/cluster-administration/networking/)

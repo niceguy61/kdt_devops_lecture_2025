@@ -1,787 +1,561 @@
-# Session 6: 바인드 마운트와 tmpfs
+# Session 6: 워크로드 스케줄링 및 리소스 관리
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 3 > Session 6**으로, Session 5의 볼륨 관리를 바탕으로 바인드 마운트와 tmpfs의 고급 활용법과 성능 최적화 기법을 학습합니다.
+이 세션은 **Week 2 > Day 3 > Session 6**으로, 스토리지 오케스트레이션 이해를 바탕으로 Kubernetes의 워크로드 스케줄링 알고리즘과 클러스터 리소스 관리 메커니즘을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **바인드 마운트** 고급 활용 및 **개발 워크플로우** 최적화
-- **tmpfs 마운트** 성능 튜닝 및 **메모리 관리** 전략
-- **마운트 타입별** 최적 사용 시나리오 및 **보안 고려사항**
+- **Kubernetes 스케줄러** 알고리즘과 **Pod 배치 전략** 이해
+- **리소스 쿼터** 및 **제한 정책**을 통한 **멀티 테넌시** 관리
+- **오토스케일링** 메커니즘과 **클러스터 확장** 전략 수립
 
-## 1. 이론: 마운트 타입별 심화 분석 (20분)
+## 1. 이론: Kubernetes 스케줄러 아키텍처 (20분)
 
-### 마운트 성능 비교
+### 스케줄링 프로세스 개요
 
 ```mermaid
 graph TB
-    subgraph "Performance Comparison"
-        A[tmpfs] --> B[Memory Speed]
-        C[Named Volume] --> D[Optimized I/O]
-        E[Bind Mount] --> F[Direct Access]
+    subgraph "Scheduling Process"
+        A[Pod Creation] --> B[Scheduler Queue]
+        B --> C[Filtering Phase]
+        C --> D[Scoring Phase]
+        D --> E[Node Selection]
+        E --> F[Binding]
     end
     
-    subgraph "Use Cases"
-        B --> G[Cache/Temp Data]
-        D --> H[Database/Persistent]
-        F --> I[Development/Config]
+    subgraph "Scheduler Components"
+        G[Scheduler Framework] --> H[Plugins]
+        H --> I[Profiles]
+        I --> J[Extensions]
     end
     
-    subgraph "Trade-offs"
-        G --> J[Fast but Volatile]
-        H --> K[Persistent but Slower]
-        I --> L[Flexible but Security Risk]
+    subgraph "Scheduling Constraints"
+        K[Node Affinity] --> L[Pod Affinity]
+        L --> M[Taints & Tolerations]
+        M --> N[Resource Requirements]
     end
-```
-
-### 마운트 타입별 성능 특성
-
-```
-성능 벤치마크 (상대적):
-
-tmpfs Mount:
-├── 읽기 성능: ★★★★★ (메모리 속도)
-├── 쓰기 성능: ★★★★★ (메모리 속도)
-├── 지연시간: ★★★★★ (나노초 단위)
-├── 처리량: ★★★★★ (GB/s 단위)
-└── 영속성: ☆☆☆☆☆ (휘발성)
-
-Named Volume:
-├── 읽기 성능: ★★★★☆ (최적화된 I/O)
-├── 쓰기 성능: ★★★★☆ (버퍼링)
-├── 지연시간: ★★★☆☆ (밀리초 단위)
-├── 처리량: ★★★☆☆ (MB/s 단위)
-└── 영속성: ★★★★★ (영구 보존)
-
-Bind Mount:
-├── 읽기 성능: ★★★☆☆ (호스트 FS 의존)
-├── 쓰기 성능: ★★★☆☆ (호스트 FS 의존)
-├── 지연시간: ★★★☆☆ (호스트 FS 의존)
-├── 처리량: ★★★☆☆ (호스트 FS 의존)
-└── 영속성: ★★★★★ (호스트에 저장)
-```
-
-### 보안 및 격리 수준
-
-```
-보안 매트릭스:
-
-tmpfs Mount:
-├── 데이터 격리: ★★★★★ (메모리 격리)
-├── 호스트 접근: ☆☆☆☆☆ (접근 불가)
-├── 권한 상속: ☆☆☆☆☆ (독립적)
-├── 데이터 유출: ★★★★★ (자동 삭제)
-└── 추천 용도: 임시/민감 데이터
-
-Named Volume:
-├── 데이터 격리: ★★★★☆ (Docker 관리)
-├── 호스트 접근: ★★☆☆☆ (제한적)
-├── 권한 상속: ★★★☆☆ (Docker 제어)
-├── 데이터 유출: ★★★☆☆ (관리 필요)
-└── 추천 용도: 애플리케이션 데이터
-
-Bind Mount:
-├── 데이터 격리: ★★☆☆☆ (호스트 공유)
-├── 호스트 접근: ★☆☆☆☆ (직접 접근)
-├── 권한 상속: ★☆☆☆☆ (호스트 권한)
-├── 데이터 유출: ★☆☆☆☆ (높은 위험)
-└── 추천 용도: 개발/설정 파일
-```
-
-## 2. 실습: 바인드 마운트 고급 활용 (15분)
-
-### 개발 환경 최적화
-
-```bash
-# 풀스택 개발 환경 구성
-mkdir -p fullstack-dev/{frontend,backend,database,nginx}
-
-# Frontend 프로젝트 구조
-mkdir -p fullstack-dev/frontend/{src,public,build}
-cat > fullstack-dev/frontend/src/App.js << 'EOF'
-import React from 'react';
-
-function App() {
-  return (
-    <div className="App">
-      <h1>Live Development Environment</h1>
-      <p>Changes reflect immediately!</p>
-      <p>Timestamp: {new Date().toLocaleString()}</p>
-    </div>
-  );
-}
-
-export default App;
-EOF
-
-# Backend API
-mkdir -p fullstack-dev/backend/{src,config}
-cat > fullstack-dev/backend/src/server.js << 'EOF'
-const express = require('express');
-const app = express();
-const port = 3000;
-
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
-});
-
-app.get('/api/data', (req, res) => {
-  res.json({ 
-    message: 'Live reload working!',
-    data: [1, 2, 3, 4, 5]
-  });
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-});
-EOF
-
-# Nginx 설정
-cat > fullstack-dev/nginx/nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream backend {
-        server backend:3000;
-    }
     
-    server {
-        listen 80;
-        
-        location / {
-            root /usr/share/nginx/html;
-            try_files $uri $uri/ /index.html;
-        }
-        
-        location /api {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-        }
-    }
-}
-EOF
-
-# 개발 환경 네트워크
-docker network create dev-network
-
-# Backend 서비스 (라이브 리로드)
-docker run -d --name backend \
-    --network dev-network \
-    -v $(pwd)/fullstack-dev/backend/src:/app \
-    -w /app \
-    node:alpine sh -c 'npm init -y && npm install express && node server.js'
-
-# Frontend 빌드 환경
-docker run -d --name frontend-build \
-    --network dev-network \
-    -v $(pwd)/fullstack-dev/frontend:/app \
-    -w /app \
-    node:alpine sh -c 'while true; do echo "Frontend build process"; sleep 30; done'
-
-# Nginx 프록시
-docker run -d --name nginx-proxy \
-    --network dev-network \
-    -v $(pwd)/fullstack-dev/nginx/nginx.conf:/etc/nginx/nginx.conf \
-    -v $(pwd)/fullstack-dev/frontend/build:/usr/share/nginx/html \
-    -p 8080:80 \
-    nginx:alpine
-
-# 개발 환경 테스트
-sleep 5
-curl -s http://localhost:8080/api/health | jq
+    C --> K
+    G --> A
 ```
 
-### 실시간 파일 동기화
+### 스케줄링 알고리즘 상세
 
-```bash
-# 파일 변경 감지 및 자동 재시작
-cat > file-watcher.sh << 'EOF'
-#!/bin/bash
+```
+Kubernetes 스케줄러 동작 원리:
 
-WATCH_DIR="./fullstack-dev/backend/src"
-CONTAINER_NAME="backend"
+스케줄링 사이클:
+├── 1단계: 스케줄링 큐에서 Pod 선택
+├── 2단계: 필터링 (Predicates/Filter Plugins)
+├── 3단계: 점수 매기기 (Priorities/Score Plugins)
+├── 4단계: 최적 노드 선택
+├── 5단계: 바인딩 (Bind Plugins)
+├── 6단계: 사후 처리 (PostBind Plugins)
+└── 7단계: 다음 Pod 처리
 
-echo "Starting file watcher for $WATCH_DIR"
+필터링 단계 (Filter Plugins):
+├── NodeResourcesFit:
+│   ├── CPU, 메모리, 스토리지 요구사항 확인
+│   ├── 확장 리소스 (GPU, FPGA) 가용성
+│   ├── 포트 충돌 검사
+│   └── 리소스 오버커밋 정책 적용
+├── NodeAffinity:
+│   ├── 노드 셀렉터 및 어피니티 규칙
+│   ├── 필수 조건 (requiredDuringScheduling)
+│   ├── 선호 조건 (preferredDuringScheduling)
+│   └── 라벨 기반 노드 선택
+├── PodAffinity/AntiAffinity:
+│   ├── Pod 간 배치 규칙
+│   ├── 동일 노드/영역 배치 (Affinity)
+│   ├── 분산 배치 (AntiAffinity)
+│   └── 토폴로지 도메인 고려
+├── TaintToleration:
+│   ├── 노드 테인트와 Pod 톨러레이션 매칭
+│   ├── 전용 노드 할당
+│   ├── 문제 노드 격리
+│   └── 스케줄링 제외 메커니즘
+├── VolumeBinding:
+│   ├── PVC와 PV 바인딩 가능성
+│   ├── 토폴로지 제약 조건
+│   ├── 스토리지 클래스 호환성
+│   └── 지연 바인딩 지원
+└── 기타 필터:
+    ├── NodeUnschedulable: 스케줄링 비활성화 노드
+    ├── NodeName: 특정 노드 지정
+    ├── NodePorts: 포트 가용성 확인
+    └── ImageLocality: 이미지 로컬 존재 여부
 
-# inotify를 사용한 파일 변경 감지 (Linux)
-if command -v inotifywait >/dev/null 2>&1; then
-    while inotifywait -e modify,create,delete -r "$WATCH_DIR"; do
-        echo "File change detected, restarting container..."
-        docker restart $CONTAINER_NAME
-        sleep 2
-    done
-else
-    # 폴링 방식 (크로스 플랫폼)
-    last_modified=$(find "$WATCH_DIR" -type f -exec stat -c %Y {} \; | sort -n | tail -1)
+점수 매기기 단계 (Score Plugins):
+├── NodeResourcesFit:
+│   ├── 리소스 사용률 기반 점수
+│   ├── 균등 분산 vs 집중 배치
+│   ├── 요청/제한 비율 고려
+│   └── 확장 리소스 가중치
+├── ImageLocality:
+│   ├── 이미지 로컬 존재 시 높은 점수
+│   ├── 이미지 크기 고려
+│   ├── 네트워크 대역폭 절약
+│   └── 시작 시간 단축
+├── InterPodAffinity:
+│   ├── Pod 어피니티 선호도 점수
+│   ├── 토폴로지 분산 고려
+│   ├── 가중치 기반 계산
+│   └── 복잡도 제한 (기본 300개 노드)
+├── NodeAffinity:
+│   ├── 노드 어피니티 선호도 점수
+│   ├── 가중치 기반 우선순위
+│   ├── 다중 조건 조합
+│   └── 소프트 제약 조건 처리
+└── 커스텀 스코어링:
+    ├── 플러그인 기반 확장
+    ├── 비즈니스 로직 반영
+    ├── 외부 메트릭 통합
+    └── 동적 점수 계산
+
+스케줄러 프레임워크:
+├── 확장 가능한 플러그인 아키텍처
+├── 다중 스케줄링 프로파일 지원
+├── 커스텀 스케줄러 개발 지원
+├── 이벤트 기반 확장 포인트
+├── 성능 최적화 및 병렬 처리
+└── 디버깅 및 관찰가능성 지원
+```
+
+### 고급 스케줄링 기능
+
+```
+고급 스케줄링 개념:
+
+Pod 우선순위 및 선점:
+├── PriorityClass를 통한 우선순위 정의
+├── 높은 우선순위 Pod의 선점 스케줄링
+├── 낮은 우선순위 Pod 축출 (Eviction)
+├── 리소스 부족 시 우선순위 기반 결정
+├── 시스템 크리티컬 워크로드 보호
+└── 배치 작업 vs 서비스 워크로드 분리
+
+토폴로지 분산 제약:
+├── Pod 토폴로지 분산 제약 (PodTopologySpreadConstraints)
+├── 영역, 노드, 랙 단위 분산
+├── 최대 편차 (maxSkew) 제어
+├── 고가용성 및 장애 격리
+├── 로드 밸런싱 최적화
+└── 지리적 분산 배치
+
+다중 스케줄러:
+├── 기본 스케줄러 외 커스텀 스케줄러
+├── 워크로드별 특화 스케줄링
+├── 스케줄러 이름 지정 (schedulerName)
+├── 병렬 스케줄링 지원
+├── 특수 요구사항 처리
+└── 실험적 스케줄링 알고리즘
+
+스케줄링 게이트:
+├── 외부 시스템 승인 대기
+├── 조건부 스케줄링 제어
+├── 워크플로우 통합
+├── 리소스 예약 시스템 연동
+└── 복잡한 배치 정책 구현
+```
+
+## 2. 이론: 리소스 관리 및 쿼터 시스템 (15분)
+
+### 리소스 쿼터 아키텍처
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant API as API Server
+    participant Admission as Admission Controller
+    participant Quota as ResourceQuota
+    participant Scheduler as Scheduler
     
-    while true; do
-        current_modified=$(find "$WATCH_DIR" -type f -exec stat -c %Y {} \; | sort -n | tail -1)
-        
-        if [ "$current_modified" != "$last_modified" ]; then
-            echo "File change detected, restarting container..."
-            docker restart $CONTAINER_NAME
-            last_modified=$current_modified
-            sleep 2
-        fi
-        
-        sleep 1
-    done
-fi
-EOF
-
-chmod +x file-watcher.sh
-
-# 백그라운드에서 파일 감시 시작
-./file-watcher.sh &
-WATCHER_PID=$!
-
-# 파일 변경 테스트
-sleep 3
-echo "// Updated at $(date)" >> fullstack-dev/backend/src/server.js
-
-sleep 5
-kill $WATCHER_PID 2>/dev/null
+    User->>API: Create Pod
+    API->>Admission: Validate request
+    Admission->>Quota: Check resource quota
+    Quota-->>Admission: Quota available
+    Admission-->>API: Request approved
+    API->>Scheduler: Schedule Pod
+    Scheduler-->>API: Pod scheduled
+    API-->>User: Pod created
 ```
 
-### 설정 파일 관리
+### 리소스 쿼터 및 제한 정책
 
-```bash
-# 환경별 설정 관리
-mkdir -p config-management/{development,staging,production}
+```
+리소스 관리 체계:
 
-# 개발 환경 설정
-cat > config-management/development/app.json << 'EOF'
-{
-  "database": {
-    "host": "localhost",
-    "port": 5432,
-    "name": "dev_db",
-    "debug": true
-  },
-  "api": {
-    "baseUrl": "http://localhost:3000",
-    "timeout": 5000,
-    "retries": 3
-  },
-  "logging": {
-    "level": "debug",
-    "console": true
-  }
-}
-EOF
+ResourceQuota:
+├── 네임스페이스별 리소스 사용량 제한
+├── 컴퓨팅 리소스 (CPU, 메모리, 스토리지)
+├── 오브젝트 수량 제한 (Pod, Service, PVC 등)
+├── 확장 리소스 (GPU, 사용자 정의 리소스)
+├── 스코프 기반 쿼터 (우선순위, QoS 클래스)
+├── 하드 제한 vs 소프트 제한
+└── 실시간 사용량 추적 및 제어
 
-# 스테이징 환경 설정
-cat > config-management/staging/app.json << 'EOF'
-{
-  "database": {
-    "host": "staging-db",
-    "port": 5432,
-    "name": "staging_db",
-    "debug": false
-  },
-  "api": {
-    "baseUrl": "https://staging-api.example.com",
-    "timeout": 10000,
-    "retries": 5
-  },
-  "logging": {
-    "level": "info",
-    "console": false
-  }
-}
-EOF
+LimitRange:
+├── 개별 리소스 오브젝트 제한
+├── Pod, 컨테이너, PVC별 최소/최대 리소스
+├── 기본값 및 기본 요청량 설정
+├── 요청/제한 비율 제어
+├── 리소스 오버커밋 방지
+└── 네임스페이스 레벨 정책 적용
 
-# 환경별 컨테이너 실행
-for env in development staging; do
-    docker run -d --name app-$env \
-        -v $(pwd)/config-management/$env:/config:ro \
-        alpine sh -c "
-            echo 'Starting $env environment'
-            cat /config/app.json
-            sleep 3600
-        "
-done
+QoS (Quality of Service) 클래스:
+├── Guaranteed:
+│   ├── 모든 컨테이너에 CPU/메모리 요청=제한
+│   ├── 최고 우선순위, 축출 저항성
+│   ├── 예측 가능한 성능
+│   ├── 크리티컬 워크로드 적합
+│   └── 리소스 예약 보장
+├── Burstable:
+│   ├── 최소 하나의 컨테이너에 요청량 설정
+│   ├── 요청량 < 제한량 또는 제한량 미설정
+│   ├── 중간 우선순위
+│   ├── 리소스 버스트 허용
+│   └── 일반적인 애플리케이션 워크로드
+└── BestEffort:
+    ├── 요청량 및 제한량 미설정
+    ├── 최저 우선순위, 먼저 축출
+    ├── 남은 리소스 활용
+    ├── 배치 작업 및 실험적 워크로드
+    └── 비용 효율적 리소스 활용
 
-# 설정 확인
-docker logs app-development | head -10
-docker logs app-staging | head -10
+멀티 테넌시 지원:
+├── 네임스페이스 기반 격리
+├── RBAC 권한 분리
+├── 네트워크 정책 격리
+├── 리소스 쿼터 할당
+├── 노드 풀 분리
+├── 스토리지 클래스 분리
+└── 모니터링 및 로깅 분리
 ```
 
-## 3. 실습: tmpfs 성능 최적화 (15분)
+### 리소스 모니터링 및 최적화
 
-### 고성능 캐시 시스템
+```
+리소스 최적화 전략:
 
-```bash
-# Redis 캐시 서버 (tmpfs 사용)
-docker run -d --name redis-cache \
-    --tmpfs /data:rw,size=512m,mode=0755 \
-    redis:alpine redis-server --dir /data --save ""
+Vertical Pod Autoscaler (VPA):
+├── Pod 리소스 요청량 자동 조정
+├── 과거 사용량 기반 추천
+├── 수직 스케일링 (리소스 증감)
+├── 재시작 기반 또는 인플레이스 업데이트
+├── 리소스 효율성 개선
+├── 오버프로비저닝 방지
+└── 워크로드별 최적화
 
-# 메모리 기반 데이터베이스
-docker run -d --name memory-db \
-    --tmpfs /var/lib/sqlite:rw,size=256m \
-    alpine sh -c '
-        apk add sqlite
-        cd /var/lib/sqlite
-        
-        # 메모리 기반 SQLite 데이터베이스
-        sqlite3 memory.db "
-            CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
-            INSERT INTO users (name, email) VALUES 
-                (\"John Doe\", \"john@example.com\"),
-                (\"Jane Smith\", \"jane@example.com\");
-        "
-        
-        while true; do
-            echo "Database entries: $(sqlite3 memory.db \"SELECT COUNT(*) FROM users;\")"
-            sleep 10
-        done
-    '
+리소스 사용량 분석:
+├── 메트릭 서버를 통한 실시간 모니터링
+├── Prometheus 기반 장기 메트릭 수집
+├── 리소스 사용 패턴 분석
+├── 피크 시간대 및 계절성 고려
+├── 비용 최적화 기회 식별
+└── 용량 계획 및 예측
 
-# 성능 테스트
-docker exec redis-cache redis-benchmark -n 10000 -c 10 -q
+노드 리소스 관리:
+├── 시스템 예약 리소스 (system-reserved)
+├── kubelet 예약 리소스 (kube-reserved)
+├── 축출 임계값 (eviction-threshold)
+├── 노드 압박 상황 처리
+├── 우선순위 기반 Pod 축출
+└── 노드 상태 및 조건 관리
 ```
 
-### 임시 작업 공간 최적화
+## 3. 이론: 오토스케일링 메커니즘 (10분)
 
-```bash
-# 대용량 데이터 처리 작업공간
-docker run -d --name data-processor \
-    --tmpfs /workspace:rw,size=1g,mode=1777 \
-    --tmpfs /tmp:rw,size=512m,noexec,nosuid \
-    alpine sh -c '
-        echo "Setting up high-performance workspace..."
-        
-        # 작업 디렉토리 구조 생성
-        mkdir -p /workspace/{input,output,temp}
-        
-        # 대용량 파일 처리 시뮬레이션
-        for i in {1..5}; do
-            echo "Processing batch $i..."
-            dd if=/dev/urandom of=/workspace/input/data_$i.bin bs=1M count=50 2>/dev/null
-            
-            # 데이터 변환 (예시)
-            cp /workspace/input/data_$i.bin /workspace/temp/processing_$i.bin
-            gzip /workspace/temp/processing_$i.bin
-            mv /workspace/temp/processing_$i.bin.gz /workspace/output/
-            
-            echo "Batch $i completed"
-        done
-        
-        echo "All processing completed"
-        ls -lh /workspace/output/
-        
-        sleep 3600
-    '
+### 오토스케일링 아키텍처
 
-# 작업 진행 상황 모니터링
-docker exec data-processor df -h /workspace
-docker exec data-processor ls -la /workspace/output/
+```
+Kubernetes 오토스케일링 계층:
+
+Horizontal Pod Autoscaler (HPA):
+├── Pod 복제본 수 자동 조정
+├── CPU, 메모리 사용률 기반
+├── 커스텀 메트릭 지원 (Prometheus, 외부 메트릭)
+├── 다중 메트릭 조합 정책
+├── 스케일 업/다운 정책 및 안정화
+├── 최소/최대 복제본 수 제한
+└── 배치 작업 제외 (Deployment, ReplicaSet 대상)
+
+Vertical Pod Autoscaler (VPA):
+├── Pod 리소스 요청량 자동 조정
+├── 과거 사용량 패턴 학습
+├── 추천 모드 vs 자동 적용 모드
+├── 업데이트 정책 (Off, Initial, Auto)
+├── 컨테이너별 개별 조정
+├── 리소스 효율성 극대화
+└── HPA와 동시 사용 제한
+
+Cluster Autoscaler:
+├── 노드 수 자동 조정
+├── 스케줄링 불가능한 Pod 감지
+├── 노드 그룹별 확장/축소
+├── 클라우드 제공업체 통합
+├── 비용 최적화 고려
+├── 스케일 다운 지연 및 안전장치
+└── 다중 노드 풀 지원
+
+오토스케일링 정책:
+├── 메트릭 기반 정책:
+│   ├── 리소스 메트릭 (CPU, 메모리)
+│   ├── 커스텀 메트릭 (애플리케이션 메트릭)
+│   ├── 외부 메트릭 (클라우드 서비스 메트릭)
+│   └── 다중 메트릭 조합 및 가중치
+├── 행동 정책:
+│   ├── 스케일 업 정책 (빠른 반응)
+│   ├── 스케일 다운 정책 (안정화 우선)
+│   ├── 안정화 윈도우 (thrashing 방지)
+│   └── 백오프 및 쿨다운 기간
+└── 제약 조건:
+    ├── 최소/최대 복제본 수
+    ├── 리소스 쿼터 한계
+    ├── 노드 가용성 제약
+    └── 비용 예산 제한
 ```
 
-### 보안 강화 tmpfs
+## 4. 개념 예시: 스케줄링 및 리소스 관리 구성 (12분)
 
-```bash
-# 보안 강화된 임시 스토리지
-docker run -d --name secure-workspace \
-    --tmpfs /secure:rw,size=100m,mode=0700,noexec,nosuid,nodev \
-    --user 1000:1000 \
-    alpine sh -c '
-        echo "Secure workspace initialized"
-        
-        # 민감한 데이터 처리
-        echo "secret-api-key-12345" > /secure/api.key
-        echo "database-password-67890" > /secure/db.pass
-        
-        # 권한 확인
-        ls -la /secure/
-        
-        # 보안 검증
-        echo "Security check:"
-        mount | grep /secure
-        
-        # 작업 완료 후 자동 정리 (컨테이너 종료 시)
-        sleep 30
-        echo "Secure processing completed, data will be automatically purged"
-    '
+### 고급 스케줄링 구성 예시
 
-# 보안 설정 확인
-docker exec secure-workspace mount | grep secure
-docker exec secure-workspace ls -la /secure/
+```yaml
+# Pod 우선순위 클래스 (개념 예시)
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000
+globalDefault: false
+description: "High priority class for critical workloads"
+
+---
+# 토폴로지 분산 제약이 있는 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      priorityClassName: high-priority
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: web-app
+      - maxSkew: 2
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: web-app
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-type
+                operator: In
+                values: ["compute"]
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: instance-type
+                operator: In
+                values: ["c5.large", "c5.xlarge"]
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: ["web-app"]
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: web
+        image: nginx:1.21
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ```
 
-## 4. 실습: 성능 벤치마킹 (10분)
+### 리소스 쿼터 및 제한 정책 예시
 
-### I/O 성능 비교 테스트
+```yaml
+# ResourceQuota (개념 예시)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-quota
+  namespace: team-a
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    requests.storage: 100Gi
+    persistentvolumeclaims: "10"
+    pods: "50"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"
+  scopes:
+  - NotTerminating
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["high", "medium"]
 
-```bash
-# 성능 테스트 스크립트
-cat > performance-benchmark.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Docker Storage Performance Benchmark ==="
-
-# 테스트 파라미터
-TEST_SIZE="100M"
-BLOCK_SIZE="1M"
-
-# tmpfs 성능 테스트
-echo "1. tmpfs Performance:"
-docker run --rm --tmpfs /test:rw,size=200m alpine sh -c "
-    echo 'Write test:'
-    time dd if=/dev/zero of=/test/tmpfs_write bs=$BLOCK_SIZE count=100 2>&1 | grep -E '(copied|MB/s)'
-    echo 'Read test:'
-    time dd if=/test/tmpfs_write of=/dev/null bs=$BLOCK_SIZE 2>&1 | grep -E '(copied|MB/s)'
-"
-
-# Named Volume 성능 테스트
-echo ""
-echo "2. Named Volume Performance:"
-docker volume create perf-test-vol
-docker run --rm -v perf-test-vol:/test alpine sh -c "
-    echo 'Write test:'
-    time dd if=/dev/zero of=/test/volume_write bs=$BLOCK_SIZE count=100 2>&1 | grep -E '(copied|MB/s)'
-    echo 'Read test:'
-    time dd if=/test/volume_write of=/dev/null bs=$BLOCK_SIZE 2>&1 | grep -E '(copied|MB/s)'
-"
-
-# Bind Mount 성능 테스트
-echo ""
-echo "3. Bind Mount Performance:"
-mkdir -p /tmp/bind-test
-docker run --rm -v /tmp/bind-test:/test alpine sh -c "
-    echo 'Write test:'
-    time dd if=/dev/zero of=/test/bind_write bs=$BLOCK_SIZE count=100 2>&1 | grep -E '(copied|MB/s)'
-    echo 'Read test:'
-    time dd if=/test/bind_write of=/dev/null bs=$BLOCK_SIZE 2>&1 | grep -E '(copied|MB/s)'
-"
-
-# 정리
-docker volume rm perf-test-vol
-rm -rf /tmp/bind-test
-
-echo ""
-echo "Benchmark completed!"
-EOF
-
-chmod +x performance-benchmark.sh
-./performance-benchmark.sh
+---
+# LimitRange (개념 예시)
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: resource-limits
+  namespace: team-a
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: 200m
+      memory: 256Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    min:
+      cpu: 50m
+      memory: 64Mi
+    max:
+      cpu: 2
+      memory: 4Gi
+    maxLimitRequestRatio:
+      cpu: 4
+      memory: 8
+  - type: Pod
+    max:
+      cpu: 4
+      memory: 8Gi
+  - type: PersistentVolumeClaim
+    min:
+      storage: 1Gi
+    max:
+      storage: 100Gi
 ```
 
-### 메모리 사용량 분석
+### 오토스케일링 구성 예시
 
-```bash
-# 메모리 사용량 모니터링
-cat > memory-analysis.sh << 'EOF'
-#!/bin/bash
+```yaml
+# HPA 구성 (개념 예시)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
 
-echo "=== Memory Usage Analysis ==="
-
-# 다양한 크기의 tmpfs 생성
-for size in 50m 100m 200m; do
-    container_name="tmpfs-$size"
-    
-    echo "Creating tmpfs container with size: $size"
-    docker run -d --name $container_name \
-        --tmpfs /data:rw,size=$size \
-        alpine sh -c "
-            # tmpfs 공간 채우기
-            dd if=/dev/zero of=/data/fill bs=1M count=\$(echo $size | sed 's/m//') 2>/dev/null || true
-            df -h /data
-            sleep 3600
-        "
-done
-
-# 메모리 사용량 확인
-echo ""
-echo "Container memory usage:"
-docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.MemPerc}}"
-
-# tmpfs 마운트 정보
-echo ""
-echo "tmpfs mount information:"
-for container in tmpfs-50m tmpfs-100m tmpfs-200m; do
-    echo "Container: $container"
-    docker exec $container df -h /data
-done
-
-# 정리
-docker stop tmpfs-50m tmpfs-100m tmpfs-200m
-docker rm tmpfs-50m tmpfs-100m tmpfs-200m
-EOF
-
-chmod +x memory-analysis.sh
-./memory-analysis.sh
+---
+# VPA 구성 (개념 예시)
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: web-app-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: web
+      minAllowed:
+        cpu: 50m
+        memory: 64Mi
+      maxAllowed:
+        cpu: 1
+        memory: 2Gi
+      controlledResources: ["cpu", "memory"]
 ```
 
-### 동시성 성능 테스트
+## 5. 토론 및 정리 (8분)
 
-```bash
-# 동시 접근 성능 테스트
-cat > concurrent-test.sh << 'EOF'
-#!/bin/bash
+### 핵심 개념 정리
+- **Kubernetes 스케줄러**의 2단계 알고리즘과 고급 배치 전략
+- **리소스 쿼터 시스템**을 통한 멀티 테넌시 및 리소스 거버넌스
+- **오토스케일링** 메커니즘을 통한 동적 리소스 관리
+- **QoS 클래스**와 **우선순위**를 통한 워크로드 차별화
 
-echo "=== Concurrent Access Performance Test ==="
-
-# 공유 볼륨 생성
-docker volume create shared-volume
-
-# 동시 쓰기 테스트
-echo "Starting concurrent write test..."
-for i in {1..5}; do
-    docker run -d --name writer-$i \
-        -v shared-volume:/shared \
-        alpine sh -c "
-            for j in {1..100}; do
-                echo 'Writer $i - Entry \$j - \$(date)' >> /shared/writer-$i.log
-                sleep 0.1
-            done
-            echo 'Writer $i completed'
-        " &
-done
-
-# 동시 읽기 테스트
-sleep 2
-echo "Starting concurrent read test..."
-for i in {1..3}; do
-    docker run -d --name reader-$i \
-        -v shared-volume:/shared \
-        alpine sh -c "
-            while [ \$(ls /shared/*.log 2>/dev/null | wc -l) -lt 5 ]; do
-                echo 'Reader $i waiting for files...'
-                sleep 1
-            done
-            
-            for file in /shared/*.log; do
-                echo 'Reader $i reading \$file'
-                wc -l \$file
-            done
-            
-            echo 'Reader $i completed'
-        " &
-done
-
-# 모든 작업 완료 대기
-wait
-
-# 결과 확인
-echo ""
-echo "Test results:"
-docker run --rm -v shared-volume:/shared alpine sh -c "
-    echo 'Files created:'
-    ls -la /shared/
-    echo ''
-    echo 'Total lines written:'
-    cat /shared/*.log | wc -l
-"
-
-# 정리
-docker stop $(docker ps -q --filter name=writer-) $(docker ps -q --filter name=reader-) 2>/dev/null || true
-docker rm $(docker ps -aq --filter name=writer-) $(docker ps -aq --filter name=reader-) 2>/dev/null || true
-docker volume rm shared-volume
-EOF
-
-chmod +x concurrent-test.sh
-./concurrent-test.sh
-```
-
-## 5. 실습: 보안 및 권한 관리 (10분)
-
-### 권한 매핑 전략
-
-```bash
-# 사용자 권한 매핑 테스트
-echo "Current host user: $(id)"
-
-# 권한 문제 시나리오
-mkdir -p security-test/{data,logs}
-echo "Host file" > security-test/data/host-file.txt
-
-# 권한 문제 발생
-docker run --rm -v $(pwd)/security-test:/test alpine sh -c '
-    echo "Container user: $(id)"
-    echo "Container file" > /test/data/container-file.txt
-    ls -la /test/data/
-'
-
-# 호스트에서 권한 확인
-ls -la security-test/data/
-
-# 사용자 매핑으로 해결
-docker run --rm \
-    --user $(id -u):$(id -g) \
-    -v $(pwd)/security-test:/test \
-    alpine sh -c '
-    echo "Mapped user: $(id)"
-    echo "Mapped file" > /test/data/mapped-file.txt
-    ls -la /test/data/
-'
-
-# 결과 확인
-ls -la security-test/data/
-```
-
-### 읽기 전용 마운트
-
-```bash
-# 읽기 전용 설정 파일 마운트
-mkdir -p readonly-config
-cat > readonly-config/app.conf << 'EOF'
-# Application Configuration
-debug=false
-log_level=info
-max_connections=100
-EOF
-
-# 읽기 전용 마운트로 컨테이너 실행
-docker run -d --name secure-app \
-    -v $(pwd)/readonly-config:/config:ro \
-    alpine sh -c '
-        echo "Configuration loaded:"
-        cat /config/app.conf
-        
-        echo "Attempting to modify config (should fail):"
-        echo "modified=true" >> /config/app.conf 2>&1 || echo "Write blocked (expected)"
-        
-        sleep 3600
-    '
-
-# 보안 검증
-docker logs secure-app
-```
-
-### 네임스페이스 격리
-
-```bash
-# 네임스페이스 격리 테스트
-cat > namespace-test.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Namespace Isolation Test ==="
-
-# 호스트 정보
-echo "Host namespace info:"
-echo "  PID: $$"
-echo "  User: $(id)"
-echo "  Network: $(ip addr show | grep inet | head -2)"
-
-# 컨테이너 네임스페이스
-docker run --rm alpine sh -c '
-    echo ""
-    echo "Container namespace info:"
-    echo "  PID: $$"
-    echo "  User: $(id)"
-    echo "  Network: $(ip addr show | grep inet | head -2)"
-    echo "  Mount: $(mount | grep tmpfs | head -2)"
-'
-
-# 권한 격리 테스트
-echo ""
-echo "Permission isolation test:"
-docker run --rm \
-    --tmpfs /isolated:rw,size=50m,mode=0700 \
-    --user 1000:1000 \
-    alpine sh -c '
-    echo "Creating isolated data..."
-    echo "sensitive data" > /isolated/secret.txt
-    ls -la /isolated/
-    
-    echo "Namespace isolation verified"
-'
-EOF
-
-chmod +x namespace-test.sh
-./namespace-test.sh
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### 마운트 전략 가이드라인
-
-```bash
-# 마운트 타입 선택 가이드
-cat > mount-strategy-guide.md << 'EOF'
-# Docker Mount Strategy Guide
-
-## 사용 시나리오별 권장사항
-
-### 개발 환경
-- **소스 코드**: Bind Mount (실시간 편집)
-- **설정 파일**: Bind Mount (환경별 관리)
-- **빌드 캐시**: tmpfs (빠른 I/O)
-- **로그**: Named Volume (영속성)
-
-### 스테이징 환경
-- **애플리케이션 데이터**: Named Volume
-- **설정**: ConfigMap/Secret (K8s) 또는 Named Volume
-- **임시 파일**: tmpfs
-- **로그**: 중앙 집중식 로깅
-
-### 프로덕션 환경
-- **데이터베이스**: Named Volume + 백업
-- **정적 자산**: Named Volume
-- **캐시**: tmpfs 또는 Redis
-- **로그**: 외부 로그 시스템
-
-## 성능 고려사항
-1. **tmpfs**: 최고 성능, 휘발성
-2. **Named Volume**: 균형잡힌 성능, 영속성
-3. **Bind Mount**: 호스트 의존적, 개발용
-
-## 보안 고려사항
-1. **최소 권한 원칙** 적용
-2. **읽기 전용** 마운트 활용
-3. **사용자 매핑** 설정
-4. **네임스페이스 격리** 확인
-EOF
-
-echo "Mount strategy guide created: mount-strategy-guide.md"
-
-# 최종 정리 및 검증
-echo ""
-echo "=== Final Mount Configuration Summary ==="
-
-# 현재 실행 중인 컨테이너의 마운트 정보
-for container in $(docker ps --format "{{.Names}}" | head -5); do
-    echo "Container: $container"
-    docker inspect $container --format '{{range .Mounts}}  {{.Type}}: {{.Source}} -> {{.Destination}} ({{.Mode}}){{end}}' | grep -v '^$'
-done
-
-# 시스템 리소스 사용량
-echo ""
-echo "System resource usage:"
-docker system df
-
-# 정리
-echo ""
-echo "Cleaning up test resources..."
-docker stop $(docker ps -q) 2>/dev/null || true
-docker rm $(docker ps -aq) 2>/dev/null || true
-rm -rf fullstack-dev config-management security-test readonly-config
-echo "✓ Cleanup completed"
-```
+### 토론 주제
+"대규모 멀티 테넌트 클러스터에서 리소스 효율성과 워크로드 격리를 동시에 보장하는 최적의 스케줄링 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **바인드 마운트**: 개발 워크플로우, 실시간 동기화, 권한 매핑
-- **tmpfs 마운트**: 고성능 캐시, 메모리 관리, 보안 강화
-- **성능 최적화**: I/O 벤치마킹, 동시성, 메모리 효율성
-- **보안 관리**: 읽기 전용, 네임스페이스 격리, 권한 제어
+- **스케줄링**: 필터링, 점수 매기기, 어피니티, 토폴로지 분산
+- **리소스 관리**: ResourceQuota, LimitRange, QoS 클래스
+- **오토스케일링**: HPA, VPA, Cluster Autoscaler, 메트릭 기반
+- **멀티 테넌시**: 네임스페이스, 우선순위, 격리 정책
 
 ## 📚 참고 자료
-- [Bind Mount 보안](https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation)
-- [tmpfs 성능 튜닝](https://docs.docker.com/storage/tmpfs/#tmpfs-containers)
-- [스토리지 드라이버](https://docs.docker.com/storage/storagedriver/)
-
-## 🔧 실습 체크리스트
-- [ ] 바인드 마운트 개발 환경 구성
-- [ ] tmpfs 고성능 캐시 시스템
-- [ ] 성능 벤치마킹 및 분석
-- [ ] 보안 강화 마운트 설정
-- [ ] 마운트 전략 가이드라인 수립
+- [Kubernetes 스케줄러](https://kubernetes.io/docs/concepts/scheduling-eviction/)
+- [리소스 관리](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+- [오토스케일링](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)

@@ -1,744 +1,537 @@
-# Session 2: 서비스 정의와 네트워킹
+# Session 2: 업그레이드 및 마이그레이션 전략
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 4 > Session 2**로, Session 1의 기본 Compose 구조를 바탕으로 서비스 간 통신과 네트워크 설계를 학습합니다.
+이 세션은 **Week 2 > Day 4 > Session 2**로, 클러스터 운영 관리 이해를 바탕으로 Kubernetes 클러스터의 안전한 업그레이드와 워크로드 마이그레이션 전략을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **서비스 간 통신** 패턴 및 **DNS 해석** 이해
-- **커스텀 네트워크** 설계 및 **네트워크 분리** 구현
-- **포트 매핑** 전략 및 **로드 밸런싱** 기초
+- **Kubernetes 버전 업그레이드** 전략과 **호환성 관리** 방법
+- **워크로드 마이그레이션** 기법과 **무중단 전환** 전략
+- **롤백 계획** 및 **리스크 관리** 방법론 수립
 
-## 1. 이론: Compose 네트워킹 (20분)
+## 1. 이론: Kubernetes 버전 업그레이드 전략 (20분)
 
-### 기본 네트워킹 동작
+### 업그레이드 계획 및 준비
 
 ```mermaid
 graph TB
-    subgraph "Docker Compose 네트워크"
-        A[프로젝트명_default] --> B[서비스 A]
-        A --> C[서비스 B]
-        A --> D[서비스 C]
+    subgraph "Upgrade Planning"
+        A[Version Analysis] --> B[Compatibility Check]
+        B --> C[Risk Assessment]
+        C --> D[Rollback Plan]
     end
     
-    subgraph "서비스 간 통신"
-        B --> E[서비스명으로 접근]
-        C --> F[DNS 자동 해석]
-        D --> G[내부 포트 사용]
+    subgraph "Upgrade Process"
+        E[Control Plane] --> F[Worker Nodes]
+        F --> G[Add-ons]
+        G --> H[Validation]
     end
     
-    subgraph "외부 접근"
-        H[Host] --> I[포트 매핑]
-        I --> B
+    subgraph "Post-Upgrade"
+        I[Testing] --> J[Monitoring]
+        J --> K[Documentation]
     end
+    
+    D --> E
+    H --> I
 ```
 
-### 네트워크 설계 패턴
+### 버전 호환성 및 업그레이드 경로
+
+```
+Kubernetes 업그레이드 전략:
+
+버전 호환성 분석:
+├── Kubernetes 버전 정책:
+│   ├── 마이너 버전 간 호환성 (n-2 지원)
+│   ├── API 버전 지원 정책
+│   ├── 기능 게이트 생명주기
+│   ├── 사용 중단 정책 (Deprecation Policy)
+│   └── 보안 패치 및 백포트
+├── 컴포넌트 호환성:
+│   ├── kubelet 버전 스큐 정책
+│   ├── kube-proxy 호환성
+│   ├── kubectl 클라이언트 호환성
+│   ├── 컨테이너 런타임 지원
+│   └── CNI/CSI 플러그인 호환성
+├── 애플리케이션 호환성:
+│   ├── API 버전 변경 영향 분석
+│   ├── 사용 중단된 API 사용 현황
+│   ├── 커스텀 리소스 호환성
+│   ├── 헬름 차트 호환성
+│   └── 서드파티 도구 호환성
+└── 인프라 호환성:
+    ├── 클라우드 제공업체 지원
+    ├── 네트워크 플러그인 호환성
+    ├── 스토리지 드라이버 지원
+    ├── 모니터링 도구 호환성
+    └── 보안 도구 통합
+
+업그레이드 준비 단계:
+├── 현재 상태 분석:
+│   ├── 클러스터 버전 및 구성 확인
+│   ├── 워크로드 인벤토리 작성
+│   ├── API 사용 현황 분석
+│   ├── 리소스 사용량 평가
+│   └── 의존성 매핑
+├── 호환성 검증:
+│   ├── kubectl convert를 통한 API 변환 테스트
+│   ├── 사용 중단 API 식별 및 마이그레이션
+│   ├── 애드온 및 오퍼레이터 호환성 확인
+│   ├── 커스텀 컨트롤러 테스트
+│   └── 통합 테스트 수행
+├── 백업 및 스냅샷:
+│   ├── etcd 클러스터 전체 백업
+│   ├── 애플리케이션 데이터 백업
+│   ├── 설정 파일 및 시크릿 백업
+│   ├── 인프라 상태 스냅샷
+│   └── 복구 절차 검증
+└── 테스트 환경 구성:
+    ├── 프로덕션 동일 환경 구성
+    ├── 업그레이드 시나리오 테스트
+    ├── 성능 및 안정성 검증
+    ├── 롤백 시나리오 테스트
+    └── 자동화 스크립트 검증
+
+업그레이드 실행 전략:
+├── 단계적 업그레이드:
+│   ├── 컨트롤 플레인 우선 업그레이드
+│   ├── 워커 노드 순차 업그레이드
+│   ├── 애드온 및 시스템 컴포넌트
+│   ├── 사용자 워크로드 검증
+│   └── 모니터링 및 검증
+├── 블루-그린 업그레이드:
+│   ├── 새로운 클러스터 구성
+│   ├── 워크로드 점진적 이동
+│   ├── 트래픽 전환 및 검증
+│   ├── 기존 클러스터 유지 (롤백용)
+│   └── 완전 전환 후 정리
+├── 카나리 업그레이드:
+│   ├── 일부 노드만 업그레이드
+│   ├── 제한된 워크로드 테스트
+│   ├── 점진적 확대 적용
+│   ├── 문제 발생 시 즉시 롤백
+│   └── 전체 클러스터 업그레이드
+└── 인플레이스 업그레이드:
+    ├── 기존 클러스터 직접 업그레이드
+    ├── 최소 다운타임 목표
+    ├── 자동화된 업그레이드 도구 활용
+    ├── 실시간 모니터링 및 검증
+    └── 빠른 롤백 메커니즘
+```
+
+### 컨트롤 플레인 업그레이드
+
+```
+컨트롤 플레인 업그레이드 절차:
+
+etcd 업그레이드:
+├── 백업 및 스냅샷 생성
+├── 멤버별 순차 업그레이드
+├── 클러스터 상태 검증
+├── 데이터 무결성 확인
+└── 성능 메트릭 모니터링
+
+API 서버 업그레이드:
+├── 로드 밸런서에서 제거
+├── 새 버전으로 교체
+├── 헬스 체크 통과 확인
+├── 로드 밸런서에 재추가
+└── API 호환성 검증
+
+기타 컴포넌트:
+├── kube-controller-manager
+├── kube-scheduler
+├── cloud-controller-manager
+├── DNS 및 네트워크 애드온
+└── 모니터링 및 로깅 스택
+```
+
+## 2. 이론: 워크로드 마이그레이션 전략 (15분)
+
+### 마이그레이션 패턴 및 전략
+
+```mermaid
+sequenceDiagram
+    participant Source as Source Cluster
+    participant Migration as Migration Tool
+    participant Target as Target Cluster
+    participant LB as Load Balancer
+    
+    Source->>Migration: Export workloads
+    Migration->>Target: Import workloads
+    Target->>Target: Validate deployment
+    Migration->>LB: Update traffic routing
+    LB->>Target: Route traffic
+    Migration->>Source: Drain workloads
+```
+
+### 마이그레이션 방법론
+
+```
+워크로드 마이그레이션 전략:
+
+마이그레이션 패턴:
+├── Lift and Shift:
+│   ├── 최소한의 변경으로 이동
+│   ├── 기존 구성 그대로 복제
+│   ├── 빠른 마이그레이션 가능
+│   ├── 최적화 기회 제한
+│   └── 호환성 문제 가능성
+├── Re-platforming:
+│   ├── 플랫폼 특화 최적화
+│   ├── 클라우드 네이티브 기능 활용
+│   ├── 성능 및 비용 최적화
+│   ├── 중간 수준의 변경 필요
+│   └── 점진적 개선 가능
+├── Refactoring:
+│   ├── 아키텍처 재설계
+│   ├── 마이크로서비스 분해
+│   ├── 클라우드 네이티브 패턴 적용
+│   ├── 높은 변경 비용
+│   └── 장기적 이익 극대화
+└── Hybrid Approach:
+    ├── 워크로드별 차별화 전략
+    ├── 위험도 기반 접근법
+    ├── 단계적 현대화
+    ├── 비즈니스 연속성 보장
+    └── 점진적 투자 회수
+
+데이터 마이그레이션:
+├── 상태 비저장 워크로드:
+│   ├── 설정 및 시크릿 이동
+│   ├── 이미지 레지스트리 동기화
+│   ├── 네트워크 정책 복제
+│   ├── RBAC 권한 매핑
+│   └── 모니터링 설정 이전
+├── 상태 유지 워크로드:
+│   ├── 데이터베이스 마이그레이션
+│   ├── 볼륨 데이터 복제
+│   ├── 백업 및 복원 전략
+│   ├── 데이터 일관성 보장
+│   └── 다운타임 최소화
+├── 네트워크 구성:
+│   ├── 서비스 디스커버리 업데이트
+│   ├── 로드 밸런서 재구성
+│   ├── DNS 레코드 업데이트
+│   ├── 방화벽 규칙 조정
+│   └── 인증서 및 TLS 설정
+└── 보안 정책:
+    ├── RBAC 정책 이전
+    ├── 네트워크 정책 적용
+    ├── Pod 보안 표준 설정
+    ├── 시크릿 및 키 관리
+    └── 감사 로그 설정
+
+마이그레이션 도구:
+├── Velero:
+│   ├── 클러스터 백업 및 복원
+│   ├── 네임스페이스 단위 마이그레이션
+│   ├── 볼륨 스냅샷 지원
+│   ├── 스케줄된 백업
+│   └── 재해 복구 지원
+├── Kubernetes Migration Tools:
+│   ├── kubectl을 통한 리소스 내보내기
+│   ├── Helm 차트 기반 배포
+│   ├── Kustomize 오버레이 활용
+│   ├── GitOps 기반 동기화
+│   └── 커스텀 마이그레이션 스크립트
+├── 클라우드 제공업체 도구:
+│   ├── AWS Migration Hub
+│   ├── Azure Migrate
+│   ├── Google Cloud Migrate
+│   ├── 관리형 마이그레이션 서비스
+│   └── 네이티브 통합 지원
+└── 서드파티 솔루션:
+    ├── Portworx PX-Migrate
+    ├── Kasten K10
+    ├── Rancher Fleet
+    ├── 상용 마이그레이션 도구
+    └── 컨설팅 서비스 활용
+```
+
+## 3. 이론: 롤백 및 리스크 관리 (10분)
+
+### 롤백 전략 및 복구 계획
+
+```
+롤백 및 복구 전략:
+
+롤백 시나리오:
+├── 업그레이드 실패:
+│   ├── 컨트롤 플레인 장애
+│   ├── 워커 노드 문제
+│   ├── 네트워크 연결 실패
+│   ├── 스토리지 접근 불가
+│   └── 애플리케이션 호환성 문제
+├── 성능 저하:
+│   ├── 응답 시간 증가
+│   ├── 처리량 감소
+│   ├── 리소스 사용량 급증
+│   ├── 메모리 누수 발생
+│   └── CPU 사용률 급증
+├── 기능 장애:
+│   ├── API 호환성 문제
+│   ├── 기능 동작 오류
+│   ├── 데이터 손실 위험
+│   ├── 보안 취약점 노출
+│   └── 통합 서비스 실패
+└── 비즈니스 영향:
+    ├── 서비스 중단
+    ├── 사용자 경험 저하
+    ├── 매출 손실 발생
+    ├── SLA 위반
+    └── 고객 신뢰도 하락
+
+롤백 메커니즘:
+├── 자동 롤백:
+│   ├── 헬스 체크 기반 자동 감지
+│   ├── 메트릭 임계값 기반 트리거
+│   ├── 사전 정의된 롤백 스크립트
+│   ├── 최소 개입으로 빠른 복구
+│   └── 알림 및 로깅 자동화
+├── 수동 롤백:
+│   ├── 운영팀 판단 기반 실행
+│   ├── 상황별 맞춤 대응
+│   ├── 부분 롤백 및 선택적 복구
+│   ├── 근본 원인 분석 병행
+│   └── 문서화된 절차 준수
+├── 점진적 롤백:
+│   ├── 단계별 순차 롤백
+│   ├── 영향 범위 최소화
+│   ├── 서비스 연속성 보장
+│   ├── 데이터 일관성 유지
+│   └── 사용자 영향 최소화
+└── 완전 롤백:
+    ├── 전체 시스템 이전 상태 복원
+    ├── 백업에서 완전 복구
+    ├── 모든 변경 사항 되돌리기
+    ├── 최대 안정성 확보
+    └── 최대 다운타임 발생
+
+리스크 관리:
+├── 사전 위험 평가:
+│   ├── 업그레이드 영향 분석
+│   ├── 의존성 위험 평가
+│   ├── 비즈니스 연속성 계획
+│   ├── 복구 시간 목표 설정
+│   └── 위험 완화 전략 수립
+├── 모니터링 및 알림:
+│   ├── 실시간 상태 모니터링
+│   ├── 이상 징후 조기 감지
+│   ├── 자동 알림 및 에스컬레이션
+│   ├── 대시보드 및 시각화
+│   └── 로그 분석 및 추적
+└── 커뮤니케이션:
+    ├── 이해관계자 사전 통보
+    ├── 진행 상황 실시간 공유
+    ├── 문제 발생 시 즉시 보고
+    ├── 복구 완료 후 사후 분석
+    └── 교훈 학습 및 개선
+```
+
+## 4. 개념 예시: 업그레이드 및 마이그레이션 구성 (12분)
+
+### kubeadm 업그레이드 예시
+
+```bash
+# Kubernetes 클러스터 업그레이드 (개념 예시)
+
+# 1. 현재 버전 확인
+kubectl version --short
+kubeadm version
+
+# 2. 업그레이드 계획 확인
+kubeadm upgrade plan
+
+# 3. 컨트롤 플레인 업그레이드
+sudo kubeadm upgrade apply v1.28.0
+
+# 4. kubelet 및 kubectl 업그레이드
+sudo apt-mark unhold kubeadm kubelet kubectl
+sudo apt-get update
+sudo apt-get install -y kubeadm=1.28.0-00 kubelet=1.28.0-00 kubectl=1.28.0-00
+sudo apt-mark hold kubeadm kubelet kubectl
+
+# 5. kubelet 재시작
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+# 6. 워커 노드 업그레이드 (각 노드에서)
+kubectl drain <node-name> --ignore-daemonsets
+sudo kubeadm upgrade node
+sudo systemctl restart kubelet
+kubectl uncordon <node-name>
+```
+
+### Velero 백업 및 마이그레이션 예시
 
 ```yaml
-# 기본 네트워크 (자동 생성)
-version: '3.8'
-services:
-  web:
-    image: nginx
-  api:
-    image: node:alpine
-# 자동으로 프로젝트명_default 네트워크 생성
+# Velero 백업 구성 (개념 예시)
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: full-cluster-backup
+  namespace: velero
+spec:
+  includedNamespaces:
+  - "*"
+  excludedNamespaces:
+  - kube-system
+  - velero
+  includedResources:
+  - "*"
+  excludedResources:
+  - events
+  - events.events.k8s.io
+  labelSelector:
+    matchLabels:
+      backup: "true"
+  snapshotVolumes: true
+  ttl: 720h0m0s
+  storageLocation: default
+  volumeSnapshotLocations:
+  - default
 
 ---
-# 커스텀 네트워크
-version: '3.8'
-services:
-  web:
-    image: nginx
-    networks:
-      - frontend
-  api:
-    image: node:alpine
-    networks:
-      - frontend
-      - backend
-  db:
-    image: mysql
-    networks:
-      - backend
-
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-    internal: true  # 외부 접근 차단
+# 복원 구성
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: full-cluster-restore
+  namespace: velero
+spec:
+  backupName: full-cluster-backup
+  includedNamespaces:
+  - production
+  - staging
+  excludedResources:
+  - nodes
+  - events
+  restorePVs: true
 ```
 
-## 2. 실습: 멀티 서비스 통신 구현 (15분)
-
-### 3-tier 아키텍처 구성
+### 업그레이드 자동화 스크립트 예시
 
 ```bash
-# 프로젝트 디렉토리 생성
-mkdir -p microservices-demo && cd microservices-demo
-
-# 멀티 서비스 Compose 파일
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
-
-services:
-  # Frontend - Nginx 리버스 프록시
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/html:/usr/share/nginx/html:ro
-    networks:
-      - frontend
-    depends_on:
-      - api-gateway
-
-  # API Gateway
-  api-gateway:
-    build: ./gateway
-    ports:
-      - "3000:3000"
-    environment:
-      - USER_SERVICE_URL=http://user-service:3001
-      - ORDER_SERVICE_URL=http://order-service:3002
-      - PRODUCT_SERVICE_URL=http://product-service:3003
-    networks:
-      - frontend
-      - backend
-    depends_on:
-      - user-service
-      - order-service
-      - product-service
-
-  # 마이크로서비스들
-  user-service:
-    build: ./services/user
-    environment:
-      - DB_HOST=postgres
-      - DB_NAME=userdb
-      - DB_USER=user
-      - DB_PASS=password
-    networks:
-      - backend
-      - database
-    depends_on:
-      - postgres
-
-  order-service:
-    build: ./services/order
-    environment:
-      - DB_HOST=postgres
-      - DB_NAME=orderdb
-      - REDIS_HOST=redis
-    networks:
-      - backend
-      - database
-    depends_on:
-      - postgres
-      - redis
-
-  product-service:
-    build: ./services/product
-    environment:
-      - DB_HOST=mongo
-      - DB_NAME=productdb
-    networks:
-      - backend
-      - database
-    depends_on:
-      - mongo
-
-  # 데이터베이스들
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - database
-
-  redis:
-    image: redis:alpine
-    networks:
-      - database
-
-  mongo:
-    image: mongo:latest
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: secret
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - database
-
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-  database:
-    driver: bridge
-    internal: true
-
-volumes:
-  postgres_data:
-  mongo_data:
-EOF
-
-# 디렉토리 구조 생성
-mkdir -p {nginx,gateway,services/{user,order,product}}
-```
-
-### API Gateway 구현
-
-```bash
-# API Gateway 코드
-cat > gateway/package.json << 'EOF'
-{
-  "name": "api-gateway",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6",
-    "cors": "^2.8.5"
-  }
-}
-EOF
-
-cat > gateway/server.js << 'EOF'
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const cors = require('cors');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// 서비스 URL 설정
-const services = {
-  user: process.env.USER_SERVICE_URL || 'http://user-service:3001',
-  order: process.env.ORDER_SERVICE_URL || 'http://order-service:3002',
-  product: process.env.PRODUCT_SERVICE_URL || 'http://product-service:3003'
-};
-
-// 프록시 설정
-Object.keys(services).forEach(service => {
-  app.use(`/api/${service}`, createProxyMiddleware({
-    target: services[service],
-    changeOrigin: true,
-    pathRewrite: { [`^/api/${service}`]: '' }
-  }));
-});
-
-// 헬스체크 및 서비스 디스커버리
-app.get('/api/health', async (req, res) => {
-  const healthChecks = {};
-  
-  for (const [name, url] of Object.entries(services)) {
-    try {
-      const response = await fetch(`${url}/health`);
-      healthChecks[name] = await response.json();
-    } catch (error) {
-      healthChecks[name] = { status: 'unhealthy', error: error.message };
-    }
-  }
-  
-  res.json({
-    gateway: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: healthChecks
-  });
-});
-
-app.listen(3000, '0.0.0.0', () => {
-  console.log('API Gateway running on port 3000');
-  console.log('Service URLs:', services);
-});
-EOF
-
-cat > gateway/Dockerfile << 'EOF'
-FROM node:alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-EOF
-```
-
-### 마이크로서비스 구현
-
-```bash
-# User Service
-cat > services/user/package.json << 'EOF'
-{
-  "name": "user-service",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.8.0"
-  }
-}
-EOF
-
-cat > services/user/server.js << 'EOF'
-const express = require('express');
-const { Client } = require('pg');
-
-const app = express();
-app.use(express.json());
-
-const db = new Client({
-  host: process.env.DB_HOST || 'postgres',
-  database: process.env.DB_NAME || 'userdb',
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASS || 'secret'
-});
-
-db.connect().catch(console.error);
-
-app.get('/health', (req, res) => {
-  res.json({ service: 'user-service', status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-app.get('/users', async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/users', async (req, res) => {
-  const { name, email } = req.body;
-  try {
-    const result = await db.query(
-      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-      [name, email]
-    );
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.listen(3001, '0.0.0.0', () => {
-  console.log('User service running on port 3001');
-});
-EOF
-
-cat > services/user/Dockerfile << 'EOF'
-FROM node:alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3001
-CMD ["node", "server.js"]
-EOF
-
-# Order Service (유사한 구조)
-cp -r services/user/* services/order/
-sed -i 's/user-service/order-service/g' services/order/server.js
-sed -i 's/3001/3002/g' services/order/server.js
-sed -i 's/users/orders/g' services/order/server.js
-
-# Product Service (MongoDB 사용)
-cat > services/product/package.json << 'EOF'
-{
-  "name": "product-service",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2",
-    "mongodb": "^4.12.0"
-  }
-}
-EOF
-
-cat > services/product/server.js << 'EOF'
-const express = require('express');
-const { MongoClient } = require('mongodb');
-
-const app = express();
-app.use(express.json());
-
-const mongoUrl = `mongodb://admin:secret@${process.env.DB_HOST || 'mongo'}:27017`;
-let db;
-
-MongoClient.connect(mongoUrl).then(client => {
-  db = client.db(process.env.DB_NAME || 'productdb');
-  console.log('Connected to MongoDB');
-}).catch(console.error);
-
-app.get('/health', (req, res) => {
-  res.json({ service: 'product-service', status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-app.get('/products', async (req, res) => {
-  try {
-    const products = await db.collection('products').find({}).toArray();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.listen(3003, '0.0.0.0', () => {
-  console.log('Product service running on port 3003');
-});
-EOF
-
-cat > services/product/Dockerfile << 'EOF'
-FROM node:alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3003
-CMD ["node", "server.js"]
-EOF
-```
-
-## 3. 실습: 네트워크 분리 및 보안 (15분)
-
-### Nginx 프록시 설정
-
-```bash
-# Nginx 설정
-cat > nginx/nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream api_gateway {
-        server api-gateway:3000;
-    }
-    
-    server {
-        listen 80;
-        
-        # 정적 파일 서빙
-        location / {
-            root /usr/share/nginx/html;
-            index index.html;
-            try_files $uri $uri/ /index.html;
-        }
-        
-        # API 프록시
-        location /api/ {
-            proxy_pass http://api_gateway;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-        
-        # 헬스체크
-        location /nginx-health {
-            access_log off;
-            return 200 "healthy\n";
-            add_header Content-Type text/plain;
-        }
-    }
-}
-EOF
-
-# 프론트엔드 HTML
-cat > nginx/html/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Microservices Demo</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .service { background: #f5f5f5; padding: 20px; margin: 10px 0; border-radius: 5px; }
-        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; margin: 5px; }
-        .result { margin: 10px 0; padding: 10px; background: #e9ecef; border-radius: 3px; }
-    </style>
-</head>
-<body>
-    <h1>마이크로서비스 아키텍처 데모</h1>
-    
-    <div class="service">
-        <h3>시스템 상태</h3>
-        <button onclick="checkHealth()">전체 헬스체크</button>
-        <div id="health-result" class="result"></div>
-    </div>
-    
-    <div class="service">
-        <h3>사용자 서비스</h3>
-        <button onclick="getUsers()">사용자 목록</button>
-        <button onclick="addUser()">사용자 추가</button>
-        <div id="user-result" class="result"></div>
-    </div>
-    
-    <div class="service">
-        <h3>주문 서비스</h3>
-        <button onclick="getOrders()">주문 목록</button>
-        <div id="order-result" class="result"></div>
-    </div>
-    
-    <div class="service">
-        <h3>상품 서비스</h3>
-        <button onclick="getProducts()">상품 목록</button>
-        <div id="product-result" class="result"></div>
-    </div>
-
-    <script>
-        async function checkHealth() {
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                document.getElementById('health-result').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('health-result').innerHTML = `오류: ${error.message}`;
-            }
-        }
-        
-        async function getUsers() {
-            try {
-                const response = await fetch('/api/user/users');
-                const data = await response.json();
-                document.getElementById('user-result').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('user-result').innerHTML = `오류: ${error.message}`;
-            }
-        }
-        
-        async function addUser() {
-            try {
-                const response = await fetch('/api/user/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: 'Test User', email: 'test@example.com' })
-                });
-                const data = await response.json();
-                document.getElementById('user-result').innerHTML = 
-                    `사용자 추가됨: <pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('user-result').innerHTML = `오류: ${error.message}`;
-            }
-        }
-        
-        async function getOrders() {
-            document.getElementById('order-result').innerHTML = '주문 서비스 구현 중...';
-        }
-        
-        async function getProducts() {
-            document.getElementById('product-result').innerHTML = '상품 서비스 구현 중...';
-        }
-    </script>
-</body>
-</html>
-EOF
-
-# 데이터베이스 초기화
-cat > init-db.sql << 'EOF'
--- 사용자 데이터베이스
-CREATE DATABASE IF NOT EXISTS userdb;
-\c userdb;
-
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO users (name, email) VALUES 
-('John Doe', 'john@example.com'),
-('Jane Smith', 'jane@example.com');
-
--- 주문 데이터베이스
-CREATE DATABASE IF NOT EXISTS orderdb;
-\c orderdb;
-
-CREATE TABLE IF NOT EXISTS orders (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,
-    quantity INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-EOF
-```
-
-## 4. 실습: 서비스 디스커버리 및 통신 테스트 (10분)
-
-### 네트워크 연결성 테스트
-
-```bash
-# 전체 스택 실행
-docker-compose up -d
-
-# 서비스 시작 대기
-echo "서비스 시작 대기 중..."
-sleep 30
-
-# 네트워크 연결성 테스트
-echo "=== 네트워크 연결성 테스트 ==="
-
-# 서비스 상태 확인
-docker-compose ps
-
-# 네트워크 구조 확인
-docker network ls | grep microservices
-
-# 서비스 간 통신 테스트
-echo "API Gateway에서 마이크로서비스 접근 테스트:"
-docker-compose exec api-gateway sh -c "
-    echo 'User Service:' && curl -s http://user-service:3001/health | jq .service
-    echo 'Order Service:' && curl -s http://order-service:3002/health | jq .service  
-    echo 'Product Service:' && curl -s http://product-service:3003/health | jq .service
-"
-
-# DNS 해석 테스트
-echo "DNS 해석 테스트:"
-docker-compose exec api-gateway nslookup user-service
-docker-compose exec api-gateway nslookup postgres
-
-# 외부 접근 테스트
-echo "외부 접근 테스트:"
-curl -s http://localhost:8080/api/health | jq '.gateway'
-curl -s http://localhost:8080/api/user/health | jq '.service'
-```
-
-### 네트워크 격리 검증
-
-```bash
-# 네트워크 격리 테스트 스크립트
-cat > test-network-isolation.sh << 'EOF'
 #!/bin/bash
+# Kubernetes 업그레이드 자동화 스크립트 (개념 예시)
 
-echo "=== 네트워크 격리 테스트 ==="
+set -e
 
-# Frontend 네트워크에서 Database 접근 시도 (실패해야 함)
-echo "1. Frontend -> Database 접근 테스트 (차단되어야 함):"
-docker-compose exec nginx sh -c "nc -zv postgres 5432" 2>&1 || echo "✓ 접근 차단됨 (정상)"
+TARGET_VERSION="1.28.0"
+BACKUP_NAME="pre-upgrade-$(date +%Y%m%d-%H%M%S)"
 
-# Backend 네트워크에서 Database 접근 (성공해야 함)
-echo "2. Backend -> Database 접근 테스트 (허용되어야 함):"
-docker-compose exec user-service sh -c "nc -zv postgres 5432" && echo "✓ 접근 허용됨 (정상)"
+echo "Starting Kubernetes upgrade to version $TARGET_VERSION"
 
-# API Gateway의 다중 네트워크 접근
-echo "3. API Gateway 다중 네트워크 접근:"
-docker-compose exec api-gateway sh -c "
-    echo 'Frontend 네트워크 - Nginx:' && nc -zv nginx 80 && echo '✓ 접근 가능'
-    echo 'Backend 네트워크 - User Service:' && nc -zv user-service 3001 && echo '✓ 접근 가능'
-"
+# 1. 사전 백업
+echo "Creating backup..."
+velero backup create $BACKUP_NAME --wait
 
-# 네트워크 정보 확인
-echo "4. 네트워크 구성 정보:"
-for network in frontend backend database; do
-    echo "Network: microservices-demo_$network"
-    docker network inspect microservices-demo_$network --format '{{range .Containers}}{{.Name}} {{end}}'
-done
-EOF
+# 2. 업그레이드 전 검증
+echo "Pre-upgrade validation..."
+kubectl get nodes
+kubectl get pods --all-namespaces | grep -v Running | grep -v Completed
 
-chmod +x test-network-isolation.sh
-./test-network-isolation.sh
-```
+# 3. 컨트롤 플레인 업그레이드
+echo "Upgrading control plane..."
+kubeadm upgrade plan
+kubeadm upgrade apply $TARGET_VERSION -y
 
-## 5. Q&A 및 정리 (5분)
-
-### 서비스 통신 패턴 분석
-
-```bash
-# 통신 패턴 분석 스크립트
-cat > analyze-communication.sh << 'EOF'
-#!/bin/bash
-
-echo "=== 서비스 통신 패턴 분석 ==="
-
-# 1. 동기 통신 (HTTP REST API)
-echo "1. 동기 통신 테스트:"
-time curl -s http://localhost:8080/api/user/users | jq length
-
-# 2. 서비스 체인 통신
-echo "2. 서비스 체인 통신 (Gateway -> Service -> DB):"
-docker-compose logs --tail=5 api-gateway
-docker-compose logs --tail=5 user-service
-
-# 3. 로드 밸런싱 시뮬레이션
-echo "3. 로드 밸런싱 테스트 (여러 요청):"
-for i in {1..5}; do
-    curl -s http://localhost:8080/api/health | jq '.timestamp'
+# 4. 워커 노드 업그레이드
+echo "Upgrading worker nodes..."
+for node in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}' | grep -v master); do
+    echo "Upgrading node: $node"
+    kubectl drain $node --ignore-daemonsets --delete-emptydir-data --force
+    
+    # SSH to node and upgrade
+    ssh $node "
+        kubeadm upgrade node
+        systemctl restart kubelet
+    "
+    
+    kubectl uncordon $node
+    kubectl wait --for=condition=Ready node/$node --timeout=300s
 done
 
-# 4. 장애 시나리오 테스트
-echo "4. 장애 복구 테스트:"
-docker-compose stop user-service
-sleep 2
-curl -s http://localhost:8080/api/user/health || echo "서비스 다운 감지"
-docker-compose start user-service
-sleep 5
-curl -s http://localhost:8080/api/user/health | jq '.status'
-EOF
+# 5. 업그레이드 후 검증
+echo "Post-upgrade validation..."
+kubectl version
+kubectl get nodes
+kubectl get pods --all-namespaces
 
-chmod +x analyze-communication.sh
-./analyze-communication.sh
-
-# 세션 정리 및 다음 단계 준비
-cat > session2-summary.md << 'EOF'
-# Session 2 요약: 서비스 정의와 네트워킹
-
-## 구현한 아키텍처
-```
-Frontend Network:  [Nginx] ←→ [API Gateway]
-Backend Network:   [API Gateway] ←→ [Microservices]
-Database Network:  [Microservices] ←→ [Databases]
+echo "Upgrade completed successfully!"
 ```
 
-## 핵심 학습 내용
-1. **네트워크 분리**: 보안과 격리를 위한 다중 네트워크 설계
-2. **서비스 디스커버리**: DNS 기반 자동 서비스 발견
-3. **API Gateway 패턴**: 단일 진입점을 통한 마이크로서비스 관리
-4. **프록시 설정**: Nginx를 통한 로드 밸런싱과 라우팅
+### 마이그레이션 체크리스트 예시
 
-## 네트워크 보안 원칙
-- Frontend: 외부 접근 허용, 제한된 내부 접근
-- Backend: 내부 통신만, 비즈니스 로직 처리
-- Database: 완전 격리, 애플리케이션 서비스만 접근
-
-## 다음 세션 준비
-- 볼륨과 환경 변수 관리
-- 설정 파일 외부화
-- 시크릿 관리 방법
-EOF
-
-echo "Session 2 완료! 요약: session2-summary.md"
-
-# 정리 (선택사항)
-# docker-compose down -v
+```yaml
+# 마이그레이션 체크리스트 (개념 예시)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: migration-checklist
+data:
+  pre-migration.md: |
+    # Pre-Migration Checklist
+    
+    ## Infrastructure
+    - [ ] Target cluster provisioned and configured
+    - [ ] Network connectivity established
+    - [ ] Storage systems prepared
+    - [ ] Backup systems configured
+    
+    ## Security
+    - [ ] RBAC policies reviewed and updated
+    - [ ] Secrets and certificates migrated
+    - [ ] Network policies configured
+    - [ ] Security scanning completed
+    
+    ## Applications
+    - [ ] Application inventory completed
+    - [ ] Dependencies mapped
+    - [ ] Configuration externalized
+    - [ ] Health checks configured
+    
+    ## Testing
+    - [ ] Migration scripts tested
+    - [ ] Rollback procedures verified
+    - [ ] Performance benchmarks established
+    - [ ] Monitoring and alerting configured
+  
+  post-migration.md: |
+    # Post-Migration Checklist
+    
+    ## Validation
+    - [ ] All workloads running successfully
+    - [ ] Network connectivity verified
+    - [ ] Data integrity confirmed
+    - [ ] Performance metrics within acceptable range
+    
+    ## Cleanup
+    - [ ] Source cluster resources cleaned up
+    - [ ] Temporary migration resources removed
+    - [ ] Documentation updated
+    - [ ] Team training completed
 ```
+
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **체계적 업그레이드 계획**과 **호환성 검증** 프로세스
+- **다양한 마이그레이션 패턴**과 **상황별 최적 전략**
+- **롤백 메커니즘**과 **리스크 관리** 체계
+- **자동화 도구** 활용을 통한 **안전하고 효율적인 전환**
+
+### 토론 주제
+"대규모 프로덕션 환경에서 무중단 업그레이드와 마이그레이션을 보장하면서도 리스크를 최소화하는 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **서비스 디스커버리**: DNS 기반 자동 서비스 발견
-- **네트워크 분리**: Frontend, Backend, Database 계층 분리
-- **API Gateway**: 단일 진입점, 라우팅, 프록시
-- **마이크로서비스**: 독립적 서비스, 느슨한 결합
+- **업그레이드 전략**: 버전 호환성, 단계적 업그레이드, 블루-그린
+- **마이그레이션**: Lift and Shift, Re-platforming, 데이터 마이그레이션
+- **롤백 계획**: 자동 롤백, 리스크 평가, 복구 전략
+- **자동화 도구**: kubeadm, Velero, 마이그레이션 스크립트
 
 ## 📚 참고 자료
-- [Compose 네트워킹](https://docs.docker.com/compose/networking/)
-- [마이크로서비스 패턴](https://microservices.io/patterns/)
-- [API Gateway 패턴](https://microservices.io/patterns/apigateway.html)
-
-## 🔧 실습 체크리스트
-- [ ] 멀티 서비스 아키텍처 구현
-- [ ] 네트워크 분리 및 보안 설정
-- [ ] API Gateway 패턴 적용
-- [ ] 서비스 간 통신 테스트
-- [ ] 네트워크 격리 검증
+- [Kubernetes 업그레이드 가이드](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
+- [Velero 백업 솔루션](https://velero.io/docs/)
+- [클러스터 마이그레이션 모범 사례](https://kubernetes.io/docs/setup/production-environment/)

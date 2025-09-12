@@ -1,355 +1,281 @@
-# Session 5: 기본 명령어 실습 - 컨테이너 관리
+# Session 5: Docker 보안 모델 및 격리 메커니즘
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 5**로, 컨테이너의 상태 관리와 라이프사이클 제어 명령어를 실습합니다. Week 1에서 학습한 컨테이너 상태 모델을 실제 명령어로 조작하는 과정을 체험합니다.
+이 세션은 **Week 2 > Day 1 > Session 5**로, Docker 스토리지 관리 이해를 바탕으로 컨테이너 보안 아키텍처와 격리 메커니즘을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **컨테이너 상태**와 **관리 명령어** 이해
-- **ps, start, stop, rm** 명령어 실습
-- **컨테이너 라이프사이클** 실제 조작 경험
+- **컨테이너 보안 모델**과 **격리 경계** 완전 이해
+- **권한 관리 시스템**과 **보안 강화 기법** 분석
+- **취약점 관리**와 **보안 모니터링** 전략 설계
 
-## 1. 이론: 컨테이너 상태와 관리 명령어 (20분)
+## 1. 이론: 컨테이너 보안 아키텍처 (20분)
 
-### 컨테이너 상태 다이어그램
+### 보안 격리 계층 구조
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Created: docker create
-    Created --> Running: docker start
-    Running --> Paused: docker pause
-    Paused --> Running: docker unpause
-    Running --> Stopped: docker stop
-    Stopped --> Running: docker start
-    Stopped --> [*]: docker rm
-    Running --> [*]: docker rm -f
+graph TB
+    subgraph "Application Layer"
+        A[Application Code]
+        B[Runtime Libraries]
+        C[Application Data]
+    end
     
-    note right of Created: 컨테이너 생성됨<br/>프로세스 미실행
-    note right of Running: 메인 프로세스 실행 중
-    note right of Paused: 프로세스 일시정지<br/>메모리 상태 유지
-    note right of Stopped: 프로세스 종료<br/>파일시스템 유지
+    subgraph "Container Layer"
+        D[Container Process]
+        E[File System]
+        F[Network Interface]
+    end
+    
+    subgraph "Kernel Layer"
+        G[Namespaces]
+        H[cgroups]
+        I[Capabilities]
+        J[Seccomp]
+        K[AppArmor/SELinux]
+    end
+    
+    subgraph "Hardware Layer"
+        L[CPU]
+        M[Memory]
+        N[Storage]
+        O[Network]
+    end
+    
+    A --> D
+    D --> G
+    G --> L
 ```
 
-### 컨테이너 관리 명령어 분류
+### Linux 보안 메커니즘 활용
 
 ```
-생성 및 실행:
-├── docker create    # 컨테이너 생성 (실행 안함)
-├── docker run       # 생성 + 실행
-└── docker start     # 중지된 컨테이너 시작
+컨테이너 격리 기술:
 
-상태 제어:
-├── docker stop      # 정상 종료 (SIGTERM)
-├── docker kill      # 강제 종료 (SIGKILL)
-├── docker restart   # 재시작
-├── docker pause     # 일시정지
-└── docker unpause   # 일시정지 해제
+Namespaces (네임스페이스):
+├── PID: 프로세스 ID 격리
+├── NET: 네트워크 인터페이스 격리
+├── MNT: 파일시스템 마운트 격리
+├── UTS: 호스트명/도메인명 격리
+├── IPC: 프로세스 간 통신 격리
+├── USER: 사용자/그룹 ID 격리
+└── TIME: 시스템 시간 격리 (최신)
 
-정보 확인:
-├── docker ps        # 실행 중인 컨테이너
-├── docker ps -a     # 모든 컨테이너
-├── docker inspect   # 상세 정보
-├── docker logs      # 로그 확인
-└── docker stats     # 리소스 사용량
+Control Groups (cgroups):
+├── CPU 사용률 제한
+├── 메모리 사용량 제한
+├── 디스크 I/O 제한
+├── 네트워크 대역폭 제한
+├── 디바이스 접근 제어
+├── 프로세스 수 제한
+└── 리소스 회계 및 모니터링
 
-정리:
-├── docker rm        # 컨테이너 삭제
-├── docker rm -f     # 강제 삭제
-└── docker container prune  # 일괄 정리
+Linux Capabilities:
+├── 루트 권한 세분화
+├── 필요한 권한만 부여
+├── CAP_NET_ADMIN: 네트워크 관리
+├── CAP_SYS_ADMIN: 시스템 관리
+├── CAP_DAC_OVERRIDE: 파일 권한 무시
+├── CAP_SETUID: 사용자 ID 변경
+└── 최소 권한 원칙 적용
+
+Seccomp (Secure Computing):
+├── 시스템 콜 필터링
+├── 허용된 시스템 콜만 실행
+├── 공격 표면 최소화
+├── 기본 프로필 제공
+├── 사용자 정의 프로필 지원
+└── 성능 오버헤드 최소화
 ```
 
-### 컨테이너 식별 방법
+## 2. 이론: 권한 관리 및 접근 제어 (15분)
 
-```
-컨테이너 식별자:
-├── Container ID (전체): sha256:1234567890abcdef...
-├── Container ID (단축): 1234567890ab
-├── Container Name: my-nginx, web-server
-└── 태그 조합: nginx:latest
-
-사용 예시:
-├── docker stop 1234567890ab
-├── docker stop my-nginx
-├── docker logs web-server
-└── docker rm $(docker ps -aq)  # 모든 컨테이너 ID
-```
-
-## 2. 실습: 컨테이너 생성 및 시작 (12분)
-
-### docker create vs docker run 비교
-
-```bash
-# 방법 1: create + start (2단계)
-docker create --name nginx-test nginx:latest
-docker ps -a  # Created 상태 확인
-docker start nginx-test
-docker ps     # Running 상태 확인
-
-# 방법 2: run (1단계)
-docker run -d --name nginx-run nginx:latest
-docker ps     # 바로 Running 상태
-```
-
-### 다양한 실행 모드 실습
-
-```bash
-# 백그라운드 실행 (-d, --detach)
-docker run -d --name bg-nginx nginx:latest
-
-# 포그라운드 실행 (기본값)
-docker run --name fg-nginx nginx:latest
-# Ctrl+C로 종료
-
-# 대화형 실행 (-it)
-docker run -it --name interactive-ubuntu ubuntu:20.04 /bin/bash
-# 컨테이너 내부에서 명령어 실행 후 exit
-
-# 일회성 실행 (--rm)
-docker run --rm --name temp-container alpine:latest echo "Hello World"
-# 실행 완료 후 자동 삭제됨
-```
-
-### 컨테이너 이름 관리
-
-```bash
-# 자동 생성된 이름 확인
-docker run -d nginx:latest
-docker ps  # 랜덤 이름 확인 (예: quirky_einstein)
-
-# 명시적 이름 지정
-docker run -d --name my-web-server nginx:latest
-docker run -d --name my-database mysql:8.0
-
-# 이름 중복 오류 체험
-docker run -d --name my-web-server nginx:latest  # 오류 발생
-```
-
-## 3. 실습: 컨테이너 상태 확인 (8분)
-
-### docker ps 명령어 활용
-
-```bash
-# 실행 중인 컨테이너만 표시
-docker ps
-
-# 모든 컨테이너 표시 (중지된 것 포함)
-docker ps -a
-
-# 최근 생성된 컨테이너 N개
-docker ps -n 3
-
-# 마지막으로 생성된 컨테이너
-docker ps -l
-
-# 컨테이너 ID만 표시
-docker ps -q
-docker ps -aq  # 모든 컨테이너 ID
-```
-
-### 출력 형식 커스터마이징
-
-```bash
-# 기본 출력 형식
-docker ps --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}"
-
-# JSON 형식으로 출력
-docker ps --format json
-
-# 특정 필드만 출력
-docker ps --format "{{.Names}}: {{.Status}}"
-
-# 필터링과 함께 사용
-docker ps --filter "status=running" --format "table {{.Names}}\t{{.Image}}"
-```
-
-### 컨테이너 상세 정보 확인
-
-```bash
-# 컨테이너 상세 정보 (JSON)
-docker inspect nginx-test
-
-# 특정 정보만 추출
-docker inspect --format='{{.State.Status}}' nginx-test
-docker inspect --format='{{.NetworkSettings.IPAddress}}' nginx-test
-docker inspect --format='{{.Config.Image}}' nginx-test
-
-# 여러 컨테이너 동시 조회
-docker inspect nginx-test mysql-db redis-cache
-```
-
-## 4. 실습: 컨테이너 제어 (10분)
-
-### 컨테이너 중지 및 시작
-
-```bash
-# 정상 종료 (SIGTERM 신호)
-docker stop nginx-test
-
-# 강제 종료 (SIGKILL 신호)
-docker kill nginx-test
-
-# 시간 제한 설정 (10초 후 강제 종료)
-docker stop -t 10 nginx-test
-
-# 컨테이너 재시작
-docker restart nginx-test
-
-# 여러 컨테이너 동시 제어
-docker stop nginx-test mysql-db redis-cache
-docker start nginx-test mysql-db redis-cache
-```
-
-### 컨테이너 일시정지
-
-```bash
-# 컨테이너 일시정지 (프로세스 freeze)
-docker pause nginx-test
-docker ps  # Status가 "Paused" 표시
-
-# 일시정지 해제
-docker unpause nginx-test
-docker ps  # Status가 "Up" 표시
-
-# 일시정지 중 리소스 확인
-docker stats --no-stream nginx-test
-```
-
-### 실행 중인 컨테이너 모니터링
-
-```bash
-# 실시간 리소스 사용량
-docker stats
-
-# 특정 컨테이너만 모니터링
-docker stats nginx-test mysql-db
-
-# 한 번만 출력 (실시간 아님)
-docker stats --no-stream
-
-# 컨테이너 내부 프로세스 확인
-docker top nginx-test
-```
-
-## 5. 실습: 컨테이너 삭제 및 정리 (10분)
-
-### 개별 컨테이너 삭제
-
-```bash
-# 중지된 컨테이너 삭제
-docker rm nginx-test
-
-# 실행 중인 컨테이너 강제 삭제
-docker rm -f nginx-run
-
-# 여러 컨테이너 동시 삭제
-docker rm container1 container2 container3
-
-# 볼륨과 함께 삭제
-docker rm -v nginx-with-volume
-```
-
-### 대량 컨테이너 정리
-
-```bash
-# 모든 중지된 컨테이너 삭제
-docker container prune
-
-# 확인 없이 강제 삭제
-docker container prune -f
-
-# 특정 조건의 컨테이너 삭제
-docker rm $(docker ps -aq --filter "status=exited")
-
-# 특정 이미지로 생성된 컨테이너 삭제
-docker rm $(docker ps -aq --filter "ancestor=nginx")
-```
-
-### 필터를 활용한 선택적 정리
-
-```bash
-# 24시간 이전에 생성된 컨테이너 삭제
-docker container prune --filter "until=24h"
-
-# 특정 라벨을 가진 컨테이너 삭제
-docker rm $(docker ps -aq --filter "label=environment=test")
-
-# 종료 코드가 0이 아닌 컨테이너 삭제
-docker rm $(docker ps -aq --filter "exited=1")
-```
-
-## 6. 종합 실습 및 문제 해결 (5분)
-
-### 컨테이너 관리 워크플로우
-
-```bash
-# 실습 시나리오: 웹 서버 관리
-# 1. 웹 서버 컨테이너 생성 및 실행
-docker run -d -p 8080:80 --name production-web nginx:latest
-
-# 2. 상태 확인
-docker ps
-docker stats --no-stream production-web
-
-# 3. 설정 변경을 위한 일시 중지
-docker pause production-web
-
-# 4. 일시정지 해제 및 재시작
-docker unpause production-web
-docker restart production-web
-
-# 5. 로그 확인
-docker logs production-web
-
-# 6. 유지보수 완료 후 정리
-docker stop production-web
-docker rm production-web
-```
-
-### 일반적인 문제 해결
+### 사용자 및 권한 모델
 
 ```mermaid
-flowchart TD
-    A[컨테이너 관리 문제] --> B{문제 유형}
-    B -->|시작 실패| C[포트 충돌 확인]
-    B -->|중지 안됨| D[강제 종료 시도]
-    B -->|삭제 안됨| E[실행 상태 확인]
-    B -->|리소스 부족| F[시스템 리소스 점검]
+sequenceDiagram
+    participant User as Host User
+    participant Docker as Docker Daemon
+    participant Container as Container Process
+    participant Kernel as Linux Kernel
     
-    C --> G[다른 포트 사용]
-    D --> H[docker kill 사용]
-    E --> I[docker stop 후 삭제]
-    F --> J[불필요한 컨테이너 정리]
+    User->>Docker: docker run --user 1000:1000
+    Docker->>Kernel: Create user namespace
+    Kernel-->>Docker: Namespace created
+    Docker->>Container: Start with mapped UID/GID
+    Container->>Kernel: System call with mapped ID
+    Kernel-->>Container: Permission check passed
 ```
 
-### 유용한 명령어 조합
+### 보안 강화 기법
+
+```
+Docker 보안 강화:
+
+사용자 네임스페이스:
+├── 컨테이너 내 root를 호스트 일반 사용자로 매핑
+├── 권한 에스컬레이션 방지
+├── 호스트 시스템 보호 강화
+├── 파일 시스템 권한 격리
+├── 프로세스 권한 제한
+└── 컨테이너 탈출 공격 완화
+
+읽기 전용 파일시스템:
+├── 루트 파일시스템 읽기 전용 마운트
+├── 런타임 파일 변조 방지
+├── 임시 파일용 tmpfs 볼륨 사용
+├── 로그 및 데이터용 별도 볼륨
+├── 애플리케이션 무결성 보장
+└── 악성 코드 실행 차단
+
+네트워크 보안:
+├── 사용자 정의 네트워크 사용
+├── 불필요한 포트 노출 금지
+├── 네트워크 세그멘테이션
+├── 트래픽 암호화 (TLS)
+├── 방화벽 규칙 적용
+└── 네트워크 모니터링
+
+리소스 제한:
+├── CPU 사용률 제한
+├── 메모리 사용량 제한
+├── 파일 디스크립터 제한
+├── 프로세스 수 제한
+├── 네트워크 대역폭 제한
+└── DoS 공격 방지
+```
+
+## 3. 이론: 취약점 관리 및 보안 모니터링 (10분)
+
+### 이미지 보안 스캔
+
+```
+보안 스캔 전략:
+
+정적 분석:
+├── 베이스 이미지 취약점 스캔
+├── 패키지 의존성 분석
+├── 설정 파일 보안 검사
+├── 시크릿 정보 노출 검사
+├── 라이선스 컴플라이언스
+└── 보안 정책 준수 확인
+
+동적 분석:
+├── 런타임 행동 모니터링
+├── 네트워크 트래픽 분석
+├── 파일 시스템 변경 감지
+├── 프로세스 실행 추적
+├── 시스템 콜 모니터링
+└── 이상 행동 탐지
+
+지속적 모니터링:
+├── 실시간 보안 이벤트 수집
+├── 로그 분석 및 상관관계 분석
+├── 침입 탐지 시스템 (IDS)
+├── 보안 정보 및 이벤트 관리 (SIEM)
+├── 자동화된 대응 체계
+└── 보안 대시보드 및 알림
+```
+
+### 보안 모범 사례
+
+```
+컨테이너 보안 모범 사례:
+
+이미지 보안:
+├── 신뢰할 수 있는 베이스 이미지 사용
+├── 최소한의 패키지만 설치
+├── 정기적인 이미지 업데이트
+├── 이미지 서명 및 검증
+├── 프라이빗 레지스트리 사용
+└── 멀티 스테이지 빌드 활용
+
+런타임 보안:
+├── 비특권 사용자로 실행
+├── 읽기 전용 루트 파일시스템
+├── 불필요한 권한 제거
+├── 네트워크 정책 적용
+├── 리소스 제한 설정
+└── 보안 프로필 적용
+
+운영 보안:
+├── 정기적인 보안 패치
+├── 접근 제어 및 인증
+├── 감사 로그 수집
+├── 백업 및 복구 계획
+├── 인시던트 대응 절차
+└── 보안 교육 및 훈련
+```
+
+## 4. 개념 예시: 보안 구성 분석 (12분)
+
+### 보안 강화 실행 예시
 
 ```bash
-# 모든 컨테이너 강제 중지
-docker stop $(docker ps -q)
-
-# 모든 컨테이너 삭제 (실행 중인 것 포함)
-docker rm -f $(docker ps -aq)
-
-# 특정 패턴 이름의 컨테이너만 삭제
-docker rm $(docker ps -aq --filter "name=test-*")
-
-# 컨테이너 상태별 개수 확인
-docker ps -a --format "{{.Status}}" | sort | uniq -c
+# 보안 강화된 컨테이너 실행 (개념 예시)
+docker run -d \
+  --user 1000:1000 \
+  --read-only \
+  --tmpfs /tmp \
+  --cap-drop ALL \
+  --cap-add NET_BIND_SERVICE \
+  --security-opt no-new-privileges \
+  --security-opt seccomp=default.json \
+  nginx:alpine
 ```
+
+### 보안 스캔 예시
+
+```bash
+# 이미지 취약점 스캔 (개념 예시)
+docker scan nginx:latest
+
+# 예상 출력:
+# ✓ Tested 82 dependencies for known issues
+# ✗ Found 3 vulnerabilities
+# 
+# Issues with no direct upgrade or patch:
+#   ✗ Medium severity vulnerability found in openssl
+#   ✗ Low severity vulnerability found in zlib
+```
+
+### 보안 정책 적용 예시
+
+```yaml
+# Docker Compose 보안 설정 (개념 예시)
+version: '3.8'
+services:
+  web:
+    image: nginx:alpine
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+```
+
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **다층 보안 모델**을 통한 컨테이너 격리
+- **Linux 보안 메커니즘** 활용한 권한 제어
+- **취약점 관리**와 **지속적 모니터링** 체계
+- **보안 모범 사례** 적용을 통한 위험 최소화
+
+### 토론 주제
+"컨테이너 환경에서 보안과 편의성의 균형을 맞추는 최적의 보안 아키텍처는 무엇인가?"
 
 ## 💡 핵심 키워드
-- **docker ps**: 컨테이너 목록 및 상태 확인
-- **docker start/stop**: 컨테이너 시작/중지 제어
-- **docker rm**: 컨테이너 삭제 및 정리
-- **컨테이너 라이프사이클**: Created → Running → Stopped
+- **격리 기술**: Namespace, cgroups, Capabilities, Seccomp
+- **권한 관리**: 사용자 네임스페이스, 최소 권한 원칙
+- **보안 강화**: 읽기 전용 파일시스템, 네트워크 보안
+- **취약점 관리**: 보안 스캔, 모니터링, 모범 사례
 
 ## 📚 참고 자료
-- [docker ps 레퍼런스](https://docs.docker.com/engine/reference/commandline/ps/)
-- [컨테이너 라이프사이클](https://docs.docker.com/engine/reference/run/)
-- [docker rm 가이드](https://docs.docker.com/engine/reference/commandline/rm/)
-
-## 🔧 실습 체크리스트
-- [ ] 컨테이너 생성과 시작 분리 실습
-- [ ] 다양한 실행 모드 체험
-- [ ] 컨테이너 상태 확인 및 모니터링
-- [ ] 컨테이너 제어 명령어 실습
-- [ ] 컨테이너 정리 및 대량 관리
+- [Docker 보안](https://docs.docker.com/engine/security/)
+- [컨테이너 보안 가이드](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)

@@ -1,363 +1,311 @@
-# Session 7: 포트 매핑 및 네트워크 기초
+# Session 7: 컨테이너 생태계 및 표준화 동향
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 7**로, Docker 네트워킹의 기초인 포트 매핑을 실습합니다. Week 1에서 학습한 네트워킹 이론을 바탕으로 실제 웹 서버 컨테이너를 외부에서 접근 가능하게 만드는 과정을 체험합니다.
+이 세션은 **Week 2 > Day 1 > Session 7**로, Docker Compose 오케스트레이션 이해를 바탕으로 컨테이너 생태계 전반과 표준화 동향을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **포트 매핑** 개념과 **네트워크 기초** 이해
-- **웹 서버 컨테이너** 실행 및 **외부 접근** 설정
-- **네트워크 문제 해결** 및 **보안 고려사항** 학습
+- **컨테이너 생태계**와 **OCI 표준** 완전 이해
+- **컨테이너 런타임** 비교 분석과 **CRI 인터페이스** 구조
+- **클라우드 네이티브** 트렌드와 **미래 발전 방향** 전망
 
-## 1. 이론: 포트 매핑 개념과 네트워크 기초 (20분)
+## 1. 이론: 컨테이너 표준화 및 OCI (20분)
 
-### Docker 네트워킹 아키텍처
+### Open Container Initiative (OCI) 표준
 
 ```mermaid
 graph TB
-    subgraph "호스트 시스템"
-        A[Host Network Interface<br/>192.168.1.100] --> B[Docker Bridge<br/>docker0: 172.17.0.1]
-        B --> C[Container 1<br/>172.17.0.2:80]
-        B --> D[Container 2<br/>172.17.0.3:3306]
-        B --> E[Container 3<br/>172.17.0.4:6379]
+    subgraph "OCI Standards"
+        A[Runtime Specification] --> B[Image Specification]
+        B --> C[Distribution Specification]
     end
     
-    subgraph "외부 네트워크"
-        F[Client<br/>192.168.1.50] --> A
-        G[Internet] --> A
+    subgraph "Implementation"
+        D[runc] --> E[containerd]
+        E --> F[Docker Engine]
+        E --> G[Kubernetes CRI]
     end
     
-    subgraph "포트 매핑"
-        H[Host:8080] --> C
-        I[Host:3306] --> D
-        J[Host:6379] --> E
+    subgraph "Ecosystem"
+        H[Podman]
+        I[CRI-O]
+        J[Buildah]
+        K[Skopeo]
     end
+    
+    A --> D
+    B --> H
+    C --> K
 ```
 
-### 포트 매핑 동작 원리
+### OCI 표준 구성 요소
 
 ```
-포트 매핑 과정:
-1. 클라이언트가 Host:8080으로 요청
-2. Docker가 iptables 규칙으로 트래픽 포워딩
-3. 172.17.0.2:80 (컨테이너 내부)로 전달
-4. 컨테이너 애플리케이션이 응답 처리
-5. 역방향으로 응답 전달
+OCI 표준 상세 분석:
 
-iptables 규칙 예시:
--A DOCKER -d 172.17.0.2/32 ! -i docker0 -o docker0 -p tcp -m tcp --dport 80 -j ACCEPT
--A DOCKER -t nat -A DOCKER ! -i docker0 -p tcp -m tcp --dport 8080 -j DNAT --to-destination 172.17.0.2:80
+Runtime Specification:
+├── 컨테이너 실행 환경 표준 정의
+├── 파일시스템 번들 구조 명세
+├── 설정 파일 (config.json) 형식
+├── 라이프사이클 관리 (create, start, kill, delete)
+├── 리소스 제한 및 보안 설정
+├── 네임스페이스 및 cgroups 구성
+├── 플랫폼별 특화 설정 지원
+└── 런타임 간 호환성 보장
+
+Image Specification:
+├── 컨테이너 이미지 형식 표준화
+├── 매니페스트 (manifest) 구조 정의
+├── 레이어 압축 및 해시 알고리즘
+├── 이미지 메타데이터 형식
+├── 멀티 아키텍처 이미지 지원
+├── 이미지 서명 및 검증 체계
+├── 콘텐츠 주소 지정 방식
+└── 레지스트리 간 호환성
+
+Distribution Specification:
+├── 이미지 배포 프로토콜 표준
+├── HTTP API 엔드포인트 정의
+├── 인증 및 권한 부여 메커니즘
+├── 이미지 업로드/다운로드 프로세스
+├── 태그 및 레퍼런스 관리
+├── 콘텐츠 검색 및 디스커버리
+├── 미러링 및 복제 지원
+└── 보안 및 무결성 보장
 ```
 
-### 네트워크 모드별 특징
+### 컨테이너 런타임 생태계
 
-| 모드 | 설명 | 포트 매핑 | 사용 사례 |
-|------|------|-----------|-----------|
-| **bridge** | 기본 모드, 격리된 네트워크 | 필요 | 일반적인 웹 애플리케이션 |
-| **host** | 호스트 네트워크 직접 사용 | 불필요 | 고성능 네트워크 애플리케이션 |
-| **none** | 네트워크 없음 | 불가능 | 보안이 중요한 배치 작업 |
-| **container** | 다른 컨테이너와 네트워크 공유 | 공유 | 사이드카 패턴 |
+```
+주요 컨테이너 런타임:
 
-## 2. 실습: 기본 포트 매핑 (12분)
+High-level Runtime:
+├── containerd: Docker, Kubernetes 기본 런타임
+├── CRI-O: Kubernetes 전용 경량 런타임
+├── Podman: 데몬리스 컨테이너 엔진
+├── LXD: 시스템 컨테이너 전문
+├── rkt (CoreOS): 보안 중심 런타임 (deprecated)
+└── gVisor: 샌드박스 기반 보안 런타임
 
-### 단일 포트 매핑
+Low-level Runtime:
+├── runc: OCI 표준 참조 구현
+├── crun: C 언어 기반 고성능 런타임
+├── kata-containers: VM 기반 보안 런타임
+├── firecracker: AWS Lambda 기반 마이크로VM
+├── youki: Rust 언어 기반 런타임
+└── runsc: gVisor 샌드박스 런타임
+
+특수 목적 런타임:
+├── Singularity: HPC 및 과학 컴퓨팅
+├── Charliecloud: 비특권 HPC 컨테이너
+├── Sysbox: 시스템 컨테이너 런타임
+├── WasmEdge: WebAssembly 런타임
+└── Krustlet: Kubernetes WebAssembly 노드
+```
+
+## 2. 이론: Container Runtime Interface (CRI) (15분)
+
+### CRI 아키텍처 분석
+
+```mermaid
+sequenceDiagram
+    participant K8s as Kubernetes
+    participant CRI as CRI Runtime
+    participant containerd as containerd
+    participant runc as runc
+    
+    K8s->>CRI: RunPodSandbox
+    CRI->>containerd: Create sandbox
+    containerd->>runc: Create container
+    runc-->>containerd: Container created
+    containerd-->>CRI: Sandbox ready
+    CRI-->>K8s: Pod running
+    
+    K8s->>CRI: CreateContainer
+    CRI->>containerd: Create container
+    containerd->>runc: Execute container
+    runc-->>containerd: Container started
+    containerd-->>CRI: Container running
+    CRI-->>K8s: Container ready
+```
+
+### CRI 인터페이스 구조
+
+```
+CRI 핵심 기능:
+
+Pod Lifecycle Management:
+├── RunPodSandbox: Pod 네트워크 네임스페이스 생성
+├── StopPodSandbox: Pod 네트워크 정리
+├── RemovePodSandbox: Pod 리소스 완전 제거
+├── PodSandboxStatus: Pod 상태 조회
+├── ListPodSandbox: Pod 목록 조회
+└── 네트워크 및 스토리지 격리 관리
+
+Container Lifecycle:
+├── CreateContainer: 컨테이너 생성
+├── StartContainer: 컨테이너 시작
+├── StopContainer: 컨테이너 정지
+├── RemoveContainer: 컨테이너 제거
+├── ContainerStatus: 컨테이너 상태 조회
+├── ListContainers: 컨테이너 목록 조회
+├── ExecSync: 동기 명령 실행
+└── Exec: 비동기 명령 실행
+
+Image Management:
+├── ListImages: 이미지 목록 조회
+├── ImageStatus: 이미지 상태 확인
+├── PullImage: 이미지 다운로드
+├── RemoveImage: 이미지 삭제
+├── ImageFsInfo: 이미지 파일시스템 정보
+└── 이미지 캐시 및 정리 관리
+
+Runtime Information:
+├── Version: 런타임 버전 정보
+├── Status: 런타임 상태 확인
+├── UpdateRuntimeConfig: 런타임 설정 업데이트
+└── 런타임 메트릭 및 통계 정보
+```
+
+## 3. 이론: 클라우드 네이티브 생태계 (10분)
+
+### CNCF 프로젝트 생태계
+
+```
+Cloud Native Computing Foundation:
+
+Graduated Projects:
+├── Kubernetes: 컨테이너 오케스트레이션
+├── Prometheus: 모니터링 및 알림
+├── Envoy: 서비스 프록시
+├── CoreDNS: DNS 서버
+├── containerd: 컨테이너 런타임
+├── Fluentd: 로그 수집 및 처리
+├── Jaeger: 분산 추적
+├── TiKV: 분산 키-값 스토어
+├── Vitess: 데이터베이스 클러스터링
+└── Helm: Kubernetes 패키지 관리
+
+Incubating Projects:
+├── Istio: 서비스 메시
+├── gRPC: 고성능 RPC 프레임워크
+├── CNI: 컨테이너 네트워크 인터페이스
+├── Notary: 콘텐츠 신뢰 및 서명
+├── SPIFFE/SPIRE: 보안 ID 프레임워크
+├── Open Policy Agent: 정책 엔진
+├── Falco: 런타임 보안 모니터링
+└── Linkerd: 서비스 메시
+
+Sandbox Projects:
+├── 새로운 혁신 기술들
+├── 실험적 프로젝트들
+├── 커뮤니티 주도 개발
+└── 미래 기술 트렌드 반영
+```
+
+### 컨테이너 보안 발전 방향
+
+```
+보안 기술 트렌드:
+
+Zero Trust Architecture:
+├── 네트워크 경계 보안에서 ID 기반 보안으로
+├── 모든 통신 암호화 및 인증
+├── 최소 권한 원칙 적용
+├── 지속적인 검증 및 모니터링
+├── 마이크로세그멘테이션
+└── 정책 기반 접근 제어
+
+Supply Chain Security:
+├── 소프트웨어 공급망 보안 강화
+├── 이미지 서명 및 검증 의무화
+├── SBOM (Software Bill of Materials)
+├── 취약점 스캔 자동화
+├── 컴플라이언스 자동 검사
+└── 보안 정책 as Code
+
+Runtime Security:
+├── 행동 기반 이상 탐지
+├── 머신러닝 기반 위협 분석
+├── 실시간 보안 모니터링
+├── 자동화된 대응 체계
+├── 포렌식 및 감사 로그
+└── 보안 오케스트레이션
+```
+
+## 4. 개념 예시: 생태계 도구 비교 (12분)
+
+### 런타임 비교 분석 예시
 
 ```bash
-# 기본 웹 서버 실행 (포트 매핑)
-docker run -d -p 8080:80 --name web-nginx nginx:latest
+# Docker 런타임 정보 (개념 예시)
+docker system info | grep -i runtime
+# Default Runtime: runc
+# Runtimes: runc
 
-# 포트 매핑 확인
-docker ps
-# PORTS 컬럼에서 0.0.0.0:8080->80/tcp 확인
+# Podman 사용 예시 (개념 예시)
+podman run --rm alpine echo "Hello from Podman"
+# 데몬리스 실행, 루트리스 지원
 
-# 웹 브라우저 또는 curl로 접근 테스트
-curl http://localhost:8080
-curl -I http://localhost:8080
-
-# 다른 포트로 추가 웹 서버 실행
-docker run -d -p 8081:80 --name web-apache httpd:latest
-curl http://localhost:8081
+# containerd 직접 사용 예시 (개념 예시)
+ctr images pull docker.io/library/alpine:latest
+ctr run docker.io/library/alpine:latest mycontainer
 ```
 
-### 다중 포트 매핑
+### OCI 호환성 테스트 예시
 
 ```bash
-# 여러 포트를 동시에 매핑
-docker run -d \
-  -p 8082:80 \
-  -p 8443:443 \
-  --name web-multi nginx:latest
+# OCI 번들 생성 (개념 예시)
+mkdir mycontainer
+cd mycontainer
+runc spec
 
-# 포트 확인
-docker port web-multi
+# config.json 구조 확인 (개념 예시)
+cat config.json | jq '.process.args'
+# ["sh"]
 
-# MySQL 컨테이너 (데이터베이스 포트)
-docker run -d \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=mypassword \
-  --name mysql-db mysql:8.0
-
-# Redis 컨테이너 (캐시 서버 포트)
-docker run -d \
-  -p 6379:6379 \
-  --name redis-cache redis:latest
+# OCI 런타임으로 실행 (개념 예시)
+sudo runc run mycontainer
 ```
 
-### 특정 인터페이스 바인딩
+### CNCF 도구 통합 예시
 
-```bash
-# 모든 인터페이스에 바인딩 (기본값)
-docker run -d -p 8084:80 --name web-all nginx:latest
-
-# 로컬호스트만 바인딩 (외부 접근 차단)
-docker run -d -p 127.0.0.1:8085:80 --name web-local nginx:latest
-
-# 특정 IP 주소에 바인딩
-docker run -d -p 192.168.1.100:8086:80 --name web-specific nginx:latest
-
-# 접근 테스트
-curl http://localhost:8084    # 성공
-curl http://localhost:8085    # 성공
-curl http://192.168.1.100:8086  # 성공 (해당 IP가 있는 경우)
+```yaml
+# Cloud Native 스택 예시 (개념 예시)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cloud-native-app
+  annotations:
+    prometheus.io/scrape: "true"
+    linkerd.io/inject: enabled
+spec:
+  containers:
+  - name: app
+    image: myapp:latest
+    ports:
+    - containerPort: 8080
+  - name: envoy-proxy
+    image: envoyproxy/envoy:latest
 ```
 
-## 3. 실습: 동적 포트 할당 (8분)
+## 5. 토론 및 정리 (8분)
 
-### 자동 포트 할당
+### 핵심 개념 정리
+- **OCI 표준**을 통한 컨테이너 생태계 표준화
+- **CRI 인터페이스**로 Kubernetes와 런타임 분리
+- **CNCF 생태계**의 클라우드 네이티브 기술 발전
+- **보안 및 공급망** 관리의 중요성 증대
 
-```bash
-# Docker가 자동으로 포트 할당
-docker run -d -P --name web-auto nginx:latest
-
-# 할당된 포트 확인
-docker ps
-docker port web-auto
-
-# 할당된 포트로 접근
-ASSIGNED_PORT=$(docker port web-auto 80 | cut -d: -f2)
-echo "Assigned port: $ASSIGNED_PORT"
-curl http://localhost:$ASSIGNED_PORT
-```
-
-### 포트 범위 매핑
-
-```bash
-# 포트 범위 매핑 (여러 서비스용)
-docker run -d -p 8090-8095:80 --name web-range nginx:latest
-
-# 사용 가능한 포트 확인
-docker port web-range
-
-# UDP 포트 매핑
-docker run -d -p 5353:53/udp --name dns-server alpine:latest
-
-# TCP와 UDP 동시 매핑
-docker run -d \
-  -p 8096:80/tcp \
-  -p 8096:80/udp \
-  --name web-both nginx:latest
-```
-
-## 4. 실습: 네트워크 문제 해결 (10분)
-
-### 포트 충돌 해결
-
-```bash
-# 포트 충돌 상황 생성
-docker run -d -p 8080:80 --name web1 nginx:latest
-docker run -d -p 8080:80 --name web2 nginx:latest  # 오류 발생
-
-# 오류 메시지 확인
-docker logs web2
-
-# 사용 중인 포트 확인 (호스트)
-netstat -tlnp | grep 8080
-# 또는
-ss -tlnp | grep 8080
-
-# 해결: 다른 포트 사용
-docker rm web2
-docker run -d -p 8081:80 --name web2 nginx:latest
-```
-
-### 네트워크 연결 테스트
-
-```bash
-# 컨테이너 네트워크 정보 확인
-docker inspect web1 | grep -A 10 "NetworkSettings"
-
-# 컨테이너 IP 주소 확인
-docker inspect --format='{{.NetworkSettings.IPAddress}}' web1
-
-# 컨테이너 간 통신 테스트
-CONTAINER_IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' web1)
-docker run --rm alpine:latest ping -c 3 $CONTAINER_IP
-
-# 호스트에서 컨테이너로 직접 접근
-curl http://$CONTAINER_IP:80
-```
-
-### 방화벽 및 보안 확인
-
-```bash
-# Docker가 생성한 iptables 규칙 확인
-sudo iptables -t nat -L DOCKER
-sudo iptables -L DOCKER
-
-# 포트 접근 가능성 테스트
-# 외부에서 접근 (다른 머신에서)
-# curl http://[HOST_IP]:8080
-
-# 로컬 방화벽 상태 확인 (Ubuntu)
-sudo ufw status
-
-# Docker 서비스 포트 확인
-sudo netstat -tlnp | grep docker
-```
-
-## 5. 실습: 실제 웹 애플리케이션 배포 (15분)
-
-### 정적 웹사이트 배포
-
-```bash
-# HTML 파일 준비
-mkdir -p ./my-website
-cat > ./my-website/index.html << EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My Docker Website</title>
-</head>
-<body>
-    <h1>Welcome to My Docker Website!</h1>
-    <p>This is running in a Docker container.</p>
-    <p>Current time: <span id="time"></span></p>
-    <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
-    </script>
-</body>
-</html>
-EOF
-
-# 볼륨 마운트로 웹사이트 배포
-docker run -d \
-  -p 8090:80 \
-  -v $(pwd)/my-website:/usr/share/nginx/html \
-  --name my-website nginx:latest
-
-# 웹사이트 접근 확인
-curl http://localhost:8090
-```
-
-### Node.js 애플리케이션 배포
-
-```bash
-# 간단한 Node.js 앱 준비
-mkdir -p ./node-app
-cat > ./node-app/app.js << EOF
-const http = require('http');
-const port = 3000;
-
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.end(\`
-    <h1>Node.js in Docker</h1>
-    <p>Request URL: \${req.url}</p>
-    <p>Method: \${req.method}</p>
-    <p>Timestamp: \${new Date().toISOString()}</p>
-  \`);
-});
-
-server.listen(port, () => {
-  console.log(\`Server running at http://localhost:\${port}/\`);
-});
-EOF
-
-# Node.js 컨테이너로 실행
-docker run -d \
-  -p 8091:3000 \
-  -v $(pwd)/node-app:/app \
-  -w /app \
-  --name node-app node:16-alpine \
-  node app.js
-
-# 애플리케이션 접근 확인
-curl http://localhost:8091
-curl http://localhost:8091/api/test
-```
-
-### 데이터베이스 연동 테스트
-
-```bash
-# MySQL 컨테이너 실행 (이미 실행 중이면 스킵)
-docker run -d \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=mypassword \
-  -e MYSQL_DATABASE=testdb \
-  --name mysql-server mysql:8.0
-
-# MySQL 연결 테스트 (MySQL 클라이언트 컨테이너 사용)
-docker run -it --rm mysql:8.0 mysql -h host.docker.internal -P 3306 -u root -p
-
-# 컨테이너 내부에서 MySQL 명령어:
-# SHOW DATABASES;
-# USE testdb;
-# CREATE TABLE users (id INT, name VARCHAR(50));
-# INSERT INTO users VALUES (1, 'Docker User');
-# SELECT * FROM users;
-# EXIT;
-```
-
-## 6. 보안 고려사항 및 모범 사례 (5분)
-
-### 포트 매핑 보안 원칙
-
-```bash
-# 1. 필요한 포트만 노출
-docker run -d -p 127.0.0.1:8080:80 --name secure-web nginx:latest  # 로컬만
-docker run -d -p 8080:80 --name public-web nginx:latest            # 전체 공개
-
-# 2. 비표준 포트 사용
-docker run -d -p 8443:80 --name web-nonstandard nginx:latest
-
-# 3. 환경별 포트 분리
-docker run -d -p 8080:80 --name web-dev nginx:latest      # 개발
-docker run -d -p 8081:80 --name web-staging nginx:latest  # 스테이징
-# 프로덕션은 80:80 또는 로드밸런서 사용
-
-# 4. 포트 스캔 방지
-docker run -d \
-  -p 127.0.0.1:8080:80 \
-  --restart unless-stopped \
-  --name secure-app nginx:latest
-```
-
-### 네트워크 모니터링
-
-```bash
-# 활성 연결 모니터링
-docker exec web-nginx netstat -an | grep :80
-
-# 실시간 트래픽 확인
-docker logs -f web-nginx
-
-# 리소스 사용량 모니터링
-docker stats web-nginx --no-stream
-```
+### 토론 주제
+"컨테이너 기술의 표준화가 클라우드 네이티브 생태계 발전에 미치는 영향과 미래 전망은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **포트 매핑**: -p 옵션으로 호스트-컨테이너 포트 연결
-- **브리지 네트워크**: Docker 기본 네트워크 모드
-- **iptables**: Docker가 사용하는 네트워크 규칙 관리
-- **네트워크 격리**: 컨테이너별 독립적 네트워크 스택
+- **표준화**: OCI, Runtime Spec, Image Spec, Distribution Spec
+- **런타임 생태계**: containerd, CRI-O, Podman, runc
+- **클라우드 네이티브**: CNCF, Kubernetes, 서비스 메시
+- **보안 트렌드**: Zero Trust, Supply Chain, Runtime Security
 
 ## 📚 참고 자료
-- [Docker 네트워킹 가이드](https://docs.docker.com/network/)
-- [포트 매핑 레퍼런스](https://docs.docker.com/engine/reference/run/#expose-incoming-ports)
-- [Docker 보안 가이드](https://docs.docker.com/engine/security/)
-
-## 🔧 실습 체크리스트
-- [ ] 기본 포트 매핑으로 웹 서버 실행
-- [ ] 다중 포트 및 특정 인터페이스 바인딩
-- [ ] 동적 포트 할당 및 확인
-- [ ] 포트 충돌 문제 해결
-- [ ] 실제 웹 애플리케이션 배포 및 접근
+- [OCI 표준 문서](https://opencontainers.org/)
+- [CNCF 프로젝트](https://www.cncf.io/projects/)
+- [CRI 인터페이스](https://kubernetes.io/docs/concepts/architecture/cri/)

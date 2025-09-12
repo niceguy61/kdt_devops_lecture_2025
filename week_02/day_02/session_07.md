@@ -1,689 +1,506 @@
-# Session 7: 이미지 최적화와 보안 고려사항
+# Session 7: 프로덕션 운영 모범 사례
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 7**로, Session 6의 멀티 스테이지 빌드를 바탕으로 이미지 크기 최적화와 보안 강화 방법을 실습합니다. 프로덕션 환경에 적합한 안전하고 효율적인 이미지 구축 기법을 학습합니다.
+이 세션은 **Week 2 > Day 2 > Session 7**로, 디버깅 및 문제 해결 기법 이해를 바탕으로 프로덕션 환경에서의 컨테이너 운영 모범 사례와 자동화 전략을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **이미지 크기 최적화**와 **보안 모범 사례** 학습
-- **최적화된 프로덕션 이미지** 구축 실습
-- **취약점 스캔**과 **보안 강화** 기법 적용
+- **프로덕션 환경** 컨테이너 **라이프사이클 관리** 전략
+- **보안 운영 절차** 및 **컴플라이언스** 관리 방법론
+- **자동화 및 CI/CD** 통합을 통한 **운영 효율성** 극대화
 
-## 1. 이론: 이미지 크기 최적화와 보안 모범 사례 (20분)
+## 1. 이론: 컨테이너 라이프사이클 관리 (20분)
 
-### 이미지 최적화 전략
+### 프로덕션 라이프사이클 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "크기 최적화"
-        A[베이스 이미지 선택] --> B[Alpine/Distroless]
-        C[레이어 최소화] --> D[명령어 체이닝]
-        E[불필요한 파일 제거] --> F[캐시 정리]
-        G[멀티 스테이지 빌드] --> H[빌드 도구 분리]
+    subgraph "Development Phase"
+        A[Code Development] --> B[Local Testing]
+        B --> C[Image Build]
     end
     
-    subgraph "보안 강화"
-        I[비root 사용자] --> J[최소 권한]
-        K[취약점 스캔] --> L[정기 업데이트]
-        M[시크릿 관리] --> N[환경 변수 분리]
-        O[읽기 전용 파일시스템] --> P[불변 인프라]
+    subgraph "CI/CD Pipeline"
+        D[Source Control] --> E[Automated Testing]
+        E --> F[Security Scanning]
+        F --> G[Image Registry]
     end
+    
+    subgraph "Deployment Phase"
+        H[Staging Environment] --> I[Production Deployment]
+        I --> J[Health Monitoring]
+        J --> K[Auto Scaling]
+    end
+    
+    subgraph "Operations Phase"
+        L[Monitoring] --> M[Maintenance]
+        M --> N[Updates/Patches]
+        N --> O[Backup/Recovery]
+    end
+    
+    C --> D
+    G --> H
+    K --> L
 ```
 
-### 이미지 크기 최적화 체크리스트
+### 배포 전략 및 패턴
 
 ```
-베이스 이미지 최적화:
-├── Alpine Linux 사용 (5MB vs 72MB)
-├── Distroless 이미지 활용 (보안 + 크기)
-├── Scratch 이미지 (정적 바이너리용)
-└── Slim 변형 선택 (중간 크기)
+프로덕션 배포 전략:
 
-레이어 최적화:
-├── RUN 명령어 체이닝
-├── 패키지 캐시 정리
-├── 임시 파일 제거
-└── .dockerignore 활용
+블루-그린 배포:
+├── 두 개의 동일한 프로덕션 환경 운영
+├── 새 버전을 그린 환경에 배포
+├── 트래픽을 블루에서 그린으로 전환
+├── 문제 발생 시 즉시 롤백 가능
+├── 다운타임 최소화 (거의 제로)
+├── 리소스 비용 2배 필요
+├── 데이터베이스 마이그레이션 복잡성
+└── 상태 비저장 애플리케이션에 적합
 
-파일 최적화:
-├── 불필요한 패키지 제거
-├── 문서 및 예제 파일 제거
-├── 로케일 파일 정리
-└── 개발 도구 제거
+카나리 배포:
+├── 새 버전을 소수 사용자에게 점진적 배포
+├── 트래픽의 일정 비율만 새 버전으로 라우팅
+├── 메트릭 모니터링을 통한 점진적 확대
+├── 문제 발생 시 영향 범위 최소화
+├── A/B 테스트와 결합 가능
+├── 세밀한 트래픽 제어 필요
+├── 복잡한 모니터링 및 알림 체계
+└── 사용자 경험 기반 검증
+
+롤링 업데이트:
+├── 기존 인스턴스를 하나씩 순차적 교체
+├── 서비스 중단 없이 점진적 업데이트
+├── 리소스 효율적 (추가 인스턴스 최소)
+├── 업데이트 진행 상황 실시간 모니터링
+├── 문제 발생 시 자동 롤백
+├── 헬스 체크 기반 업데이트 제어
+├── 데이터베이스 호환성 고려 필요
+└── Kubernetes 기본 배포 전략
+
+이뮤터블 인프라:
+├── 인프라 구성 요소를 불변으로 관리
+├── 변경 시 새로운 인스턴스로 교체
+├── 설정 드리프트 방지
+├── 일관된 환경 보장
+├── 버전 관리 및 추적 용이
+├── 빠른 롤백 및 복구
+├── Infrastructure as Code 필수
+└── 컨테이너와 자연스럽게 결합
+```
+
+### 환경별 관리 전략
+
+```
+환경 분리 및 관리:
+
+개발 환경 (Development):
+├── 개발자 개별 환경 또는 공유 환경
+├── 빠른 피드백을 위한 자동 배포
+├── 디버깅 도구 및 개발 편의 기능
+├── 리소스 제한 완화
+├── 실험적 기능 테스트
+├── 로컬 개발 환경과 동기화
+└── 데이터 마스킹 및 테스트 데이터
+
+스테이징 환경 (Staging):
+├── 프로덕션과 동일한 구성
+├── 통합 테스트 및 성능 테스트
+├── 사용자 승인 테스트 (UAT)
+├── 보안 테스트 및 취약점 스캔
+├── 배포 프로세스 검증
+├── 모니터링 및 알림 테스트
+└── 데이터 마이그레이션 검증
+
+프로덕션 환경 (Production):
+├── 고가용성 및 확장성 보장
+├── 강화된 보안 및 모니터링
+├── 자동화된 백업 및 복구
+├── 성능 최적화 및 튜닝
+├── 컴플라이언스 및 감사 로그
+├── 장애 대응 및 에스컬레이션
+└── 비즈니스 연속성 계획
+
+환경 간 일관성:
+├── Infrastructure as Code 활용
+├── 컨테이너 이미지 동일성 보장
+├── 환경별 설정 외부화
+├── 자동화된 환경 프로비저닝
+├── 환경별 테스트 자동화
+└── 설정 드리프트 모니터링
+```
+
+## 2. 이론: 보안 운영 및 컴플라이언스 (15분)
+
+### 보안 운영 체계
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant CI as CI/CD Pipeline
+    participant Registry as Image Registry
+    participant Runtime as Runtime Environment
+    participant Monitor as Security Monitor
+    
+    Dev->>CI: Push code
+    CI->>CI: Security scan (SAST)
+    CI->>Registry: Push image
+    Registry->>Registry: Vulnerability scan
+    Registry->>Runtime: Deploy secure image
+    Runtime->>Monitor: Runtime security events
+    Monitor->>Dev: Security alerts
 ```
 
 ### 보안 모범 사례
 
 ```
-사용자 보안:
-├── 비root 사용자 생성 및 사용
-├── 최소 권한 원칙 적용
-├── 사용자 ID 고정 (1000번대)
-└── 홈 디렉토리 제한
+컨테이너 보안 운영:
 
-파일시스템 보안:
+이미지 보안 관리:
+├── 신뢰할 수 있는 베이스 이미지 사용
+├── 정기적인 이미지 업데이트 및 패치
+├── 이미지 취약점 스캔 자동화
+├── 이미지 서명 및 검증 (Docker Content Trust)
+├── 프라이빗 레지스트리 사용
+├── 이미지 레이어 최소화
+├── 시크릿 정보 이미지 포함 금지
+└── 멀티 스테이지 빌드로 공격 표면 축소
+
+런타임 보안 강화:
+├── 비특권 사용자로 컨테이너 실행
 ├── 읽기 전용 루트 파일시스템
-├── 실행 권한 최소화
-├── 민감한 파일 권한 제한
-└── 임시 디렉토리 분리
+├── 불필요한 Linux Capabilities 제거
+├── Seccomp 프로필 적용
+├── AppArmor/SELinux 정책 활용
+├── 네트워크 정책 및 세그멘테이션
+├── 리소스 제한 및 격리 강화
+└── 런타임 보안 모니터링
 
-네트워크 보안:
-├── 필요한 포트만 노출
-├── 내부 통신 암호화
-├── 네트워크 정책 적용
-└── 방화벽 규칙 설정
+접근 제어 및 인증:
+├── RBAC (Role-Based Access Control)
+├── 최소 권한 원칙 적용
+├── 다단계 인증 (MFA) 구현
+├── API 키 및 토큰 관리
+├── 서비스 간 인증 (mTLS)
+├── 감사 로그 및 추적
+├── 정기적인 권한 검토
+└── 자동화된 접근 권한 관리
 
-시크릿 관리:
-├── 하드코딩된 비밀번호 금지
-├── 환경 변수로 시크릿 전달
-├── 시크릿 관리 도구 활용
-└── 빌드 시 시크릿 제거
+데이터 보호:
+├── 전송 중 데이터 암호화 (TLS)
+├── 저장 데이터 암호화
+├── 시크릿 관리 시스템 활용
+├── 개인정보 마스킹 및 익명화
+├── 데이터 백업 암호화
+├── 키 관리 및 로테이션
+└── 데이터 분류 및 라벨링
 ```
 
-## 2. 실습: 극도로 최적화된 Node.js 이미지 (15분)
+### 컴플라이언스 관리
 
-### 최적화 전후 비교를 위한 기본 이미지
+```
+규정 준수 체계:
 
-```bash
-# 실습 디렉토리 생성
-mkdir -p ~/docker-practice/day2/session7/optimized-node
-cd ~/docker-practice/day2/session7/optimized-node
+주요 컴플라이언스 표준:
+├── SOC 2 (Service Organization Control 2)
+├── ISO 27001 (정보보안 관리시스템)
+├── PCI DSS (Payment Card Industry Data Security Standard)
+├── HIPAA (Health Insurance Portability and Accountability Act)
+├── GDPR (General Data Protection Regulation)
+├── SOX (Sarbanes-Oxley Act)
+├── FedRAMP (Federal Risk and Authorization Management Program)
+└── 국가별 개인정보보호법
 
-# 간단한 Express 애플리케이션
-cat > app.js << 'EOF'
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
+컴플라이언스 자동화:
+├── 정책 as Code 구현
+├── 자동화된 컴플라이언스 검사
+├── 지속적인 모니터링 및 보고
+├── 위반 사항 자동 탐지 및 알림
+├── 감사 로그 자동 수집
+├── 컴플라이언스 대시보드
+├── 정기적인 컴플라이언스 평가
+└── 자동화된 증거 수집
 
-// 보안 미들웨어 시뮬레이션
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
-app.get('/', (req, res) => {
-  res.json({
-    message: '🚀 Optimized Node.js Application',
-    version: process.env.npm_package_version || '1.0.0',
-    node_version: process.version,
-    platform: process.platform,
-    arch: process.arch,
-    memory_usage: process.memoryUsage(),
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${port}`);
-  console.log(`👤 Running as user: ${process.getuid ? process.getuid() : 'unknown'}`);
-  console.log(`📁 Working directory: ${process.cwd()}`);
-});
-EOF
-
-# package.json (최소 의존성)
-cat > package.json << 'EOF'
-{
-  "name": "optimized-node-app",
-  "version": "1.0.0",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
-}
-EOF
+거버넌스 체계:
+├── 보안 정책 및 절차 문서화
+├── 역할 및 책임 명확화
+├── 정기적인 보안 교육 및 훈련
+├── 인시던트 대응 계획
+├── 비즈니스 연속성 계획
+├── 공급업체 보안 평가
+├── 제3자 보안 감사
+└── 지속적인 개선 프로세스
 ```
 
-### 비최적화 Dockerfile (비교용)
+## 3. 이론: 자동화 및 운영 효율성 (10분)
 
-```dockerfile
-# Dockerfile.unoptimized
-cat > Dockerfile.unoptimized << 'EOF'
-FROM node:18
+### CI/CD 파이프라인 통합
 
-WORKDIR /app
-COPY . .
-RUN npm install
+```
+자동화 파이프라인 구성:
 
-EXPOSE 3000
-CMD ["npm", "start"]
-EOF
+소스 코드 관리:
+├── Git 기반 버전 관리
+├── 브랜치 전략 (GitFlow, GitHub Flow)
+├── 코드 리뷰 및 승인 프로세스
+├── 자동화된 코드 품질 검사
+├── 의존성 관리 및 업데이트
+├── 라이선스 컴플라이언스 검사
+└── 보안 취약점 스캔 (SAST)
+
+빌드 및 테스트 자동화:
+├── 자동화된 빌드 프로세스
+├── 단위 테스트 및 통합 테스트
+├── 성능 테스트 및 부하 테스트
+├── 보안 테스트 (DAST, IAST)
+├── 이미지 취약점 스캔
+├── 컨테이너 이미지 최적화
+└── 테스트 결과 리포팅
+
+배포 자동화:
+├── 환경별 자동 배포
+├── 배포 승인 워크플로우
+├── 카나리 배포 자동화
+├── 롤백 자동화
+├── 헬스 체크 및 검증
+├── 배포 알림 및 추적
+└── 배포 메트릭 수집
+
+운영 자동화:
+├── 인프라 프로비저닝 자동화
+├── 설정 관리 자동화
+├── 모니터링 및 알림 자동화
+├── 백업 및 복구 자동화
+├── 스케일링 자동화
+├── 패치 관리 자동화
+└── 인시던트 대응 자동화
 ```
 
-### 최적화된 Dockerfile
+### 운영 효율성 최적화
 
-```dockerfile
-# Dockerfile.optimized
-cat > Dockerfile.optimized << 'EOF'
-# ================================
-# Stage 1: Dependencies
-# ================================
-FROM node:18-alpine AS deps
+```
+운영 최적화 전략:
 
-# 보안 업데이트
-RUN apk update && apk upgrade
+리소스 최적화:
+├── 자동 스케일링 정책 최적화
+├── 리소스 사용률 모니터링
+├── 비용 최적화 및 예산 관리
+├── 용량 계획 및 예측
+├── 멀티 클라우드 전략
+├── 스팟 인스턴스 활용
+└── 리소스 태깅 및 추적
 
-WORKDIR /app
+성능 최적화:
+├── 애플리케이션 성능 모니터링 (APM)
+├── 데이터베이스 성능 튜닝
+├── 캐싱 전략 최적화
+├── CDN 및 엣지 컴퓨팅 활용
+├── 네트워크 최적화
+├── 스토리지 성능 튜닝
+└── 코드 레벨 최적화
 
-# 의존성만 설치 (캐시 최적화)
-COPY package*.json ./
-RUN npm ci --only=production --silent && \
-    npm cache clean --force
-
-# ================================
-# Stage 2: Runtime
-# ================================
-FROM node:18-alpine
-
-# 보안 업데이트 및 필수 도구만 설치
-RUN apk update && apk upgrade && \
-    apk add --no-cache dumb-init && \
-    rm -rf /var/cache/apk/*
-
-# 비root 사용자 생성
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S -u 1001 -G nodejs nodejs
-
-# 애플리케이션 디렉토리 생성 및 권한 설정
-RUN mkdir -p /app && \
-    chown -R nodejs:nodejs /app
-
-WORKDIR /app
-
-# 의존성 복사 (올바른 권한으로)
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-
-# 애플리케이션 코드 복사
-COPY --chown=nodejs:nodejs app.js package*.json ./
-
-# 사용자 전환
-USER nodejs
-
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
-
-# 포트 노출
-EXPOSE 3000
-
-# dumb-init으로 PID 1 문제 해결
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "app.js"]
-EOF
+운영 프로세스 개선:
+├── 표준화된 운영 절차 (SOP)
+├── 자동화된 문서 생성
+├── 지식 베이스 구축
+├── 온콜 로테이션 관리
+├── 인시던트 포스트모템
+├── 지속적인 개선 (Kaizen)
+└── 팀 간 협업 도구 통합
 ```
 
-### Distroless 이미지 버전
+## 4. 개념 예시: 프로덕션 운영 구성 (12분)
 
-```dockerfile
-# Dockerfile.distroless
-cat > Dockerfile.distroless << 'EOF'
-# ================================
-# Stage 1: Builder
-# ================================
-FROM node:18-alpine AS builder
+### CI/CD 파이프라인 예시
 
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+```yaml
+# GitHub Actions 워크플로우 (개념 예시)
+name: Production Deployment
 
-# ================================
-# Stage 2: Distroless Runtime
-# ================================
-FROM gcr.io/distroless/nodejs18-debian11
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
-# 메타데이터
-LABEL maintainer="student@example.com"
-LABEL description="Distroless Node.js application"
-
-# 의존성 및 애플리케이션 복사
-COPY --from=builder /app/node_modules /app/node_modules
-COPY app.js package*.json /app/
-
-WORKDIR /app
-
-EXPOSE 3000
-CMD ["app.js"]
-EOF
-```
-
-### 크기 비교 및 보안 테스트
-
-```bash
-# 모든 버전 빌드
-docker build -f Dockerfile.unoptimized -t node-app:unoptimized .
-docker build -f Dockerfile.optimized -t node-app:optimized .
-docker build -f Dockerfile.distroless -t node-app:distroless .
-
-# 이미지 크기 비교
-echo "=== Image Size Comparison ==="
-docker images node-app --format "table {{.Tag}}\t{{.Size}}"
-
-# 보안 테스트 (사용자 확인)
-echo -e "\n=== Security Test: User Check ==="
-docker run --rm node-app:unoptimized whoami 2>/dev/null || echo "whoami not available"
-docker run --rm node-app:optimized whoami 2>/dev/null || echo "whoami not available"
-docker run --rm node-app:distroless whoami 2>/dev/null || echo "whoami not available (distroless)"
-
-# 실행 테스트
-docker run -d -p 8080:3000 --name node-optimized node-app:optimized
-docker run -d -p 8081:3000 --name node-distroless node-app:distroless
-
-curl http://localhost:8080/
-curl http://localhost:8081/
-```
-
-## 3. 실습: Python 보안 강화 이미지 (10분)
-
-### 보안 강화된 Python 애플리케이션
-
-```bash
-# Python 보안 프로젝트
-mkdir -p python-secure && cd python-secure
-
-# 보안 강화된 FastAPI 앱
-cat > main.py << 'EOF'
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import HTTPBearer
-from fastapi.middleware.cors import CORSMiddleware
-import os
-import secrets
-import hashlib
-from datetime import datetime
-
-app = FastAPI(
-    title="Secure Python App",
-    description="Security-hardened Python application",
-    version="1.0.0"
-)
-
-# 보안 미들웨어
-security = HTTPBearer()
-
-# CORS 설정 (제한적)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://trusted-domain.com"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
-)
-
-# 보안 헤더 미들웨어
-@app.middleware("http")
-async def add_security_headers(request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    return response
-
-@app.get("/")
-async def root():
-    return {
-        "message": "🔒 Secure Python Application",
-        "security_features": [
-            "Non-root user execution",
-            "Read-only filesystem",
-            "Security headers",
-            "Input validation",
-            "No hardcoded secrets"
-        ],
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/health")
-async def health():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
-@app.get("/secure-info")
-async def secure_info(token: str = Depends(security)):
-    # 간단한 토큰 검증 (실제로는 JWT 등 사용)
-    expected_token = os.getenv("API_TOKEN", "default-token")
-    if not secrets.compare_digest(token.credentials, expected_token):
-        raise HTTPException(status_code=401, detail="Invalid token")
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
     
-    return {
-        "user_id": hashlib.sha256(token.credentials.encode()).hexdigest()[:8],
-        "access_level": "authenticated",
-        "timestamp": datetime.now().isoformat()
-    }
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-EOF
-
-# requirements.txt
-cat > requirements.txt << 'EOF'
-fastapi==0.103.1
-uvicorn[standard]==0.23.2
-python-multipart==0.0.6
-EOF
-```
-
-### 보안 강화된 Python Dockerfile
-
-```dockerfile
-# 보안 강화 Python Dockerfile
-cat > Dockerfile << 'EOF'
-# ================================
-# Stage 1: Builder
-# ================================
-FROM python:3.11-slim AS builder
-
-# 보안 업데이트
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends gcc && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# 의존성 설치
-COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# ================================
-# Stage 2: Runtime
-# ================================
-FROM python:3.11-slim
-
-# 보안 업데이트
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 비root 사용자 생성 (고정 UID/GID)
-RUN groupadd -r -g 1001 appgroup && \
-    useradd -r -u 1001 -g appgroup -d /app -s /bin/bash appuser
-
-# 애플리케이션 디렉토리 생성
-RUN mkdir -p /app && \
-    chown -R appuser:appgroup /app
-
-WORKDIR /app
-
-# Python 경로 설정
-ENV PYTHONPATH=/home/appuser/.local
-ENV PATH=/home/appuser/.local/bin:$PATH
-
-# 빌드된 패키지 복사
-COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
-
-# 애플리케이션 코드 복사
-COPY --chown=appuser:appgroup main.py .
-
-# 사용자 전환
-USER appuser
-
-# 보안 환경 변수
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONHASHSEED=random
-
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-
-EXPOSE 8000
-
-# 읽기 전용 파일시스템 준비 (런타임에 --read-only 플래그 사용)
-VOLUME ["/tmp"]
-
-CMD ["python", "main.py"]
-EOF
-
-# 빌드 및 보안 테스트
-docker build -t python-app:secure .
-
-# 읽기 전용 파일시스템으로 실행
-docker run -d -p 8082:8000 \
-  --read-only \
-  --tmpfs /tmp \
-  -e API_TOKEN="secure-token-123" \
-  --name python-secure python-app:secure
-
-# 보안 테스트
-curl http://localhost:8082/
-curl -H "Authorization: Bearer secure-token-123" http://localhost:8082/secure-info
-```
-
-## 4. 실습: 취약점 스캔 및 보안 검증 (10분)
-
-### Docker Scout를 사용한 취약점 스캔
-
-```bash
-# Docker Scout 활성화 (Docker Desktop 포함)
-docker scout --help 2>/dev/null || echo "Docker Scout not available"
-
-# 이미지 취약점 스캔
-echo "=== Vulnerability Scanning ==="
-docker scout cves node-app:unoptimized 2>/dev/null || echo "Scout scan failed for unoptimized"
-docker scout cves node-app:optimized 2>/dev/null || echo "Scout scan failed for optimized"
-docker scout cves python-app:secure 2>/dev/null || echo "Scout scan failed for python"
-
-# 대안: Trivy 사용 (컨테이너로 실행)
-echo -e "\n=== Alternative: Trivy Scan ==="
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy:latest image --severity HIGH,CRITICAL node-app:optimized 2>/dev/null || echo "Trivy not available"
-```
-
-### 보안 설정 검증
-
-```bash
-# 컨테이너 보안 설정 확인
-echo "=== Security Configuration Check ==="
-
-# 사용자 확인
-echo "User check:"
-docker exec node-optimized id 2>/dev/null || echo "Container not running"
-docker exec python-secure id 2>/dev/null || echo "Container not running"
-
-# 파일시스템 권한 확인
-echo -e "\nFilesystem permissions:"
-docker exec node-optimized ls -la /app 2>/dev/null || echo "Container not running"
-
-# 프로세스 확인
-echo -e "\nProcess check:"
-docker exec node-optimized ps aux 2>/dev/null || echo "Container not running"
-
-# 네트워크 포트 확인
-echo -e "\nNetwork ports:"
-docker exec node-optimized netstat -tlnp 2>/dev/null || echo "netstat not available"
-```
-
-### 보안 벤치마크 체크리스트
-
-```bash
-# 보안 체크리스트 생성
-cat > security-checklist.md << 'EOF'
-# Docker 보안 체크리스트
-
-## ✅ 완료된 보안 조치
-
-### 사용자 보안
-- [x] 비root 사용자로 실행
-- [x] 고정 UID/GID 사용 (1001)
-- [x] 최소 권한 원칙 적용
-
-### 이미지 보안
-- [x] 최신 베이스 이미지 사용
-- [x] 보안 업데이트 적용
-- [x] 불필요한 패키지 제거
-- [x] 멀티 스테이지 빌드로 공격 표면 축소
-
-### 런타임 보안
-- [x] 읽기 전용 파일시스템 (--read-only)
-- [x] 임시 파일시스템 분리 (--tmpfs)
-- [x] 보안 헤더 적용
-- [x] 헬스체크 구현
-
-### 네트워크 보안
-- [x] 필요한 포트만 노출
-- [x] CORS 정책 적용
-- [x] HTTPS 강제 (Strict-Transport-Security)
-
-### 시크릿 관리
-- [x] 환경 변수로 시크릿 전달
-- [x] 하드코딩된 비밀번호 없음
-- [x] 토큰 기반 인증
-
-## 📊 보안 메트릭
-- 이미지 크기: 90% 감소
-- 취약점: HIGH/CRITICAL 0개
-- 공격 표면: 최소화
-- 사용자 권한: 비root
-EOF
-
-cat security-checklist.md
-```
-
-## 5. 실습: 프로덕션 배포용 최종 이미지 (10분)
-
-### 프로덕션 준비 완료 이미지
-
-```dockerfile
-# 프로덕션 최적화 Dockerfile
-cat > Dockerfile.production << 'EOF'
-# ================================
-# Stage 1: Security Scanner
-# ================================
-FROM aquasec/trivy:latest AS scanner
-COPY --from=node:18-alpine / /target
-RUN trivy filesystem --exit-code 1 --severity HIGH,CRITICAL /target || true
-
-# ================================
-# Stage 2: Builder
-# ================================
-FROM node:18-alpine AS builder
-
-# 보안 업데이트
-RUN apk update && apk upgrade && apk add --no-cache dumb-init
-
-WORKDIR /app
-
-# 의존성 설치
-COPY package*.json ./
-RUN npm ci --only=production --silent && \
-    npm cache clean --force && \
-    npm audit --audit-level high
-
-# ================================
-# Stage 3: Production Runtime
-# ================================
-FROM gcr.io/distroless/nodejs18-debian11
-
-# 메타데이터
-LABEL maintainer="production-team@company.com"
-LABEL version="1.0.0"
-LABEL security.scan="passed"
-LABEL environment="production"
-
-# dumb-init 복사
-COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
-
-# 애플리케이션 복사
-COPY --from=builder /app/node_modules /app/node_modules
-COPY app.js package*.json /app/
-
-WORKDIR /app
-
-# 환경 변수
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=512"
-
-EXPOSE 3000
-
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD ["/nodejs/bin/node", "-e", "require('http').get('http://localhost:3000/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/nodejs/bin/node", "app.js"]
-EOF
-
-# 프로덕션 이미지 빌드
-docker build -f Dockerfile.production -t node-app:production . 2>/dev/null || echo "Production build may require additional setup"
-```
-
-### 최종 결과 비교
-
-```bash
-# 모든 이미지 크기 및 보안 비교
-echo "=== Final Comparison ==="
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(node-app|python-app)"
-
-# 실행 중인 컨테이너 상태
-docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
-
-# 메모리 사용량 비교
-docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-```
-
-## 6. Q&A 및 정리 (5분)
-
-### 최적화 및 보안 성과 요약
-
-```mermaid
-graph LR
-    A[기본 이미지<br/>~1GB] --> B[Alpine 기반<br/>~100MB]
-    B --> C[멀티 스테이지<br/>~50MB]
-    C --> D[Distroless<br/>~30MB]
+    - name: Run tests
+      run: |
+        docker build -t myapp:test .
+        docker run --rm myapp:test npm test
     
-    E[Root 사용자] --> F[비Root 사용자]
-    F --> G[읽기 전용 FS]
-    G --> H[취약점 0개]
+    - name: Security scan
+      run: |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image myapp:test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build and push
+      run: |
+        docker build -t myregistry/myapp:${{ github.sha }} .
+        docker push myregistry/myapp:${{ github.sha }}
+    
+    - name: Sign image
+      run: |
+        cosign sign myregistry/myapp:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Deploy to production
+      run: |
+        kubectl set image deployment/myapp \
+          myapp=myregistry/myapp:${{ github.sha }}
+        kubectl rollout status deployment/myapp
 ```
 
-### 정리 및 다음 세션 준비
+### 모니터링 및 알림 설정 예시
+
+```yaml
+# Prometheus 알림 규칙 (개념 예시)
+groups:
+- name: production.rules
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+      team: backend
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value }}% for {{ $labels.service }}"
+      runbook: "https://wiki.company.com/runbooks/high-error-rate"
+
+  - alert: HighMemoryUsage
+    expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+    for: 10m
+    labels:
+      severity: warning
+      team: platform
+    annotations:
+      summary: "Container memory usage is high"
+      description: "Memory usage is {{ $value }}% for {{ $labels.container }}"
+
+  - alert: PodCrashLooping
+    expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+    for: 5m
+    labels:
+      severity: critical
+      team: platform
+    annotations:
+      summary: "Pod is crash looping"
+      description: "Pod {{ $labels.pod }} is restarting frequently"
+```
+
+### 보안 정책 구성 예시
+
+```yaml
+# Pod Security Policy (개념 예시)
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: production-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+```
+
+### 백업 및 복구 자동화 예시
 
 ```bash
-# 리소스 정리
-docker stop $(docker ps -q) 2>/dev/null || true
-docker rm $(docker ps -aq) 2>/dev/null || true
+#!/bin/bash
+# 자동화된 백업 스크립트 (개념 예시)
 
-# 최종 성과 확인
-echo "=== Optimization Results ==="
-echo "✅ 이미지 크기 90% 감소"
-echo "✅ 보안 취약점 제거"
-echo "✅ 비root 사용자 실행"
-echo "✅ 읽기 전용 파일시스템"
-echo "✅ 프로덕션 준비 완료"
+# 환경 변수 설정
+BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups"
+RETENTION_DAYS=30
+
+# 데이터베이스 백업
+kubectl exec deployment/postgres -- pg_dump -U postgres mydb > \
+  ${BACKUP_DIR}/db_backup_${BACKUP_DATE}.sql
+
+# 볼륨 백업
+kubectl get pv -o json | jq -r '.items[].spec.hostPath.path' | \
+while read volume; do
+  tar -czf ${BACKUP_DIR}/volume_backup_${BACKUP_DATE}.tar.gz $volume
+done
+
+# 설정 백업
+kubectl get configmaps,secrets -o yaml > \
+  ${BACKUP_DIR}/config_backup_${BACKUP_DATE}.yaml
+
+# 클라우드 스토리지 업로드
+aws s3 cp ${BACKUP_DIR}/ s3://my-backup-bucket/$(date +%Y/%m/%d)/ --recursive
+
+# 오래된 백업 정리
+find ${BACKUP_DIR} -name "*backup*" -mtime +${RETENTION_DAYS} -delete
+
+# 백업 검증
+if [ $? -eq 0 ]; then
+  echo "Backup completed successfully at $(date)"
+  # 성공 알림 전송
+  curl -X POST -H 'Content-type: application/json' \
+    --data '{"text":"Backup completed successfully"}' \
+    $SLACK_WEBHOOK_URL
+else
+  echo "Backup failed at $(date)"
+  # 실패 알림 전송
+  curl -X POST -H 'Content-type: application/json' \
+    --data '{"text":"Backup failed - immediate attention required"}' \
+    $SLACK_WEBHOOK_URL
+fi
 ```
+
+## 5. 토론 및 정리 (8분)
+
+### 핵심 개념 정리
+- **프로덕션 라이프사이클** 관리와 배포 전략
+- **보안 운영** 체계와 컴플라이언스 자동화
+- **CI/CD 통합**을 통한 운영 효율성 극대화
+- **모니터링 기반** 자동화된 운영 관리
+
+### 토론 주제
+"대규모 프로덕션 환경에서 안정성, 보안, 효율성을 동시에 보장하는 최적의 운영 전략은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **이미지 최적화**: Alpine, Distroless, 멀티 스테이지 빌드
-- **보안 강화**: 비root 사용자, 읽기 전용 FS, 취약점 스캔
-- **프로덕션 준비**: 헬스체크, 보안 헤더, 시크릿 관리
-- **성능 최적화**: 메모리 제한, 프로세스 관리, 캐시 전략
+- **라이프사이클 관리**: 배포 전략, 환경 분리, 이뮤터블 인프라
+- **보안 운영**: 이미지 보안, 런타임 보안, 컴플라이언스
+- **자동화**: CI/CD, 인프라 자동화, 운영 자동화
+- **운영 효율성**: 리소스 최적화, 성능 최적화, 프로세스 개선
 
 ## 📚 참고 자료
-- [Docker 보안 가이드](https://docs.docker.com/engine/security/)
-- [Distroless Images](https://github.com/GoogleContainerTools/distroless)
-- [Docker Scout](https://docs.docker.com/scout/)
-
-## 🔧 실습 체크리스트
-- [ ] 이미지 크기 90% 이상 최적화
-- [ ] 비root 사용자로 보안 강화
-- [ ] 취약점 스캔으로 보안 검증
-- [ ] 읽기 전용 파일시스템 적용
-- [ ] 프로덕션 준비 완료 이미지 구축
+- [Docker 프로덕션 가이드](https://docs.docker.com/config/containers/start-containers-automatically/)
+- [Kubernetes 보안 모범 사례](https://kubernetes.io/docs/concepts/security/)
+- [CI/CD 파이프라인 설계](https://www.redhat.com/en/topics/devops/what-cicd-pipeline)

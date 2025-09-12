@@ -1,727 +1,474 @@
-# Session 4: 의존성과 헬스체크
+# Session 4: 트러블슈팅 및 디버깅
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 4 > Session 4**로, Session 3의 데이터 관리를 바탕으로 서비스 의존성과 헬스체크를 통한 안정적인 서비스 시작 순서를 학습합니다.
+이 세션은 **Week 2 > Day 4 > Session 4**로, 성능 튜닝 및 최적화 이해를 바탕으로 Kubernetes 클러스터의 문제 진단, 트러블슈팅 및 디버깅 방법론을 심화 분석합니다.
 
 ## 학습 목표 (5분)
-- **서비스 의존성** 관리 및 **시작 순서** 제어
-- **헬스체크** 구현 및 **장애 감지** 자동화
-- **재시작 정책** 설정 및 **복구 전략** 수립
+- **체계적 문제 진단** 방법론과 **근본 원인 분석** 기법
+- **로그 분석** 및 **이벤트 추적**을 통한 **문제 해결** 프로세스
+- **디버깅 도구** 활용과 **자동화된 문제 해결** 전략
 
-## 1. 이론: 서비스 의존성 관리 (20분)
+## 1. 이론: 체계적 트러블슈팅 방법론 (20분)
 
-### 의존성 유형과 패턴
+### 문제 진단 프레임워크
 
 ```mermaid
 graph TB
-    subgraph "의존성 레벨"
-        A[Level 1: Infrastructure] --> B[Database, Cache, Message Queue]
-        C[Level 2: Core Services] --> D[Auth, User, Config Services]
-        E[Level 3: Business Logic] --> F[Order, Payment, Inventory]
-        G[Level 4: API Gateway] --> H[Routing, Load Balancing]
-        I[Level 5: Frontend] --> J[Web UI, Mobile API]
+    subgraph "Troubleshooting Process"
+        A[Problem Identification] --> B[Information Gathering]
+        B --> C[Hypothesis Formation]
+        C --> D[Testing & Validation]
+        D --> E[Root Cause Analysis]
+        E --> F[Solution Implementation]
+        F --> G[Verification & Documentation]
     end
     
-    B --> D
-    D --> F
-    F --> H
-    H --> I
+    subgraph "Diagnostic Tools"
+        H[kubectl] --> I[Logs & Events]
+        I --> J[Metrics & Monitoring]
+        J --> K[Debugging Tools]
+    end
+    
+    subgraph "Problem Categories"
+        L[Cluster Issues] --> M[Node Issues]
+        M --> N[Pod Issues]
+        N --> O[Network Issues]
+        O --> P[Storage Issues]
+    end
+    
+    A --> H
+    B --> L
 ```
 
-### depends_on vs healthcheck
+### 문제 분류 및 진단 접근법
+
+```
+Kubernetes 문제 분류:
+
+클러스터 레벨 문제:
+├── 컨트롤 플레인 장애:
+│   ├── API 서버 응답 없음 또는 느림
+│   ├── etcd 클러스터 분할 또는 데이터 손실
+│   ├── 스케줄러 작동 중단
+│   ├── 컨트롤러 매니저 오류
+│   └── 네트워크 연결 문제
+├── 인증/권한 문제:
+│   ├── RBAC 권한 부족
+│   ├── 서비스 어카운트 토큰 만료
+│   ├── 인증서 만료 또는 오류
+│   ├── 웹훅 인증 실패
+│   └── 네트워크 정책 차단
+└── 리소스 부족:
+    ├── 노드 리소스 고갈
+    ├── 스토리지 용량 부족
+    ├── IP 주소 풀 고갈
+    ├── PV/PVC 바인딩 실패
+    └── 리소스 쿼터 초과
+
+노드 레벨 문제:
+├── 노드 상태 이상:
+│   ├── NotReady 상태
+│   ├── 네트워크 연결 불가
+│   ├── 디스크 압박 (DiskPressure)
+│   ├── 메모리 압박 (MemoryPressure)
+│   └── PID 압박 (PIDPressure)
+├── kubelet 문제:
+│   ├── kubelet 서비스 중단
+│   ├── 컨테이너 런타임 통신 오류
+│   ├── 이미지 풀링 실패
+│   ├── 볼륨 마운트 실패
+│   └── 네트워크 플러그인 오류
+└── 시스템 리소스 문제:
+    ├── 높은 CPU/메모리 사용률
+    ├── 디스크 I/O 병목
+    ├── 네트워크 대역폭 포화
+    ├── 파일 디스크립터 부족
+    └── 커널 리소스 고갈
+
+Pod 레벨 문제:
+├── Pod 시작 실패:
+│   ├── 이미지 풀링 오류
+│   ├── 리소스 부족으로 스케줄링 실패
+│   ├── 볼륨 마운트 실패
+│   ├── 초기화 컨테이너 실패
+│   └── 보안 정책 위반
+├── Pod 런타임 문제:
+│   ├── 애플리케이션 크래시
+│   ├── 헬스 체크 실패
+│   ├── 리소스 제한 초과 (OOMKilled)
+│   ├── 네트워크 연결 문제
+│   └── 스토리지 접근 오류
+└── Pod 종료 문제:
+    ├── 그레이스풀 셧다운 실패
+    ├── SIGTERM 처리 오류
+    ├── 좀비 프로세스 생성
+    ├── 리소스 정리 실패
+    └── 볼륨 언마운트 오류
+```
+
+### 진단 도구 및 명령어
+
+```
+kubectl 진단 명령어:
+
+기본 상태 확인:
+├── kubectl get nodes -o wide
+├── kubectl get pods --all-namespaces -o wide
+├── kubectl get events --sort-by='.lastTimestamp'
+├── kubectl top nodes
+├── kubectl top pods --all-namespaces
+├── kubectl describe node <node-name>
+├── kubectl describe pod <pod-name>
+└── kubectl logs <pod-name> -c <container-name>
+
+고급 진단 명령어:
+├── kubectl get pods --field-selector=status.phase=Failed
+├── kubectl get pods --field-selector=status.phase=Pending
+├── kubectl get events --field-selector type=Warning
+├── kubectl get componentstatuses
+├── kubectl cluster-info dump
+├── kubectl auth can-i <verb> <resource>
+├── kubectl explain <resource>
+└── kubectl api-resources
+
+디버깅 및 트러블슈팅:
+├── kubectl exec -it <pod-name> -- /bin/bash
+├── kubectl port-forward <pod-name> 8080:80
+├── kubectl cp <pod-name>:/path/to/file ./local-file
+├── kubectl attach <pod-name> -c <container-name>
+├── kubectl run debug --image=busybox -it --rm
+├── kubectl debug <pod-name> --image=busybox
+├── kubectl rollout status deployment/<deployment-name>
+└── kubectl rollout history deployment/<deployment-name>
+```
+
+## 2. 이론: 로그 분석 및 이벤트 추적 (15분)
+
+### 로그 분석 전략
+
+```
+로그 분석 방법론:
+
+로그 수집 및 중앙화:
+├── 컨테이너 로그 수집:
+│   ├── kubectl logs를 통한 실시간 로그
+│   ├── 로그 드라이버 설정 (json-file, syslog)
+│   ├── 로그 로테이션 및 보관 정책
+│   ├── 멀티 컨테이너 Pod 로그 관리
+│   └── 사이드카 패턴 로그 수집
+├── 시스템 로그 수집:
+│   ├── kubelet 로그 (/var/log/kubelet.log)
+│   ├── 컨테이너 런타임 로그
+│   ├── 시스템 서비스 로그 (systemd)
+│   ├── 커널 로그 (dmesg, /var/log/kern.log)
+│   └── 네트워크 및 방화벽 로그
+└── 중앙집중식 로깅:
+    ├── ELK/EFK 스택 구성
+    ├── Fluentd/Fluent Bit 로그 수집
+    ├── 로그 파싱 및 구조화
+    ├── 인덱싱 및 검색 최적화
+    └── 로그 보관 및 아카이빙
+
+이벤트 분석:
+├── Kubernetes 이벤트:
+│   ├── 이벤트 타입 (Normal, Warning)
+│   ├── 이벤트 소스 및 대상 오브젝트
+│   ├── 이벤트 발생 시간 및 빈도
+│   ├── 이벤트 메시지 패턴 분석
+│   └── 이벤트 상관관계 분석
+├── 이벤트 보존 및 확장:
+│   ├── 이벤트 TTL 연장 (기본 1시간)
+│   ├── 외부 이벤트 저장소 연동
+│   ├── 이벤트 기반 알림 설정
+│   ├── 이벤트 메트릭 생성
+│   └── 이벤트 기반 자동화
+└── 감사 로그 분석:
+    ├── API 서버 감사 로그 활성화
+    ├── 사용자 활동 추적
+    ├── 권한 변경 이력
+    ├── 리소스 변경 추적
+    └── 보안 이벤트 분석
+```
+
+### 문제 패턴 인식
+
+```
+일반적인 문제 패턴:
+
+이미지 관련 문제:
+├── ImagePullBackOff:
+│   ├── 이미지 이름 또는 태그 오류
+│   ├── 레지스트리 접근 권한 부족
+│   ├── 네트워크 연결 문제
+│   ├── 이미지 레지스트리 다운
+│   └── 이미지 크기 또는 레이어 문제
+├── ErrImagePull:
+│   ├── 존재하지 않는 이미지
+│   ├── 인증 정보 오류
+│   ├── 레지스트리 URL 오류
+│   └── 프록시 설정 문제
+└── 해결 방법:
+    ├── 이미지 이름 및 태그 확인
+    ├── imagePullSecrets 설정
+    ├── 네트워크 연결성 테스트
+    └── 레지스트리 상태 확인
+
+리소스 관련 문제:
+├── Pending 상태:
+│   ├── 리소스 부족 (CPU, 메모리)
+│   ├── 노드 어피니티 조건 불만족
+│   ├── 테인트/톨러레이션 불일치
+│   ├── PVC 바인딩 실패
+│   └── 스케줄링 제약 조건
+├── OOMKilled:
+│   ├── 메모리 제한 초과
+│   ├── 메모리 누수
+│   ├── 부적절한 메모리 제한 설정
+│   └── JVM 힙 크기 문제
+└── CrashLoopBackOff:
+    ├── 애플리케이션 시작 실패
+    ├── 설정 오류
+    ├── 의존성 서비스 접근 불가
+    └── 헬스 체크 실패
+
+네트워크 관련 문제:
+├── 서비스 연결 실패:
+│   ├── 서비스 엔드포인트 없음
+│   ├── 네트워크 정책 차단
+│   ├── DNS 해석 실패
+│   ├── 포트 불일치
+│   └── 로드 밸런서 설정 오류
+├── DNS 문제:
+│   ├── CoreDNS 서비스 장애
+│   ├── DNS 정책 설정 오류
+│   ├── 네임스페이스 격리 문제
+│   └── 외부 DNS 연결 실패
+└── 네트워크 정책:
+    ├── 기본 거부 정책
+    ├── 잘못된 라벨 셀렉터
+    ├── 포트 또는 프로토콜 불일치
+    └── 네임스페이스 간 통신 차단
+```
+
+## 3. 이론: 고급 디버깅 기법 (10분)
+
+### 디버깅 도구 및 기법
+
+```
+고급 디버깅 도구:
+
+kubectl debug 명령어:
+├── 임시 디버깅 컨테이너 생성
+├── 기존 Pod에 디버깅 컨테이너 추가
+├── 노드 디버깅을 위한 특권 컨테이너
+├── 네트워크 네임스페이스 공유 디버깅
+└── 프로세스 네임스페이스 공유 디버깅
+
+네트워크 디버깅:
+├── 연결성 테스트 도구:
+│   ├── ping, traceroute, nslookup
+│   ├── telnet, nc (netcat)
+│   ├── curl, wget
+│   └── iperf3 (대역폭 테스트)
+├── 패킷 분석:
+│   ├── tcpdump 패킷 캡처
+│   ├── wireshark 분석
+│   ├── 네트워크 플로우 추적
+│   └── DNS 쿼리 분석
+└── 서비스 메시 디버깅:
+    ├── Envoy 프록시 로그 분석
+    ├── 트래픽 미러링
+    ├── 서킷 브레이커 상태
+    └── 분산 추적 (Jaeger, Zipkin)
+
+스토리지 디버깅:
+├── 볼륨 마운트 문제:
+│   ├── 마운트 포인트 확인
+│   ├── 파일시스템 권한 검사
+│   ├── 스토리지 클래스 호환성
+│   └── CSI 드라이버 로그 분석
+├── 성능 문제:
+│   ├── I/O 메트릭 분석 (iostat, iotop)
+│   ├── 디스크 사용량 확인 (df, du)
+│   ├── 파일 시스템 오류 검사
+│   └── 스토리지 백엔드 상태
+└── 데이터 일관성:
+    ├── 파일시스템 무결성 검사
+    ├── 백업 및 복원 테스트
+    ├── 스냅샷 상태 확인
+    └── 복제 상태 모니터링
+```
+
+## 4. 개념 예시: 트러블슈팅 시나리오 (12분)
+
+### 일반적인 문제 해결 예시
+
+```bash
+# Pod 시작 실패 디버깅 (개념 예시)
+
+# 1. Pod 상태 확인
+kubectl get pods
+kubectl describe pod problematic-pod
+
+# 2. 이벤트 확인
+kubectl get events --field-selector involvedObject.name=problematic-pod
+
+# 3. 로그 확인
+kubectl logs problematic-pod
+kubectl logs problematic-pod --previous
+
+# 4. 리소스 확인
+kubectl top nodes
+kubectl describe node worker-node-1
+
+# 5. 네트워크 디버깅
+kubectl run netshoot --image=nicolaka/netshoot -it --rm
+# 컨테이너 내에서:
+# nslookup kubernetes.default
+# ping google.com
+# curl -I http://service-name.namespace.svc.cluster.local
+```
+
+### 자동화된 진단 스크립트 예시
+
+```bash
+#!/bin/bash
+# Kubernetes 클러스터 헬스 체크 스크립트 (개념 예시)
+
+echo "=== Kubernetes Cluster Health Check ==="
+
+# 1. 클러스터 기본 상태
+echo "1. Cluster Basic Status"
+kubectl cluster-info
+kubectl get componentstatuses
+
+# 2. 노드 상태 확인
+echo "2. Node Status"
+kubectl get nodes -o wide
+kubectl top nodes
+
+# 3. 시스템 Pod 상태
+echo "3. System Pods Status"
+kubectl get pods -n kube-system
+
+# 4. 실패한 Pod 확인
+echo "4. Failed Pods"
+kubectl get pods --all-namespaces --field-selector=status.phase=Failed
+
+# 5. 대기 중인 Pod 확인
+echo "5. Pending Pods"
+kubectl get pods --all-namespaces --field-selector=status.phase=Pending
+
+# 6. 최근 경고 이벤트
+echo "6. Recent Warning Events"
+kubectl get events --all-namespaces --field-selector type=Warning \
+  --sort-by='.lastTimestamp' | tail -10
+
+# 7. 리소스 사용률 높은 Pod
+echo "7. High Resource Usage Pods"
+kubectl top pods --all-namespaces --sort-by=cpu | head -10
+kubectl top pods --all-namespaces --sort-by=memory | head -10
+
+# 8. PVC 상태 확인
+echo "8. PVC Status"
+kubectl get pvc --all-namespaces
+
+# 9. 네트워크 정책 확인
+echo "9. Network Policies"
+kubectl get networkpolicies --all-namespaces
+
+echo "=== Health Check Complete ==="
+```
+
+### 문제 해결 플레이북 예시
 
 ```yaml
-# 기본 의존성 (컨테이너 시작만 대기)
-services:
-  web:
-    depends_on:
-      - db
-  db:
-    image: postgres
-
-# 헬스체크 기반 의존성 (서비스 준비 완료 대기)
-services:
-  web:
-    depends_on:
-      db:
-        condition: service_healthy
-  db:
-    image: postgres
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-```
-
-## 2. 실습: 의존성 체인 구현 (15분)
-
-### 복잡한 의존성 구조
-
-```bash
-mkdir -p dependency-demo && cd dependency-demo
-
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
-
-services:
-  # Level 1: Infrastructure
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d appdb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    volumes:
-      - redis_data:/data
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: secret
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    ports:
-      - "15672:15672"
-
-  # Level 2: Core Services
-  auth-service:
-    build: ./services/auth
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  config-service:
-    build: ./services/config
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - DB_HOST=postgres
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  # Level 3: Business Services
-  user-service:
-    build: ./services/user
-    depends_on:
-      auth-service:
-        condition: service_healthy
-      config-service:
-        condition: service_healthy
-    environment:
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - CONFIG_SERVICE_URL=http://config-service:3002
-      - DB_HOST=postgres
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  order-service:
-    build: ./services/order
-    depends_on:
-      user-service:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - USER_SERVICE_URL=http://user-service:3003
-      - RABBITMQ_URL=amqp://admin:secret@rabbitmq:5672
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # Level 4: API Gateway
-  api-gateway:
-    build: ./gateway
-    depends_on:
-      user-service:
-        condition: service_healthy
-      order-service:
-        condition: service_healthy
-    ports:
-      - "8080:3000"
-    environment:
-      - USER_SERVICE_URL=http://user-service:3003
-      - ORDER_SERVICE_URL=http://order-service:3004
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  postgres_data:
-  redis_data:
-EOF
-
-# 서비스 디렉토리 생성
-mkdir -p {services/{auth,config,user,order},gateway}
-```
-
-### 헬스체크 구현
-
-```bash
-# Auth Service
-cat > services/auth/package.json << 'EOF'
-{
-  "name": "auth-service",
-  "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.8.0",
-    "redis": "^4.5.0"
-  }
-}
-EOF
-
-cat > services/auth/server.js << 'EOF'
-const express = require('express');
-const { Client } = require('pg');
-const redis = require('redis');
-
-const app = express();
-app.use(express.json());
-
-let dbConnected = false;
-let redisConnected = false;
-
-// Database connection
-const db = new Client({
-  host: process.env.DB_HOST,
-  database: 'appdb',
-  user: 'user',
-  password: 'password'
-});
-
-db.connect()
-  .then(() => {
-    dbConnected = true;
-    console.log('Database connected');
-  })
-  .catch(console.error);
-
-// Redis connection
-const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST
-});
-
-redisClient.connect()
-  .then(() => {
-    redisConnected = true;
-    console.log('Redis connected');
-  })
-  .catch(console.error);
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  const health = {
-    service: 'auth-service',
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    dependencies: {
-      database: dbConnected ? 'connected' : 'disconnected',
-      redis: redisConnected ? 'connected' : 'disconnected'
-    }
-  };
-
-  const isHealthy = dbConnected && redisConnected;
-  res.status(isHealthy ? 200 : 503).json(health);
-});
-
-// Readiness check
-app.get('/ready', (req, res) => {
-  if (dbConnected && redisConnected) {
-    res.json({ status: 'ready' });
-  } else {
-    res.status(503).json({ status: 'not ready' });
-  }
-});
-
-app.listen(3001, '0.0.0.0', () => {
-  console.log('Auth service running on port 3001');
-});
-EOF
-
-cat > services/auth/Dockerfile << 'EOF'
-FROM node:alpine
-RUN apk add --no-cache curl
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3001
-CMD ["node", "server.js"]
-EOF
-
-# 다른 서비스들도 유사한 구조로 생성
-for service in config user order; do
-  cp -r services/auth/* services/$service/
-  port=$((3001 + $(echo "auth config user order" | tr ' ' '\n' | grep -n $service | cut -d: -f1)))
-  sed -i "s/auth-service/${service}-service/g" services/$service/server.js
-  sed -i "s/3001/$port/g" services/$service/server.js
-  sed -i "s/3001/$port/g" services/$service/Dockerfile
-done
-```
-
-## 3. 실습: 재시작 정책과 복구 전략 (15분)
-
-### 재시작 정책 설정
-
-```bash
-cat > docker-compose.restart.yml << 'EOF'
-version: '3.8'
-
-services:
-  # 항상 재시작 (중요한 인프라)
-  postgres:
-    image: postgres:13
-    restart: always
-    environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-
-  # 실패 시에만 재시작 (최대 3회)
-  redis:
-    image: redis:alpine
-    restart: on-failure:3
-
-  # 수동으로 중지하지 않는 한 재시작
-  api-gateway:
-    build: ./gateway
-    restart: unless-stopped
-    ports:
-      - "8080:3000"
-
-  # 재시작 안함 (일회성 작업)
-  migration:
-    image: migrate/migrate
-    restart: "no"
-    command: >
-      -path=/migrations 
-      -database postgres://user:password@postgres:5432/appdb?sslmode=disable 
-      up
-
-  # 조건부 재시작 (헬스체크 실패 시)
-  web-service:
-    build: ./services/web
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-EOF
-```
-
-### 장애 시나리오 테스트
-
-```bash
-# 장애 테스트 스크립트
-cat > test-failures.sh << 'EOF'
-#!/bin/bash
-
-echo "=== 장애 시나리오 테스트 ==="
-
-# 1. 데이터베이스 장애 시뮬레이션
-echo "1. 데이터베이스 중지 테스트"
-docker-compose stop postgres
-sleep 10
-
-echo "서비스 상태 확인:"
-docker-compose ps
-
-echo "헬스체크 상태:"
-curl -s http://localhost:8080/health | jq '.dependencies.database' || echo "API Gateway 응답 없음"
-
-# 2. 데이터베이스 복구
-echo "2. 데이터베이스 복구"
-docker-compose start postgres
-sleep 30
-
-echo "복구 후 상태:"
-curl -s http://localhost:8080/health | jq '.dependencies.database'
-
-# 3. 서비스 재시작 테스트
-echo "3. 서비스 재시작 테스트"
-docker-compose restart user-service
-sleep 20
-
-echo "재시작 후 상태:"
-docker-compose ps | grep user-service
-
-# 4. 연쇄 장애 테스트
-echo "4. 연쇄 장애 테스트"
-docker-compose stop redis rabbitmq
-sleep 10
-
-echo "연쇄 장애 상태:"
-docker-compose ps
-
-# 복구
-docker-compose start redis rabbitmq
-sleep 30
-echo "전체 복구 완료"
-EOF
-
-chmod +x test-failures.sh
-```
-
-### 자동 복구 시스템
-
-```bash
-# 모니터링 및 자동 복구 서비스
-cat > docker-compose.monitoring.yml << 'EOF'
-version: '3.8'
-
-services:
-  # 헬스체크 모니터
-  health-monitor:
-    image: alpine
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./monitor.sh:/monitor.sh:ro
-    command: sh /monitor.sh
-    depends_on:
-      - api-gateway
-
-  # 로그 수집기
-  log-collector:
-    image: fluent/fluent-bit
-    restart: unless-stopped
-    volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    ports:
-      - "24224:24224"
-
-  # 알림 서비스
-  alerting:
-    build: ./alerting
-    restart: unless-stopped
-    environment:
-      - WEBHOOK_URL=http://localhost:9093/webhook
-    volumes:
-      - ./alerts:/alerts
-EOF
-
-# 헬스 모니터 스크립트
-cat > monitor.sh << 'EOF'
-#!/bin/sh
-
-apk add --no-cache curl docker-cli
-
-while true; do
-    echo "$(date): Health monitoring check"
+# 트러블슈팅 플레이북 (개념 예시)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: troubleshooting-playbook
+data:
+  pod-crashloopbackoff.md: |
+    # CrashLoopBackOff 문제 해결
     
-    # API Gateway 헬스체크
-    if ! curl -f -s http://api-gateway:3000/health > /dev/null; then
-        echo "API Gateway unhealthy, restarting..."
-        docker restart dependency-demo_api-gateway_1
-    fi
+    ## 진단 단계
+    1. Pod 상태 및 재시작 횟수 확인
+       ```
+       kubectl get pods
+       kubectl describe pod <pod-name>
+       ```
     
-    # 개별 서비스 헬스체크
-    for service in auth-service config-service user-service order-service; do
-        container_name="dependency-demo_${service}_1"
-        if [ "$(docker inspect -f '{{.State.Health.Status}}' $container_name 2>/dev/null)" = "unhealthy" ]; then
-            echo "$service is unhealthy, restarting..."
-            docker restart $container_name
-        fi
-    done
+    2. 로그 분석
+       ```
+       kubectl logs <pod-name>
+       kubectl logs <pod-name> --previous
+       ```
     
-    sleep 30
-done
-EOF
-
-# Fluent Bit 설정
-cat > fluent-bit.conf << 'EOF'
-[SERVICE]
-    Flush         1
-    Log_Level     info
-    Daemon        off
-
-[INPUT]
-    Name              tail
-    Path              /var/lib/docker/containers/*/*-json.log
-    Parser            docker
-    Tag               docker.*
-    Refresh_Interval  5
-
-[OUTPUT]
-    Name  stdout
-    Match *
-EOF
+    3. 리소스 제한 확인
+       ```
+       kubectl describe pod <pod-name> | grep -A 5 Limits
+       ```
+    
+    ## 일반적인 원인
+    - 애플리케이션 시작 실패
+    - 메모리 부족 (OOMKilled)
+    - 설정 파일 오류
+    - 의존성 서비스 접근 불가
+    
+    ## 해결 방법
+    - 애플리케이션 로그 분석
+    - 리소스 제한 조정
+    - 설정 검증
+    - 헬스 체크 조정
+  
+  network-connectivity.md: |
+    # 네트워크 연결 문제 해결
+    
+    ## 진단 단계
+    1. 서비스 엔드포인트 확인
+       ```
+       kubectl get endpoints <service-name>
+       kubectl describe service <service-name>
+       ```
+    
+    2. DNS 해석 테스트
+       ```
+       kubectl run dnsutils --image=tutum/dnsutils -it --rm
+       nslookup <service-name>.<namespace>.svc.cluster.local
+       ```
+    
+    3. 네트워크 정책 확인
+       ```
+       kubectl get networkpolicies
+       kubectl describe networkpolicy <policy-name>
+       ```
+    
+    ## 해결 방법
+    - 서비스 라벨 셀렉터 확인
+    - 네트워크 정책 수정
+    - DNS 설정 검증
+    - 방화벽 규칙 확인
 ```
 
-## 4. 실습: 점진적 배포 (Graceful Deployment) (10분)
+## 5. 토론 및 정리 (8분)
 
-### 무중단 배포 전략
+### 핵심 개념 정리
+- **체계적 트러블슈팅** 방법론을 통한 **효율적 문제 해결**
+- **로그 및 이벤트 분석**을 통한 **근본 원인 파악**
+- **고급 디버깅 도구** 활용과 **자동화된 진단** 프로세스
+- **문제 패턴 인식**과 **예방적 모니터링** 체계
 
-```bash
-# 블루-그린 배포 시뮬레이션
-cat > docker-compose.blue-green.yml << 'EOF'
-version: '3.8'
-
-services:
-  # 로드 밸런서
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx-blue-green.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - app-blue
-      - app-green
-
-  # Blue 환경 (현재 운영)
-  app-blue:
-    build: ./app
-    environment:
-      - VERSION=blue
-      - COLOR=blue
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # Green 환경 (새 버전)
-  app-green:
-    build: ./app
-    environment:
-      - VERSION=green
-      - COLOR=green
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-EOF
-
-# Nginx 설정 (Blue-Green)
-cat > nginx-blue-green.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream app_blue {
-        server app-blue:3000;
-    }
-    
-    upstream app_green {
-        server app-green:3000;
-    }
-    
-    # 기본적으로 Blue 환경으로 라우팅
-    upstream app_backend {
-        server app-blue:3000 weight=100;
-        server app-green:3000 weight=0;
-    }
-    
-    server {
-        listen 80;
-        
-        location / {
-            proxy_pass http://app_backend;
-            proxy_set_header Host $host;
-        }
-        
-        # 헬스체크 엔드포인트
-        location /health {
-            proxy_pass http://app_backend/health;
-        }
-        
-        # Blue 환경 직접 접근
-        location /blue {
-            proxy_pass http://app_blue/;
-        }
-        
-        # Green 환경 직접 접근
-        location /green {
-            proxy_pass http://app_green/;
-        }
-    }
-}
-EOF
-
-# 배포 스크립트
-cat > deploy.sh << 'EOF'
-#!/bin/bash
-
-CURRENT_ENV=${1:-blue}
-NEW_ENV=${2:-green}
-
-echo "Starting deployment from $CURRENT_ENV to $NEW_ENV"
-
-# 1. 새 환경 헬스체크
-echo "Checking $NEW_ENV environment health..."
-timeout 60 bash -c "
-    while ! curl -f -s http://localhost:8080/$NEW_ENV/health; do
-        echo 'Waiting for $NEW_ENV to be healthy...'
-        sleep 5
-    done
-"
-
-# 2. 점진적 트래픽 전환
-echo "Starting gradual traffic shift..."
-for weight in 10 25 50 75 100; do
-    echo "Shifting ${weight}% traffic to $NEW_ENV"
-    
-    # Nginx 설정 업데이트 (실제로는 동적 설정 변경)
-    sed -i "s/weight=100/weight=$((100-weight))/g" nginx-blue-green.conf
-    sed -i "s/weight=0/weight=${weight}/g" nginx-blue-green.conf
-    
-    # Nginx 리로드
-    docker-compose exec nginx nginx -s reload
-    
-    # 헬스체크
-    sleep 10
-    if ! curl -f -s http://localhost:8080/health; then
-        echo "Health check failed, rolling back..."
-        # 롤백 로직
-        exit 1
-    fi
-done
-
-echo "Deployment completed successfully"
-EOF
-
-chmod +x deploy.sh
-```
-
-## 5. Q&A 및 정리 (5분)
-
-### 의존성 및 헬스체크 검증
-
-```bash
-# 전체 시스템 시작 및 검증
-echo "=== 의존성 체인 시작 ==="
-docker-compose up -d
-
-# 시작 순서 확인
-echo "서비스 시작 순서 모니터링:"
-for i in {1..10}; do
-    echo "Check $i:"
-    docker-compose ps --format "table {{.Name}}\t{{.Status}}"
-    sleep 10
-done
-
-# 헬스체크 상태 확인
-echo "=== 헬스체크 상태 ==="
-for service in postgres redis auth-service config-service user-service order-service api-gateway; do
-    status=$(docker inspect dependency-demo_${service}_1 --format '{{.State.Health.Status}}' 2>/dev/null || echo "no healthcheck")
-    echo "$service: $status"
-done
-
-# 의존성 테스트
-./test-failures.sh
-
-# 정리 및 요약
-cat > session4-summary.md << 'EOF'
-# Session 4 요약: 의존성과 헬스체크
-
-## 구현한 기능
-1. **의존성 체인**: 5단계 서비스 의존성 구조
-2. **헬스체크**: 각 서비스별 상태 모니터링
-3. **재시작 정책**: 장애 상황별 복구 전략
-4. **자동 복구**: 모니터링 기반 자동 재시작
-5. **점진적 배포**: 블루-그린 배포 전략
-
-## 의존성 레벨
-```
-Level 1: postgres, redis, rabbitmq (Infrastructure)
-Level 2: auth-service, config-service (Core)
-Level 3: user-service, order-service (Business)
-Level 4: api-gateway (Gateway)
-Level 5: nginx (Frontend)
-```
-
-## 헬스체크 전략
-- **Infrastructure**: 기본 연결성 확인
-- **Services**: HTTP 엔드포인트 + 의존성 확인
-- **Gateway**: 다운스트림 서비스 상태 집계
-
-## 재시작 정책
-- **always**: 중요한 인프라 서비스
-- **on-failure**: 일시적 장애 복구
-- **unless-stopped**: 일반 애플리케이션 서비스
-- **no**: 일회성 작업
-
-## 장애 복구 패턴
-1. **Circuit Breaker**: 장애 전파 차단
-2. **Retry Logic**: 일시적 장애 재시도
-3. **Graceful Degradation**: 기능 축소 운영
-4. **Auto Healing**: 자동 복구 시스템
-EOF
-
-echo "Session 4 완료! 요약: session4-summary.md"
-```
+### 토론 주제
+"복잡한 마이크로서비스 환경에서 신속한 문제 해결을 위한 최적의 트러블슈팅 전략과 도구 조합은 무엇인가?"
 
 ## 💡 핵심 키워드
-- **서비스 의존성**: depends_on, condition, 시작 순서
-- **헬스체크**: 상태 모니터링, 자동 복구
-- **재시작 정책**: always, on-failure, unless-stopped
-- **점진적 배포**: 블루-그린, 카나리, 롤링 업데이트
+- **트러블슈팅**: 문제 진단, 근본 원인 분석, 체계적 접근법
+- **로그 분석**: 중앙집중화, 패턴 인식, 이벤트 추적
+- **디버깅 도구**: kubectl debug, 네트워크 도구, 성능 분석
+- **자동화**: 헬스 체크, 진단 스크립트, 플레이북
 
 ## 📚 참고 자료
-- [Compose 의존성](https://docs.docker.com/compose/compose-file/#depends_on)
-- [헬스체크](https://docs.docker.com/compose/compose-file/#healthcheck)
-- [재시작 정책](https://docs.docker.com/compose/compose-file/#restart)
-
-## 🔧 실습 체크리스트
-- [ ] 다단계 서비스 의존성 구현
-- [ ] 헬스체크 기반 서비스 준비 확인
-- [ ] 재시작 정책 설정 및 테스트
-- [ ] 장애 시나리오 테스트 및 복구
-- [ ] 점진적 배포 전략 구현
+- [Kubernetes 트러블슈팅](https://kubernetes.io/docs/tasks/debug-application-cluster/)
+- [kubectl 디버깅 가이드](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+- [클러스터 문제 해결](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-cluster/)
