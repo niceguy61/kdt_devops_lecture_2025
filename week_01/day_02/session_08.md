@@ -1,64 +1,42 @@
-# Session 8: 실습 준비 및 Q&A
+# Session 8: 이론 종합 및 토론
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 1 > Day 2**의 마지막 세션으로, Docker 설치 상태를 최종 점검하고 내일부터 시작할 본격적인 실습을 위한 준비를 완료합니다. 2일차 학습 내용을 정리하고 질의응답을 통해 이해도를 점검합니다.
+이 세션은 **Week 1 > Day 2**의 마지막 세션으로, 컨테이너 기술의 핵심 개념들을 종합적으로 정리하고 산업 동향과 미래 전망을 분석합니다. 그룹 토론을 통해 컨테이너 기술의 영향과 전망을 논의합니다.
 
 ## 학습 목표 (5분)
-- Docker 설치 상태 최종 확인 및 문제 해결
-- 기본 Docker 명령어 미리보기
-- 2일차 학습 내용 정리 및 질의응답
+- 컨테이너 기술 **핵심 개념 종합 정리**
+- **산업 동향**과 **미래 전망** 분석
+- **그룹 토론**: 컨테이너 기술의 영향과 전망
 
-## 1. Docker 설치 상태 점검 (15분)
+## 1. 컨테이너 기술 핵심 개념 정리 (15분)
 
-### 기본 설치 확인
-**Docker 설치 상태 진단**은 **시스템의 여러 계층에서 체계적으로 확인**해야 합니다.
+### 컨테이너 기술의 본질
+**컨테이너 기술**은 **애플리케이션 배포와 실행의 패러다임을 근본적으로 변화**시켰습니다.
 
-#### Docker 버전 정보 확인
-**설치된 Docker의 버전과 구성 요소 확인**
+#### 기술적 혁신의 핵심
+**컨테이너가 가져온 근본적 변화**:
 
-```bash
-# Docker Client 및 Server 버전 확인
-docker --version
-# 출력 예시: Docker version 24.0.7, build afdd53b
+1. **가상화의 진화**
+   - 하드웨어 가상화 → OS 가상화 → 애플리케이션 가상화
+   - 무거운 하이퍼바이저 → 경량 컨테이너 런타임
+   - 분 단위 시작 시간 → 초 단위 시작 시간
 
-docker version
-# 상세 버전 정보:
-# Client: Docker Engine - Community
-#  Version:           24.0.7
-#  API version:       1.43
-# Server: Docker Engine - Community
-#  Engine:
-#   Version:          24.0.7
-#   API version:      1.43 (minimum version 1.12)
+2. **개발 워크플로우의 혁신**
+   - "Works on my machine" 문제 해결
+   - 개발/테스트/운영 환경 일치
+   - 인프라스트럭처 자동화
 
-# Docker Compose 버전 확인
-docker-compose --version
-# 출력 예시: Docker Compose version v2.21.0
-```
+3. **마이크로서비스 아키텍처 지원**
+   - 모놀리스 → 마이크로서비스 전환 촉진
+   - 서비스별 독립적 배포와 확장
+   - 기술 스택 다양성 지원
 
-#### 시스템 정보 확인
-**Docker 엔진의 상세 구성과 상태 확인**
-
-```bash
-# Docker 시스템 전체 정보
-docker system info
-# 주요 확인 항목:
-# - Server Version: Docker 엔진 버전
-# - Storage Driver: 사용 중인 스토리지 드라이버 (overlay2 권장)
-# - Logging Driver: 로깅 드라이버 (json-file 기본값)
-# - Cgroup Driver: cgroup 드라이버 (systemd 권장)
-# - Runtimes: 사용 가능한 런타임 (runc 기본값)
-# - CPUs: 사용 가능한 CPU 코어 수
-# - Total Memory: 전체 메모리 용량
-
-# Docker 리소스 사용량 확인
-docker system df
-# 확인 항목:
-# - Images: 이미지 개수와 사용 중인 이미지
-# - Containers: 컨테이너 개수와 상태
-# - Local Volumes: 로컬 볼륨 사용량
-# - Build Cache: 빌드 캐시 사용량
-```
+#### 이론적 기초의 중요성
+**컨테이너 기술을 제대로 활용하기 위해서는**:
+- **Linux 커널 기능** 이해 (Namespaces, Cgroups)
+- **네트워킹 개념** 이해 (Bridge, Overlay, Host)
+- **스토리지 시스템** 이해 (Union FS, Volumes)
+- **보안 모델** 이해 (Isolation, Least Privilege)
 
 ### 권한 설정 확인
 **Docker 명령어 실행 권한 점검**:
