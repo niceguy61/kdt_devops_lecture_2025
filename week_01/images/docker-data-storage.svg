@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .text { font-family: Arial, sans-serif; font-size: 14px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 12px; fill: #7f8c8d; }
+      .volume-box { fill: #e8f5e9; stroke: #4caf50; stroke-width: 2; rx: 8; }
+      .bind-box { fill: #e3f2fd; stroke: #2196f3; stroke-width: 2; rx: 8; }
+      .tmpfs-box { fill: #fff3e0; stroke: #ff9800; stroke-width: 2; rx: 8; }
+      .container-box { fill: #f3e5f5; stroke: #9c27b0; stroke-width: 2; rx: 8; }
+      .host-box { fill: #ffebee; stroke: #f44336; stroke-width: 2; rx: 8; }
+      .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" class="title">Docker 데이터 저장 방식</text>
+  
+  <!-- Host System -->
+  <rect x="50" y="60" width="800" height="600" class="host-box"/>
+  <text x="70" y="85" class="subtitle" fill="#c62828">호스트 시스템</text>
+  
+  <!-- Container -->
+  <rect x="100" y="120" width="300" height="200" class="container-box"/>
+  <text x="250" y="145" text-anchor="middle" class="subtitle" fill="#7b1fa2">Docker 컨테이너</text>
+  
+  <!-- Container Layers -->
+  <rect x="120" y="160" width="260" height="30" fill="#ffcdd2" stroke="#f44336" stroke-width="1" rx="4"/>
+  <text x="250" y="180" text-anchor="middle" class="text">Container Layer (R/W)</text>
+  
+  <rect x="120" y="200" width="260" height="25" fill="#c8e6c9" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="250" y="217" text-anchor="middle" class="small-text">Image Layer 3 (R/O)</text>
+  
+  <rect x="120" y="230" width="260" height="25" fill="#c8e6c9" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="250" y="247" text-anchor="middle" class="small-text">Image Layer 2 (R/O)</text>
+  
+  <rect x="120" y="260" width="260" height="25" fill="#c8e6c9" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="250" y="277" text-anchor="middle" class="small-text">Image Layer 1 (R/O)</text>
+  
+  <rect x="120" y="290" width="260" height="25" fill="#c8e6c9" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="250" y="307" text-anchor="middle" class="small-text">Base Layer (R/O)</text>
+  
+  <!-- Volume Storage -->
+  <rect x="500" y="120" width="200" height="120" class="volume-box"/>
+  <text x="600" y="145" text-anchor="middle" class="subtitle" fill="#2e7d32">Docker Volume</text>
+  <text x="510" y="170" class="text">• Docker 완전 관리</text>
+  <text x="510" y="190" class="text">• 백업/복원 용이</text>
+  <text x="510" y="210" class="text">• 컨테이너 간 공유</text>
+  <text x="510" y="230" class="text">• 높은 성능</text>
+  
+  <!-- Bind Mount -->
+  <rect x="500" y="260" width="200" height="120" class="bind-box"/>
+  <text x="600" y="285" text-anchor="middle" class="subtitle" fill="#1565c0">Bind Mount</text>
+  <text x="510" y="310" class="text">• 호스트 디렉토리</text>
+  <text x="510" y="330" class="text">• 직접 파일 편집</text>
+  <text x="510" y="350" class="text">• 개발 환경 적합</text>
+  <text x="510" y="370" class="text">• 설정 파일 관리</text>
+  
+  <!-- tmpfs Mount -->
+  <rect x="500" y="400" width="200" height="120" class="tmpfs-box"/>
+  <text x="600" y="425" text-anchor="middle" class="subtitle" fill="#ef6c00">tmpfs Mount</text>
+  <text x="510" y="450" class="text">• 메모리 기반</text>
+  <text x="510" y="470" class="text">• 최고 성능</text>
+  <text x="510" y="490" class="text">• 임시 데이터</text>
+  <text x="510" y="510" class="text">• 보안 강화</text>
+  
+  <!-- Host Directories -->
+  <rect x="720" y="260" width="120" height="60" fill="#ffcdd2" stroke="#f44336" stroke-width="1" rx="4"/>
+  <text x="780" y="285" text-anchor="middle" class="text">/host/data</text>
+  <text x="780" y="305" text-anchor="middle" class="small-text">호스트 디렉토리</text>
+  
+  <!-- Docker Volume Area -->
+  <rect x="720" y="120" width="120" height="60" fill="#c8e6c9" stroke="#4caf50" stroke-width="1" rx="4"/>
+  <text x="780" y="145" text-anchor="middle" class="text">Docker 영역</text>
+  <text x="780" y="165" text-anchor="middle" class="small-text">/var/lib/docker</text>
+  
+  <!-- Memory Area -->
+  <rect x="720" y="400" width="120" height="60" fill="#ffe0b2" stroke="#ff9800" stroke-width="1" rx="4"/>
+  <text x="780" y="425" text-anchor="middle" class="text">메모리</text>
+  <text x="780" y="445" text-anchor="middle" class="small-text">RAM</text>
+  
+  <!-- Arrows -->
+  <line x1="400" y1="200" x2="500" y2="180" class="arrow"/>
+  <line x1="400" y1="220" x2="500" y2="320" class="arrow"/>
+  <line x1="400" y1="240" x2="500" y2="460" class="arrow"/>
+  
+  <line x1="700" y1="180" x2="720" y2="150" class="arrow"/>
+  <line x1="700" y1="320" x2="720" y2="290" class="arrow"/>
+  <line x1="700" y1="460" x2="720" y2="430" class="arrow"/>
+  
+  <!-- Mount Types Labels -->
+  <text x="450" y="200" class="small-text">-v volume:/path</text>
+  <text x="450" y="340" class="small-text">-v /host:/path</text>
+  <text x="450" y="480" class="small-text">--tmpfs /path</text>
+  
+  <!-- Performance Comparison -->
+  <rect x="100" y="550" width="700" height="100" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1" rx="8"/>
+  <text x="450" y="575" text-anchor="middle" class="subtitle">성능 및 특징 비교</text>
+  
+  <text x="120" y="600" class="text">Volume:</text>
+  <text x="180" y="600" class="small-text">성능 ★★★★☆ | 관리 ★★★★★ | 보안 ★★★★★ | 이식성 ★★★★★</text>
+  
+  <text x="120" y="620" class="text">Bind Mount:</text>
+  <text x="200" y="620" class="small-text">성능 ★★★☆☆ | 관리 ★★☆☆☆ | 보안 ★★★☆☆ | 이식성 ★★☆☆☆</text>
+  
+  <text x="120" y="640" class="text">tmpfs:</text>
+  <text x="170" y="640" class="small-text">성능 ★★★★★ | 관리 ★★★★☆ | 보안 ★★★★★ | 이식성 ★★★★☆</text>
+</svg>
