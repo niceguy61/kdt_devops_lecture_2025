@@ -1,9 +1,54 @@
-# Session 8: 이론 정리 및 토론
+# Session 8: DevOps 이론 종합 정리 및 심화 토론
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 1 > Day 1**의 마지막 세션으로, DevOps 개념과 문화에 대한 하루 학습 내용을 종합 정리하고 토론을 통해 이해를 심화합니다. 이론 중심의 Week 1 특성에 맞게 개념 정리와 토론에 집중합니다.
+이 세션은 **Week 1 > Day 1**의 마지막 세션으로, DevOps의 철학적 기초부터 실무 적용까지 하루 학습 내용을 체계적으로 종합하고, 심화 토론을 통해 이론적 이해를 실무 역량으로 전환합니다.
 
-## 2. 전통적 개발 vs DevOps 비교 분석 (15분)
+## 학습 목표 (5분)
+- DevOps 핵심 개념의 체계적 정리와 상호 연관성 이해
+- 이론적 지식의 실무 적용 방안 도출
+- 조직별 DevOps 도입 전략 수립 능력 배양
+- 다음 단계 학습을 위한 이론적 토대 구축
+
+## 1. DevOps 핵심 개념 체계적 정리 (15분)
+
+### DevOps 정의의 다층적 이해
+**4단계 계층 모델로 본 DevOps의 본질:**
+
+```mermaid
+pyramid
+    title DevOps 4단계 계층 모델
+    
+    "문화와 철학" : 40
+    "방법론과 프로세스" : 30  
+    "도구와 기술" : 20
+    "메트릭과 측정" : 10
+```
+
+**각 계층의 상호 의존성:**
+- **문화와 철학 (40%)**: DevOps의 근본 기반
+- **방법론과 프로세스 (30%)**: 문화를 구현하는 체계
+- **도구와 기술 (20%)**: 방법론을 지원하는 수단
+- **메트릭과 측정 (10%)**: 성과를 측정하는 지표
+
+### CALMS 모델의 통합적 이해
+**5가지 요소의 순환적 상호작용:**
+
+```mermaid
+graph TB
+    C[Culture<br/>문화<br/>협업 마인드] --> A[Automation<br/>자동화<br/>반복 작업 제거]
+    A --> L[Lean<br/>린<br/>낭비 제거]
+    L --> M[Measurement<br/>측정<br/>데이터 기반]
+    M --> S[Sharing<br/>공유<br/>지식 전파]
+    S --> C
+    
+    style C fill:#e1f5fe,stroke:#0277bd,stroke-width:3px
+    style A fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+    style L fill:#e8f5e8,stroke:#388e3c,stroke-width:3px
+    style M fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style S fill:#fce4ec,stroke:#c2185b,stroke-width:3px
+```
+
+## 2. 전통적 개발 vs DevOps 비교 분석 (12분)
 
 ### 개발 방식 비교표
 
