@@ -162,9 +162,11 @@
 
 ### DevOps + Scrum 통합 모델
 ```
-Sprint Planning → Development → CI/CD → Production → Monitoring
-     ↑                                                    ↓
-     ←←←←←←←←← Sprint Review ←←←←←←←←←←←←←←←←←←←←←←←←←←
+🔄 DevOps + Scrum 통합 모델:
+
+📅 Sprint Planning → 💻 Development → 🚀 CI/CD → 🌐 Production → 📊 Monitoring
+     ↑                                                                    ↓
+     ←←←←←←←←←←←←←←←←← Sprint Review ←←←←←←←←←←←←←←←←←←←←←←←←←←
 ```
 
 ### 실천 방법
