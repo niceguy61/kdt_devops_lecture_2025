@@ -1,456 +1,461 @@
-# Session 2: Kubernetes 아키텍처 심화 분석
+# Session 2: CNI (Container Network Interface)
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 3 > Session 2**로, 컨테이너 오케스트레이션 개념 이해를 바탕으로 Kubernetes의 내부 아키텍처와 핵심 컴포넌트 간의 상호작용을 심화 분석합니다.
+이 세션은 **Week 2 > Day 3 > Session 2**로, Kubernetes 네트워킹의 핵심인 CNI 표준과 주요 구현체들을 학습합니다. Session 1에서 학습한 네트워킹 원칙이 실제로 어떻게 구현되는지 이해합니다.
 
 ## 학습 목표 (5분)
-- **Kubernetes 클러스터 아키텍처** 및 **컴포넌트 역할** 완전 이해
-- **마스터 노드와 워커 노드** 간의 **통신 메커니즘** 분석
-- **etcd 클러스터**와 **상태 관리** 시스템 구조 파악
+- **CNI 표준**과 **플러그인** 아키텍처 완전 이해
+- **주요 CNI 구현체** 비교 분석 (Flannel, Calico, Weave)
+- **네트워크 정책** 지원과 **성능** 특성 학습
+- **CNI 선택** 기준과 **운영** 고려사항 파악
 
-## 1. 이론: Kubernetes 클러스터 아키텍처 (20분)
+## 1. CNI 표준과 플러그인 아키텍처 (15분)
 
-### 전체 클러스터 구조
+### CNI 아키텍처 개요
 
 ```mermaid
 graph TB
-    subgraph "Control Plane (Master Nodes)"
-        A[API Server] --> B[etcd Cluster]
-        A --> C[Scheduler]
-        A --> D[Controller Manager]
-        A --> E[Cloud Controller Manager]
+    subgraph "CNI 표준 구조"
+        A[Container Runtime] --> B[CNI Plugin]
+        B --> C[Network Configuration]
+        C --> D[IP Address Management]
+        D --> E[Network Interface Setup]
     end
     
-    subgraph "Worker Node 1"
-        F[kubelet] --> G[kube-proxy]
-        G --> H[Container Runtime]
-        H --> I[Pods]
+    subgraph "CNI 플러그인 타입"
+        F[Main Plugin] --> G[Bridge, Macvlan, IPVLAN]
+        H[IPAM Plugin] --> I[host-local, dhcp, static]
+        J[Meta Plugin] --> K[flannel, calico, weave]
     end
     
-    subgraph "Worker Node 2"
-        J[kubelet] --> K[kube-proxy]
-        K --> L[Container Runtime]
-        L --> M[Pods]
+    subgraph "CNI 실행 과정"
+        L[Pod 생성] --> M[CNI ADD 호출]
+        M --> N[네트워크 설정]
+        N --> O[IP 할당]
+        O --> P[라우팅 설정]
+        P --> Q[Pod 실행]
     end
     
-    subgraph "Add-ons"
-        N[DNS] --> O[Dashboard]
-        O --> P[Monitoring]
-    end
-    
-    A --> F
-    A --> J
-    F --> N
+    B --> F
+    B --> H
+    B --> J
+    M --> B
 ```
 
-### 컨트롤 플레인 컴포넌트 상세 분석
-
+### CNI 표준 상세 분석
 ```
-Kubernetes 컨트롤 플레인 구성:
+CNI (Container Network Interface) 표준:
 
-API Server (kube-apiserver):
-├── 역할 및 기능:
-│   ├── 클러스터의 중앙 관리 지점
-│   ├── RESTful API 엔드포인트 제공
-│   ├── 인증 및 권한 부여 처리
-│   ├── 요청 검증 및 승인 제어
-│   ├── etcd와의 유일한 통신 인터페이스
-│   ├── 감시(Watch) API 제공
-│   └── 클러스터 상태 변경 이벤트 발행
-├── 아키텍처 특징:
-│   ├── 무상태(Stateless) 설계
-│   ├── 수평 확장 가능
-│   ├── 로드 밸런서를 통한 고가용성
-│   ├── TLS 암호화 통신
-│   ├── 플러그인 아키텍처 지원
-│   └── OpenAPI 스펙 준수
-└── 주요 API 그룹:
-    ├── Core API (v1): Pod, Service, ConfigMap
-    ├── Apps API (apps/v1): Deployment, ReplicaSet
-    ├── Networking API: NetworkPolicy, Ingress
-    ├── Storage API: PersistentVolume, StorageClass
-    ├── RBAC API: Role, RoleBinding, ClusterRole
-    └── Custom Resource Definitions (CRDs)
+CNI 기본 개념:
+├── CNCF 표준 네트워크 인터페이스
+├── 컨테이너 런타임과 네트워크 플러그인 간 표준
+├── JSON 기반 설정 및 명령어 인터페이스
+├── 플러그인 체인을 통한 확장성
+├── 언어 독립적 실행 파일 기반
+└── 단순하고 명확한 API 설계
 
-etcd 클러스터:
-├── 역할 및 기능:
-│   ├── 분산 키-값 저장소
-│   ├── 클러스터 상태 정보 저장
-│   ├── 설정 데이터 및 메타데이터 관리
-│   ├── 서비스 디스커버리 지원
-│   ├── 분산 락 메커니즘 제공
-│   ├── 감시(Watch) 기능 지원
-│   └── 스냅샷 및 백업 기능
-├── 아키텍처 특징:
-│   ├── Raft 합의 알고리즘 사용
-│   ├── 강한 일관성 보장
-│   ├── 홀수 개 노드 구성 권장 (3, 5, 7)
-│   ├── 리더-팔로워 구조
-│   ├── 자동 장애 조치
-│   └── TLS 상호 인증
-└── 저장 데이터:
-    ├── 클러스터 구성 정보
-    ├── 리소스 오브젝트 상태
-    ├── 네트워크 정책 및 설정
-    ├── 시크릿 및 ConfigMap
-    ├── 서비스 엔드포인트 정보
-    └── 노드 및 Pod 메타데이터
+CNI 명령어:
+├── ADD: 컨테이너를 네트워크에 추가
+├── DEL: 컨테이너를 네트워크에서 제거
+├── CHECK: 네트워크 설정 상태 확인
+├── VERSION: CNI 버전 정보 조회
+└── 환경 변수를 통한 매개변수 전달
 
-Scheduler (kube-scheduler):
-├── 역할 및 기능:
-│   ├── Pod를 적절한 노드에 배치
-│   ├── 리소스 요구사항 분석
-│   ├── 노드 선택 알고리즘 실행
-│   ├── 어피니티 및 안티-어피니티 처리
-│   ├── 테인트 및 톨러레이션 고려
-│   ├── 우선순위 기반 스케줄링
-│   └── 커스텀 스케줄러 지원
-├── 스케줄링 프로세스:
-│   ├── 1단계: 필터링 (Predicates)
-│   ├── 2단계: 점수 매기기 (Priorities)
-│   ├── 3단계: 최적 노드 선택
-│   ├── 4단계: 바인딩 요청 생성
-│   └── 5단계: API 서버에 결과 전송
-└── 스케줄링 정책:
-    ├── 리소스 기반 스케줄링
-    ├── 노드 어피니티 스케줄링
-    ├── Pod 어피니티/안티-어피니티
-    ├── 테인트 및 톨러레이션
-    ├── 토폴로지 분산 제약
-    └── 우선순위 클래스 기반
+CNI 설정 구조:
+├── cniVersion: CNI 스펙 버전
+├── name: 네트워크 이름
+├── type: 플러그인 타입
+├── ipam: IP 주소 관리 설정
+├── dns: DNS 설정
+├── args: 추가 인수
+└── 플러그인별 특화 설정
 
-Controller Manager (kube-controller-manager):
-├── 역할 및 기능:
-│   ├── 클러스터 상태 감시 및 조정
-│   ├── 선언적 상태와 실제 상태 동기화
-│   ├── 다양한 컨트롤러 실행 및 관리
-│   ├── 이벤트 기반 상태 변경 처리
-│   ├── 자동 복구 및 자가 치유
-│   └── 리소스 가비지 컬렉션
-├── 주요 컨트롤러:
-│   ├── Deployment Controller: 배포 관리
-│   ├── ReplicaSet Controller: 복제본 관리
-│   ├── Service Controller: 서비스 엔드포인트 관리
-│   ├── Node Controller: 노드 상태 관리
-│   ├── Namespace Controller: 네임스페이스 관리
-│   ├── PersistentVolume Controller: 스토리지 관리
-│   └── Job Controller: 배치 작업 관리
-└── 제어 루프 패턴:
-    ├── 현재 상태 관찰 (Observe)
-    ├── 원하는 상태와 비교 (Diff)
-    ├── 조정 작업 수행 (Act)
-    └── 지속적인 모니터링 (Loop)
+플러그인 체인:
+├── 여러 플러그인 순차 실행
+├── 각 플러그인의 결과를 다음으로 전달
+├── 복합적인 네트워크 설정 가능
+├── 모듈화된 기능 조합
+├── 실패 시 롤백 메커니즘
+└── 예: bridge → firewall → bandwidth
+
+CNI 런타임 통합:
+├── kubelet이 CNI 플러그인 호출
+├── 컨테이너 생성/삭제 시점에 실행
+├── 네트워크 네임스페이스 관리
+├── 인터페이스 생성 및 설정
+├── IP 주소 할당 및 라우팅
+└── DNS 설정 및 정책 적용
+
+IPAM (IP Address Management):
+├── IP 주소 할당 및 관리
+├── 서브넷 및 게이트웨이 설정
+├── IP 풀 관리 및 임대
+├── 중복 방지 및 충돌 해결
+├── 동적/정적 할당 지원
+└── 플러그인별 IPAM 구현
 ```
 
-### 워커 노드 컴포넌트 분석
+## 2. 주요 CNI 구현체 비교 분석 (12분)
 
-```
-워커 노드 구성 요소:
-
-kubelet:
-├── 역할 및 기능:
-│   ├── 노드의 Kubernetes 에이전트
-│   ├── Pod 생명주기 관리
-│   ├── 컨테이너 런타임과 통신
-│   ├── 노드 상태 보고
-│   ├── 볼륨 마운트 관리
-│   ├── 헬스 체크 수행
-│   └── 리소스 사용량 모니터링
-├── 주요 기능:
-│   ├── Pod 스펙 해석 및 실행
-│   ├── 컨테이너 이미지 풀링
-│   ├── 네트워크 및 스토리지 설정
-│   ├── 로그 수집 및 전달
-│   ├── 메트릭 수집 및 노출
-│   └── 보안 컨텍스트 적용
-└── 통신 인터페이스:
-    ├── API 서버와 HTTPS 통신
-    ├── Container Runtime Interface (CRI)
-    ├── Container Network Interface (CNI)
-    ├── Container Storage Interface (CSI)
-    └── Device Plugin API
-
-kube-proxy:
-├── 역할 및 기능:
-│   ├── 서비스 추상화 구현
-│   ├── 로드 밸런싱 및 트래픽 라우팅
-│   ├── 네트워크 규칙 관리
-│   ├── 서비스 디스커버리 지원
-│   ├── 클러스터 내부 통신 처리
-│   └── 외부 트래픽 라우팅
-├── 프록시 모드:
-│   ├── iptables 모드 (기본)
-│   ├── IPVS 모드 (고성능)
-│   ├── userspace 모드 (레거시)
-│   └── kernelspace 모드 (실험적)
-└── 네트워크 기능:
-    ├── 서비스 IP 가상화
-    ├── 엔드포인트 로드 밸런싱
-    ├── 세션 어피니티 지원
-    ├── 외부 IP 및 NodePort 처리
-    └── 네트워크 정책 적용
-
-Container Runtime:
-├── 지원 런타임:
-│   ├── containerd (권장)
-│   ├── CRI-O
-│   ├── Docker Engine (deprecated)
-│   └── 기타 CRI 호환 런타임
-├── CRI 인터페이스:
-│   ├── 이미지 관리 API
-│   ├── 컨테이너 생명주기 API
-│   ├── 샌드박스 관리 API
-│   └── 스트리밍 API
-└── 런타임 기능:
-    ├── 컨테이너 실행 및 관리
-    ├── 이미지 풀링 및 캐싱
-    ├── 네트워크 네임스페이스 관리
-    ├── 스토리지 마운트 처리
-    └── 보안 컨텍스트 적용
-```
-
-## 2. 이론: 컴포넌트 간 통신 메커니즘 (15분)
-
-### API 서버 중심 통신 아키텍처
+### CNI 구현체 아키텍처 비교
 
 ```mermaid
-sequenceDiagram
-    participant kubectl as kubectl
-    participant api as API Server
-    participant etcd as etcd
-    participant scheduler as Scheduler
-    participant kubelet as kubelet
-    participant runtime as Container Runtime
+graph TB
+    subgraph "Flannel"
+        A[VXLAN Overlay] --> B[Simple Setup]
+        B --> C[L3 Network]
+        C --> D[etcd Backend]
+    end
     
-    kubectl->>api: Create Pod request
-    api->>api: Authentication & Authorization
-    api->>etcd: Store Pod spec
-    etcd-->>api: Confirmation
-    api-->>kubectl: Pod created
+    subgraph "Calico"
+        E[BGP Routing] --> F[Network Policy]
+        F --> G[eBPF Support]
+        G --> H[Felix Agent]
+    end
     
-    scheduler->>api: Watch for unscheduled Pods
-    api-->>scheduler: New Pod event
-    scheduler->>scheduler: Select best node
-    scheduler->>api: Bind Pod to node
-    api->>etcd: Update Pod binding
+    subgraph "Weave"
+        I[Mesh Network] --> J[Encryption]
+        J --> K[Auto Discovery]
+        K --> L[Fast Datapath]
+    end
     
-    kubelet->>api: Watch for assigned Pods
-    api-->>kubelet: Pod assignment
-    kubelet->>runtime: Create container
-    runtime-->>kubelet: Container started
-    kubelet->>api: Update Pod status
-    api->>etcd: Store Pod status
+    subgraph "Cilium"
+        M[eBPF Datapath] --> N[L7 Policy]
+        N --> O[Service Mesh]
+        O --> P[Observability]
+    end
+    
+    D --> A
+    H --> E
+    L --> I
+    P --> M
 ```
 
-### 통신 보안 및 인증
-
+### CNI 구현체 상세 비교
 ```
-Kubernetes 보안 통신:
+주요 CNI 구현체 특성:
 
-TLS 암호화:
-├── 모든 컴포넌트 간 TLS 통신
-├── 상호 TLS 인증 (mTLS)
-├── 인증서 기반 신원 확인
-├── 인증서 자동 갱신
-├── 암호화 알고리즘 정책
-└── 보안 채널 설정
+Flannel:
+├── 특징:
+│   ├── 단순하고 안정적인 오버레이 네트워크
+│   ├── VXLAN, UDP, host-gw 백엔드 지원
+│   ├── 최소한의 설정으로 빠른 구축
+│   ├── etcd를 통한 네트워크 정보 저장
+│   └── 대부분의 환경에서 안정적 동작
+├── 장점:
+│   ├── 설정 및 관리 단순성
+│   ├── 높은 호환성 및 안정성
+│   ├── 작은 리소스 사용량
+│   └── 빠른 배포 및 문제 해결
+├── 단점:
+│   ├── 네트워크 정책 미지원
+│   ├── 고급 기능 부족
+│   ├── 성능 최적화 제한
+│   └── L7 기능 없음
+└── 적합한 환경: 단순한 클러스터, 개발/테스트
 
-인증 메커니즘:
-├── X.509 클라이언트 인증서
-├── 서비스 어카운트 토큰
-├── OpenID Connect (OIDC)
-├── 웹훅 토큰 인증
-├── 프록시 인증
-└── 익명 요청 처리
+Calico:
+├── 특징:
+│   ├── BGP 기반 L3 네트워킹
+│   ├── 강력한 네트워크 정책 지원
+│   ├── eBPF 데이터플레인 옵션
+│   ├── Felix 에이전트를 통한 정책 적용
+│   └── 확장성과 성능 최적화
+├── 장점:
+│   ├── 우수한 성능 (네이티브 라우팅)
+│   ├── 세밀한 네트워크 정책
+│   ├── 대규모 클러스터 지원
+│   ├── 풍부한 관찰 가능성
+│   └── 멀티 클라우드 지원
+├── 단점:
+│   ├── 복잡한 설정 및 관리
+│   ├── BGP 지식 필요
+│   ├── 네트워크 인프라 의존성
+│   └── 높은 학습 곡선
+└── 적합한 환경: 대규모 프로덕션, 보안 중요
 
-권한 부여 (Authorization):
-├── RBAC (Role-Based Access Control)
-├── ABAC (Attribute-Based Access Control)
-├── 웹훅 권한 부여
-├── 노드 권한 부여
-└── 항상 허용/거부 모드
+Weave:
+├── 특징:
+│   ├── 메시 네트워크 토폴로지
+│   ├── 자동 피어 발견 및 연결
+│   ├── 네트워크 암호화 지원
+│   ├── Fast Datapath (커널 우회)
+│   └── 간단한 설치 및 운영
+├── 장점:
+│   ├── 자동 네트워크 구성
+│   ├── 내장 암호화 및 보안
+│   ├── 네트워크 분할 복구
+│   ├── 멀티 호스트 네트워킹
+│   └── 시각적 네트워크 모니터링
+├── 단점:
+│   ├── 상대적으로 높은 오버헤드
+│   ├── 복잡한 메시 토폴로지
+│   ├── 제한적인 정책 기능
+│   └── 대규모 환경에서 성능 이슈
+└── 적합한 환경: 중소규모, 보안 중시
 
-승인 제어 (Admission Control):
-├── 변형 승인 컨트롤러 (Mutating)
-├── 검증 승인 컨트롤러 (Validating)
-├── 동적 승인 제어 (Webhooks)
-├── 정책 기반 승인 제어
-└── 리소스 쿼터 적용
-```
+Cilium:
+├── 특징:
+│   ├── eBPF 기반 고성능 데이터플레인
+│   ├── L3-L7 네트워크 정책
+│   ├── 서비스 메시 기능 내장
+│   ├── 고급 관찰 가능성
+│   └── API 인식 보안 정책
+├── 장점:
+│   ├── 최고 수준의 성능
+│   ├── 세밀한 L7 정책 제어
+│   ├── 풍부한 모니터링 기능
+│   ├── 서비스 메시 통합
+│   └── 혁신적인 기술 적용
+├── 단점:
+│   ├── 높은 복잡성
+│   ├── 커널 버전 의존성
+│   ├── 상대적으로 새로운 기술
+│   └── 전문 지식 필요
+└── 적합한 환경: 고성능 요구, 최신 기술 도입
 
-## 3. 이론: etcd 클러스터와 상태 관리 (10분)
-
-### etcd 아키텍처 및 데이터 모델
-
-```
-etcd 클러스터 구성:
-
-Raft 합의 알고리즘:
-├── 리더 선출 메커니즘
-├── 로그 복제 프로토콜
-├── 안전성 보장 (Safety)
-├── 활성도 보장 (Liveness)
-├── 분할 내성 (Partition Tolerance)
-└── 강한 일관성 (Strong Consistency)
-
-클러스터 토폴로지:
-├── 홀수 개 노드 구성 (3, 5, 7)
-├── 쿼럼 기반 의사결정
-├── 리더-팔로워 역할 분담
-├── 자동 장애 조치
-├── 네트워크 분할 처리
-└── 노드 추가/제거 동적 처리
-
-데이터 저장 구조:
-├── 키-값 저장 모델
-├── 계층적 키 네임스페이스
-├── 버전 관리 및 히스토리
-├── TTL (Time To Live) 지원
-├── 트랜잭션 처리
-└── 압축 및 최적화
-
-백업 및 복구:
-├── 스냅샷 기반 백업
-├── 증분 백업 지원
-├── 포인트-인-타임 복구
-├── 클러스터 간 복제
-├── 재해 복구 절차
-└── 데이터 무결성 검증
-```
-
-### Kubernetes 상태 관리
-
-```
-클러스터 상태 관리:
-
-리소스 상태 추적:
-├── 선언적 상태 (Desired State)
-├── 현재 상태 (Current State)
-├── 관찰된 상태 (Observed State)
-├── 상태 전이 추적
-├── 이벤트 기반 업데이트
-└── 최종 일관성 보장
-
-Watch 메커니즘:
-├── 실시간 상태 변경 감지
-├── 이벤트 스트림 처리
-├── 효율적인 폴링 대체
-├── 네트워크 대역폭 최적화
-├── 클라이언트 캐싱 지원
-└── 재연결 및 재동기화
-
-리소스 버전 관리:
-├── 낙관적 동시성 제어
-├── 충돌 감지 및 해결
-├── 버전 기반 업데이트
-├── 조건부 업데이트 지원
-├── 원자적 연산 보장
-└── 데이터 경합 방지
+선택 기준 매트릭스:
+├── 단순성: Flannel > Weave > Calico > Cilium
+├── 성능: Cilium > Calico > Flannel > Weave
+├── 보안: Cilium > Calico > Weave > Flannel
+├── 안정성: Flannel > Calico > Weave > Cilium
+├── 기능: Cilium > Calico > Weave > Flannel
+└── 학습곡선: Flannel < Weave < Calico < Cilium
 ```
 
-## 4. 개념 예시: 아키텍처 구성 분석 (7분)
+## 3. 네트워크 정책 지원과 성능 특성 (10분)
 
-### 클러스터 구성 예시
+### 네트워크 정책 구현 비교
 
-```yaml
-# 고가용성 클러스터 구성 (개념 예시)
-apiVersion: kubeadm.k8s.io/v1beta3
-kind: ClusterConfiguration
-metadata:
-  name: ha-cluster
-kubernetesVersion: v1.28.0
-controlPlaneEndpoint: "k8s-api.example.com:6443"
-etcd:
-  external:
-    endpoints:
-    - https://etcd1.example.com:2379
-    - https://etcd2.example.com:2379
-    - https://etcd3.example.com:2379
-    caFile: /etc/kubernetes/pki/etcd/ca.crt
-    certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
-    keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
-networking:
-  serviceSubnet: "10.96.0.0/12"
-  podSubnet: "10.244.0.0/16"
-apiServer:
-  extraArgs:
-    audit-log-maxage: "30"
-    audit-log-maxbackup: "3"
-    audit-log-maxsize: "100"
-    audit-log-path: /var/log/audit.log
-  certSANs:
-  - "k8s-api.example.com"
-  - "10.0.0.100"
-controllerManager:
-  extraArgs:
-    bind-address: "0.0.0.0"
-scheduler:
-  extraArgs:
-    bind-address: "0.0.0.0"
+```mermaid
+graph TB
+    subgraph "정책 지원 수준"
+        A[L3 정책] --> B[IP/포트 기반]
+        C[L4 정책] --> D[프로토콜 기반]
+        E[L7 정책] --> F[애플리케이션 기반]
+    end
+    
+    subgraph "구현체별 지원"
+        G[Flannel: 미지원] --> H[기본 연결만]
+        I[Calico: L3/L4] --> J[NetworkPolicy]
+        K[Weave: L3/L4] --> L[기본 정책]
+        M[Cilium: L3-L7] --> N[고급 정책]
+    end
+    
+    subgraph "성능 특성"
+        O[Throughput] --> P[대역폭 성능]
+        Q[Latency] --> R[지연시간]
+        S[CPU Usage] --> T[리소스 사용량]
+        U[Memory Usage] --> V[메모리 효율성]
+    end
+    
+    B --> I
+    D --> K
+    F --> M
+    P --> O
+    R --> Q
+    T --> S
+    V --> U
 ```
 
-### 컴포넌트 상태 확인 예시
+### 성능 및 정책 특성 분석
+```
+네트워크 정책 및 성능 비교:
 
-```bash
-# 클러스터 컴포넌트 상태 확인 (개념 예시)
+네트워크 정책 지원:
+├── Flannel:
+│   ├── 네트워크 정책 미지원
+│   ├── 모든 Pod 간 통신 허용
+│   ├── 외부 방화벽 솔루션 필요
+│   └── 단순한 연결성만 제공
+├── Calico:
+│   ├── Kubernetes NetworkPolicy 완전 지원
+│   ├── Calico 고유 정책 추가 기능
+│   ├── 글로벌 네트워크 정책
+│   ├── 호스트 엔드포인트 보호
+│   ├── 서비스 어카운트 기반 정책
+│   └── 세밀한 트래픽 제어
+├── Weave:
+│   ├── 기본 NetworkPolicy 지원
+│   ├── 네임스페이스 격리
+│   ├── 제한적인 고급 기능
+│   └── 단순한 정책 모델
+└── Cilium:
+    ├── L3-L7 정책 완전 지원
+    ├── HTTP/gRPC API 인식 정책
+    ├── DNS 기반 정책
+    ├── 서비스 메시 정책 통합
+    └── 가장 세밀한 제어 가능
 
-# 노드 상태 확인
-kubectl get nodes -o wide
+성능 특성 비교:
+├── 처리량 (Throughput):
+│   ├── Cilium (eBPF): 최고 성능
+│   ├── Calico (BGP): 높은 성능
+│   ├── Flannel (host-gw): 중간 성능
+│   ├── Weave (FastDP): 중간 성능
+│   └── 오버레이 네트워크: 상대적 저성능
+├── 지연시간 (Latency):
+│   ├── 네이티브 라우팅: 최소 지연
+│   ├── 커널 우회: 낮은 지연
+│   ├── VXLAN 캡슐화: 추가 지연
+│   └── 정책 처리: 미미한 오버헤드
+├── 리소스 사용량:
+│   ├── CPU: 정책 복잡도에 비례
+│   ├── 메모리: 연결 상태 추적량에 비례
+│   ├── 네트워크: 캡슐화 오버헤드
+│   └── 스토리지: 로그 및 상태 정보
+└── 확장성:
+    ├── 노드 수: 라우팅 테이블 크기 영향
+    ├── Pod 수: 정책 규칙 수 영향
+    ├── 정책 수: 처리 복잡도 영향
+    └── 연결 수: 상태 추적 오버헤드
 
-# 컨트롤 플레인 컴포넌트 상태
-kubectl get pods -n kube-system
-
-# etcd 클러스터 상태 확인
-kubectl exec -n kube-system etcd-master1 -- etcdctl \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  endpoint health
-
-# API 서버 상태 확인
-kubectl get --raw='/healthz'
-
-# 스케줄러 리더 확인
-kubectl get endpoints kube-scheduler -n kube-system -o yaml
+벤치마크 고려사항:
+├── 테스트 환경: 하드웨어, OS, 커널 버전
+├── 워크로드 특성: 연결 패턴, 데이터 크기
+├── 네트워크 토폴로지: 노드 간 거리, 대역폭
+├── 정책 복잡도: 규칙 수, 매칭 조건
+├── 모니터링 오버헤드: 로깅, 메트릭 수집
+└── 실제 애플리케이션 성능 측정 중요
 ```
 
-### 통신 흐름 추적 예시
+## 4. CNI 선택 기준과 운영 고려사항 (10분)
 
-```bash
-# API 요청 추적 (개념 예시)
+### CNI 선택 의사결정 트리
 
-# API 서버 감사 로그 확인
-tail -f /var/log/audit.log | grep "Pod"
-
-# kubelet 로그 확인
-journalctl -u kubelet -f
-
-# 네트워크 통신 확인
-tcpdump -i any port 6443 -n
-
-# etcd 통신 모니터링
-etcdctl watch --prefix /registry/pods/
+```mermaid
+graph TB
+    A[CNI 선택 시작] --> B{네트워크 정책 필요?}
+    B -->|No| C[Flannel 고려]
+    B -->|Yes| D{성능 중요도?}
+    
+    D -->|High| E{최신 기술 수용?}
+    D -->|Medium| F[Calico 고려]
+    
+    E -->|Yes| G[Cilium 고려]
+    E -->|No| F
+    
+    C --> H{단순성 vs 기능}
+    F --> I{BGP 지식 보유?}
+    G --> J{eBPF 지원 환경?}
+    
+    H -->|단순성| K[Flannel 선택]
+    H -->|기능| L[Weave 고려]
+    
+    I -->|Yes| M[Calico 선택]
+    I -->|No| L
+    
+    J -->|Yes| N[Cilium 선택]
+    J -->|No| F
+    
+    L --> O[Weave 선택]
 ```
 
-## 5. 토론 및 정리 (3분)
+### 선택 기준 및 운영 고려사항
+```
+CNI 선택 기준:
 
-### 핵심 개념 정리
-- **Kubernetes 아키텍처**는 마스터-워커 노드 구조로 설계
-- **API 서버**가 모든 통신의 중심 역할 수행
-- **etcd**를 통한 분산 상태 관리와 강한 일관성 보장
-- **컴포넌트 간 보안 통신**과 인증/권한 부여 체계
+기술적 요구사항:
+├── 네트워크 정책 필요성:
+│   ├── 마이크로세그멘테이션 요구
+│   ├── 컴플라이언스 규정 준수
+│   ├── 보안 격리 수준
+│   └── 트래픽 제어 세밀도
+├── 성능 요구사항:
+│   ├── 처리량 (Throughput) 목표
+│   ├── 지연시간 (Latency) 허용 범위
+│   ├── 동시 연결 수 지원
+│   └── 확장성 요구사항
+├── 환경 제약사항:
+│   ├── 클라우드 플랫폼 지원
+│   ├── 온프레미스 네트워크 통합
+│   ├── 기존 인프라 호환성
+│   └── 보안 정책 및 규정
+
+운영 고려사항:
+├── 설치 및 설정:
+│   ├── 초기 구축 복잡도
+│   ├── 설정 파일 관리
+│   ├── 의존성 및 전제조건
+│   └── 자동화 가능성
+├── 관리 및 운영:
+│   ├── 모니터링 및 로깅
+│   ├── 트러블슈팅 도구
+│   ├── 업그레이드 절차
+│   ├── 백업 및 복구
+│   └── 성능 튜닝 옵션
+├── 인력 및 기술:
+│   ├── 필요한 전문 지식
+│   ├── 학습 곡선 및 교육
+│   ├── 커뮤니티 지원
+│   ├── 상용 지원 옵션
+│   └── 문서화 품질
+
+환경별 권장사항:
+├── 개발/테스트 환경:
+│   ├── Flannel: 단순하고 안정적
+│   ├── 빠른 구축 및 재구축
+│   ├── 최소한의 관리 오버헤드
+│   └── 네트워크 정책 불필요
+├── 스테이징 환경:
+│   ├── 프로덕션과 동일한 CNI 사용
+│   ├── 성능 및 정책 테스트
+│   ├── 운영 절차 검증
+│   └── 모니터링 시스템 테스트
+├── 프로덕션 환경:
+│   ├── Calico: 균형잡힌 기능과 성능
+│   ├── Cilium: 최고 성능 및 기능
+│   ├── 강력한 네트워크 정책
+│   ├── 고가용성 및 확장성
+│   └── 종합적인 모니터링
+└── 특수 환경:
+    ├── 엣지 컴퓨팅: 경량화된 솔루션
+    ├── 멀티 클라우드: 호환성 중시
+    ├── 고보안: 정책 기능 중시
+    └── 고성능: 최적화된 데이터플레인
+
+마이그레이션 고려사항:
+├── 기존 CNI에서 새 CNI로 전환
+├── 다운타임 최소화 전략
+├── 네트워크 정책 마이그레이션
+├── 애플리케이션 호환성 검증
+├── 롤백 계획 및 절차
+└── 단계적 마이그레이션 방법
+```
+
+## 💬 그룹 토론: CNI 선택 기준과 운영 환경별 고려사항 (8분)
 
 ### 토론 주제
-"Kubernetes 아키텍처의 각 컴포넌트가 고가용성과 확장성을 보장하기 위해 어떻게 설계되었는가?"
+**"다양한 운영 환경(개발, 스테이징, 프로덕션)에서 CNI를 선택할 때 고려해야 할 핵심 기준과 실무 경험은 무엇인가?"**
 
-## 💡 핵심 키워드
-- **아키텍처**: 컨트롤 플레인, 워커 노드, 분산 시스템
-- **핵심 컴포넌트**: API 서버, etcd, 스케줄러, kubelet
-- **통신 메커니즘**: TLS, 인증, 권한 부여, Watch API
-- **상태 관리**: Raft 합의, 선언적 상태, 최종 일관성
+### 토론 가이드라인
+
+#### CNI 선택 기준 우선순위 (3분)
+- **기능 요구사항**: 네트워크 정책, 성능, 확장성
+- **운영 복잡성**: 설치, 관리, 트러블슈팅
+- **조직 역량**: 기술 수준, 학습 곡선, 지원 체계
+
+#### 환경별 선택 전략 (3분)
+- **개발 환경**: 단순성과 빠른 구축 중시
+- **프로덕션**: 안정성, 성능, 보안 중시
+- **특수 환경**: 엣지, 멀티클라우드, 고보안
+
+#### 실무 적용 경험 (2분)
+- **마이그레이션**: 기존 CNI 전환 경험
+- **운영 이슈**: 실제 발생한 문제와 해결 방안
+- **성능 최적화**: 튜닝 및 모니터링 경험
+
+## 💡 핵심 개념 정리
+- **CNI 표준**: 컨테이너 네트워크 인터페이스, 플러그인 아키텍처
+- **주요 구현체**: Flannel(단순), Calico(균형), Weave(메시), Cilium(고성능)
+- **네트워크 정책**: L3-L7 트래픽 제어, 보안 격리
+- **선택 기준**: 기능, 성능, 복잡성, 조직 역량
 
 ## 📚 참고 자료
-- [Kubernetes 아키텍처](https://kubernetes.io/docs/concepts/architecture/)
-- [etcd 문서](https://etcd.io/docs/)
-- [Kubernetes API 개념](https://kubernetes.io/docs/concepts/overview/kubernetes-api/)
+- [CNI Specification](https://github.com/containernetworking/cni/blob/master/SPEC.md)
+- [Flannel Documentation](https://github.com/flannel-io/flannel)
+- [Calico Documentation](https://docs.projectcalico.org/)
+- [Cilium Documentation](https://docs.cilium.io/)
+
+## 다음 세션 준비
+다음 세션에서는 **Service 네트워킹 심화**에 대해 학습합니다. Service 타입별 네트워킹 메커니즘과 로드 밸런싱 원리를 상세히 분석할 예정입니다.

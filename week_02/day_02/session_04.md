@@ -1,431 +1,290 @@
-# Session 4: 스토리지 성능 튜닝
+# Session 4: ConfigMap과 Secret
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 4**로, 네트워크 성능 최적화 이해를 바탕으로 컨테이너 스토리지 시스템의 성능 튜닝과 I/O 최적화 기법을 심화 분석합니다.
+이 세션은 **Week 2 > Day 2 > Session 4**로, Kubernetes의 구성 관리 핵심인 ConfigMap과 Secret의 개념과 보안 모델을 학습합니다.
 
 ## 학습 목표 (5분)
-- **스토리지 드라이버별 성능 특성** 비교 분석
-- **I/O 성능 최적화** 기법과 **파일시스템 튜닝** 전략
-- **데이터 백업 및 복구** 성능 최적화 방법론
+- **구성 관리** 패턴과 **외부화** 원칙 이해
+- **ConfigMap**의 **설정 데이터** 관리 방식 학습
+- **Secret**의 **민감 정보** 보안 모델 파악
+- **환경별 구성** 관리 전략 이해
 
-## 1. 이론: 스토리지 드라이버 성능 분석 (20분)
+## 1. 구성 관리 패턴과 외부화 원칙 (15분)
 
-### 스토리지 드라이버 성능 비교
+### 구성 외부화 개념
 
 ```mermaid
 graph TB
-    subgraph "Storage Driver Performance"
-        A[overlay2] --> B[최고 성능<br/>권장 드라이버]
-        C[aufs] --> D[레거시<br/>성능 저하]
-        E[devicemapper] --> F[블록 레벨<br/>복잡한 설정]
-        G[btrfs] --> H[CoW 기능<br/>안정성 이슈]
-        I[zfs] --> J[고급 기능<br/>높은 메모리 요구]
+    subgraph "전통적 방식"
+        A[애플리케이션] --> B[하드코딩된 설정]
+        B --> C[환경별 빌드]
+        C --> D[배포 복잡성]
     end
     
-    subgraph "Performance Metrics"
-        K[Sequential I/O<br/>순차 I/O]
-        L[Random I/O<br/>랜덤 I/O]
-        M[Metadata Ops<br/>메타데이터 연산]
-        N[Memory Usage<br/>메모리 사용량]
+    subgraph "Kubernetes 방식"
+        E[애플리케이션] --> F[외부 구성]
+        F --> G[ConfigMap/Secret]
+        G --> H[환경 독립적]
     end
     
-    B --> K
-    D --> L
-    F --> M
-    J --> N
+    subgraph "12-Factor App 원칙"
+        I[코드와 구성 분리] --> J[환경 변수 사용]
+        J --> K[런타임 주입]
+        K --> L[보안 강화]
+    end
+    
+    D -.->|개선| E
+    H --> I
 ```
 
-### 스토리지 드라이버별 성능 특성
-
+### 구성 관리 모범 사례
 ```
-스토리지 드라이버 성능 분석:
+구성 외부화 원칙:
 
-overlay2 (권장):
-├── 순차 읽기: 95-98% (네이티브 대비)
-├── 순차 쓰기: 90-95% (CoW 오버헤드)
-├── 랜덤 읽기: 85-90% (레이어 탐색)
-├── 랜덤 쓰기: 80-85% (첫 쓰기 비용)
-├── 메타데이터 연산: 매우 빠름
-├── 메모리 사용량: 낮음
-├── CPU 오버헤드: 최소
-└── 디스크 사용량: 효율적
+12-Factor App 준수:
+├── 코드와 구성의 엄격한 분리
+├── 환경 변수를 통한 구성 주입
+├── 빌드-릴리스-실행 단계 분리
+├── 환경 간 동일한 코드베이스
+└── 보안 정보 별도 관리
 
-aufs (레거시):
-├── 순차 읽기: 80-85% (다중 레이어)
-├── 순차 쓰기: 70-75% (복잡한 CoW)
-├── 랜덤 읽기: 60-70% (레이어 순회)
-├── 랜덤 쓰기: 50-60% (성능 저하)
-├── 메타데이터 연산: 느림
-├── 메모리 사용량: 높음
-├── CPU 오버헤드: 높음
-└── 디스크 사용량: 비효율적
+구성 계층화:
+├── 기본 구성 (Default)
+├── 환경별 구성 (Dev/Staging/Prod)
+├── 애플리케이션별 구성
+├── 인스턴스별 구성
+└── 런타임 오버라이드
 
-devicemapper:
-├── 순차 읽기: 85-90% (블록 레벨)
-├── 순차 쓰기: 75-80% (스냅샷 오버헤드)
-├── 랜덤 읽기: 70-80% (블록 매핑)
-├── 랜덤 쓰기: 60-70% (메타데이터 업데이트)
-├── 메타데이터 연산: 보통
-├── 메모리 사용량: 높음 (메타데이터)
-├── CPU 오버헤드: 보통
-└── 디스크 사용량: 설정에 따라 가변
+보안 고려사항:
+├── 민감 정보와 일반 설정 분리
+├── 최소 권한 원칙 적용
+├── 암호화 저장 및 전송
+├── 접근 로깅 및 감사
+└── 정기적인 로테이션
 
-btrfs:
-├── 순차 읽기: 90-95% (네이티브 CoW)
-├── 순차 쓰기: 80-85% (CoW 특성)
-├── 랜덤 읽기: 75-85% (B-tree 구조)
-├── 랜덤 쓰기: 70-80% (프래그멘테이션)
-├── 메타데이터 연산: 빠름 (B-tree)
-├── 메모리 사용량: 보통
-├── CPU 오버헤드: 보통
-└── 디스크 사용량: 압축 지원
-
-zfs:
-├── 순차 읽기: 95-98% (ARC 캐시)
-├── 순차 쓰기: 85-90% (ZIL 최적화)
-├── 랜덤 읽기: 90-95% (L2ARC)
-├── 랜덤 쓰기: 80-85% (CoW + 압축)
-├── 메타데이터 연산: 매우 빠름
-├── 메모리 사용량: 매우 높음 (ARC)
-├── CPU 오버헤드: 높음 (압축/체크섬)
-└── 디스크 사용량: 압축 및 중복제거
+버전 관리:
+├── 구성 변경 이력 추적
+├── 롤백 가능한 구성 관리
+├── 변경 승인 프로세스
+├── 환경 간 구성 동기화
+└── 자동화된 배포 파이프라인
 ```
 
-### I/O 패턴 최적화 전략
+## 2. ConfigMap의 설정 데이터 관리 방식 (12분)
 
-```
-I/O 성능 최적화:
-
-파일시스템 레벨 최적화:
-├── 마운트 옵션 튜닝 (noatime, relatime)
-├── 블록 크기 최적화 (4K, 8K, 16K)
-├── 저널링 모드 선택 (ordered, writeback)
-├── 읽기 전용 마운트 활용
-├── 압축 및 중복제거 설정
-└── 예약 블록 비율 조정
-
-I/O 스케줄러 최적화:
-├── noop: SSD 및 가상화 환경
-├── deadline: 실시간 응답성 중요
-├── cfq: 공정한 I/O 분배
-├── mq-deadline: 멀티큐 환경
-├── kyber: 지연시간 기반 스케줄링
-└── bfq: 대화형 워크로드
-
-블록 디바이스 튜닝:
-├── 큐 깊이 (queue depth) 조정
-├── 읽기 전방 (read-ahead) 설정
-├── I/O 병합 (merge) 최적화
-├── 디스크 스케줄러 파라미터
-├── 블록 크기 정렬 (alignment)
-└── 디바이스별 최적화 설정
-
-애플리케이션 레벨 최적화:
-├── 버퍼링 전략 최적화
-├── 비동기 I/O (AIO) 활용
-├── 메모리 매핑 (mmap) 사용
-├── 배치 I/O 처리
-├── 캐싱 계층 구현
-└── I/O 패턴 분석 및 최적화
-```
-
-## 2. 이론: 볼륨 성능 최적화 (15분)
-
-### 볼륨 타입별 성능 특성
+### ConfigMap 사용 패턴
 
 ```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Container as Container Layer
-    participant Volume as Volume Mount
-    participant Storage as Storage Backend
-    
-    App->>Container: Write request
-    
-    alt Bind Mount
-        Container->>Storage: Direct file access
-        Storage-->>Container: Native performance
-    else Named Volume
-        Container->>Volume: Volume driver
-        Volume->>Storage: Managed access
-        Storage-->>Volume: Controlled performance
-        Volume-->>Container: Optimized response
-    else tmpfs Mount
-        Container->>Container: Memory access
-        Container-->>Container: Maximum performance
+graph TB
+    subgraph "ConfigMap 생성"
+        A[Key-Value 데이터] --> B[ConfigMap 오브젝트]
+        C[설정 파일] --> B
+        D[디렉토리] --> B
     end
     
-    Container-->>App: I/O complete
+    subgraph "Pod에서 사용"
+        E[환경 변수] --> F[Pod 컨테이너]
+        G[볼륨 마운트] --> F
+        H[명령행 인수] --> F
+    end
+    
+    subgraph "업데이트 전파"
+        I[ConfigMap 변경] --> J[볼륨 자동 업데이트]
+        I --> K[환경 변수 재시작 필요]
+    end
+    
+    B --> E
+    B --> G
+    B --> H
+    
+    J --> F
+    K --> F
 ```
 
-### 볼륨 최적화 전략
-
+### ConfigMap 활용 방식
 ```
-볼륨 성능 최적화:
+ConfigMap 활용 패턴:
 
-로컬 볼륨 최적화:
-├── 전용 디스크 파티션 할당
-├── SSD 스토리지 활용
-├── RAID 구성 최적화 (RAID 0, 10)
-├── 파일시스템 선택 (ext4, xfs, btrfs)
-├── 마운트 옵션 튜닝
-└── 디렉토리 구조 최적화
+데이터 저장 방식:
+├── Key-Value 쌍으로 저장
+├── 텍스트 데이터만 지원 (바이너리 불가)
+├── 최대 1MB 크기 제한
+├── UTF-8 인코딩 필수
+└── 네임스페이스 범위 내 유효
 
-네트워크 볼륨 최적화:
-├── 고속 네트워크 인터페이스 (10GbE, InfiniBand)
-├── 네트워크 지연시간 최소화
-├── 대역폭 할당 및 QoS
-├── 로컬 캐싱 구현
-├── 압축 및 중복제거
-└── 멀티패스 I/O 구성
+Pod에서 사용 방법:
+├── 환경 변수로 주입
+├── 볼륨으로 마운트
+├── 명령행 인수로 전달
+├── init 컨테이너에서 처리
+└── 사이드카 패턴으로 관리
 
-클라우드 볼륨 최적화:
-├── 프로비저닝된 IOPS 활용
-├── 볼륨 타입 선택 (gp3, io2, st1)
-├── 볼륨 크기 및 성능 비례
-├── 스냅샷 최적화
-├── 암호화 성능 고려
-└── 지역별 배치 최적화
+환경 변수 주입:
+├── 전체 ConfigMap 주입
+├── 특정 키만 선택적 주입
+├── 키 이름 변경 가능
+├── 기본값 설정 가능
+└── Pod 재시작 시에만 업데이트
 
-메모리 기반 최적화:
-├── tmpfs 볼륨 활용
-├── 메모리 디스크 (ramdisk)
-├── 페이지 캐시 최적화
-├── 스왑 설정 최적화
-├── NUMA 토폴로지 고려
-└── 메모리 압축 기술
-```
+볼륨 마운트:
+├── 파일 시스템으로 마운트
+├── 각 키가 파일로 생성
+├── 실시간 업데이트 지원 (subPath 제외)
+├── 읽기 전용 마운트
+└── 파일 권한 설정 가능
 
-### 캐싱 전략
-
-```
-다층 캐싱 아키텍처:
-
-애플리케이션 캐시:
-├── 인메모리 캐시 (Redis, Memcached)
-├── 애플리케이션 레벨 캐시
-├── 쿼리 결과 캐싱
-├── 세션 캐시
-├── 정적 콘텐츠 캐시
-└── CDN 통합
-
-파일시스템 캐시:
-├── 페이지 캐시 최적화
-├── 디렉토리 엔트리 캐시 (dcache)
-├── 아이노드 캐시 (icache)
-├── 버퍼 캐시 관리
-├── 읽기 전방 (readahead)
-└── 쓰기 지연 (write-behind)
-
-스토리지 캐시:
-├── SSD 캐시 계층
-├── 하드웨어 RAID 캐시
-├── 스토리지 컨트롤러 캐시
-├── 네트워크 스토리지 캐시
-├── 분산 캐시 시스템
-└── 계층적 스토리지 관리 (HSM)
-
-캐시 정책:
-├── LRU (Least Recently Used)
-├── LFU (Least Frequently Used)
-├── ARC (Adaptive Replacement Cache)
-├── 2Q (Two Queue)
-├── CLOCK 알고리즘
-└── 사용자 정의 정책
+업데이트 전략:
+├── 볼륨: 자동 업데이트 (최대 1분 지연)
+├── 환경 변수: Pod 재시작 필요
+├── 애플리케이션 리로드 메커니즘 필요
+├── 롤링 업데이트 트리거 가능
+└── 구성 변경 모니터링 권장
 ```
 
-## 3. 이론: 백업 및 복구 성능 최적화 (10분)
+## 3. Secret의 민감 정보 보안 모델 (12분)
 
-### 고성능 백업 전략
+### Secret 보안 아키텍처
 
-```
-백업 성능 최적화:
-
-증분 백업 최적화:
-├── 블록 레벨 변경 감지
-├── 파일 레벨 델타 백업
-├── 스냅샷 기반 백업
-├── 체인지 로그 활용
-├── 압축 및 중복제거
-└── 병렬 백업 처리
-
-스냅샷 기술 활용:
-├── 파일시스템 스냅샷 (LVM, Btrfs, ZFS)
-├── 스토리지 레벨 스냅샷
-├── 애플리케이션 일관성 스냅샷
-├── 크래시 일관성 vs 애플리케이션 일관성
-├── 스냅샷 체인 관리
-└── 자동 스냅샷 스케줄링
-
-네트워크 백업 최적화:
-├── 대역폭 스로틀링
-├── 압축 전송
-├── 암호화 오버헤드 최소화
-├── 멀티스트림 전송
-├── 재시도 및 체크포인트
-└── 네트워크 QoS 적용
-
-복구 성능 최적화:
-├── 병렬 복구 처리
-├── 우선순위 기반 복구
-├── 부분 복구 지원
-├── 인플레이스 복구
-├── 핫 스탠바이 시스템
-└── 자동 장애조치 (failover)
+```mermaid
+graph TB
+    subgraph "Secret 저장"
+        A[민감 데이터] --> B[Base64 인코딩]
+        B --> C[etcd 암호화]
+        C --> D[RBAC 접근 제어]
+    end
+    
+    subgraph "Pod 사용"
+        E[Secret 마운트] --> F[메모리 파일시스템]
+        F --> G[컨테이너 접근]
+        G --> H[프로세스 종료 시 삭제]
+    end
+    
+    subgraph "보안 계층"
+        I[네트워크 암호화] --> J[저장소 암호화]
+        J --> K[접근 권한 제어]
+        K --> L[감사 로깅]
+    end
+    
+    D --> E
+    H --> I
 ```
 
-## 4. 개념 예시: 스토리지 튜닝 구성 (12분)
+### Secret 타입과 보안 모델
+```
+Secret 타입별 특징:
 
-### 고성능 스토리지 설정 예시
+Opaque (기본):
+├── 임의의 사용자 정의 데이터
+├── 가장 일반적인 Secret 타입
+├── 애플리케이션 비밀번호, API 키 등
+├── Base64 인코딩으로 저장
+└── 사용자가 직접 관리
 
-```yaml
-# Docker Compose 스토리지 최적화 (개념 예시)
-version: '3.8'
+kubernetes.io/dockerconfigjson:
+├── Docker 레지스트리 인증 정보
+├── 프라이빗 이미지 풀링 시 사용
+├── imagePullSecrets로 Pod에 연결
+├── 자동으로 Docker 설정 형식 생성
+└── 여러 레지스트리 지원 가능
 
-services:
-  database:
-    image: postgres:13
-    volumes:
-      # 고성능 로컬 볼륨
-      - db_data:/var/lib/postgresql/data:Z
-      # 로그용 tmpfs (휘발성)
-      - type: tmpfs
-        target: /var/log/postgresql
-        tmpfs:
-          size: 100M
-    environment:
-      # PostgreSQL 성능 튜닝
-      POSTGRES_INITDB_ARGS: "--data-checksums --wal-segsize=64"
-    command: >
-      postgres
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
-      -c maintenance_work_mem=64MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
+kubernetes.io/tls:
+├── TLS 인증서와 개인 키
+├── Ingress TLS 종료에 사용
+├── tls.crt와 tls.key 필드 필수
+├── 인증서 자동 갱신 지원
+└── cert-manager와 연동 가능
 
-  app:
-    image: myapp:latest
-    volumes:
-      # 애플리케이션 캐시용 볼륨
-      - app_cache:/app/cache
-      # 임시 파일용 tmpfs
-      - type: tmpfs
-        target: /tmp
-        tmpfs:
-          size: 512M
-          mode: 1777
+kubernetes.io/service-account-token:
+├── ServiceAccount 토큰 저장
+├── API 서버 인증에 사용
+├── 자동 생성 및 관리
+├── 토큰 만료 및 갱신
+└── RBAC과 연동
 
-volumes:
-  db_data:
-    driver: local
-    driver_opts:
-      type: ext4
-      device: /dev/sdb1
-      o: "rw,noatime,data=writeback"
-  
-  app_cache:
-    driver: local
-    driver_opts:
-      type: tmpfs
-      device: tmpfs
-      o: "size=1G,uid=1000,gid=1000"
+보안 특징:
+├── etcd에서 암호화 저장 (encryption at rest)
+├── 전송 중 TLS 암호화 (encryption in transit)
+├── 메모리 파일시스템 사용 (tmpfs)
+├── RBAC 기반 접근 제어
+├── 네임스페이스 격리
+└── 감사 로깅 지원
 ```
 
-### 스토리지 성능 모니터링 예시
+## 4. 환경별 구성 관리 전략 (8분)
 
-```bash
-# I/O 성능 측정 (개념 예시)
-# 순차 쓰기 성능 테스트
-docker run --rm -v myvolume:/data alpine \
-  dd if=/dev/zero of=/data/testfile bs=1M count=1000 oflag=direct
+### 환경별 구성 패턴
 
-# 랜덤 I/O 성능 테스트
-docker run --rm -v myvolume:/data alpine \
-  fio --name=random-rw --ioengine=libaio --iodepth=4 \
-      --rw=randrw --bs=4k --direct=1 --size=1G \
-      --numjobs=1 --runtime=60 --group_reporting \
-      --filename=/data/fio-test
-
-# 실시간 I/O 모니터링
-docker run --rm --pid=host --privileged alpine \
-  iostat -x 1
-
-# 컨테이너별 I/O 통계
-docker stats --format "table {{.Container}}\t{{.BlockIO}}"
+```mermaid
+graph TB
+    subgraph "환경 구성 전략"
+        A[Base Configuration] --> B[Development Override]
+        A --> C[Staging Override]
+        A --> D[Production Override]
+    end
+    
+    subgraph "배포 패턴"
+        E[Kustomize] --> F[환경별 패치]
+        G[Helm] --> H[Values 파일]
+        I[GitOps] --> J[환경별 브랜치]
+    end
+    
+    subgraph "보안 관리"
+        K[External Secrets] --> L[Vault 연동]
+        M[Sealed Secrets] --> N[암호화된 Git 저장]
+    end
+    
+    F --> A
+    H --> A
+    J --> A
+    L --> K
+    N --> M
 ```
 
-### 백업 성능 최적화 예시
+### 환경별 관리 전략
+```
+환경별 구성 관리:
 
-```bash
-# 고성능 백업 스크립트 (개념 예시)
-#!/bin/bash
+계층적 구성:
+├── 기본 구성 (모든 환경 공통)
+├── 환경별 오버라이드 (dev/staging/prod)
+├── 지역별 설정 (region-specific)
+├── 클러스터별 설정 (cluster-specific)
+└── 애플리케이션별 커스터마이징
 
-# 병렬 압축 백업
-docker run --rm \
-  -v myvolume:/source:ro \
-  -v backup_storage:/backup \
-  alpine tar -I pigz -cf /backup/backup-$(date +%Y%m%d).tar.gz /source
+도구별 접근법:
+├── Kustomize: 패치 기반 오버라이드
+├── Helm: 템플릿과 Values 파일
+├── Jsonnet: 프로그래밍 방식 구성
+├── Kapitan: 다층 구성 관리
+└── ArgoCD: GitOps 기반 배포
 
-# 증분 백업 (rsync 기반)
-docker run --rm \
-  -v myvolume:/source:ro \
-  -v backup_storage:/backup \
-  alpine rsync -avz --delete --link-dest=/backup/previous /source/ /backup/current/
+보안 정보 관리:
+├── External Secrets Operator
+├── HashiCorp Vault 연동
+├── AWS Secrets Manager
+├── Azure Key Vault
+├── Google Secret Manager
+└── Sealed Secrets (Bitnami)
 
-# 스냅샷 기반 백업
-docker run --rm \
-  -v /var/lib/docker:/docker:ro \
-  -v backup_storage:/backup \
-  alpine sh -c "
-    # LVM 스냅샷 생성
-    lvcreate -L1G -s -n docker-snap /dev/vg0/docker
-    # 스냅샷 마운트 및 백업
-    mount /dev/vg0/docker-snap /mnt/snap
-    tar -czf /backup/docker-snap-$(date +%Y%m%d).tar.gz -C /mnt/snap .
-    # 정리
-    umount /mnt/snap
-    lvremove -f /dev/vg0/docker-snap
-  "
+모범 사례:
+├── 환경별 네임스페이스 분리
+├── RBAC 기반 접근 제어
+├── 구성 변경 승인 프로세스
+├── 자동화된 구성 검증
+├── 구성 드리프트 감지
+└── 재해 복구 계획 수립
 ```
 
-### 스토리지 드라이버 벤치마크 예시
-
-```bash
-# 스토리지 드라이버 성능 비교 (개념 예시)
-for driver in overlay2 aufs devicemapper; do
-  echo "Testing $driver driver..."
-  
-  # Docker 데몬 재시작 (드라이버 변경)
-  sudo systemctl stop docker
-  sudo dockerd --storage-driver=$driver &
-  
-  # 성능 테스트
-  time docker run --rm alpine dd if=/dev/zero of=/tmp/test bs=1M count=100
-  
-  # 결과 기록
-  echo "$driver: $(time)" >> benchmark_results.txt
-done
-```
-
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **스토리지 드라이버별** 성능 특성과 최적 선택 기준
-- **I/O 최적화** 기법과 파일시스템 튜닝 전략
-- **볼륨 성능** 최적화와 캐싱 계층 설계
-- **백업 및 복구** 성능 향상 방법론
+## 💬 그룹 토론: 구성 관리 외부화의 중요성과 보안 고려사항 (8분)
 
 ### 토론 주제
-"데이터 집약적 애플리케이션에서 스토리지 성능과 데이터 안정성을 동시에 보장하는 최적의 아키텍처는 무엇인가?"
+**"구성 관리 외부화가 현대 애플리케이션 개발과 운영에 미치는 영향과 보안 고려사항은 무엇인가?"**
 
-## 💡 핵심 키워드
-- **스토리지 성능**: I/O 패턴, 드라이버 최적화, 파일시스템 튜닝
-- **볼륨 최적화**: 로컬/네트워크/클라우드 볼륨, 캐싱 전략
-- **백업 최적화**: 증분 백업, 스냅샷, 병렬 처리
-- **모니터링**: I/O 메트릭, 성능 벤치마크, 실시간 분석
+## 💡 핵심 개념 정리
+- **ConfigMap**: 일반 구성 데이터, 환경 변수/볼륨 주입
+- **Secret**: 민감 정보, 암호화 저장, 보안 모델
+- **외부화**: 12-Factor App, 코드와 구성 분리
+- **환경 관리**: 계층적 구성, 도구 기반 관리
 
-## 📚 참고 자료
-- [Docker 스토리지 드라이버](https://docs.docker.com/storage/storagedriver/)
-- [Linux I/O 성능 튜닝](https://www.kernel.org/doc/Documentation/block/)
+## 다음 세션 준비
+다음 세션에서는 **Volume과 PersistentVolume**에 대해 학습합니다.

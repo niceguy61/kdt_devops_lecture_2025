@@ -1,296 +1,331 @@
-# Session 3: Docker 네트워킹 모델 심화 분석
+# Session 3: Kubernetes 클러스터 아키텍처
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 3**으로, Docker Engine과 레이어 시스템 이해를 바탕으로 Docker 네트워킹의 내부 구조와 동작 원리를 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 3**으로, Kubernetes의 전체 클러스터 아키텍처를 이해합니다. Session 2에서 학습한 오케스트레이션 필요성을 바탕으로 Kubernetes가 이를 어떻게 해결하는지 구조적으로 분석합니다.
 
 ## 학습 목표 (5분)
-- **Docker 네트워킹 모델**과 **드라이버 아키텍처** 완전 이해
-- **CNM(Container Network Model)** 구조와 **네트워크 격리** 메커니즘
-- **포트 매핑**과 **서비스 디스커버리** 내부 동작 원리
+- **클러스터 개념**과 **전체 구조** 완전 이해
+- **마스터-워커 아키텍처** 설계 원칙 학습
+- **분산 시스템**으로서의 **Kubernetes 특성** 파악
+- **고가용성 클러스터** 구성 방안 이해
 
-## 1. 이론: Container Network Model (CNM) 아키텍처 (20분)
+## 1. 클러스터 개념과 전체 구조 (15분)
 
-### CNM 핵심 구성 요소
+### Kubernetes 클러스터 정의
 
 ```mermaid
 graph TB
-    subgraph "Container Network Model"
-        A[Network Sandbox] --> B[Endpoint]
-        B --> C[Network]
-        
-        subgraph "Network Drivers"
-            D[bridge]
-            E[host]
-            F[overlay]
-            G[macvlan]
-            H[none]
+    subgraph "Kubernetes 클러스터"
+        subgraph "Control Plane (마스터)"
+            A1[API Server]
+            A2[etcd]
+            A3[Scheduler]
+            A4[Controller Manager]
         end
         
-        C --> D
-        C --> E
-        C --> F
-        C --> G
-        C --> H
+        subgraph "Data Plane (워커 노드들)"
+            B1[Worker Node 1]
+            B2[Worker Node 2]
+            B3[Worker Node N]
+        end
+        
+        subgraph "네트워크"
+            C1[Cluster Network]
+            C2[Service Network]
+            C3[Pod Network]
+        end
+        
+        A1 --> B1
+        A1 --> B2
+        A1 --> B3
+        
+        B1 --> C1
+        B2 --> C1
+        B3 --> C1
     end
-    
-    subgraph "IPAM"
-        I[IP Address Management]
-        J[Subnet Allocation]
-        K[Gateway Configuration]
-    end
-    
-    C --> I
 ```
 
-### CNM 구성 요소 상세 분석
-
+### 클러스터 구성 요소 분석
 ```
-Container Network Model 구조:
+Kubernetes 클러스터 구성:
 
-Network Sandbox:
-├── 컨테이너의 네트워크 스택 격리 공간
-├── 네트워크 인터페이스, 라우팅 테이블, DNS 설정 포함
-├── Linux Network Namespace로 구현
-├── 컨테이너별 독립적인 네트워크 환경 제공
-└── 여러 네트워크에 동시 연결 가능
+Control Plane (제어 평면):
+├── API Server: 모든 통신의 중앙 허브
+├── etcd: 클러스터 상태 저장소
+├── Scheduler: Pod 배치 결정
+├── Controller Manager: 상태 관리 및 제어
+└── Cloud Controller Manager: 클라우드 통합
 
-Endpoint:
-├── Network Sandbox와 Network 간의 연결점
-├── 가상 네트워크 인터페이스로 구현
-├── MAC 주소와 IP 주소 할당
-├── 네트워크별 독립적인 설정 가능
-└── 동적 생성 및 제거 지원
+Data Plane (데이터 평면):
+├── kubelet: 노드 에이전트
+├── kube-proxy: 네트워크 프록시
+├── Container Runtime: 컨테이너 실행 엔진
+└── Pod: 최소 배포 단위
 
-Network:
-├── 동일한 네트워크에 속한 Endpoint들의 집합
-├── 네트워크 드라이버에 의해 구현
-├── 서브넷, 게이트웨이, DNS 설정 관리
-├── 네트워크 정책 및 보안 규칙 적용
-└── 멀티 호스트 네트워킹 지원
+네트워크 계층:
+├── Cluster Network: 노드 간 통신
+├── Pod Network: Pod 간 통신
+├── Service Network: 서비스 추상화
+└── Ingress: 외부 트래픽 진입점
 ```
 
-### 네트워크 드라이버 심화 분석
+## 2. 마스터-워커 아키텍처 설계 원칙 (12분)
 
-```
-주요 네트워크 드라이버:
-
-bridge (기본 드라이버):
-├── Linux bridge 기반 가상 스위치
-├── docker0 브리지 인터페이스 사용
-├── NAT를 통한 외부 통신
-├── 포트 매핑으로 서비스 노출
-├── 단일 호스트 내 컨테이너 통신
-└── 격리된 네트워크 세그먼트 제공
-
-host:
-├── 호스트 네트워크 스택 직접 사용
-├── 네트워크 격리 없음
-├── 최고 성능 (오버헤드 없음)
-├── 포트 충돌 가능성
-├── 보안 위험 증가
-└── 특수 용도 (모니터링, 네트워크 도구)
-
-overlay:
-├── 멀티 호스트 네트워킹 지원
-├── VXLAN 터널링 기술 사용
-├── Docker Swarm 클러스터링 필수
-├── 분산 서비스 디스커버리
-├── 암호화된 통신 지원
-└── 로드 밸런싱 내장
-
-macvlan:
-├── 컨테이너에 물리적 MAC 주소 할당
-├── VLAN 태깅 지원
-├── 레거시 애플리케이션 호환성
-├── 브로드캐스트 도메인 분리
-├── 네트워크 가상화 없이 직접 연결
-└── 물리 네트워크와 동일한 세그먼트
-
-none:
-├── 네트워크 인터페이스 없음
-├── 완전한 네트워크 격리
-├── 사용자 정의 네트워킹
-├── 보안이 중요한 워크로드
-└── 특수 네트워크 구성
-```
-
-## 2. 이론: 네트워크 격리 및 보안 메커니즘 (15분)
-
-### 네트워크 네임스페이스 격리
+### 아키텍처 설계 철학
 
 ```mermaid
-graph LR
-    subgraph "Host Network Namespace"
-        A[eth0: 192.168.1.100]
-        B[docker0: 172.17.0.1]
+graph TB
+    subgraph "설계 원칙"
+        A[관심사 분리] --> B[단일 책임]
+        B --> C[확장성]
+        C --> D[고가용성]
+        D --> E[장애 격리]
+        E --> A
     end
     
-    subgraph "Container 1 Namespace"
-        C[eth0: 172.17.0.2]
+    subgraph "마스터 노드 역할"
+        F[의사결정] --> G[상태 관리]
+        G --> H[정책 적용]
+        H --> I[스케줄링]
     end
     
-    subgraph "Container 2 Namespace"
-        D[eth0: 172.17.0.3]
+    subgraph "워커 노드 역할"
+        J[워크로드 실행] --> K[리소스 제공]
+        K --> L[상태 보고]
+        L --> M[명령 수행]
     end
     
-    B --> C
-    B --> D
-    A --> B
+    A --> F
+    A --> J
 ```
 
-### 네트워크 보안 및 격리 정책
-
+### 마스터-워커 통신 패턴
 ```
-네트워크 보안 메커니즘:
+Control Plane ↔ Worker Node 통신:
 
-iptables 규칙:
-├── Docker가 자동으로 iptables 규칙 생성
-├── DOCKER 체인을 통한 트래픽 제어
-├── 컨테이너 간 통신 규칙 관리
-├── 외부 접근 제어 및 포트 매핑
-├── NAT 규칙을 통한 주소 변환
-└── 사용자 정의 규칙과의 상호작용
+API 기반 통신:
+├── RESTful HTTP/HTTPS
+├── gRPC (내부 컴포넌트)
+├── 인증서 기반 보안
+└── RBAC 권한 제어
 
-네트워크 정책:
-├── 기본적으로 동일 네트워크 내 통신 허용
-├── 사용자 정의 네트워크에서 DNS 기반 서비스 디스커버리
-├── 네트워크별 독립적인 격리 정책
-├── 외부 네트워크와의 통신 제어
-└── 컨테이너 간 트래픽 암호화 (overlay)
+통신 방향:
+├── Master → Worker: 명령 전달
+├── Worker → Master: 상태 보고
+├── 양방향: 실시간 모니터링
+└── 비동기: 이벤트 기반 처리
 
 보안 고려사항:
-├── 기본 bridge 네트워크의 보안 한계
-├── 사용자 정의 네트워크 권장
-├── 최소 권한 원칙 적용
-├── 네트워크 세그멘테이션 활용
-└── 모니터링 및 로깅 강화
+├── TLS 암호화 통신
+├── 상호 인증 (mTLS)
+├── 네트워크 정책 적용
+└── 최소 권한 원칙
 ```
 
-## 3. 이론: 서비스 디스커버리 및 로드 밸런싱 (10분)
+## 3. 분산 시스템으로서의 Kubernetes 특성 (10분)
 
-### DNS 기반 서비스 디스커버리
+### 분산 시스템 특성 분석
 
-```
-서비스 디스커버리 메커니즘:
-
-내장 DNS 서버:
-├── 각 컨테이너에 127.0.0.11:53 DNS 서버
-├── 컨테이너 이름을 IP 주소로 해석
-├── 네트워크별 독립적인 DNS 네임스페이스
-├── 서비스 이름 기반 로드 밸런싱
-└── 동적 서비스 등록 및 해제
-
-네트워크 별명 (Alias):
-├── 하나의 컨테이너에 여러 DNS 이름 할당
-├── 서비스 그룹핑 및 추상화
-├── 롤링 업데이트 시 무중단 서비스
-├── 마이크로서비스 아키텍처 지원
-└── 레거시 애플리케이션 호환성
-
-외부 DNS 통합:
-├── 업스트림 DNS 서버 설정
-├── 사용자 정의 DNS 서버 지정
-├── DNS 검색 도메인 설정
-├── 호스트 파일 오버라이드
-└── 하이브리드 DNS 해석
-```
-
-### 로드 밸런싱 메커니즘
-
-```
-Docker 내장 로드 밸런싱:
-
-라운드 로빈 알고리즘:
-├── 동일한 서비스 이름의 여러 컨테이너
-├── DNS 쿼리마다 순차적 IP 반환
-├── 간단하고 효과적인 부하 분산
-├── 컨테이너 상태 자동 감지
-└── 장애 컨테이너 자동 제외
-
-연결 기반 로드 밸런싱:
-├── TCP 연결 레벨에서 부하 분산
-├── 세션 지속성 미지원
-├── 상태 비저장 서비스에 적합
-├── 높은 처리량과 낮은 지연시간
-└── 컨테이너 스케일링 자동 반영
-
-외부 로드 밸런서 통합:
-├── HAProxy, NGINX 등과 연동
-├── 고급 로드 밸런싱 알고리즘
-├── 헬스 체크 및 장애 조치
-├── SSL 터미네이션
-└── 세션 지속성 지원
+```mermaid
+graph TB
+    subgraph "분산 시스템 특성"
+        A[확장성] --> B[가용성]
+        B --> C[일관성]
+        C --> D[분할 내성]
+        D --> E[성능]
+        E --> A
+    end
+    
+    subgraph "CAP 정리 적용"
+        F[Consistency] --> G[Availability]
+        G --> H[Partition Tolerance]
+        H --> F
+    end
+    
+    subgraph "Kubernetes 선택"
+        I[AP 시스템] --> J[최종 일관성]
+        J --> K[고가용성 우선]
+    end
+    
+    C --> F
+    B --> G
+    D --> H
+    G --> I
 ```
 
-## 4. 개념 예시: 네트워킹 구성 분석 (7분)
+### 분산 시스템 도전과제와 해결방안
+```
+분산 시스템 도전과제:
 
-### 네트워크 구성 분석 예시
+네트워크 분할 (Network Partition):
+├── 문제: 노드 간 통신 단절
+├── 해결: 쿼럼 기반 의사결정
+├── 도구: etcd 클러스터링
+└── 전략: 다중 가용영역 배치
 
-```bash
-# 네트워크 목록 확인 (개념 예시)
-docker network ls
+상태 일관성 (State Consistency):
+├── 문제: 분산된 상태 동기화
+├── 해결: 단일 진실 소스 (etcd)
+├── 패턴: 이벤트 소싱
+└── 보장: 최종 일관성
 
-# 예상 출력:
-# NETWORK ID     NAME      DRIVER    SCOPE
-# 3f7e8b9c2d1a   bridge    bridge    local
-# 5a9b8c7d6e2f   host      host      local
-# 8c7d6e2f9a3b   none      null      local
+장애 감지와 복구:
+├── 문제: 부분 장애 감지 어려움
+├── 해결: 헬스체크 메커니즘
+├── 도구: Liveness/Readiness Probe
+└── 전략: 자동 복구 및 재시작
+
+확장성 관리:
+├── 문제: 성능과 일관성 트레이드오프
+├── 해결: 계층적 아키텍처
+├── 패턴: 샤딩과 파티셔닝
+└── 최적화: 캐싱과 로드 밸런싱
 ```
 
-### 네트워크 상세 정보 분석 예시
+## 4. 고가용성 클러스터 구성 방안 (10분)
 
-```bash
-# 브리지 네트워크 상세 정보 (개념 예시)
-docker network inspect bridge
+### HA 클러스터 아키텍처
 
-# 예상 출력 구조:
-# {
-#     "Name": "bridge",
-#     "Driver": "bridge",
-#     "IPAM": {
-#         "Config": [{"Subnet": "172.17.0.0/16"}]
-#     },
-#     "Containers": {
-#         "container_id": {
-#             "IPv4Address": "172.17.0.2/16"
-#         }
-#     }
-# }
+```mermaid
+graph TB
+    subgraph "고가용성 Control Plane"
+        subgraph "마스터 노드 1"
+            A1[API Server 1]
+            A2[etcd 1]
+            A3[Scheduler 1]
+            A4[Controller 1]
+        end
+        
+        subgraph "마스터 노드 2"
+            B1[API Server 2]
+            B2[etcd 2]
+            B3[Scheduler 2]
+            B4[Controller 2]
+        end
+        
+        subgraph "마스터 노드 3"
+            C1[API Server 3]
+            C2[etcd 3]
+            C3[Scheduler 3]
+            C4[Controller 3]
+        end
+    end
+    
+    subgraph "로드 밸런서"
+        D[Load Balancer]
+    end
+    
+    subgraph "워커 노드들"
+        E1[Worker 1]
+        E2[Worker 2]
+        E3[Worker N]
+    end
+    
+    D --> A1
+    D --> B1
+    D --> C1
+    
+    A2 <--> B2
+    B2 <--> C2
+    C2 <--> A2
+    
+    A1 --> E1
+    B1 --> E2
+    C1 --> E3
 ```
 
-### 컨테이너 네트워크 연결 예시
+### HA 구성 모범 사례
+```
+고가용성 클러스터 구성:
 
-```bash
-# 사용자 정의 네트워크 생성 (개념 예시)
-docker network create --driver bridge mynetwork
+마스터 노드 HA:
+├── 홀수 개 노드 (3, 5, 7개)
+├── 다중 가용영역 분산
+├── 로드 밸런서 앞단 배치
+└── 자동 장애조치 구성
 
-# 컨테이너를 특정 네트워크에 연결 (개념 예시)
-docker run -d --name web --network mynetwork nginx
-docker run -d --name db --network mynetwork mysql
+etcd 클러스터 HA:
+├── 쿼럼 기반 의사결정
+├── 리더 선출 메커니즘
+├── 데이터 복제 및 동기화
+└── 백업 및 복구 전략
 
-# 네트워크 내 DNS 해석 테스트 (개념 예시)
-docker exec web ping db
-# 결과: db 컨테이너의 IP로 ping 성공
+네트워크 HA:
+├── 다중 네트워크 경로
+├── 네트워크 분할 대응
+├── DNS 기반 서비스 디스커버리
+└── 로드 밸런싱 및 헬스체크
+
+스토리지 HA:
+├── 분산 스토리지 시스템
+├── 데이터 복제 및 백업
+├── 스냅샷 및 복구
+└── 성능 모니터링
+
+모니터링 및 알림:
+├── 클러스터 상태 모니터링
+├── 성능 메트릭 수집
+├── 장애 알림 시스템
+└── 자동 복구 메커니즘
 ```
 
-## 5. 토론 및 정리 (3분)
+## 5. 클러스터 배포 모델 비교 (5분)
 
-### 핵심 개념 정리
-- **CNM 아키텍처**를 통한 표준화된 네트워킹
-- **네트워크 드라이버**별 특성과 사용 사례
-- **DNS 기반 서비스 디스커버리**와 자동 로드 밸런싱
-- **네트워크 격리**를 통한 보안 강화
+### 배포 모델 분석
+
+```mermaid
+graph TB
+    subgraph "온프레미스"
+        A1[완전 제어] --> A2[높은 복잡성]
+        A2 --> A3[초기 비용 높음]
+        A3 --> A4[운영 부담 큼]
+    end
+    
+    subgraph "관리형 서비스"
+        B1[간편한 관리] --> B2[제한된 제어]
+        B2 --> B3[운영 비용 절약]
+        B3 --> B4[벤더 종속성]
+    end
+    
+    subgraph "하이브리드"
+        C1[유연성] --> C2[복잡성 증가]
+        C2 --> C3[다중 관리 필요]
+        C3 --> C4[통합 도전]
+    end
+```
+
+## 💬 그룹 토론: 분산 시스템으로서 Kubernetes의 장단점 (8분)
 
 ### 토론 주제
-"마이크로서비스 아키텍처에서 Docker 네트워킹이 제공하는 서비스 디스커버리와 격리의 장점은 무엇인가?"
+**"분산 시스템으로서 Kubernetes의 장점과 단점은 무엇이며, 이를 어떻게 극복할 수 있는가?"**
 
-## 💡 핵심 키워드
-- **CNM**: Network Sandbox, Endpoint, Network
-- **네트워크 드라이버**: bridge, overlay, macvlan, host
-- **서비스 디스커버리**: DNS, 네트워크 별명, 로드 밸런싱
-- **네트워크 보안**: 격리, iptables, 네트워크 정책
+### 토론 가이드라인
+
+#### 장점 분석 (3분)
+- **확장성**: 수평적 확장과 탄력성
+- **가용성**: 장애 격리와 자동 복구
+- **유연성**: 다양한 워크로드 지원
+
+#### 단점 분석 (3분)
+- **복잡성**: 학습 곡선과 운영 복잡성
+- **오버헤드**: 리소스 사용량과 성능
+- **디버깅**: 분산 환경에서의 문제 추적
+
+#### 극복 방안 (2분)
+- **도구와 자동화**: 관리 도구 활용
+- **모니터링**: 관찰성 향상
+- **교육과 문화**: 팀 역량 강화
+
+## 💡 핵심 개념 정리
+- **클러스터**: 여러 노드가 하나의 시스템으로 동작하는 구조
+- **마스터-워커**: 제어와 실행의 분리를 통한 확장성 확보
+- **분산 시스템**: CAP 정리를 고려한 가용성 우선 설계
+- **고가용성**: 단일 장애점 제거와 자동 복구 메커니즘
 
 ## 📚 참고 자료
-- [Docker 네트워킹 개요](https://docs.docker.com/network/)
-- [Container Network Model](https://github.com/docker/libnetwork/blob/master/docs/design.md)
-- [Docker 네트워크 드라이버](https://docs.docker.com/network/drivers/)
+- [Kubernetes Architecture](https://kubernetes.io/docs/concepts/overview/components/)
+- [High Availability Clusters](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)
+- [Distributed Systems Concepts](https://kubernetes.io/docs/concepts/cluster-administration/)
+
+## 다음 세션 준비
+다음 세션에서는 **마스터 노드와 워커 노드**의 구체적인 역할과 구성 요소를 자세히 학습합니다. 각 노드 타입의 책임과 상호작용을 심화 분석할 예정입니다.

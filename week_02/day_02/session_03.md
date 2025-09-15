@@ -1,400 +1,270 @@
-# Session 3: 컨테이너 네트워크 성능 최적화
+# Session 3: Service와 네트워킹
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 3**으로, 이미지 최적화 이해를 바탕으로 컨테이너 네트워킹의 성능 최적화와 고급 네트워크 구성 기법을 심화 분석합니다.
+이 세션은 **Week 2 > Day 2 > Session 3**으로, Kubernetes의 네트워크 추상화 핵심인 Service 개념과 다양한 Service 타입의 특징을 학습합니다.
 
 ## 학습 목표 (5분)
-- **네트워크 드라이버별 성능 특성** 비교 분석
-- **트래픽 최적화** 및 **로드 밸런싱** 고급 기법
-- **네트워크 보안과 성능**의 균형잡힌 설계 전략
+- **Service 추상화** 모델과 **네트워크 안정성** 개념 이해
+- **ClusterIP, NodePort, LoadBalancer** 타입별 특징 분석
+- **Endpoint**와 **서비스 디스커버리** 메커니즘 파악
+- **DNS 기반 서비스** 해결 원리 이해
 
-## 1. 이론: 네트워크 드라이버 성능 분석 (20분)
+## 1. Service 추상화 모델과 타입별 특징 (15분)
 
-### 네트워크 드라이버 성능 비교
+### Service 추상화 개념
 
 ```mermaid
 graph TB
-    subgraph "Performance Comparison"
-        A[host] --> B[최고 성능<br/>격리 없음]
-        C[bridge] --> D[균형잡힌 성능<br/>기본 격리]
-        E[overlay] --> F[분산 네트워킹<br/>암호화 오버헤드]
-        G[macvlan] --> H[네이티브 성능<br/>VLAN 지원]
+    subgraph "Service 추상화"
+        A[Service] --> B[안정적인 IP]
+        B --> C[안정적인 DNS]
+        C --> D[포트 추상화]
+        D --> E[로드 밸런싱]
     end
     
-    subgraph "Performance Metrics"
-        I[Throughput<br/>처리량]
-        J[Latency<br/>지연시간]
-        K[CPU Overhead<br/>CPU 오버헤드]
-        L[Memory Usage<br/>메모리 사용량]
+    subgraph "Backend Pods (동적)"
+        F[Pod 1 - IP 변경] --> G[Pod 2 - 생성/삭제]
+        G --> H[Pod 3 - 재시작]
+        H --> I[Pod N - 스케일링]
     end
     
-    B --> I
-    D --> J
-    F --> K
+    subgraph "Client 관점"
+        J[일관된 접근점] --> K[투명한 로드밸런싱]
+        K --> L[장애 격리]
+        L --> M[서비스 디스커버리]
+    end
+    
+    E --> F
+    E --> G
+    E --> H
+    E --> I
+    
+    A --> J
+```
+
+### Service 타입 비교
+```
+Service 타입별 특징:
+
+ClusterIP (기본):
+├── 클러스터 내부에서만 접근 가능
+├── 가상 IP 할당 (Cluster IP 대역)
+├── kube-proxy가 트래픽 라우팅
+├── 마이크로서비스 간 통신
+├── 외부 노출 없음
+└── 가장 일반적인 Service 타입
+
+NodePort:
+├── 모든 노드의 특정 포트로 접근
+├── ClusterIP 기능 + 노드 포트 바인딩
+├── 포트 범위: 30000-32767 (기본)
+├── 외부에서 <NodeIP>:<NodePort>로 접근
+├── 개발/테스트 환경에 적합
+└── 프로덕션에서는 제한적 사용
+
+LoadBalancer:
+├── 클라우드 제공업체의 로드밸런서 사용
+├── NodePort 기능 + 외부 로드밸런서
+├── 자동으로 외부 IP 할당
+├── 클라우드 환경에서만 동작
+├── 프로덕션 환경에 적합
+└── 비용 발생 (클라우드 LB)
+
+ExternalName:
+├── 외부 서비스를 클러스터 내부로 매핑
+├── DNS CNAME 레코드 생성
+├── 실제 Pod 없이 외부 서비스 참조
+├── 서비스 추상화 유지
+└── 외부 의존성 관리
+```
+
+## 2. Endpoint와 서비스 디스커버리 메커니즘 (12분)
+
+### Endpoint 동작 원리
+
+```mermaid
+graph TB
+    subgraph "Service Discovery"
+        A[Service] --> B[Label Selector]
+        B --> C[Pod 선택]
+        C --> D[Endpoint 생성]
+        
+        E[Endpoint Controller] --> F[Pod 상태 모니터링]
+        F --> G[Ready Pod만 포함]
+        G --> H[Endpoint 업데이트]
+    end
+    
+    subgraph "Traffic Flow"
+        I[Client Request] --> J[Service IP]
+        J --> K[kube-proxy]
+        K --> L[Endpoint 조회]
+        L --> M[Pod IP 선택]
+        M --> N[실제 Pod]
+    end
+    
+    D --> L
     H --> L
 ```
 
-### 네트워크 성능 특성 상세 분석
-
+### 서비스 디스커버리 메커니즘
 ```
-네트워크 드라이버별 성능 특성:
+서비스 디스커버리 구현:
 
-host 네트워크:
-├── 처리량: 네이티브 성능 (100% 기준)
-├── 지연시간: 최소 (< 0.1ms 추가 지연)
-├── CPU 오버헤드: 없음 (0% 추가)
-├── 메모리 사용량: 최소
-├── 격리 수준: 없음 (보안 위험)
-├── 포트 충돌: 가능성 높음
-├── 사용 사례: 고성능 네트워크 애플리케이션
-└── 제한사항: 단일 호스트, 보안 취약
+DNS 기반 디스커버리:
+├── CoreDNS가 클러스터 DNS 제공
+├── Service 이름으로 자동 DNS 레코드 생성
+├── <service-name>.<namespace>.svc.cluster.local
+├── 네임스페이스 내에서는 서비스명만으로 접근
+├── 크로스 네임스페이스 접근 시 FQDN 사용
+└── DNS 캐싱으로 성능 최적화
 
-bridge 네트워크:
-├── 처리량: 90-95% (NAT 오버헤드)
-├── 지연시간: 낮음 (0.1-0.5ms 추가)
-├── CPU 오버헤드: 낮음 (5-10%)
-├── 메모리 사용량: 보통
-├── 격리 수준: 네트워크 네임스페이스
-├── 포트 매핑: 유연한 포트 관리
-├── 사용 사례: 일반적인 컨테이너 애플리케이션
-└── 제한사항: 단일 호스트 네트워킹
+환경 변수 기반:
+├── Pod 생성 시 Service 정보를 환경 변수로 주입
+├── <SERVICE_NAME>_SERVICE_HOST
+├── <SERVICE_NAME>_SERVICE_PORT
+├── 레거시 지원 목적
+└── DNS 방식 권장
 
-overlay 네트워크:
-├── 처리량: 70-85% (VXLAN 캡슐화)
-├── 지연시간: 보통 (1-5ms 추가)
-├── CPU 오버헤드: 높음 (15-25%)
-├── 메모리 사용량: 높음
-├── 격리 수준: 멀티 호스트 격리
-├── 암호화: 기본 제공 (성능 영향)
-├── 사용 사례: 분산 마이크로서비스
-└── 제한사항: 복잡한 설정, 성능 오버헤드
+Endpoint 기반 동적 업데이트:
+├── Pod 상태 변화 실시간 반영
+├── Ready 상태 Pod만 트래픽 수신
+├── 헬스체크 실패 시 자동 제외
+├── 스케일링 시 자동 포함/제외
+└── 무중단 서비스 업데이트
 
-macvlan 네트워크:
-├── 처리량: 95-98% (거의 네이티브)
-├── 지연시간: 매우 낮음 (< 0.2ms)
-├── CPU 오버헤드: 매우 낮음 (2-5%)
-├── 메모리 사용량: 낮음
-├── 격리 수준: VLAN 기반 격리
-├── MAC 주소: 컨테이너별 고유 MAC
-├── 사용 사례: 레거시 네트워크 통합
-└── 제한사항: 물리 네트워크 의존성
+서비스 메시 통합:
+├── Istio, Linkerd 등과 연동
+├── 고급 트래픽 관리
+├── 보안 정책 적용
+├── 관찰성 향상
+└── 마이크로서비스 패턴 지원
 ```
 
-### 네트워크 최적화 기법
+## 3. DNS 기반 서비스 해결 원리 (10분)
 
-```
-성능 최적화 전략:
-
-커널 바이패스 기술:
-├── DPDK (Data Plane Development Kit)
-├── SR-IOV (Single Root I/O Virtualization)
-├── 사용자 공간 네트워킹
-├── 하드웨어 오프로딩
-├── 제로 카피 네트워킹
-└── 인터럽트 코어스싱
-
-네트워크 튜닝:
-├── TCP 윈도우 크기 최적화
-├── TCP 혼잡 제어 알고리즘 선택
-├── 네트워크 버퍼 크기 조정
-├── IRQ 밸런싱 및 CPU 어피니티
-├── NUMA 토폴로지 고려
-└── 네트워크 인터페이스 큐 설정
-
-컨테이너 네트워크 최적화:
-├── 네트워크 네임스페이스 최적화
-├── veth 페어 성능 튜닝
-├── 브리지 설정 최적화
-├── iptables 규칙 최소화
-├── 네트워크 폴링 모드 설정
-└── 컨테이너별 네트워크 리소스 할당
-```
-
-## 2. 이론: 로드 밸런싱 및 트래픽 관리 (15분)
-
-### 고급 로드 밸런싱 아키텍처
+### DNS 해결 과정
 
 ```mermaid
 sequenceDiagram
-    participant Client as Client
-    participant LB as Load Balancer
-    participant Proxy as Reverse Proxy
-    participant App1 as App Container 1
-    participant App2 as App Container 2
-    participant App3 as App Container 3
+    participant A as Application
+    participant D as CoreDNS
+    participant K as kube-apiserver
+    participant E as Endpoints
     
-    Client->>LB: HTTP Request
-    LB->>Proxy: Route to backend
+    A->>D: DNS 쿼리 (my-service)
+    D->>K: Service 정보 조회
+    K->>D: Service IP 반환
+    D->>A: Service IP 응답
     
-    alt Round Robin
-        Proxy->>App1: Forward request
-        App1-->>Proxy: Response
-    else Least Connections
-        Proxy->>App2: Forward request
-        App2-->>Proxy: Response
-    else Health-based
-        Proxy->>App3: Forward request
-        App3-->>Proxy: Response
+    A->>+E: HTTP 요청 (Service IP)
+    E->>E: Endpoint 조회
+    E->>-A: Pod IP로 라우팅
+    
+    Note over A,E: kube-proxy가 실제 라우팅 수행
+```
+
+### DNS 네이밍 규칙
+```
+Kubernetes DNS 네이밍:
+
+Service DNS 형식:
+├── <service-name>.<namespace>.svc.<cluster-domain>
+├── 기본 클러스터 도메인: cluster.local
+├── 동일 네임스페이스: <service-name>만으로 접근
+├── 다른 네임스페이스: <service-name>.<namespace>
+└── 완전한 FQDN: 모든 경우에 사용 가능
+
+Pod DNS 형식:
+├── <pod-ip>.<namespace>.pod.<cluster-domain>
+├── IP 주소의 점(.)을 하이픈(-)으로 변경
+├── 예: 10-244-1-5.default.pod.cluster.local
+├── 직접 Pod 접근 시 사용 (비권장)
+└── Service를 통한 접근 권장
+
+Headless Service:
+├── ClusterIP: None으로 설정
+├── Service IP 할당 없음
+├── Pod IP 직접 반환
+├── StatefulSet과 함께 사용
+├── 개별 Pod 접근 필요 시
+└── DNS 라운드 로빈 제공
+
+DNS 정책:
+├── ClusterFirst: 클러스터 DNS 우선
+├── ClusterFirstWithHostNet: 호스트 네트워크 + 클러스터 DNS
+├── Default: 노드 DNS 설정 사용
+├── None: 사용자 정의 DNS 설정
+└── Pod별 DNS 정책 설정 가능
+```
+
+## 4. 고급 Service 기능 (10분)
+
+### Session Affinity와 트래픽 정책
+
+```mermaid
+graph TB
+    subgraph "Session Affinity"
+        A[Client IP] --> B[Hash Function]
+        B --> C[Pod 선택]
+        C --> D[동일 Pod 유지]
     end
     
-    Proxy-->>LB: Aggregated response
-    LB-->>Client: Final response
-```
-
-### 로드 밸런싱 알고리즘 비교
-
-```
-로드 밸런싱 전략:
-
-기본 알고리즘:
-├── Round Robin: 순차적 요청 분산
-├── Weighted Round Robin: 가중치 기반 분산
-├── Least Connections: 최소 연결 수 기준
-├── Weighted Least Connections: 가중치 + 연결 수
-├── IP Hash: 클라이언트 IP 기반 해싱
-└── Random: 무작위 선택
-
-고급 알고리즘:
-├── Least Response Time: 응답 시간 기준
-├── Resource Based: 리소스 사용률 기준
-├── Adaptive: 동적 성능 지표 기반
-├── Geographic: 지리적 위치 기반
-├── Content-based: 요청 내용 기반
-└── Machine Learning: AI 기반 예측
-
-세션 지속성:
-├── Session Affinity (Sticky Sessions)
-├── 쿠키 기반 세션 관리
-├── IP 기반 세션 바인딩
-├── 외부 세션 스토어 활용
-├── 상태 비저장 설계 권장
-└── 세션 복제 및 동기화
-
-헬스 체크:
-├── HTTP/HTTPS 헬스 체크
-├── TCP 포트 연결 확인
-├── 사용자 정의 헬스 체크
-├── 다층 헬스 체크 (L4/L7)
-├── 장애 감지 및 복구 자동화
-└── 그레이스풀 셧다운 지원
-```
-
-### 트래픽 셰이핑 및 QoS
-
-```
-트래픽 관리 기법:
-
-대역폭 제어:
-├── 컨테이너별 대역폭 제한
-├── 서비스별 QoS 정책
-├── 우선순위 기반 트래픽 분류
-├── 버스트 트래픽 처리
-├── 공정한 대역폭 분배
-└── 동적 대역폭 할당
-
-트래픽 셰이핑:
-├── Token Bucket 알고리즘
-├── Leaky Bucket 알고리즘
-├── 계층적 토큰 버킷 (HTB)
-├── 클래스 기반 큐잉 (CBQ)
-├── 가중 공정 큐잉 (WFQ)
-└── 적응형 트래픽 제어
-
-혼잡 제어:
-├── TCP 혼잡 윈도우 관리
-├── 백프레셔 메커니즘
-├── 적응형 재전송 타이머
-├── 선택적 확인응답 (SACK)
-├── 명시적 혼잡 알림 (ECN)
-└── 버퍼 블로트 방지
-```
-
-## 3. 이론: 네트워크 보안과 성능 균형 (10분)
-
-### 보안 강화와 성능 최적화
-
-```
-보안-성능 균형 전략:
-
-암호화 최적화:
-├── 하드웨어 가속 암호화 (AES-NI)
-├── TLS 1.3 최신 프로토콜 사용
-├── 세션 재사용 및 티켓 활용
-├── OCSP 스테이플링
-├── 암호화 알고리즘 최적화
-└── 키 교환 최적화 (ECDHE)
-
-네트워크 격리:
-├── 마이크로세그멘테이션
-├── 네트워크 정책 엔진
-├── 서비스 메시 보안
-├── 제로 트러스트 네트워킹
-├── 동적 방화벽 규칙
-└── 트래픽 검사 최적화
-
-DDoS 방어:
-├── 레이트 리미팅
-├── 연결 제한
-├── SYN 쿠키 활용
-├── 트래픽 패턴 분석
-├── 자동 차단 메커니즘
-└── CDN 및 프록시 활용
-
-모니터링 및 감지:
-├── 실시간 트래픽 분석
-├── 이상 행동 탐지
-├── 네트워크 플로우 모니터링
-├── 침입 탐지 시스템 (IDS)
-├── 보안 이벤트 상관관계 분석
-└── 자동화된 대응 체계
-```
-
-## 4. 개념 예시: 네트워크 최적화 구성 (12분)
-
-### 고성능 네트워크 구성 예시
-
-```yaml
-# Docker Compose 네트워크 최적화 (개념 예시)
-version: '3.8'
-
-networks:
-  frontend:
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: br-frontend
-      com.docker.network.driver.mtu: 9000
-  backend:
-    driver: bridge
-    internal: true
-    driver_opts:
-      com.docker.network.bridge.name: br-backend
-      com.docker.network.driver.mtu: 9000
-
-services:
-  nginx:
-    image: nginx:alpine
-    networks:
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    sysctls:
-      - net.core.somaxconn=65535
-      - net.ipv4.tcp_max_syn_backlog=65535
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-
-  app:
-    image: myapp:latest
-    networks:
-      - frontend
-      - backend
-    deploy:
-      replicas: 3
-    sysctls:
-      - net.ipv4.tcp_keepalive_time=600
-      - net.ipv4.tcp_keepalive_intvl=60
-```
-
-### 네트워크 성능 측정 예시
-
-```bash
-# 네트워크 처리량 테스트 (개념 예시)
-# iperf3를 사용한 대역폭 측정
-docker run --rm --network host iperf3 -c target_host -t 30
-
-# 지연시간 측정
-docker exec container_name ping -c 100 target_host
-
-# 네트워크 연결 상태 확인
-docker exec container_name ss -tuln
-
-# 네트워크 통계 확인
-docker exec container_name cat /proc/net/dev
-```
-
-### 로드 밸런서 구성 예시
-
-```nginx
-# NGINX 로드 밸런서 설정 (개념 예시)
-upstream backend {
-    least_conn;
-    server app1:8080 weight=3 max_fails=3 fail_timeout=30s;
-    server app2:8080 weight=2 max_fails=3 fail_timeout=30s;
-    server app3:8080 weight=1 max_fails=3 fail_timeout=30s;
-    keepalive 32;
-}
-
-server {
-    listen 80;
+    subgraph "External Traffic Policy"
+        E[External Request] --> F{Policy}
+        F -->|Cluster| G[모든 노드로 분산]
+        F -->|Local| H[로컬 노드만]
+    end
     
-    location / {
-        proxy_pass http://backend;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_connect_timeout 5s;
-        proxy_send_timeout 10s;
-        proxy_read_timeout 10s;
-    }
-    
-    location /health {
-        access_log off;
-        return 200 "healthy\n";
-    }
-}
+    subgraph "Internal Traffic Policy"
+        I[Internal Request] --> J{Policy}
+        J -->|Cluster| K[모든 Pod]
+        J -->|Local| L[동일 노드 Pod만]
+    end
 ```
 
-### 네트워크 모니터링 설정 예시
+### 고급 기능 분석
+```
+Service 고급 기능:
 
-```yaml
-# Prometheus 네트워크 모니터링 (개념 예시)
-version: '3.8'
-services:
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    ports:
-      - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    command:
-      - '--housekeeping_interval=10s'
-      - '--docker_only=true'
+Session Affinity:
+├── ClientIP 기반 세션 유지
+├── 동일 클라이언트 → 동일 Pod
+├── 상태 저장 애플리케이션에 유용
+├── 로드 밸런싱 효율성 저하 가능
+└── timeoutSeconds로 세션 만료 설정
 
-  node-exporter:
-    image: prom/node-exporter:latest
-    ports:
-      - "9100:9100"
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.ignored-mount-points'
-      - '^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+External Traffic Policy:
+├── Cluster: 모든 노드로 트래픽 분산
+├── Local: 요청 받은 노드의 Pod만 사용
+├── Local 사용 시 소스 IP 보존
+├── 노드 간 홉 제거로 지연 시간 감소
+└── 불균등 분산 가능성
+
+Internal Traffic Policy:
+├── 클러스터 내부 트래픽 정책
+├── Cluster: 모든 Pod 대상
+├── Local: 동일 노드 Pod만 대상
+├── 네트워크 지연 최소화
+└── 리소스 지역성 활용
+
+Health Check:
+├── Readiness Probe 기반 트래픽 제어
+├── 준비되지 않은 Pod 자동 제외
+├── 롤링 업데이트 시 무중단 서비스
+├── 장애 Pod 자동 격리
+└── 서비스 품질 보장
 ```
 
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **네트워크 드라이버별** 성능 특성과 적절한 선택 기준
-- **로드 밸런싱** 알고리즘과 트래픽 관리 기법
-- **보안과 성능**의 균형잡힌 네트워크 설계
-- **모니터링 기반** 네트워크 최적화 전략
+## 💬 그룹 토론: Service 추상화가 마이크로서비스에 미치는 영향 (8분)
 
 ### 토론 주제
-"마이크로서비스 아키텍처에서 네트워크 성능과 보안을 동시에 만족하는 최적의 네트워크 설계 전략은 무엇인가?"
+**"Kubernetes Service 추상화가 마이크로서비스 아키텍처 구현과 운영에 미치는 영향과 가치는 무엇인가?"**
 
-## 💡 핵심 키워드
-- **네트워크 성능**: 처리량, 지연시간, CPU 오버헤드
-- **로드 밸런싱**: 알고리즘, 세션 지속성, 헬스 체크
-- **트래픽 관리**: QoS, 대역폭 제어, 혼잡 제어
-- **보안 최적화**: 암호화, 격리, DDoS 방어, 모니터링
+## 💡 핵심 개념 정리
+- **Service**: 네트워크 추상화, 안정적인 접근점 제공
+- **타입**: ClusterIP, NodePort, LoadBalancer, ExternalName
+- **Endpoint**: 동적 Pod 목록 관리, 서비스 디스커버리
+- **DNS**: 이름 기반 서비스 해결, CoreDNS 통합
 
-## 📚 참고 자료
-- [Docker 네트워킹 성능](https://docs.docker.com/network/drivers/)
-- [컨테이너 네트워크 최적화](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
+## 다음 세션 준비
+다음 세션에서는 **ConfigMap과 Secret**에 대해 학습합니다.

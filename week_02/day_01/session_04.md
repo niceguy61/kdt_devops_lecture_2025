@@ -1,172 +1,181 @@
-# Session 4: Docker 볼륨 및 스토리지 관리 심화
+# Session 4: 마스터 노드와 워커 노드
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 4**로, Docker 네트워킹 이해를 바탕으로 데이터 영속성과 스토리지 관리의 내부 메커니즘을 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 4**로, Kubernetes 클러스터의 핵심 구성 요소인 마스터 노드와 워커 노드의 역할과 책임을 구체적으로 분석합니다.
 
 ## 학습 목표 (5분)
-- **Docker 스토리지 아키텍처**와 **데이터 영속성** 메커니즘 이해
-- **볼륨 드라이버**와 **마운트 타입** 비교 분석
-- **스토리지 성능 최적화**와 **백업 전략** 설계 원리
+- **마스터 노드**의 **역할**과 **책임** 완전 이해
+- **워커 노드**의 **구성**과 **기능** 학습
+- **노드 간 통신** 메커니즘 파악
+- **노드 관리**와 **상태 모니터링** 이해
 
-## 1. 이론: Docker 스토리지 아키텍처 (20분)
+## 1. 마스터 노드의 역할과 책임 (15분)
 
-### 스토리지 계층 구조
+### Control Plane 구성 요소
 
 ```mermaid
 graph TB
-    subgraph "Container Layer"
-        A[Application Data]
-        B[Temporary Files]
-        C[Runtime Data]
+    subgraph "마스터 노드 (Control Plane)"
+        A[API Server] --> B[클러스터 게이트웨이]
+        C[etcd] --> D[상태 저장소]
+        E[Scheduler] --> F[Pod 배치 결정]
+        G[Controller Manager] --> H[상태 관리]
+        I[Cloud Controller] --> J[클라우드 통합]
     end
     
-    subgraph "Mount Points"
-        D[Volumes]
-        E[Bind Mounts]
-        F[tmpfs Mounts]
+    subgraph "핵심 책임"
+        K[의사결정] --> L[정책 적용]
+        L --> M[리소스 할당]
+        M --> N[상태 감시]
+        N --> K
     end
     
-    subgraph "Storage Backends"
-        G[Local Storage]
-        H[Network Storage]
-        I[Cloud Storage]
-        J[Memory]
+    B --> K
+    D --> L
+    F --> M
+    H --> N
+```
+
+### 마스터 노드 핵심 기능
+```
+Control Plane 핵심 기능:
+
+클러스터 관리:
+├── 전체 클러스터 상태 관리
+├── 리소스 할당 및 스케줄링
+├── 정책 적용 및 준수
+└── 보안 및 접근 제어
+
+API 게이트웨이:
+├── 모든 요청의 중앙 처리
+├── 인증 및 권한 부여
+├── 요청 검증 및 변환
+└── 감사 로깅
+
+상태 관리:
+├── Desired State 정의
+├── Current State 모니터링
+├── 차이 감지 및 조정
+└── 이벤트 생성 및 전파
+
+스케줄링:
+├── Pod 배치 최적화
+├── 리소스 요구사항 고려
+├── 제약 조건 적용
+└── 부하 분산
+```
+
+## 2. 워커 노드의 구성과 기능 (12분)
+
+### 워커 노드 아키텍처
+
+```mermaid
+graph TB
+    subgraph "워커 노드"
+        A[kubelet] --> B[노드 에이전트]
+        C[kube-proxy] --> D[네트워크 프록시]
+        E[Container Runtime] --> F[컨테이너 실행]
+        G[Pod] --> H[워크로드 실행]
     end
     
-    A --> D
-    A --> E
-    B --> F
-    D --> G
-    D --> H
-    D --> I
-    F --> J
+    subgraph "시스템 구성 요소"
+        I[OS Kernel] --> J[리소스 관리]
+        K[Network] --> L[통신 인프라]
+        M[Storage] --> N[데이터 저장]
+    end
+    
+    B --> I
+    D --> K
+    F --> M
+    H --> G
 ```
 
-### 마운트 타입 상세 분석
-
+### 워커 노드 핵심 역할
 ```
-Docker 스토리지 마운트 타입:
+워커 노드 핵심 역할:
 
-Volumes (권장):
-├── Docker가 완전히 관리하는 스토리지
-├── /var/lib/docker/volumes/ 경로에 저장
-├── 호스트 파일시스템과 독립적
-├── 여러 컨테이너 간 안전한 공유
-├── 볼륨 드라이버를 통한 확장성
-├── 백업 및 마이그레이션 용이
-├── Docker CLI/API로 완전한 관리
-└── 프로덕션 환경 권장 방식
+워크로드 실행:
+├── Pod 생성 및 관리
+├── 컨테이너 라이프사이클 관리
+├── 리소스 모니터링
+└── 상태 보고
 
-Bind Mounts:
-├── 호스트 파일시스템 직접 마운트
-├── 절대 경로 또는 상대 경로 지정
-├── 호스트 파일 시스템 구조에 의존
-├── 개발 환경에서 소스 코드 공유
-├── 설정 파일 및 로그 파일 접근
-├── 보안 위험 증가 (호스트 접근)
-├── 플랫폼 종속성 높음
-└── 개발 및 디버깅 용도
+네트워킹:
+├── Pod 간 통신 지원
+├── Service 트래픽 라우팅
+├── 로드 밸런싱
+└── 네트워크 정책 적용
 
-tmpfs Mounts:
-├── 메모리 기반 임시 파일시스템
-├── 컨테이너 종료 시 데이터 소멸
-├── 민감한 데이터 임시 저장
-├── 고성능 임시 작업 공간
-├── 디스크 I/O 없는 최고 성능
-├── 메모리 사용량 증가
-├── 데이터 영속성 없음
-└── 캐시 및 임시 데이터 용도
+스토리지:
+├── 볼륨 마운트
+├── 데이터 영속성
+├── 스토리지 드라이버 관리
+└── 백업 및 복구
+
+모니터링:
+├── 노드 상태 보고
+├── 리소스 사용량 수집
+├── 헬스체크 수행
+└── 로그 수집
 ```
 
-## 2. 이론: 데이터 영속성 및 생명주기 관리 (15분)
+## 3. 노드 간 통신 메커니즘 (10분)
 
-### 데이터 생명주기 패턴
+### 통신 아키텍처
 
 ```mermaid
 sequenceDiagram
-    participant App as Application
-    participant Container as Container
-    participant Volume as Volume
-    participant Storage as Storage Backend
+    participant U as User/Client
+    participant A as API Server
+    participant S as Scheduler
+    participant K as kubelet
+    participant P as Pod
     
-    App->>Container: Write data
-    Container->>Volume: Mount point write
-    Volume->>Storage: Persist data
+    U->>A: Pod 생성 요청
+    A->>A: 인증/권한 확인
+    A->>S: 스케줄링 요청
+    S->>A: 노드 선택 결과
+    A->>K: Pod 생성 명령
+    K->>P: 컨테이너 시작
+    P->>K: 상태 보고
+    K->>A: Pod 상태 업데이트
+    A->>U: 응답 반환
+```
+
+## 4. 노드 관리와 상태 모니터링 (10분)
+
+### 노드 상태 관리
+
+```mermaid
+graph TB
+    subgraph "노드 상태"
+        A[Ready] --> B[정상 작동]
+        C[NotReady] --> D[문제 발생]
+        E[Unknown] --> F[통신 불가]
+    end
     
-    Note over Container: Container stops
-    Note over Volume: Data persists
+    subgraph "상태 전이"
+        G[헬스체크] --> H[상태 평가]
+        H --> I[상태 업데이트]
+        I --> J[액션 수행]
+        J --> G
+    end
     
-    App->>Container: New container starts
-    Container->>Volume: Mount existing volume
-    Volume-->>Container: Restore data
-    Container-->>App: Data available
+    B --> G
+    D --> G
+    F --> G
 ```
 
-### 스토리지 성능 최적화
-
-```
-성능 최적화 전략:
-
-I/O 최적화:
-├── SSD vs HDD 선택 기준
-├── 파일시스템 튜닝 (ext4, xfs)
-├── 마운트 옵션 최적화
-├── 블록 크기 및 정렬
-├── 다중 볼륨 I/O 분산
-└── tmpfs 활용 임시 데이터
-
-백업 전략:
-├── 볼륨 스냅샷 생성
-├── 애플리케이션 일관성 백업
-├── 증분 백업 구현
-├── 클라우드 동기화
-├── 재해 복구 계획
-└── 자동화된 복구 프로세스
-```
-
-## 3. 개념 예시: 스토리지 구성 분석 (12분)
-
-### 볼륨 관리 예시
-
-```bash
-# 볼륨 생성 및 관리 (개념 예시)
-docker volume create mydata
-docker volume inspect mydata
-
-# 예상 출력:
-# "Mountpoint": "/var/lib/docker/volumes/mydata/_data"
-```
-
-### 마운트 타입 비교 예시
-
-```bash
-# 볼륨 마운트 (개념 예시)
-docker run -v mydata:/app/data nginx
-
-# 바인드 마운트 (개념 예시)
-docker run -v /host/path:/app/data nginx
-
-# tmpfs 마운트 (개념 예시)
-docker run --tmpfs /app/temp nginx
-```
-
-## 4. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **볼륨 시스템**을 통한 데이터 영속성 보장
-- **마운트 타입별** 특성과 적절한 사용 사례
-- **성능 최적화**를 위한 스토리지 계층 설계
-- **백업 및 재해 복구** 전략의 중요성
+## 💬 그룹 토론: 마스터 노드 고가용성 구성의 중요성 (8분)
 
 ### 토론 주제
-"컨테이너 환경에서 데이터 영속성과 성능을 동시에 만족하는 스토리지 아키텍처 설계 방안은 무엇인가?"
+**"마스터 노드의 고가용성 구성이 왜 중요하며, 어떤 방식으로 구현해야 하는가?"**
 
-## 💡 핵심 키워드
-- **스토리지 타입**: Volume, Bind Mount, tmpfs
-- **볼륨 드라이버**: local, NFS, 클라우드 스토리지
-- **성능 최적화**: I/O 튜닝, 캐싱, 네트워크 스토리지
-- **데이터 관리**: 백업, 복구, 마이그레이션
+## 💡 핵심 개념 정리
+- **마스터 노드**: 클러스터의 두뇌 역할, 의사결정과 관리
+- **워커 노드**: 실제 워크로드 실행, 리소스 제공
+- **통신 메커니즘**: API 기반 비동기 통신
+- **상태 관리**: 지속적인 모니터링과 자동 복구
 
-## 📚 참고 자료
-- [Docker 스토리지 개요](https://docs.docker.com/storage/)
-- [볼륨 관리](https://docs.docker.com/storage/volumes/)
+## 다음 세션 준비
+다음 세션에서는 **etcd와 API 서버**의 구체적인 역할과 기능을 학습합니다.

@@ -1,719 +1,774 @@
-# Session 8: Day 3 종합 정리 및 오케스트레이션 설계
+# Session 8: 네트워킹 설계 패턴
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 3 > Session 8**로, 하루 동안 학습한 컨테이너 오케스트레이션 이론들을 종합 정리하고 실제 환경에 적용 가능한 오케스트레이션 아키텍처 설계 방법론을 심화 분석합니다.
+이 세션은 **Week 2 > Day 3 > Session 8**로, Day 3의 마지막 세션입니다. 지금까지 학습한 Kubernetes 네트워킹 기술들을 종합하여 실무에서 사용되는 설계 패턴과 아키텍처 원칙을 정리합니다.
 
 ## 학습 목표 (5분)
-- **Kubernetes 오케스트레이션** 구성 요소들의 **통합적 이해**
-- **실무 시나리오** 기반 **아키텍처 설계** 능력 배양
-- **확장성, 보안, 운영성**을 고려한 **종합적 설계** 전략 수립
+- **멀티 클러스터** 네트워킹과 **서비스 메시** 아키텍처 완전 이해
+- **하이브리드 클라우드** 네트워킹 패턴 학습
+- **성능 최적화**와 **트러블슈팅** 방법론 파악
+- **네트워킹 아키텍처** 설계 원칙과 **모범 사례** 이해
 
-## 1. 종합 정리: Kubernetes 오케스트레이션 통합 아키텍처 (15분)
+## 1. 멀티 클러스터 네트워킹과 서비스 메시 (15분)
 
-### 전체 아키텍처 통합 뷰
+### 멀티 클러스터 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Control Plane"
-        A[API Server] --> B[etcd]
-        A --> C[Scheduler]
-        A --> D[Controller Manager]
+    subgraph "멀티 클러스터 네트워킹"
+        A[Cluster 1] --> B[Service Mesh Control Plane]
+        C[Cluster 2] --> B
+        D[Cluster 3] --> B
+        
+        B --> E[Cross-Cluster Service Discovery]
+        E --> F[Traffic Management]
+        F --> G[Security Policies]
     end
     
-    subgraph "Worker Nodes"
-        E[kubelet] --> F[Container Runtime]
-        E --> G[kube-proxy]
-        F --> H[Pods]
+    subgraph "서비스 메시 구성"
+        H[Data Plane] --> I[Envoy Proxy]
+        J[Control Plane] --> K[Pilot/Istiod]
+        K --> L[Citadel/Security]
+        L --> M[Galley/Configuration]
     end
     
-    subgraph "Networking Layer"
-        I[CNI Plugin] --> J[Service Mesh]
-        J --> K[Network Policies]
+    subgraph "연결 패턴"
+        N[Flat Network] --> O[VPN/Peering]
+        P[Federated] --> Q[API Federation]
+        R[Service Mesh] --> S[mTLS Tunnel]
     end
     
-    subgraph "Storage Layer"
-        L[CSI Driver] --> M[StorageClass]
-        M --> N[PV/PVC]
+    G --> H
+    M --> N
+    S --> A
+```
+
+### 멀티 클러스터 네트워킹 상세 분석
+```
+멀티 클러스터 네트워킹 패턴:
+
+클러스터 연결 모델:
+├── Flat Network 모델:
+│   ├── 모든 클러스터가 동일 네트워크 평면
+│   ├── Pod IP 직접 라우팅 가능
+│   ├── 최고 성능과 단순성
+│   ├── 네트워크 인프라 의존성 높음
+│   ├── 보안 경계 모호
+│   ├── 적용 사례:
+│   │   ├── 동일 데이터센터 내 클러스터
+│   │   ├── 클라우드 VPC 피어링
+│   │   ├── 온프레미스 L2/L3 네트워크
+│   │   └── 개발/테스트 환경
+│   └── 구현 기술:
+│       ├── Submariner
+│       ├── Cilium Cluster Mesh
+│       ├── Calico Federation
+│       └── 커스텀 CNI 확장
+├── Federated 모델:
+│   ├── API 레벨에서 클러스터 연합
+│   ├── 서비스 및 리소스 동기화
+│   ├── 중앙집중식 관리
+│   ├── 네트워크 독립성 유지
+│   ├── 복잡한 설정 및 관리
+│   ├── 적용 사례:
+│   │   ├── 지리적 분산 클러스터
+│   │   ├── 클라우드 간 연결
+│   │   ├── 하이브리드 환경
+│   │   └── 재해 복구 시나리오
+│   └── 구현 기술:
+│       ├── Admiral
+│       ├── Liqo
+│       ├── Virtual Kubelet
+│       └── Cluster API
+├── Service Mesh 모델:
+│   ├── 애플리케이션 레벨 연결
+│   ├── mTLS 기반 보안 터널
+│   ├── 고급 트래픽 관리
+│   ├── 관찰 가능성 내장
+│   ├── 복잡성과 오버헤드 증가
+│   ├── 적용 사례:
+│   │   ├── 마이크로서비스 아키텍처
+│   │   ├── 멀티 클라우드 애플리케이션
+│   │   ├── 제로 트러스트 환경
+│   │   └── 고급 트래픽 제어 필요
+│   └── 구현 기술:
+│       ├── Istio Multi-Cluster
+│       ├── Linkerd Multi-Cluster
+│       ├── Consul Connect
+│       └── AWS App Mesh
+
+서비스 메시 아키텍처:
+├── 단일 클러스터 서비스 메시:
+│   ├── 클러스터 내 모든 서비스 연결
+│   ├── 사이드카 프록시 패턴
+│   ├── 중앙집중식 제어 평면
+│   ├── 자동 mTLS 및 정책 적용
+│   ├── 풍부한 텔레메트리
+│   └── 상대적 단순한 운영
+├── 멀티 클러스터 서비스 메시:
+│   ├── 클러스터 간 서비스 연결
+│   ├── 분산 제어 평면 또는 중앙 제어
+│   ├── 크로스 클러스터 서비스 디스커버리
+│   ├── 통합 보안 정책
+│   ├── 글로벌 트래픽 관리
+│   ├── 복잡한 설정 및 운영
+│   └── 높은 가용성 및 확장성
+├── 하이브리드 서비스 메시:
+│   ├── 클라우드 + 온프레미스 연결
+│   ├── 레거시 시스템 통합
+│   ├── 점진적 마이그레이션 지원
+│   ├── 다양한 네트워크 환경 대응
+│   └── 복잡한 연결 토폴로지
+
+멀티 클러스터 서비스 디스커버리:
+├── DNS 기반 디스커버리:
+│   ├── 클러스터별 DNS 도메인
+│   ├── 크로스 클러스터 DNS 전달
+│   ├── 서비스 FQDN 표준화
+│   ├── 지리적 라우팅 지원
+│   └── 캐싱 및 성능 최적화
+├── 레지스트리 기반 디스커버리:
+│   ├── 중앙집중식 서비스 레지스트리
+│   ├── 동적 서비스 등록/해제
+│   ├── 헬스 체크 통합
+│   ├── 메타데이터 기반 라우팅
+│   └── API 기반 쿼리 인터페이스
+├── 서비스 메시 디스커버리:
+│   ├── 제어 평면 기반 동기화
+│   ├── 자동 엔드포인트 발견
+│   ├── 실시간 상태 업데이트
+│   ├── 정책 기반 가시성 제어
+│   └── 보안 컨텍스트 통합
+
+트래픽 관리 패턴:
+├── 지리적 라우팅:
+│   ├── 지역별 클러스터 우선 라우팅
+│   ├── 지연시간 최적화
+│   ├── 데이터 주권 준수
+│   ├── 재해 복구 자동화
+│   └── 비용 최적화
+├── 카나리 배포:
+│   ├── 클러스터 간 점진적 배포
+│   ├── 트래픽 분할 제어
+│   ├── A/B 테스트 지원
+│   ├── 자동 롤백 메커니즘
+│   └── 위험 최소화
+├── 로드 밸런싱:
+│   ├── 클러스터 간 부하 분산
+│   ├── 가중치 기반 라우팅
+│   ├── 헬스 기반 라우팅
+│   ├── 용량 기반 분산
+│   └── 동적 가중치 조정
+```
+
+## 2. 하이브리드 클라우드 네트워킹 패턴 (12분)
+
+### 하이브리드 클라우드 아키텍처
+
+```mermaid
+graph TB
+    subgraph "하이브리드 클라우드"
+        A[On-Premises] --> B[Private Cloud]
+        C[Public Cloud 1] --> D[Multi-Cloud Gateway]
+        E[Public Cloud 2] --> D
+        B --> D
+        
+        D --> F[Unified Network Policy]
+        F --> G[Cross-Cloud Service Mesh]
     end
     
-    subgraph "Security Layer"
-        O[RBAC] --> P[Pod Security]
-        P --> Q[Network Security]
+    subgraph "연결 기술"
+        H[VPN Tunnels] --> I[Direct Connect]
+        I --> J[SD-WAN]
+        J --> K[Service Mesh]
+        K --> L[API Gateway]
     end
     
-    subgraph "Workload Management"
-        R[Deployments] --> S[StatefulSets]
-        S --> T[Jobs/CronJobs]
+    subgraph "관리 계층"
+        M[Network Orchestration] --> N[Policy Management]
+        N --> O[Monitoring & Observability]
+        O --> P[Security & Compliance]
     end
     
-    A --> E
-    H --> I
-    H --> L
-    H --> O
-    H --> R
+    G --> H
+    L --> M
+    P --> A
 ```
 
-### 오케스트레이션 핵심 개념 통합
-
+### 하이브리드 클라우드 패턴 상세 분석
 ```
-Kubernetes 오케스트레이션 통합 분석:
+하이브리드 클라우드 네트워킹:
 
-아키텍처 계층별 역할:
-├── 컨트롤 플레인 계층:
-│   ├── API 서버: 모든 통신의 중앙 허브
-│   ├── etcd: 클러스터 상태의 신뢰할 수 있는 소스
-│   ├── 스케줄러: 지능적 워크로드 배치
-│   ├── 컨트롤러: 선언적 상태 유지 및 자동화
-│   └── 고가용성 및 확장성 보장
-├── 워커 노드 계층:
-│   ├── kubelet: 노드 에이전트 및 Pod 관리
-│   ├── 컨테이너 런타임: 실제 컨테이너 실행
-│   ├── kube-proxy: 서비스 추상화 구현
-│   └── 리소스 관리 및 모니터링
-├── 네트워킹 계층:
-│   ├── CNI 플러그인: 컨테이너 네트워킹 표준
-│   ├── 서비스 디스커버리: DNS 기반 자동 발견
-│   ├── 로드 밸런싱: 트래픽 분산 및 가용성
-│   └── 네트워크 정책: 마이크로세그멘테이션
-├── 스토리지 계층:
-│   ├── CSI 드라이버: 스토리지 백엔드 추상화
-│   ├── 동적 프로비저닝: 자동 스토리지 할당
-│   ├── 상태 관리: StatefulSet과 영구 볼륨
-│   └── 데이터 영속성 및 백업
-├── 보안 계층:
-│   ├── 인증/권한 부여: 다층 보안 모델
-│   ├── RBAC: 세밀한 접근 제어
-│   ├── Pod 보안: 런타임 보안 강화
-│   └── 네트워크 보안: 트래픽 제어 및 격리
-└── 워크로드 관리 계층:
-    ├── 배포 전략: 롤링 업데이트, 카나리 배포
-    ├── 스케일링: 수평/수직 자동 확장
-    ├── 상태 관리: 상태 유지 vs 상태 비저장
-    └── 작업 스케줄링: 배치 및 크론 작업
+연결 패턴:
+├── VPN 기반 연결:
+│   ├── Site-to-Site VPN
+│   │   ├── IPsec 터널 구성
+│   │   ├── 암호화된 통신
+│   │   ├── 상대적 저비용
+│   │   ├── 인터넷 의존성
+│   │   ├── 대역폭 제한
+│   │   └── 지연시간 변동성
+│   ├── Client-to-Site VPN
+│   │   ├── 원격 접근 지원
+│   │   ├── 사용자별 인증
+│   │   ├── 세밀한 접근 제어
+│   │   ├── 모바일 지원
+│   │   └── 관리 복잡성
+│   └── Mesh VPN
+│       ├── 다중 사이트 연결
+│       ├── 동적 라우팅
+│       ├── 자동 장애 조치
+│       ├── 확장성 우수
+│       └── 설정 복잡성
+├── 전용선 기반 연결:
+│   ├── AWS Direct Connect
+│   │   ├── 전용 네트워크 연결
+│   │   ├── 일관된 성능
+│   │   ├── 높은 대역폭
+│   │   ├── 보안성 우수
+│   │   ├── 높은 비용
+│   │   └── 구축 시간 소요
+│   ├── Azure ExpressRoute
+│   │   ├── 프라이빗 연결
+│   │   ├── 예측 가능한 성능
+│   │   ├── SLA 보장
+│   │   ├── 다중 회선 지원
+│   │   └── 지역별 가용성
+│   ├── Google Cloud Interconnect
+│   │   ├── 전용/파트너 연결
+│   │   ├── 고성능 네트워킹
+│   │   ├── 글로벌 네트워크
+│   │   ├── 유연한 대역폭
+│   │   └── 비용 효율성
+│   └── 멀티 클라우드 연결
+│       ├── 클라우드 간 직접 연결
+│       ├── 통합 네트워크 관리
+│       ├── 최적화된 라우팅
+│       ├── 단일 장애점 제거
+│       └── 복잡한 설정
+├── SD-WAN 기반 연결:
+│   ├── 소프트웨어 정의 네트워킹
+│   ├── 중앙집중식 정책 관리
+│   ├── 동적 경로 선택
+│   ├── 애플리케이션 인식 라우팅
+│   ├── 자동 장애 조치
+│   ├── 비용 최적화
+│   └── 클라우드 네이티브 통합
 
-오케스트레이션 설계 원칙:
-├── 선언적 구성 (Declarative Configuration):
-│   ├── 원하는 상태 정의
-│   ├── 자동 상태 조정
-│   ├── 버전 관리 및 추적
-│   └── GitOps 워크플로우 지원
-├── 불변 인프라 (Immutable Infrastructure):
-│   ├── 컨테이너 이미지 불변성
-│   ├── 설정 외부화
-│   ├── 재현 가능한 배포
-│   └── 드리프트 방지
-├── 마이크로서비스 아키텍처:
-│   ├── 서비스 분해 및 독립성
-│   ├── API 기반 통신
-│   ├── 독립적 배포 및 확장
-│   └── 장애 격리 및 복구
-├── 관찰가능성 (Observability):
-│   ├── 메트릭, 로그, 트레이스 통합
-│   ├── 실시간 모니터링
-│   ├── 알림 및 대시보드
-│   └── 성능 최적화 지원
-└── 자동화 우선 (Automation First):
-    ├── 인프라 as Code
-    ├── CI/CD 파이프라인 통합
-    ├── 자동 복구 및 치유
-    └── 운영 효율성 극대화
-```
-
-## 2. 실무 시나리오 1: 전자상거래 플랫폼 오케스트레이션 설계 (20분)
-
-### 시나리오 요구사항 분석
-
-```
-전자상거래 플랫폼 요구사항:
-
-비즈니스 요구사항:
-├── 일일 거래량: 100만 건
-├── 피크 시간 트래픽: 평상시 대비 10배
-├── 글로벌 서비스: 5개 지역, 15개 가용성 영역
-├── 가용성: 99.99% (연간 52분 다운타임)
-├── 응답 시간: 평균 200ms, 95th percentile 500ms
-├── 데이터 일관성: 강한 일관성 (주문, 결제)
-├── 컴플라이언스: PCI DSS, GDPR, SOX
-└── 비용 최적화: 30% 인프라 비용 절감
-
-기술적 요구사항:
-├── 마이크로서비스 아키텍처 (20+ 서비스)
-├── 다중 데이터베이스 (PostgreSQL, MongoDB, Redis)
-├── 이벤트 기반 아키텍처 (Kafka, RabbitMQ)
-├── 실시간 분석 및 추천 시스템
-├── 이미지 및 미디어 처리
-├── 검색 엔진 (Elasticsearch)
-├── 캐싱 계층 (Redis Cluster)
-└── 외부 API 통합 (결제, 배송, 알림)
-
-운영 요구사항:
-├── 무중단 배포 (Blue-Green, Canary)
-├── 자동 스케일링 (트래픽 기반)
-├── 재해 복구 (RTO: 15분, RPO: 5분)
-├── 보안 모니터링 및 침입 탐지
-├── 성능 모니터링 및 APM
-├── 로그 중앙집중화 및 분석
-├── 백업 및 아카이빙
-└── 컴플라이언스 자동 검사
-```
-
-### 오케스트레이션 아키텍처 설계
-
-```yaml
-# 전자상거래 플랫폼 아키텍처 (개념 예시)
-
-# 1. 네임스페이스 구조
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ecommerce-frontend
-  labels:
-    tier: frontend
-    environment: production
-    pod-security.kubernetes.io/enforce: baseline
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ecommerce-backend
-  labels:
-    tier: backend
-    environment: production
-    pod-security.kubernetes.io/enforce: restricted
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ecommerce-data
-  labels:
-    tier: data
-    environment: production
-    pod-security.kubernetes.io/enforce: restricted
-
----
-# 2. 프론트엔드 서비스 (React SPA)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-frontend
-  namespace: ecommerce-frontend
-spec:
-  replicas: 10
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 50%
-      maxUnavailable: 25%
-  selector:
-    matchLabels:
-      app: web-frontend
-  template:
-    metadata:
-      labels:
-        app: web-frontend
-        version: v1.2.3
-    spec:
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app: web-frontend
-      containers:
-      - name: frontend
-        image: ecommerce/frontend:v1.2.3
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-
----
-# 3. API Gateway
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-  namespace: ecommerce-backend
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: api-gateway
-  template:
-    metadata:
-      labels:
-        app: api-gateway
-    spec:
-      containers:
-      - name: gateway
-        image: ecommerce/api-gateway:v2.1.0
-        ports:
-        - containerPort: 8080
-        env:
-        - name: RATE_LIMIT_RPS
-          value: "1000"
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: jwt-secret
-              key: secret
-        resources:
-          requests:
-            cpu: 200m
-            memory: 256Mi
-          limits:
-            cpu: 1
-            memory: 1Gi
-
----
-# 4. 주문 서비스 (StatefulSet)
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: order-service
-  namespace: ecommerce-backend
-spec:
-  serviceName: order-service-headless
-  replicas: 3
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-    spec:
-      containers:
-      - name: order-service
-        image: ecommerce/order-service:v1.5.2
-        ports:
-        - containerPort: 8080
-        env:
-        - name: DB_HOST
-          value: postgres-primary.ecommerce-data.svc.cluster.local
-        - name: KAFKA_BROKERS
-          value: kafka.ecommerce-data.svc.cluster.local:9092
-        volumeMounts:
-        - name: order-data
-          mountPath: /app/data
-  volumeClaimTemplates:
-  - metadata:
-      name: order-data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: fast-ssd
-      resources:
-        requests:
-          storage: 50Gi
-
----
-# 5. HPA 구성
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: frontend-hpa
-  namespace: ecommerce-frontend
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-frontend
-  minReplicas: 5
-  maxReplicas: 100
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: http_requests_per_second
-      target:
-        type: AverageValue
-        averageValue: "100"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-      - type: Percent
-        value: 100
-        periodSeconds: 15
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
-```
-
-### 보안 및 네트워크 정책
-
-```yaml
-# 네트워크 보안 정책 (개념 예시)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: frontend-netpol
-  namespace: ecommerce-frontend
-spec:
-  podSelector:
-    matchLabels:
-      app: web-frontend
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 80
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: ecommerce-backend
-    ports:
-    - protocol: TCP
-      port: 8080
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-
----
-# RBAC 구성
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: ecommerce-backend
-  name: service-reader
-rules:
-- apiGroups: [""]
-  resources: ["services", "endpoints", "configmaps"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["secrets"]
-  resourceNames: ["jwt-secret", "db-credentials"]
-  verbs: ["get"]
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: service-reader-binding
-  namespace: ecommerce-backend
-subjects:
-- kind: ServiceAccount
-  name: ecommerce-service-account
-  namespace: ecommerce-backend
-roleRef:
-  kind: Role
-  name: service-reader
-  apiGroup: rbac.authorization.k8s.io
-```
-
-## 3. 실무 시나리오 2: 금융 서비스 컴플라이언스 오케스트레이션 (12분)
-
-### 금융 규제 환경 대응 설계
-
-```
-금융 서비스 특수 요구사항:
-
-규제 컴플라이언스:
-├── PCI DSS Level 1: 카드 데이터 보호
-├── SOX 404: 내부 통제 및 감사
-├── Basel III: 리스크 관리 및 자본 적정성
-├── GDPR/개인정보보호법: 데이터 프라이버시
-├── 금융감독원 규정: 전자금융 감독
-├── ISO 27001: 정보보안 관리체계
-└── 실시간 거래 모니터링 및 보고
-
-보안 강화 요구사항:
-├── 제로 트러스트 아키텍처
-├── 종단간 암호화 (E2E Encryption)
-├── 다단계 인증 (MFA) 필수
-├── 특권 계정 관리 (PAM)
-├── 데이터 손실 방지 (DLP)
-├── 실시간 사기 탐지 (Fraud Detection)
-├── 보안 운영 센터 (SOC) 연동
-└── 침입 탐지 및 대응 (IDS/IPS)
+네트워크 정책 통합:
+├── 통합 보안 정책:
+│   ├── 하이브리드 환경 전체 정책 적용
+│   ├── 일관된 보안 수준 유지
+│   ├── 중앙집중식 정책 관리
+│   ├── 자동화된 정책 배포
+│   ├── 컴플라이언스 준수
+│   └── 감사 및 모니터링
+├── 네트워크 세그멘테이션:
+│   ├── 환경별 네트워크 분리
+│   ├── 워크로드별 격리
+│   ├── 데이터 분류 기반 제어
+│   ├── 제로 트러스트 구현
+│   └── 측면 이동 방지
+├── 트래픽 제어:
+│   ├── QoS 정책 적용
+│   ├── 대역폭 관리
+│   ├── 우선순위 기반 라우팅
+│   ├── 트래픽 셰이핑
+│   └── 혼잡 제어
 
 데이터 거버넌스:
-├── 데이터 분류 및 라벨링
-├── 데이터 마스킹 및 익명화
-├── 암호화 키 관리 (HSM 연동)
-├── 데이터 보관 및 삭제 정책
-├── 감사 로그 무결성 보장
-├── 데이터 계보 추적 (Data Lineage)
-└── 개인정보 처리 동의 관리
+├── 데이터 주권:
+│   ├── 지역별 데이터 저장 규정
+│   ├── 국경 간 데이터 이동 제한
+│   ├── 규정 준수 자동화
+│   ├── 데이터 분류 및 태깅
+│   └── 감사 추적 보장
+├── 데이터 보호:
+│   ├── 전송 중 암호화
+│   ├── 저장 시 암호화
+│   ├── 키 관리 통합
+│   ├── 접근 제어 정책
+│   └── 데이터 손실 방지
+├── 백업 및 복구:
+│   ├── 크로스 클라우드 백업
+│   ├── 재해 복구 계획
+│   ├── RTO/RPO 목표 설정
+│   ├── 자동화된 복구
+│   └── 정기적 복구 테스트
+
+운영 모델:
+├── 중앙집중식 운영:
+│   ├── 단일 운영 센터
+│   ├── 통합 모니터링
+│   ├── 일관된 프로세스
+│   ├── 효율적 리소스 활용
+│   ├── 전문성 집중
+│   └── 단일 장애점 위험
+├── 분산 운영:
+│   ├── 지역별 운영 센터
+│   ├── 로컬 대응 능력
+│   ├── 지연시간 최소화
+│   ├── 규정 준수 용이
+│   ├── 높은 가용성
+│   └── 운영 복잡성 증가
+├── 하이브리드 운영:
+│   ├── 중앙 + 분산 조합
+│   ├── 계층적 운영 구조
+│   ├── 역할 기반 분담
+│   ├── 유연한 대응
+│   └── 최적화된 효율성
+
+비용 최적화:
+├── 네트워크 비용 관리:
+│   ├── 트래픽 패턴 분석
+│   ├── 대역폭 최적화
+│   ├── 캐싱 전략 활용
+│   ├── 압축 기술 적용
+│   └── 피어링 활용
+├── 리소스 최적화:
+│   ├── 워크로드 배치 최적화
+│   ├── 오토스케일링 활용
+│   ├── 예약 인스턴스 활용
+│   ├── 스팟 인스턴스 활용
+│   └── 리소스 풀링
+├── 운영 비용 절감:
+│   ├── 자동화 확대
+│   ├── 셀프 서비스 제공
+│   ├── 표준화 추진
+│   ├── 도구 통합
+│   └── 프로세스 최적화
 ```
 
-### 컴플라이언스 자동화 구현
+## 3. 성능 최적화와 트러블슈팅 방법론 (10분)
 
-```yaml
-# 금융 서비스 보안 강화 구성 (개념 예시)
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: banking-core
-  labels:
-    compliance.level: "pci-dss-level1"
-    data.classification: "confidential"
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
+### 성능 최적화 아키텍처
 
----
-# 보안 강화된 배포
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: payment-processor
-  namespace: banking-core
-  annotations:
-    compliance.audit: "required"
-    security.scan: "daily"
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: payment-processor
-  template:
-    metadata:
-      labels:
-        app: payment-processor
-        security.level: "high"
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "payment-processor"
-    spec:
-      serviceAccountName: payment-processor-sa
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 10001
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-      - name: payment-processor
-        image: banking/payment-processor:v2.1.0-secure
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - containerPort: 8443
-          protocol: TCP
-        env:
-        - name: TLS_CERT_PATH
-          value: "/etc/tls/tls.crt"
-        - name: TLS_KEY_PATH
-          value: "/etc/tls/tls.key"
-        - name: AUDIT_LOG_LEVEL
-          value: "DEBUG"
-        volumeMounts:
-        - name: tls-certs
-          mountPath: /etc/tls
-          readOnly: true
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: audit-logs
-          mountPath: /var/log/audit
-        resources:
-          requests:
-            cpu: 500m
-            memory: 1Gi
-          limits:
-            cpu: 2
-            memory: 4Gi
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8443
-            scheme: HTTPS
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8443
-            scheme: HTTPS
-          initialDelaySeconds: 5
-          periodSeconds: 5
-      volumes:
-      - name: tls-certs
-        secret:
-          secretName: payment-processor-tls
-      - name: tmp-volume
-        emptyDir: {}
-      - name: audit-logs
-        persistentVolumeClaim:
-          claimName: audit-logs-pvc
-
----
-# 감사 로그 수집을 위한 사이드카
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: audit-log-collector
-  namespace: banking-core
-spec:
-  selector:
-    matchLabels:
-      app: audit-log-collector
-  template:
-    metadata:
-      labels:
-        app: audit-log-collector
-    spec:
-      serviceAccountName: audit-collector-sa
-      containers:
-      - name: log-collector
-        image: banking/audit-collector:v1.0.0
-        securityContext:
-          runAsNonRoot: true
-          readOnlyRootFilesystem: true
-        volumeMounts:
-        - name: audit-logs
-          mountPath: /var/log/audit
-          readOnly: true
-        - name: host-logs
-          mountPath: /host/var/log
-          readOnly: true
-        env:
-        - name: SIEM_ENDPOINT
-          valueFrom:
-            secretKeyRef:
-              name: siem-config
-              key: endpoint
-      volumes:
-      - name: audit-logs
-        hostPath:
-          path: /var/log/audit
-      - name: host-logs
-        hostPath:
-          path: /var/log
+```mermaid
+graph TB
+    subgraph "성능 모니터링"
+        A[Network Metrics] --> B[Latency]
+        A --> C[Throughput]
+        A --> D[Packet Loss]
+        A --> E[Connection Count]
+    end
+    
+    subgraph "최적화 영역"
+        F[CNI Optimization] --> G[kube-proxy Tuning]
+        G --> H[DNS Optimization]
+        H --> I[Load Balancing]
+        I --> J[Caching Strategy]
+    end
+    
+    subgraph "트러블슈팅"
+        K[Problem Detection] --> L[Root Cause Analysis]
+        L --> M[Solution Implementation]
+        M --> N[Validation]
+        N --> O[Documentation]
+    end
+    
+    E --> F
+    J --> K
+    O --> A
 ```
 
-## 4. 오케스트레이션 설계 모범 사례 (5분)
-
-### 설계 원칙 및 패턴
-
+### 성능 최적화 상세 분석
 ```
-오케스트레이션 설계 모범 사례:
+네트워크 성능 최적화:
 
-아키텍처 설계 원칙:
-├── 단일 책임 원칙 (Single Responsibility)
-├── 느슨한 결합 (Loose Coupling)
-├── 높은 응집도 (High Cohesion)
-├── 장애 격리 (Failure Isolation)
-├── 확장성 우선 설계 (Scalability First)
-├── 보안 내재화 (Security by Design)
-└── 관찰가능성 내장 (Built-in Observability)
+성능 메트릭 및 모니터링:
+├── 핵심 성능 지표:
+│   ├── 지연시간 (Latency)
+│   │   ├── RTT (Round Trip Time)
+│   │   ├── 연결 설정 시간
+│   │   ├── DNS 해결 시간
+│   │   ├── TLS 핸드셰이크 시간
+│   │   └── 애플리케이션 응답 시간
+│   ├── 처리량 (Throughput)
+│   │   ├── 대역폭 활용률
+│   │   ├── 패킷 처리율 (PPS)
+│   │   ├── 연결 처리율 (CPS)
+│   │   ├── 트랜잭션 처리율 (TPS)
+│   │   └── 데이터 전송률
+│   ├── 가용성 (Availability)
+│   │   ├── 업타임 비율
+│   │   ├── 패킷 손실률
+│   │   ├── 연결 실패율
+│   │   ├── 서비스 응답률
+│   │   └── SLA 준수율
+│   └── 리소스 사용률
+│       ├── CPU 사용률
+│       ├── 메모리 사용률
+│       ├── 네트워크 대역폭
+│       ├── 파일 디스크립터
+│       └── 커넥션 풀 사용률
+├── 모니터링 도구:
+│   ├── Prometheus + Grafana
+│   ├── Datadog, New Relic
+│   ├── Istio/Linkerd 텔레메트리
+│   ├── eBPF 기반 도구 (Cilium Hubble)
+│   └── 클라우드 네이티브 모니터링
 
-운영 효율성 패턴:
-├── Infrastructure as Code
-├── GitOps 워크플로우
-├── 자동화된 테스팅
-├── 점진적 배포 전략
-├── 카오스 엔지니어링
-├── 성능 기준선 설정
-└── 지속적 최적화
+CNI 성능 최적화:
+├── CNI 선택 최적화:
+│   ├── 워크로드 특성 분석
+│   ├── 성능 벤치마크 수행
+│   ├── 확장성 요구사항 고려
+│   ├── 기능 vs 성능 트레이드오프
+│   └── 운영 복잡성 평가
+├── 네트워크 모드 최적화:
+│   ├── Host 네트워킹 활용
+│   ├── SR-IOV 지원 활용
+│   ├── DPDK 기반 가속화
+│   ├── 하드웨어 오프로드
+│   └── 커널 우회 기술
+├── 설정 튜닝:
+│   ├── MTU 크기 최적화
+│   ├── 버퍼 크기 조정
+│   ├── 큐 길이 설정
+│   ├── 인터럽트 처리 최적화
+│   └── CPU 어피니티 설정
 
-보안 설계 패턴:
-├── 제로 트러스트 네트워킹
-├── 최소 권한 원칙
-├── 심층 방어 (Defense in Depth)
-├── 시크릿 외부화
-├── 감사 로그 중앙화
-└── 자동화된 컴플라이언스 검사
+kube-proxy 최적화:
+├── 프록시 모드 선택:
+│   ├── IPVS 모드 활용
+│   ├── eBPF 기반 구현
+│   ├── 커널 버전 고려
+│   ├── 기능 요구사항 확인
+│   └── 성능 벤치마크 수행
+├── 설정 최적화:
+│   ├── 동기화 주기 조정
+│   ├── 연결 추적 설정
+│   ├── 세션 어피니티 최적화
+│   ├── 헬스 체크 간격 조정
+│   └── 로그 레벨 최적화
+├── 리소스 할당:
+│   ├── CPU/메모리 리소스 충분히 할당
+│   ├── 전용 노드 배치 고려
+│   ├── 우선순위 클래스 설정
+│   └── 리소스 모니터링
+
+DNS 성능 최적화:
+├── CoreDNS 튜닝:
+│   ├── 캐시 크기 최적화
+│   ├── TTL 설정 조정
+│   ├── 업스트림 DNS 최적화
+│   ├── 플러그인 체인 최적화
+│   └── 리소스 할당 증대
+├── 클라이언트 최적화:
+│   ├── ndots 값 조정
+│   ├── 검색 도메인 최소화
+│   ├── DNS 캐싱 활용
+│   ├── 연결 풀링
+│   └── 타임아웃 최적화
+├── 아키텍처 최적화:
+│   ├── DNS 서버 분산 배치
+│   ├── 지역별 DNS 캐시
+│   ├── Anycast DNS 활용
+│   └── 외부 DNS 서비스 활용
+
+트러블슈팅 방법론:
+├── 문제 탐지:
+│   ├── 모니터링 알림 분석
+│   ├── 성능 지표 추세 분석
+│   ├── 사용자 신고 분석
+│   ├── 로그 패턴 분석
+│   └── 자동화된 이상 탐지
+├── 근본 원인 분석:
+│   ├── 계층별 분석 (L2-L7)
+│   ├── 패킷 캡처 및 분석
+│   ├── 트레이싱 도구 활용
+│   ├── 성능 프로파일링
+│   └── 상관관계 분석
+├── 해결 방안 구현:
+│   ├── 임시 해결책 적용
+│   ├── 근본 해결책 개발
+│   ├── 변경 영향 분석
+│   ├── 단계적 적용
+│   └── 롤백 계획 수립
+├── 검증 및 문서화:
+│   ├── 해결 효과 검증
+│   ├── 성능 개선 측정
+│   ├── 사후 분석 수행
+│   ├── 문서화 및 공유
+│   └── 예방 조치 수립
+
+일반적인 성능 문제:
+├── 네트워크 지연:
+│   ├── 물리적 거리
+│   ├── 네트워크 홉 수
+│   ├── 대역폭 제한
+│   ├── 혼잡 제어
+│   └── 프로토콜 오버헤드
+├── 처리량 제한:
+│   ├── CPU 병목
+│   ├── 메모리 부족
+│   ├── 네트워크 인터페이스 한계
+│   ├── 애플리케이션 병목
+│   └── 설정 제한
+├── 연결 문제:
+│   ├── 포트 고갈
+│   ├── 연결 풀 부족
+│   ├── 타임아웃 설정
+│   ├── 방화벽 규칙
+│   └── DNS 해결 실패
+
+성능 테스트 방법론:
+├── 부하 테스트:
+│   ├── 점진적 부하 증가
+│   ├── 임계점 탐지
+│   ├── 병목 지점 식별
+│   ├── 확장성 검증
+│   └── SLA 검증
+├── 스트레스 테스트:
+│   ├── 극한 부하 적용
+│   ├── 장애 시나리오 테스트
+│   ├── 복구 능력 검증
+│   ├── 리소스 한계 확인
+│   └── 안정성 검증
+├── 지속성 테스트:
+│   ├── 장시간 부하 적용
+│   ├── 메모리 누수 탐지
+│   ├── 성능 저하 모니터링
+│   ├── 리소스 사용 패턴 분석
+│   └── 안정성 확인
 ```
 
-## 5. 미래 발전 방향 및 다음 단계 (3분)
+## 4. 네트워킹 아키텍처 설계 원칙과 모범 사례 (10분)
 
-### 차세대 오케스트레이션 기술
+### 설계 원칙 아키텍처
 
-```
-기술 발전 방향:
-
-서버리스 통합:
-├── Knative 서버리스 플랫폼
-├── 이벤트 기반 스케일링
-├── 함수형 워크로드 지원
-└── 비용 최적화 자동화
-
-엣지 컴퓨팅:
-├── 분산 클러스터 관리
-├── 지연시간 최적화
-├── 대역폭 효율성
-└── 오프라인 운영 지원
-
-AI/ML 운영:
-├── MLOps 파이프라인 통합
-├── 모델 서빙 최적화
-├── GPU 리소스 관리
-└── 자동화된 모델 배포
-
-지속가능성:
-├── 탄소 발자국 최소화
-├── 에너지 효율적 스케줄링
-├── 그린 컴퓨팅 전략
-└── 환경 영향 모니터링
-```
-
-### Week 2 Day 4 예고
-
-```
-다음 학습 주제:
-
-고급 Kubernetes 운영:
-├── 클러스터 운영 및 관리
-├── 업그레이드 및 마이그레이션
-├── 성능 튜닝 및 최적화
-├── 트러블슈팅 및 디버깅
-├── 백업 및 재해 복구
-├── 멀티 클러스터 관리
-├── 클라우드 네이티브 도구
-└── 운영 자동화 전략
+```mermaid
+graph TB
+    subgraph "설계 원칙"
+        A[Scalability] --> B[Reliability]
+        B --> C[Security]
+        C --> D[Performance]
+        D --> E[Maintainability]
+        E --> A
+    end
+    
+    subgraph "아키텍처 패턴"
+        F[Layered Architecture] --> G[Microservices]
+        G --> H[Service Mesh]
+        H --> I[Event-Driven]
+        I --> J[CQRS/Event Sourcing]
+    end
+    
+    subgraph "운영 고려사항"
+        K[Monitoring] --> L[Automation]
+        L --> M[Documentation]
+        M --> N[Testing]
+        N --> O[Continuous Improvement]
+    end
+    
+    A --> F
+    J --> K
+    O --> A
 ```
 
-## 💡 핵심 키워드
-- **통합 아키텍처**: 컨트롤 플레인, 워커 노드, 네트워킹, 스토리지, 보안
-- **실무 설계**: 전자상거래, 금융 서비스, 컴플라이언스
-- **설계 원칙**: 확장성, 보안성, 운영성, 관찰가능성
-- **미래 기술**: 서버리스, 엣지, AI/ML, 지속가능성
+### 설계 원칙 상세 분석
+```
+네트워킹 아키텍처 설계 원칙:
 
-## 📚 추가 학습 자료
-- [Kubernetes 아키텍처 가이드](https://kubernetes.io/docs/concepts/architecture/)
-- [클라우드 네이티브 패턴](https://www.cncf.io/blog/2020/11/17/cloud-native-patterns/)
-- [Kubernetes 보안 모범 사례](https://kubernetes.io/docs/concepts/security/)
+핵심 설계 원칙:
+├── 확장성 (Scalability):
+│   ├── 수평적 확장 우선 설계
+│   ├── 상태 비저장 아키텍처
+│   ├── 로드 밸런싱 내장
+│   ├── 자동 스케일링 지원
+│   ├── 병목 지점 최소화
+│   ├── 캐싱 전략 통합
+│   └── 비동기 처리 활용
+├── 신뢰성 (Reliability):
+│   ├── 단일 장애점 제거
+│   ├── 다중화 및 이중화
+│   ├── 자동 장애 조치
+│   ├── 회로 차단기 패턴
+│   ├── 재시도 및 백오프
+│   ├── 우아한 성능 저하
+│   └── 재해 복구 계획
+├── 보안 (Security):
+│   ├── 심층 방어 전략
+│   ├── 제로 트러스트 모델
+│   ├── 최소 권한 원칙
+│   ├── 암호화 기본 적용
+│   ├── 정기적 보안 검토
+│   ├── 취약점 관리
+│   └── 컴플라이언스 준수
+├── 성능 (Performance):
+│   ├── 지연시간 최소화
+│   ├── 처리량 최대화
+│   ├── 리소스 효율성
+│   ├── 캐싱 최적화
+│   ├── 네트워크 최적화
+│   ├── 데이터베이스 최적화
+│   └── 지속적 성능 모니터링
+├── 유지보수성 (Maintainability):
+│   ├── 모듈화 설계
+│   ├── 표준화 및 일관성
+│   ├── 문서화 충실
+│   ├── 테스트 자동화
+│   ├── 모니터링 및 로깅
+│   ├── 버전 관리
+│   └── 지속적 개선
+
+아키텍처 패턴:
+├── 계층화 아키텍처:
+│   ├── 프레젠테이션 계층
+│   ├── 비즈니스 로직 계층
+│   ├── 데이터 접근 계층
+│   ├── 인프라 계층
+│   ├── 명확한 책임 분리
+│   ├── 계층 간 의존성 관리
+│   └── 테스트 및 유지보수 용이
+├── 마이크로서비스 아키텍처:
+│   ├── 비즈니스 기능별 분해
+│   ├── 독립적 배포 및 확장
+│   ├── 기술 스택 다양성
+│   ├── 팀 자율성 증대
+│   ├── 장애 격리
+│   ├── 복잡성 증가
+│   └── 분산 시스템 도전과제
+├── 서비스 메시 패턴:
+│   ├── 서비스 간 통신 추상화
+│   ├── 트래픽 관리 중앙화
+│   ├── 보안 정책 통합
+│   ├── 관찰 가능성 향상
+│   ├── 운영 복잡성 증가
+│   └── 성능 오버헤드
+├── 이벤트 기반 아키텍처:
+│   ├── 비동기 통신 패턴
+│   ├── 느슨한 결합
+│   ├── 확장성 우수
+│   ├── 복원력 향상
+│   ├── 복잡성 증가
+│   └── 일관성 도전과제
+
+네트워크 설계 모범 사례:
+├── 네트워크 분할:
+│   ├── 환경별 네트워크 분리
+│   ├── 보안 영역별 세그멘테이션
+│   ├── 트래픽 타입별 분리
+│   ├── 성능 요구사항별 분할
+│   └── 관리 복잡성 고려
+├── 주소 체계 설계:
+│   ├── 확장 가능한 IP 주소 계획
+│   ├── 서브넷 크기 최적화
+│   ├── 예약 주소 공간 확보
+│   ├── 라우팅 효율성 고려
+│   └── 표준화된 네이밍 규칙
+├── 라우팅 설계:
+│   ├── 최적 경로 설계
+│   ├── 이중화 경로 구성
+│   ├── 로드 밸런싱 통합
+│   ├── QoS 정책 적용
+│   └── 동적 라우팅 활용
+├── 보안 설계:
+│   ├── 네트워크 정책 표준화
+│   ├── 방화벽 규칙 최소화
+│   ├── 암호화 통신 강제
+│   ├── 접근 제어 자동화
+│   └── 모니터링 및 감사
+
+운영 고려사항:
+├── 모니터링 전략:
+│   ├── 계층별 모니터링
+│   ├── 종단간 추적
+│   ├── 실시간 알림
+│   ├── 대시보드 표준화
+│   ├── 메트릭 수집 자동화
+│   └── 용량 계획 데이터
+├── 자동화 구현:
+│   ├── 인프라 코드화 (IaC)
+│   ├── CI/CD 파이프라인
+│   ├── 자동 배포 및 롤백
+│   ├── 자동 스케일링
+│   ├── 자동 복구
+│   └── 정책 자동 적용
+├── 문서화 및 지식 관리:
+│   ├── 아키텍처 문서 유지
+│   ├── 운영 절차 문서화
+│   ├── 트러블슈팅 가이드
+│   ├── 모범 사례 공유
+│   ├── 교육 및 훈련
+│   └── 지식 베이스 구축
+├── 테스트 전략:
+│   ├── 단위 테스트 자동화
+│   ├── 통합 테스트 구현
+│   ├── 성능 테스트 정기화
+│   ├── 보안 테스트 통합
+│   ├── 카오스 엔지니어링
+│   └── 재해 복구 테스트
+
+지속적 개선:
+├── 성능 최적화:
+│   ├── 정기적 성능 검토
+│   ├── 병목 지점 식별
+│   ├── 최적화 기회 탐색
+│   ├── 새로운 기술 평가
+│   └── 벤치마크 업데이트
+├── 보안 강화:
+│   ├── 위협 모델 업데이트
+│   ├── 취약점 정기 스캔
+│   ├── 보안 정책 개선
+│   ├── 침투 테스트 수행
+│   └── 보안 교육 강화
+├── 운영 효율성:
+│   ├── 프로세스 개선
+│   ├── 도구 통합 및 자동화
+│   ├── 팀 역량 강화
+│   ├── 비용 최적화
+│   └── 사용자 경험 개선
+
+성공 요인:
+├── 명확한 요구사항 정의
+├── 적절한 기술 선택
+├── 단계적 구현 접근법
+├── 충분한 테스트 및 검증
+├── 지속적 모니터링 및 개선
+├── 팀 역량 및 문화
+└── 경영진 지원 및 투자
+```
+
+## 💬 그룹 토론: 대규모 환경에서의 네트워킹 아키텍처 설계 (8분)
+
+### 토론 주제
+**"대규모 Kubernetes 환경에서 확장성, 성능, 보안을 모두 만족하는 네트워킹 아키텍처를 설계하기 위한 핵심 전략과 실무 경험은 무엇인가?"**
+
+### 토론 가이드라인
+
+#### 아키텍처 설계 전략 (3분)
+- **확장성**: 멀티 클러스터, 서비스 메시, 자동 스케일링
+- **성능**: CNI 선택, 최적화 기법, 모니터링
+- **보안**: 제로 트러스트, 네트워크 정책, 암호화
+
+#### 기술 선택 및 트레이드오프 (3분)
+- **CNI 구현체**: 기능 vs 성능 vs 복잡성
+- **서비스 메시**: 필요성 vs 오버헤드
+- **멀티 클러스터**: 연결 방식과 관리 복잡성
+
+#### 실무 적용 경험 (2분)
+- **마이그레이션**: 기존 시스템에서 전환 경험
+- **운영 도전과제**: 실제 운영에서 겪은 문제
+- **성공 요인**: 프로젝트 성공을 위한 핵심 요소
+
+## 💡 핵심 개념 정리
+- **멀티 클러스터**: Flat Network, Federation, Service Mesh 모델
+- **하이브리드 클라우드**: VPN, 전용선, SD-WAN 연결 패턴
+- **성능 최적화**: CNI 튜닝, DNS 최적화, 트러블슈팅 방법론
+- **설계 원칙**: 확장성, 신뢰성, 보안, 성능, 유지보수성
+
+## 📚 참고 자료
+- [Multi-Cluster Networking](https://kubernetes.io/docs/concepts/cluster-administration/networking/#multi-cluster-networking)
+- [Network Performance Tuning](https://kubernetes.io/docs/concepts/cluster-administration/networking/#network-performance-tuning)
+- [Istio Multi-Cluster](https://istio.io/latest/docs/setup/install/multicluster/)
+
+## Day 3 학습 완료
+오늘 학습한 **Kubernetes 네트워킹**의 모든 측면을 완전히 이해했습니다. 내일은 **Kubernetes 스토리지 이론**에 대해 학습하여 데이터 영속성과 스토리지 관리를 심화 학습할 예정입니다.
+
+## 다음 날 준비
+내일 **Day 4**에서는 Kubernetes 스토리지의 핵심 개념들을 학습합니다:
+- 볼륨과 영구 볼륨
+- 스토리지 클래스와 동적 프로비저닝
+- 데이터 관리 패턴
+- 백업과 복구 전략

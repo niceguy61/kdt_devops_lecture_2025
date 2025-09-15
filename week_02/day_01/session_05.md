@@ -1,281 +1,220 @@
-# Session 5: Docker 보안 모델 및 격리 메커니즘
+# Session 5: etcd와 API 서버
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 5**로, Docker 스토리지 관리 이해를 바탕으로 컨테이너 보안 아키텍처와 격리 메커니즘을 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 5**로, Kubernetes의 핵심 구성 요소인 etcd와 API 서버의 역할과 상호작용을 심화 학습합니다.
 
 ## 학습 목표 (5분)
-- **컨테이너 보안 모델**과 **격리 경계** 완전 이해
-- **권한 관리 시스템**과 **보안 강화 기법** 분석
-- **취약점 관리**와 **보안 모니터링** 전략 설계
+- **etcd**의 **분산 저장소** 역할과 **일관성 보장** 메커니즘 이해
+- **API 서버**의 **중앙 집중식 관리** 기능과 **RESTful API** 구조 학습
+- **선언적 구성 모델**의 **장점**과 **구현 방식** 파악
+- **인증**과 **권한 부여** 메커니즘 이해
 
-## 1. 이론: 컨테이너 보안 아키텍처 (20분)
+## 1. etcd의 역할과 분산 저장소 개념 (15분)
 
-### 보안 격리 계층 구조
+### etcd 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Application Layer"
-        A[Application Code]
-        B[Runtime Libraries]
-        C[Application Data]
+    subgraph "etcd 클러스터"
+        A[etcd Node 1] --> B[Leader]
+        C[etcd Node 2] --> D[Follower]
+        E[etcd Node 3] --> F[Follower]
     end
     
-    subgraph "Container Layer"
-        D[Container Process]
-        E[File System]
-        F[Network Interface]
+    subgraph "Raft 합의 알고리즘"
+        G[Leader Election] --> H[Log Replication]
+        H --> I[Consistency]
+        I --> J[Fault Tolerance]
+        J --> G
     end
     
-    subgraph "Kernel Layer"
-        G[Namespaces]
-        H[cgroups]
-        I[Capabilities]
-        J[Seccomp]
-        K[AppArmor/SELinux]
+    subgraph "데이터 저장"
+        K[Key-Value Store] --> L[클러스터 상태]
+        L --> M[구성 정보]
+        M --> N[메타데이터]
+        N --> K
     end
     
-    subgraph "Hardware Layer"
-        L[CPU]
-        M[Memory]
-        N[Storage]
-        O[Network]
-    end
-    
-    A --> D
+    B --> G
     D --> G
-    G --> L
+    F --> G
+    
+    I --> K
 ```
 
-### Linux 보안 메커니즘 활용
-
+### etcd 핵심 특징
 ```
-컨테이너 격리 기술:
+etcd 분산 저장소 특징:
 
-Namespaces (네임스페이스):
-├── PID: 프로세스 ID 격리
-├── NET: 네트워크 인터페이스 격리
-├── MNT: 파일시스템 마운트 격리
-├── UTS: 호스트명/도메인명 격리
-├── IPC: 프로세스 간 통신 격리
-├── USER: 사용자/그룹 ID 격리
-└── TIME: 시스템 시간 격리 (최신)
+일관성 보장:
+├── Strong Consistency (강한 일관성)
+├── ACID 트랜잭션 지원
+├── Raft 합의 알고리즘 사용
+└── 쿼럼 기반 의사결정
 
-Control Groups (cgroups):
-├── CPU 사용률 제한
-├── 메모리 사용량 제한
-├── 디스크 I/O 제한
-├── 네트워크 대역폭 제한
-├── 디바이스 접근 제어
-├── 프로세스 수 제한
-└── 리소스 회계 및 모니터링
+고가용성:
+├── 다중 노드 클러스터
+├── 자동 리더 선출
+├── 장애 노드 자동 복구
+└── 데이터 복제 및 동기화
 
-Linux Capabilities:
-├── 루트 권한 세분화
-├── 필요한 권한만 부여
-├── CAP_NET_ADMIN: 네트워크 관리
-├── CAP_SYS_ADMIN: 시스템 관리
-├── CAP_DAC_OVERRIDE: 파일 권한 무시
-├── CAP_SETUID: 사용자 ID 변경
-└── 최소 권한 원칙 적용
+성능 최적화:
+├── 메모리 기반 인덱싱
+├── 압축 및 스냅샷
+├── Watch 메커니즘
+└── 배치 처리 지원
 
-Seccomp (Secure Computing):
-├── 시스템 콜 필터링
-├── 허용된 시스템 콜만 실행
-├── 공격 표면 최소화
-├── 기본 프로필 제공
-├── 사용자 정의 프로필 지원
-└── 성능 오버헤드 최소화
+보안:
+├── TLS 암호화 통신
+├── 클라이언트 인증서
+├── RBAC 권한 제어
+└── 감사 로깅
 ```
 
-## 2. 이론: 권한 관리 및 접근 제어 (15분)
+## 2. API 서버의 중앙 집중식 관리 기능 (12분)
 
-### 사용자 및 권한 모델
+### API 서버 아키텍처
 
 ```mermaid
-sequenceDiagram
-    participant User as Host User
-    participant Docker as Docker Daemon
-    participant Container as Container Process
-    participant Kernel as Linux Kernel
+graph TB
+    subgraph "API 서버"
+        A[HTTP/HTTPS Handler] --> B[인증]
+        B --> C[권한 부여]
+        C --> D[Admission Control]
+        D --> E[Validation]
+        E --> F[Serialization]
+        F --> G[etcd 통신]
+    end
     
-    User->>Docker: docker run --user 1000:1000
-    Docker->>Kernel: Create user namespace
-    Kernel-->>Docker: Namespace created
-    Docker->>Container: Start with mapped UID/GID
-    Container->>Kernel: System call with mapped ID
-    Kernel-->>Container: Permission check passed
+    subgraph "클라이언트"
+        H[kubectl] --> A
+        I[Dashboard] --> A
+        J[Controller] --> A
+        K[Scheduler] --> A
+    end
+    
+    subgraph "백엔드"
+        G --> L[etcd 클러스터]
+        L --> M[상태 저장]
+        M --> N[Watch Events]
+        N --> G
+    end
 ```
 
-### 보안 강화 기법
-
+### API 서버 핵심 기능
 ```
-Docker 보안 강화:
+API 서버 핵심 기능:
 
-사용자 네임스페이스:
-├── 컨테이너 내 root를 호스트 일반 사용자로 매핑
-├── 권한 에스컬레이션 방지
-├── 호스트 시스템 보호 강화
-├── 파일 시스템 권한 격리
-├── 프로세스 권한 제한
-└── 컨테이너 탈출 공격 완화
+요청 처리:
+├── RESTful API 제공
+├── HTTP/HTTPS 프로토콜 지원
+├── JSON/YAML 형식 처리
+└── 비동기 처리 지원
 
-읽기 전용 파일시스템:
-├── 루트 파일시스템 읽기 전용 마운트
-├── 런타임 파일 변조 방지
-├── 임시 파일용 tmpfs 볼륨 사용
-├── 로그 및 데이터용 별도 볼륨
-├── 애플리케이션 무결성 보장
-└── 악성 코드 실행 차단
+보안 관리:
+├── 인증 (Authentication)
+├── 권한 부여 (Authorization)
+├── Admission Control
+└── 감사 로깅
 
-네트워크 보안:
-├── 사용자 정의 네트워크 사용
-├── 불필요한 포트 노출 금지
-├── 네트워크 세그멘테이션
-├── 트래픽 암호화 (TLS)
-├── 방화벽 규칙 적용
-└── 네트워크 모니터링
+상태 관리:
+├── 리소스 CRUD 작업
+├── 상태 검증 및 변환
+├── 이벤트 생성 및 전파
+└── Watch 스트림 제공
 
-리소스 제한:
-├── CPU 사용률 제한
-├── 메모리 사용량 제한
-├── 파일 디스크립터 제한
-├── 프로세스 수 제한
-├── 네트워크 대역폭 제한
-└── DoS 공격 방지
+확장성:
+├── 수평적 확장 지원
+├── 로드 밸런싱
+├── 캐싱 메커니즘
+└── 성능 최적화
 ```
 
-## 3. 이론: 취약점 관리 및 보안 모니터링 (10분)
+## 3. RESTful API와 선언적 구성 모델 (10분)
 
-### 이미지 보안 스캔
+### RESTful API 구조
 
-```
-보안 스캔 전략:
-
-정적 분석:
-├── 베이스 이미지 취약점 스캔
-├── 패키지 의존성 분석
-├── 설정 파일 보안 검사
-├── 시크릿 정보 노출 검사
-├── 라이선스 컴플라이언스
-└── 보안 정책 준수 확인
-
-동적 분석:
-├── 런타임 행동 모니터링
-├── 네트워크 트래픽 분석
-├── 파일 시스템 변경 감지
-├── 프로세스 실행 추적
-├── 시스템 콜 모니터링
-└── 이상 행동 탐지
-
-지속적 모니터링:
-├── 실시간 보안 이벤트 수집
-├── 로그 분석 및 상관관계 분석
-├── 침입 탐지 시스템 (IDS)
-├── 보안 정보 및 이벤트 관리 (SIEM)
-├── 자동화된 대응 체계
-└── 보안 대시보드 및 알림
+```mermaid
+graph LR
+    subgraph "HTTP Methods"
+        A[GET] --> B[리소스 조회]
+        C[POST] --> D[리소스 생성]
+        E[PUT] --> F[리소스 업데이트]
+        G[DELETE] --> H[리소스 삭제]
+        I[PATCH] --> J[부분 업데이트]
+    end
+    
+    subgraph "리소스 경로"
+        K[/api/v1/pods] --> L[Pod 리소스]
+        M[/api/v1/services] --> N[Service 리소스]
+        O[/apis/apps/v1/deployments] --> P[Deployment 리소스]
+    end
+    
+    B --> K
+    D --> M
+    F --> O
 ```
 
-### 보안 모범 사례
-
+### 선언적 구성 모델
 ```
-컨테이너 보안 모범 사례:
+선언적 vs 명령적 구성:
 
-이미지 보안:
-├── 신뢰할 수 있는 베이스 이미지 사용
-├── 최소한의 패키지만 설치
-├── 정기적인 이미지 업데이트
-├── 이미지 서명 및 검증
-├── 프라이빗 레지스트리 사용
-└── 멀티 스테이지 빌드 활용
+선언적 구성 (Declarative):
+├── 원하는 최종 상태 정의
+├── 시스템이 자동으로 달성
+├── 멱등성 보장
+└── 자동 복구 가능
 
-런타임 보안:
-├── 비특권 사용자로 실행
-├── 읽기 전용 루트 파일시스템
-├── 불필요한 권한 제거
-├── 네트워크 정책 적용
-├── 리소스 제한 설정
-└── 보안 프로필 적용
+명령적 구성 (Imperative):
+├── 단계별 명령 실행
+├── 수동 상태 관리
+├── 순서 의존성
+└── 오류 시 수동 복구
 
-운영 보안:
-├── 정기적인 보안 패치
-├── 접근 제어 및 인증
-├── 감사 로그 수집
-├── 백업 및 복구 계획
-├── 인시던트 대응 절차
-└── 보안 교육 및 훈련
+Kubernetes 접근법:
+├── YAML/JSON 매니페스트
+├── kubectl apply 명령
+├── Controller 패턴
+└── Reconciliation Loop
 ```
 
-## 4. 개념 예시: 보안 구성 분석 (12분)
+## 4. 인증과 권한 부여 메커니즘 (10분)
 
-### 보안 강화 실행 예시
+### 보안 아키텍처
 
-```bash
-# 보안 강화된 컨테이너 실행 (개념 예시)
-docker run -d \
-  --user 1000:1000 \
-  --read-only \
-  --tmpfs /tmp \
-  --cap-drop ALL \
-  --cap-add NET_BIND_SERVICE \
-  --security-opt no-new-privileges \
-  --security-opt seccomp=default.json \
-  nginx:alpine
+```mermaid
+graph TB
+    subgraph "인증 (Authentication)"
+        A[클라이언트 인증서] --> B[서비스 어카운트]
+        B --> C[OIDC 토큰]
+        C --> D[Webhook 인증]
+    end
+    
+    subgraph "권한 부여 (Authorization)"
+        E[RBAC] --> F[ABAC]
+        F --> G[Webhook 권한]
+        G --> H[Node 권한]
+    end
+    
+    subgraph "Admission Control"
+        I[Validating Webhook] --> J[Mutating Webhook]
+        J --> K[Built-in Controllers]
+    end
+    
+    D --> E
+    H --> I
 ```
 
-### 보안 스캔 예시
-
-```bash
-# 이미지 취약점 스캔 (개념 예시)
-docker scan nginx:latest
-
-# 예상 출력:
-# ✓ Tested 82 dependencies for known issues
-# ✗ Found 3 vulnerabilities
-# 
-# Issues with no direct upgrade or patch:
-#   ✗ Medium severity vulnerability found in openssl
-#   ✗ Low severity vulnerability found in zlib
-```
-
-### 보안 정책 적용 예시
-
-```yaml
-# Docker Compose 보안 설정 (개념 예시)
-version: '3.8'
-services:
-  web:
-    image: nginx:alpine
-    user: "1000:1000"
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-    security_opt:
-      - no-new-privileges:true
-```
-
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **다층 보안 모델**을 통한 컨테이너 격리
-- **Linux 보안 메커니즘** 활용한 권한 제어
-- **취약점 관리**와 **지속적 모니터링** 체계
-- **보안 모범 사례** 적용을 통한 위험 최소화
+## 💬 그룹 토론: 선언적 구성 모델의 장점과 한계 (8분)
 
 ### 토론 주제
-"컨테이너 환경에서 보안과 편의성의 균형을 맞추는 최적의 보안 아키텍처는 무엇인가?"
+**"선언적 구성 모델이 가져다주는 장점과 한계는 무엇이며, 어떤 상황에서 가장 효과적인가?"**
 
-## 💡 핵심 키워드
-- **격리 기술**: Namespace, cgroups, Capabilities, Seccomp
-- **권한 관리**: 사용자 네임스페이스, 최소 권한 원칙
-- **보안 강화**: 읽기 전용 파일시스템, 네트워크 보안
-- **취약점 관리**: 보안 스캔, 모니터링, 모범 사례
+## 💡 핵심 개념 정리
+- **etcd**: 분산 키-값 저장소, 클러스터 상태의 단일 진실 소스
+- **API 서버**: 모든 통신의 중앙 허브, RESTful API 제공
+- **선언적 구성**: 원하는 상태 정의, 자동 달성
+- **보안**: 다층 보안 모델, 인증-권한-승인 제어
 
-## 📚 참고 자료
-- [Docker 보안](https://docs.docker.com/engine/security/)
-- [컨테이너 보안 가이드](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)
+## 다음 세션 준비
+다음 세션에서는 **스케줄러와 컨트롤러**의 역할과 동작 원리를 학습합니다.

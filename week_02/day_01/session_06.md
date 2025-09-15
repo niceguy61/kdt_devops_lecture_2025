@@ -1,345 +1,248 @@
-# Session 6: Docker Compose 아키텍처 및 서비스 오케스트레이션
+# Session 6: 스케줄러와 컨트롤러
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 6**으로, Docker 보안 모델 이해를 바탕으로 멀티 컨테이너 애플리케이션의 오케스트레이션 아키텍처를 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 6**으로, Kubernetes의 자동화 핵심인 스케줄러와 컨트롤러의 동작 원리와 역할을 학습합니다.
 
 ## 학습 목표 (5분)
-- **Docker Compose 아키텍처**와 **서비스 정의 모델** 완전 이해
-- **네트워킹 및 볼륨 오케스트레이션** 메커니즘 분석
-- **스케일링 및 로드 밸런싱** 전략과 **의존성 관리** 원리
+- **kube-scheduler**의 **Pod 배치 알고리즘** 이해
+- **Controller Manager**의 **상태 관리** 역할 학습
+- **Desired State**와 **Current State** 개념 파악
+- **Control Loop** 패턴과 **자동 복구** 메커니즘 이해
 
-## 1. 이론: Docker Compose 아키텍처 (20분)
+## 1. kube-scheduler의 Pod 배치 알고리즘 (15분)
 
-### Compose 시스템 구조
+### 스케줄링 프로세스
 
 ```mermaid
 graph TB
-    subgraph "Docker Compose Architecture"
-        A[docker-compose.yml] --> B[Compose CLI]
-        B --> C[Docker Engine API]
-        
-        subgraph "Project Scope"
-            D[Services]
-            E[Networks]
-            F[Volumes]
-            G[Configs]
-            H[Secrets]
-        end
-        
-        C --> D
-        C --> E
-        C --> F
-        C --> G
-        C --> H
-        
-        subgraph "Container Runtime"
-            I[Container 1]
-            J[Container 2]
-            K[Container N]
-        end
-        
-        D --> I
-        D --> J
-        D --> K
+    subgraph "스케줄링 단계"
+        A[Pod 생성 요청] --> B[Filtering]
+        B --> C[Scoring]
+        C --> D[Binding]
+        D --> E[Pod 배치 완료]
     end
+    
+    subgraph "Filtering (필터링)"
+        F[리소스 요구사항] --> G[노드 선택기]
+        G --> H[Taints/Tolerations]
+        H --> I[가용 노드 목록]
+    end
+    
+    subgraph "Scoring (점수 매기기)"
+        J[리소스 균형] --> K[친화성 규칙]
+        K --> L[분산 정책]
+        L --> M[최적 노드 선택]
+    end
+    
+    B --> F
+    C --> J
+    I --> J
+    M --> D
 ```
 
-### 서비스 정의 모델
-
+### 스케줄링 알고리즘 상세
 ```
-Docker Compose 핵심 개념:
+스케줄링 알고리즘:
 
-Project (프로젝트):
-├── 관련된 서비스들의 논리적 그룹
-├── 디렉토리 이름 또는 -p 옵션으로 정의
-├── 네트워크, 볼륨 등 리소스 네임스페이스
-├── 환경별 설정 분리 (dev, staging, prod)
-├── 서비스 간 의존성 및 통신 관리
-└── 전체 애플리케이션 생명주기 관리
+1단계 - Filtering (필터링):
+├── NodeResourcesFit: 리소스 요구사항 확인
+├── NodeAffinity: 노드 친화성 규칙
+├── PodAffinity/AntiAffinity: Pod 친화성 규칙
+├── TaintToleration: Taint/Toleration 매칭
+├── VolumeBinding: 볼륨 바인딩 가능성
+└── NodePorts: 포트 충돌 확인
 
-Service (서비스):
-├── 동일한 이미지로 실행되는 컨테이너 집합
-├── 수평 확장 가능한 단위
-├── 로드 밸런싱 자동 제공
-├── 서비스 디스커버리 내장
-├── 헬스 체크 및 재시작 정책
-├── 리소스 제한 및 배치 제약
-└── 롤링 업데이트 지원
+2단계 - Scoring (점수 매기기):
+├── NodeResourcesFit: 리소스 활용도 최적화
+├── BalancedResourceAllocation: 균형잡힌 리소스 사용
+├── ImageLocality: 이미지 로컬리티 고려
+├── InterPodAffinity: Pod 간 친화성 점수
+├── NodeAffinity: 노드 친화성 점수
+└── TaintToleration: Toleration 우선순위
 
-Network (네트워크):
-├── 서비스 간 통신 채널
-├── 격리된 네트워크 세그먼트
-├── DNS 기반 서비스 해석
-├── 외부 네트워크 연결
-├── 네트워크 정책 적용
-└── 멀티 호스트 네트워킹 (Swarm)
-
-Volume (볼륨):
-├── 데이터 영속성 보장
-├── 서비스 간 데이터 공유
-├── 외부 볼륨 마운트
-├── 백업 및 복구 지원
-├── 성능 최적화 옵션
-└── 클라우드 스토리지 통합
+3단계 - Binding (바인딩):
+├── 최고 점수 노드 선택
+├── API 서버에 바인딩 정보 전송
+├── kubelet에 Pod 생성 지시
+└── 스케줄링 완료 확인
 ```
 
-### YAML 구성 파일 구조 분석
+## 2. Controller Manager의 상태 관리 역할 (12분)
 
-```yaml
-# Docker Compose 파일 구조 (개념 예시)
-version: '3.8'
+### 컨트롤러 아키텍처
 
-services:
-  web:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-    networks:
-      - frontend
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/myapp
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - frontend
-      - backend
-
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: myapp
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-    internal: true
-
-volumes:
-  db_data:
-    driver: local
+```mermaid
+graph TB
+    subgraph "Controller Manager"
+        A[Deployment Controller] --> B[ReplicaSet 관리]
+        C[ReplicaSet Controller] --> D[Pod 관리]
+        E[Service Controller] --> F[Endpoint 관리]
+        G[Node Controller] --> H[노드 상태 관리]
+        I[Job Controller] --> J[배치 작업 관리]
+    end
+    
+    subgraph "Control Loop"
+        K[Watch] --> L[Compare]
+        L --> M[Act]
+        M --> K
+    end
+    
+    B --> K
+    D --> K
+    F --> K
+    H --> K
+    J --> K
 ```
 
-## 2. 이론: 서비스 오케스트레이션 메커니즘 (15분)
+### 주요 컨트롤러 유형
+```
+핵심 컨트롤러 유형:
 
-### 의존성 관리 및 시작 순서
+워크로드 컨트롤러:
+├── Deployment Controller: 배포 관리
+├── ReplicaSet Controller: 복제본 관리
+├── StatefulSet Controller: 상태 저장 앱 관리
+├── DaemonSet Controller: 데몬 프로세스 관리
+├── Job Controller: 배치 작업 관리
+└── CronJob Controller: 스케줄된 작업 관리
+
+서비스 컨트롤러:
+├── Service Controller: 서비스 관리
+├── Endpoint Controller: 엔드포인트 관리
+├── Ingress Controller: 외부 접근 관리
+└── NetworkPolicy Controller: 네트워크 정책
+
+인프라 컨트롤러:
+├── Node Controller: 노드 상태 관리
+├── Namespace Controller: 네임스페이스 관리
+├── PersistentVolume Controller: 스토리지 관리
+└── ServiceAccount Controller: 계정 관리
+```
+
+## 3. Desired State와 Current State 개념 (10분)
+
+### 상태 관리 모델
+
+```mermaid
+graph TB
+    subgraph "상태 관리 사이클"
+        A[Desired State] --> B[API Server]
+        B --> C[etcd 저장]
+        C --> D[Controller Watch]
+        D --> E[Current State 확인]
+        E --> F{상태 비교}
+        F -->|일치| G[대기]
+        F -->|불일치| H[조정 작업]
+        H --> I[Current State 업데이트]
+        I --> E
+        G --> D
+    end
+    
+    subgraph "예시: Deployment"
+        J[replicas: 3] --> K[현재 Pod: 2]
+        K --> L[1개 Pod 추가 필요]
+        L --> M[새 Pod 생성]
+        M --> N[replicas: 3 달성]
+    end
+    
+    A --> J
+    H --> L
+```
+
+### 상태 조정 메커니즘
+```
+상태 조정 (Reconciliation) 과정:
+
+상태 감지:
+├── Watch API를 통한 실시간 모니터링
+├── 리소스 변경 이벤트 수신
+├── 주기적 상태 확인
+└── 장애 감지 및 알림
+
+차이 분석:
+├── Desired State vs Current State 비교
+├── 변경 필요 사항 식별
+├── 우선순위 결정
+└── 실행 계획 수립
+
+조정 실행:
+├── 필요한 리소스 생성/수정/삭제
+├── 단계별 실행 및 검증
+├── 롤백 메커니즘 준비
+└── 상태 업데이트
+
+검증 및 모니터링:
+├── 조정 결과 확인
+├── 새로운 Current State 기록
+├── 성공/실패 이벤트 생성
+└── 다음 사이클 준비
+```
+
+## 4. Control Loop 패턴과 자동 복구 (10분)
+
+### Control Loop 패턴
 
 ```mermaid
 sequenceDiagram
-    participant Compose as Docker Compose
-    participant DB as Database Service
-    participant API as API Service
-    participant Web as Web Service
+    participant C as Controller
+    participant A as API Server
+    participant E as etcd
+    participant R as Resource
     
-    Compose->>DB: Start database
-    DB-->>Compose: Service started
-    
-    Compose->>DB: Health check
-    DB-->>Compose: Healthy
-    
-    Compose->>API: Start API (depends_on db)
-    API-->>Compose: Service started
-    
-    Compose->>Web: Start web (depends_on api)
-    Web-->>Compose: Service started
-    
-    Note over Compose: All services running
+    loop Control Loop
+        C->>A: Watch 리소스
+        A->>E: 상태 조회
+        E->>A: 현재 상태 반환
+        A->>C: 상태 변경 이벤트
+        C->>C: Desired vs Current 비교
+        alt 상태 불일치
+            C->>A: 조정 작업 요청
+            A->>R: 리소스 생성/수정/삭제
+            R->>A: 작업 완료 보고
+            A->>E: 새 상태 저장
+        end
+    end
 ```
 
-### 서비스 디스커버리 및 로드 밸런싱
-
+### 자동 복구 시나리오
 ```
-오케스트레이션 메커니즘:
+자동 복구 시나리오:
 
-서비스 디스커버리:
-├── DNS 기반 서비스 이름 해석
-├── 서비스명으로 다른 서비스 접근
-├── 동적 IP 주소 할당 및 관리
-├── 컨테이너 재시작 시 자동 업데이트
-├── 네트워크별 독립적인 DNS 네임스페이스
-└── 외부 서비스 연결 지원
+Pod 장애 복구:
+├── Pod 상태 모니터링 (Liveness Probe)
+├── 장애 Pod 감지 및 종료
+├── 새로운 Pod 자동 생성
+└── 서비스 트래픽 자동 재라우팅
 
-로드 밸런싱:
-├── 라운드 로빈 알고리즘 기본 제공
-├── 서비스 스케일링 시 자동 부하 분산
-├── 헬스 체크 기반 트래픽 라우팅
-├── 세션 지속성 미지원 (상태 비저장)
-├── 컨테이너 장애 시 자동 제외
-└── 외부 로드 밸런서와 통합 가능
+노드 장애 복구:
+├── 노드 상태 모니터링 (Node Controller)
+├── 응답 없는 노드 감지
+├── 해당 노드의 Pod 다른 노드로 이동
+└── 클러스터 용량 자동 조정
 
-스케일링 전략:
-├── 수평 확장 (replicas 증가)
-├── 리소스 기반 자동 스케일링
-├── 트래픽 패턴 분석 기반 스케일링
-├── 블루-그린 배포 지원
-├── 롤링 업데이트 전략
-└── 카나리 배포 패턴
-```
+리소스 부족 대응:
+├── 리소스 사용량 모니터링
+├── 임계값 초과 감지
+├── 자동 스케일링 트리거
+└── 추가 리소스 할당
 
-## 3. 이론: 환경 관리 및 설정 전략 (10분)
-
-### 환경별 구성 관리
-
-```
-환경 관리 전략:
-
-다중 Compose 파일:
-├── docker-compose.yml (기본 설정)
-├── docker-compose.override.yml (개발 환경)
-├── docker-compose.prod.yml (프로덕션 환경)
-├── docker-compose.test.yml (테스트 환경)
-├── 파일 병합을 통한 설정 오버라이드
-└── 환경별 특화 설정 분리
-
-환경 변수 관리:
-├── .env 파일을 통한 기본값 설정
-├── 환경별 .env 파일 분리
-├── 시스템 환경 변수 우선순위
-├── 민감한 정보 별도 관리
-├── 설정 템플릿화 및 자동화
-└── 컨테이너별 환경 변수 격리
-
-시크릿 관리:
-├── Docker Secrets (Swarm 모드)
-├── 외부 시크릿 관리 시스템 연동
-├── 파일 기반 시크릿 마운트
-├── 런타임 시크릿 주입
-├── 시크릿 로테이션 전략
-└── 접근 권한 및 감사 로그
+구성 변경 적용:
+├── 매니페스트 변경 감지
+├── 롤링 업데이트 실행
+├── 헬스체크 기반 검증
+└── 문제 시 자동 롤백
 ```
 
-### 모니터링 및 로깅 통합
-
-```
-운영 관리 기능:
-
-로깅 전략:
-├── 중앙집중식 로그 수집
-├── 구조화된 로그 포맷 (JSON)
-├── 로그 레벨 및 필터링
-├── 로그 로테이션 및 보관
-├── 실시간 로그 스트리밍
-└── 로그 분석 및 알림
-
-모니터링 통합:
-├── 메트릭 수집 및 시각화
-├── 헬스 체크 및 상태 모니터링
-├── 리소스 사용량 추적
-├── 성능 지표 분석
-├── 알림 및 에스컬레이션
-└── 대시보드 및 리포팅
-
-백업 및 복구:
-├── 데이터 볼륨 백업 전략
-├── 설정 파일 버전 관리
-├── 전체 스택 스냅샷
-├── 재해 복구 계획
-├── 자동화된 복구 프로세스
-└── 복구 테스트 및 검증
-```
-
-## 4. 개념 예시: Compose 구성 분석 (12분)
-
-### 마이크로서비스 아키텍처 예시
-
-```yaml
-# 마이크로서비스 Compose 구성 (개념 예시)
-version: '3.8'
-
-services:
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - user-service
-      - order-service
-
-  user-service:
-    build: ./user-service
-    environment:
-      - DB_HOST=user-db
-    depends_on:
-      - user-db
-
-  order-service:
-    build: ./order-service
-    environment:
-      - DB_HOST=order-db
-    depends_on:
-      - order-db
-
-  user-db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: users
-
-  order-db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: orders
-```
-
-### 환경별 설정 오버라이드 예시
-
-```bash
-# 개발 환경 실행 (개념 예시)
-docker-compose up -d
-
-# 프로덕션 환경 실행 (개념 예시)
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# 스케일링 예시 (개념 예시)
-docker-compose up -d --scale api=3 --scale worker=5
-```
-
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **Docker Compose**를 통한 멀티 컨테이너 오케스트레이션
-- **서비스 디스커버리**와 **로드 밸런싱** 자동화
-- **환경별 구성 관리**와 **설정 분리** 전략
-- **모니터링 및 로깅** 통합을 통한 운영 효율성
+## 💬 그룹 토론: 자동화된 상태 관리의 핵심 원리 (8분)
 
 ### 토론 주제
-"마이크로서비스 아키텍처에서 Docker Compose의 역할과 Kubernetes와의 차이점은 무엇인가?"
+**"Kubernetes의 자동화된 상태 관리가 기존 시스템 관리 방식과 다른 점은 무엇이며, 어떤 장점을 제공하는가?"**
 
-## 💡 핵심 키워드
-- **오케스트레이션**: 서비스, 네트워크, 볼륨 관리
-- **의존성 관리**: depends_on, 헬스 체크, 시작 순서
-- **환경 관리**: 다중 Compose 파일, 환경 변수, 시크릿
-- **운영 관리**: 모니터링, 로깅, 백업, 스케일링
+## 💡 핵심 개념 정리
+- **스케줄러**: 최적의 노드 선택을 위한 필터링과 점수 매기기
+- **컨트롤러**: Control Loop 패턴을 통한 지속적 상태 관리
+- **Desired State**: 원하는 최종 상태의 선언적 정의
+- **자동 복구**: 장애 감지와 자동 조정을 통한 시스템 안정성
 
-## 📚 참고 자료
-- [Docker Compose 개요](https://docs.docker.com/compose/)
-- [Compose 파일 레퍼런스](https://docs.docker.com/compose/compose-file/)
+## 다음 세션 준비
+다음 세션에서는 **kubelet과 kube-proxy**의 역할과 기능을 학습합니다.

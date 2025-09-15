@@ -1,561 +1,576 @@
-# Session 6: 워크로드 스케줄링 및 리소스 관리
+# Session 6: DNS와 서비스 디스커버리
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 3 > Session 6**으로, 스토리지 오케스트레이션 이해를 바탕으로 Kubernetes의 워크로드 스케줄링 알고리즘과 클러스터 리소스 관리 메커니즘을 심화 분석합니다.
+이 세션은 **Week 2 > Day 3 > Session 6**으로, Kubernetes 클러스터 내 서비스 디스커버리의 핵심인 DNS 시스템을 학습합니다. Session 3-5에서 학습한 Service와 Ingress가 어떻게 이름으로 접근되는지 이해합니다.
 
 ## 학습 목표 (5분)
-- **Kubernetes 스케줄러** 알고리즘과 **Pod 배치 전략** 이해
-- **리소스 쿼터** 및 **제한 정책**을 통한 **멀티 테넌시** 관리
-- **오토스케일링** 메커니즘과 **클러스터 확장** 전략 수립
+- **CoreDNS** 아키텍처와 **DNS 해결** 과정 완전 이해
+- **Service DNS** 레코드와 **네이밍** 규칙 학습
+- **Pod DNS** 정책과 **사용자 정의** 설정 파악
+- **외부 DNS** 통합과 **서비스 메시** 연동 방안 이해
 
-## 1. 이론: Kubernetes 스케줄러 아키텍처 (20분)
+## 1. CoreDNS 아키텍처와 DNS 해결 과정 (15분)
 
-### 스케줄링 프로세스 개요
+### CoreDNS 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Scheduling Process"
-        A[Pod Creation] --> B[Scheduler Queue]
-        B --> C[Filtering Phase]
-        C --> D[Scoring Phase]
-        D --> E[Node Selection]
-        E --> F[Binding]
+    subgraph "CoreDNS 구조"
+        A[CoreDNS Pod] --> B[Kubernetes Plugin]
+        B --> C[API Server Watch]
+        C --> D[Service/Endpoint 동기화]
+        
+        A --> E[DNS Server]
+        E --> F[Query Processing]
+        F --> G[Plugin Chain]
+        G --> H[Response Generation]
     end
     
-    subgraph "Scheduler Components"
-        G[Scheduler Framework] --> H[Plugins]
-        H --> I[Profiles]
-        I --> J[Extensions]
+    subgraph "DNS 해결 과정"
+        I[Pod DNS Query] --> J[CoreDNS Service]
+        J --> K[Query Analysis]
+        K --> L[Record Lookup]
+        L --> M[Response Return]
     end
     
-    subgraph "Scheduling Constraints"
-        K[Node Affinity] --> L[Pod Affinity]
-        L --> M[Taints & Tolerations]
-        M --> N[Resource Requirements]
+    subgraph "플러그인 체인"
+        N[errors] --> O[health]
+        O --> P[ready]
+        P --> Q[kubernetes]
+        Q --> R[prometheus]
+        R --> S[forward]
+        S --> T[cache]
     end
     
-    C --> K
-    G --> A
+    D --> I
+    M --> I
+    G --> N
 ```
 
-### 스케줄링 알고리즘 상세
-
+### CoreDNS 상세 분석
 ```
-Kubernetes 스케줄러 동작 원리:
+CoreDNS 아키텍처:
 
-스케줄링 사이클:
-├── 1단계: 스케줄링 큐에서 Pod 선택
-├── 2단계: 필터링 (Predicates/Filter Plugins)
-├── 3단계: 점수 매기기 (Priorities/Score Plugins)
-├── 4단계: 최적 노드 선택
-├── 5단계: 바인딩 (Bind Plugins)
-├── 6단계: 사후 처리 (PostBind Plugins)
-└── 7단계: 다음 Pod 처리
+CoreDNS 기본 개념:
+├── CNCF 졸업 프로젝트:
+│   ├── Go 언어로 개발된 DNS 서버
+│   ├── 플러그인 기반 확장 가능 아키텍처
+│   ├── Kubernetes 네이티브 통합
+│   ├── 고성능 및 확장성 지원
+│   └── kube-dns 후속 솔루션
+├── 주요 특징:
+│   ├── 플러그인 체인 기반 처리
+│   ├── 동적 설정 업데이트
+│   ├── 메트릭 및 모니터링 내장
+│   ├── 다양한 백엔드 지원
+│   └── 클라우드 네이티브 설계
 
-필터링 단계 (Filter Plugins):
-├── NodeResourcesFit:
-│   ├── CPU, 메모리, 스토리지 요구사항 확인
-│   ├── 확장 리소스 (GPU, FPGA) 가용성
-│   ├── 포트 충돌 검사
-│   └── 리소스 오버커밋 정책 적용
-├── NodeAffinity:
-│   ├── 노드 셀렉터 및 어피니티 규칙
-│   ├── 필수 조건 (requiredDuringScheduling)
-│   ├── 선호 조건 (preferredDuringScheduling)
-│   └── 라벨 기반 노드 선택
-├── PodAffinity/AntiAffinity:
-│   ├── Pod 간 배치 규칙
-│   ├── 동일 노드/영역 배치 (Affinity)
-│   ├── 분산 배치 (AntiAffinity)
-│   └── 토폴로지 도메인 고려
-├── TaintToleration:
-│   ├── 노드 테인트와 Pod 톨러레이션 매칭
-│   ├── 전용 노드 할당
-│   ├── 문제 노드 격리
-│   └── 스케줄링 제외 메커니즘
-├── VolumeBinding:
-│   ├── PVC와 PV 바인딩 가능성
-│   ├── 토폴로지 제약 조건
-│   ├── 스토리지 클래스 호환성
-│   └── 지연 바인딩 지원
-└── 기타 필터:
-    ├── NodeUnschedulable: 스케줄링 비활성화 노드
-    ├── NodeName: 특정 노드 지정
-    ├── NodePorts: 포트 가용성 확인
-    └── ImageLocality: 이미지 로컬 존재 여부
+플러그인 시스템:
+├── 핵심 플러그인:
+│   ├── kubernetes: K8s 리소스 DNS 해결
+│   ├── forward: 외부 DNS 서버 전달
+│   ├── cache: DNS 응답 캐싱
+│   ├── health: 헬스 체크 엔드포인트
+│   ├── ready: 준비 상태 확인
+│   ├── prometheus: 메트릭 노출
+│   ├── errors: 오류 로깅
+│   └── log: 쿼리 로깅
+├── 플러그인 체인 처리:
+│   ├── 순차적 플러그인 실행
+│   ├── 각 플러그인의 결과 전달
+│   ├── 조건부 처리 및 분기
+│   ├── 실패 시 다음 플러그인 시도
+│   └── 최종 응답 생성
 
-점수 매기기 단계 (Score Plugins):
-├── NodeResourcesFit:
-│   ├── 리소스 사용률 기반 점수
-│   ├── 균등 분산 vs 집중 배치
-│   ├── 요청/제한 비율 고려
-│   └── 확장 리소스 가중치
-├── ImageLocality:
-│   ├── 이미지 로컬 존재 시 높은 점수
-│   ├── 이미지 크기 고려
-│   ├── 네트워크 대역폭 절약
-│   └── 시작 시간 단축
-├── InterPodAffinity:
-│   ├── Pod 어피니티 선호도 점수
-│   ├── 토폴로지 분산 고려
-│   ├── 가중치 기반 계산
-│   └── 복잡도 제한 (기본 300개 노드)
-├── NodeAffinity:
-│   ├── 노드 어피니티 선호도 점수
-│   ├── 가중치 기반 우선순위
-│   ├── 다중 조건 조합
-│   └── 소프트 제약 조건 처리
-└── 커스텀 스코어링:
-    ├── 플러그인 기반 확장
-    ├── 비즈니스 로직 반영
-    ├── 외부 메트릭 통합
-    └── 동적 점수 계산
+Kubernetes 통합:
+├── API 서버 연동:
+│   ├── Service/Endpoint Watch
+│   ├── Pod 정보 실시간 동기화
+│   ├── Namespace 기반 격리
+│   ├── RBAC 권한 관리
+│   └── 클러스터 상태 반영
+├── DNS 레코드 생성:
+│   ├── Service A/AAAA 레코드
+│   ├── Service SRV 레코드
+│   ├── Pod A/AAAA 레코드
+│   ├── Headless Service 처리
+│   └── 외부 서비스 CNAME
 
-스케줄러 프레임워크:
-├── 확장 가능한 플러그인 아키텍처
-├── 다중 스케줄링 프로파일 지원
-├── 커스텀 스케줄러 개발 지원
-├── 이벤트 기반 확장 포인트
-├── 성능 최적화 및 병렬 처리
-└── 디버깅 및 관찰가능성 지원
-```
+DNS 해결 과정:
+├── 쿼리 수신 및 분석:
+│   ├── DNS 쿼리 파싱
+│   ├── 쿼리 타입 확인 (A, AAAA, SRV, etc.)
+│   ├── 도메인 이름 분석
+│   └── 네임스페이스 추출
+├── 레코드 검색:
+│   ├── Kubernetes 리소스 매칭
+│   ├── 캐시 확인
+│   ├── 외부 DNS 전달 (필요시)
+│   └── 기본값 적용
+├── 응답 생성:
+│   ├── DNS 응답 패킷 구성
+│   ├── TTL 설정
+│   ├── 추가 레코드 포함
+│   └── 클라이언트 응답 전송
 
-### 고급 스케줄링 기능
-
-```
-고급 스케줄링 개념:
-
-Pod 우선순위 및 선점:
-├── PriorityClass를 통한 우선순위 정의
-├── 높은 우선순위 Pod의 선점 스케줄링
-├── 낮은 우선순위 Pod 축출 (Eviction)
-├── 리소스 부족 시 우선순위 기반 결정
-├── 시스템 크리티컬 워크로드 보호
-└── 배치 작업 vs 서비스 워크로드 분리
-
-토폴로지 분산 제약:
-├── Pod 토폴로지 분산 제약 (PodTopologySpreadConstraints)
-├── 영역, 노드, 랙 단위 분산
-├── 최대 편차 (maxSkew) 제어
-├── 고가용성 및 장애 격리
-├── 로드 밸런싱 최적화
-└── 지리적 분산 배치
-
-다중 스케줄러:
-├── 기본 스케줄러 외 커스텀 스케줄러
-├── 워크로드별 특화 스케줄링
-├── 스케줄러 이름 지정 (schedulerName)
-├── 병렬 스케줄링 지원
-├── 특수 요구사항 처리
-└── 실험적 스케줄링 알고리즘
-
-스케줄링 게이트:
-├── 외부 시스템 승인 대기
-├── 조건부 스케줄링 제어
-├── 워크플로우 통합
-├── 리소스 예약 시스템 연동
-└── 복잡한 배치 정책 구현
+성능 최적화:
+├── 캐싱 전략:
+│   ├── 성공/실패 응답 캐싱
+│   ├── TTL 기반 만료 관리
+│   ├── 메모리 사용량 제한
+│   └── 캐시 히트율 최적화
+├── 부하 분산:
+│   ├── 다중 CoreDNS 인스턴스
+│   ├── 안티 어피니티 배치
+│   ├── 수평 확장 지원
+│   └── 로드 밸런싱 최적화
+├── 리소스 관리:
+│   ├── 메모리 사용량 모니터링
+│   ├── CPU 사용률 최적화
+│   ├── 네트워크 대역폭 관리
+│   └── 가비지 컬렉션 튜닝
 ```
 
-## 2. 이론: 리소스 관리 및 쿼터 시스템 (15분)
+## 2. Service DNS 레코드와 네이밍 규칙 (12분)
 
-### 리소스 쿼터 아키텍처
+### DNS 네이밍 구조
 
 ```mermaid
-sequenceDiagram
-    participant User as User
-    participant API as API Server
-    participant Admission as Admission Controller
-    participant Quota as ResourceQuota
-    participant Scheduler as Scheduler
+graph TB
+    subgraph "Service DNS 구조"
+        A[service-name.namespace.svc.cluster.local] --> B[Service Name]
+        A --> C[Namespace]
+        A --> D[Service Type]
+        A --> E[Cluster Domain]
+    end
     
-    User->>API: Create Pod
-    API->>Admission: Validate request
-    Admission->>Quota: Check resource quota
-    Quota-->>Admission: Quota available
-    Admission-->>API: Request approved
-    API->>Scheduler: Schedule Pod
-    Scheduler-->>API: Pod scheduled
-    API-->>User: Pod created
+    subgraph "DNS 레코드 타입"
+        F[A Record] --> G[ClusterIP Address]
+        H[SRV Record] --> I[Port Information]
+        J[CNAME Record] --> K[ExternalName Service]
+    end
+    
+    subgraph "Headless Service"
+        L[headless-svc.namespace.svc.cluster.local] --> M[Pod IP 1]
+        L --> N[Pod IP 2]
+        L --> O[Pod IP 3]
+    end
+    
+    B --> F
+    C --> H
+    E --> J
+    G --> L
 ```
 
-### 리소스 쿼터 및 제한 정책
-
+### Service DNS 상세 분석
 ```
-리소스 관리 체계:
+Service DNS 네이밍 규칙:
 
-ResourceQuota:
-├── 네임스페이스별 리소스 사용량 제한
-├── 컴퓨팅 리소스 (CPU, 메모리, 스토리지)
-├── 오브젝트 수량 제한 (Pod, Service, PVC 등)
-├── 확장 리소스 (GPU, 사용자 정의 리소스)
-├── 스코프 기반 쿼터 (우선순위, QoS 클래스)
-├── 하드 제한 vs 소프트 제한
-└── 실시간 사용량 추적 및 제어
+DNS 이름 구조:
+├── 완전한 도메인 이름 (FQDN):
+│   ├── <service-name>.<namespace>.svc.<cluster-domain>
+│   ├── 예: web-service.default.svc.cluster.local
+│   ├── 클러스터 전체에서 유일
+│   ├── 네임스페이스 간 접근 가능
+│   └── 명시적이고 명확한 참조
+├── 단축 이름 (Short Names):
+│   ├── 동일 네임스페이스: <service-name>
+│   ├── 다른 네임스페이스: <service-name>.<namespace>
+│   ├── 서비스 타입 포함: <service-name>.<namespace>.svc
+│   ├── DNS 검색 도메인 활용
+│   └── 편의성과 가독성 향상
 
-LimitRange:
-├── 개별 리소스 오브젝트 제한
-├── Pod, 컨테이너, PVC별 최소/최대 리소스
-├── 기본값 및 기본 요청량 설정
-├── 요청/제한 비율 제어
-├── 리소스 오버커밋 방지
-└── 네임스페이스 레벨 정책 적용
+DNS 레코드 타입:
+├── A/AAAA 레코드:
+│   ├── Service ClusterIP 주소 반환
+│   ├── IPv4 (A) / IPv6 (AAAA) 지원
+│   ├── 로드 밸런싱된 가상 IP
+│   ├── 가장 일반적인 사용 사례
+│   └── 애플리케이션 투명성 보장
+├── SRV 레코드:
+│   ├── 서비스 포트 정보 포함
+│   ├── _<port-name>._<protocol>.<service-fqdn>
+│   ├── 예: _http._tcp.web-service.default.svc.cluster.local
+│   ├── 포트 디스커버리 지원
+│   ├── 프로토콜별 접근 가능
+│   └── 고급 서비스 디스커버리
+├── CNAME 레코드:
+│   ├── ExternalName 서비스용
+│   ├── 외부 도메인으로 리다이렉션
+│   ├── 별칭 및 간접 참조
+│   └── 외부 서비스 통합
 
-QoS (Quality of Service) 클래스:
-├── Guaranteed:
-│   ├── 모든 컨테이너에 CPU/메모리 요청=제한
-│   ├── 최고 우선순위, 축출 저항성
-│   ├── 예측 가능한 성능
-│   ├── 크리티컬 워크로드 적합
-│   └── 리소스 예약 보장
-├── Burstable:
-│   ├── 최소 하나의 컨테이너에 요청량 설정
-│   ├── 요청량 < 제한량 또는 제한량 미설정
-│   ├── 중간 우선순위
-│   ├── 리소스 버스트 허용
-│   └── 일반적인 애플리케이션 워크로드
-└── BestEffort:
-    ├── 요청량 및 제한량 미설정
-    ├── 최저 우선순위, 먼저 축출
-    ├── 남은 리소스 활용
-    ├── 배치 작업 및 실험적 워크로드
-    └── 비용 효율적 리소스 활용
+Headless Service DNS:
+├── 기본 개념:
+│   ├── ClusterIP: None으로 설정
+│   ├── 개별 Pod IP 직접 반환
+│   ├── 로드 밸런싱 우회
+│   ├── StatefulSet과 주로 사용
+│   └── 직접 Pod 접근 필요시
+├── DNS 동작:
+│   ├── A 레코드: 모든 Ready Pod IP 반환
+│   ├── SRV 레코드: Pod별 포트 정보
+│   ├── Pod 서브도메인: <pod-name>.<service-name>
+│   ├── 동적 Pod 목록 업데이트
+│   └── 클라이언트 측 로드 밸런싱
+├── 사용 사례:
+│   ├── 데이터베이스 클러스터 (MySQL, MongoDB)
+│   ├── 메시징 시스템 (Kafka, RabbitMQ)
+│   ├── 분산 캐시 (Redis Cluster)
+│   ├── 피어 투 피어 애플리케이션
+│   └── 커스텀 로드 밸런싱
 
-멀티 테넌시 지원:
-├── 네임스페이스 기반 격리
-├── RBAC 권한 분리
-├── 네트워크 정책 격리
-├── 리소스 쿼터 할당
-├── 노드 풀 분리
-├── 스토리지 클래스 분리
-└── 모니터링 및 로깅 분리
-```
+DNS 검색 도메인:
+├── Pod DNS 설정:
+│   ├── /etc/resolv.conf 자동 생성
+│   ├── nameserver: CoreDNS ClusterIP
+│   ├── search 도메인 목록
+│   ├── options 설정
+│   └── 동적 업데이트
+├── 검색 순서:
+│   ├── <namespace>.svc.<cluster-domain>
+│   ├── svc.<cluster-domain>
+│   ├── <cluster-domain>
+│   ├── 호스트 검색 도메인 (선택적)
+│   └── 순차적 해결 시도
+├── 최적화 고려사항:
+│   ├── 검색 도메인 수 최소화
+│   ├── 명시적 FQDN 사용 권장
+│   ├── DNS 쿼리 수 감소
+│   └── 성능 향상
 
-### 리소스 모니터링 및 최적화
-
-```
-리소스 최적화 전략:
-
-Vertical Pod Autoscaler (VPA):
-├── Pod 리소스 요청량 자동 조정
-├── 과거 사용량 기반 추천
-├── 수직 스케일링 (리소스 증감)
-├── 재시작 기반 또는 인플레이스 업데이트
-├── 리소스 효율성 개선
-├── 오버프로비저닝 방지
-└── 워크로드별 최적화
-
-리소스 사용량 분석:
-├── 메트릭 서버를 통한 실시간 모니터링
-├── Prometheus 기반 장기 메트릭 수집
-├── 리소스 사용 패턴 분석
-├── 피크 시간대 및 계절성 고려
-├── 비용 최적화 기회 식별
-└── 용량 계획 및 예측
-
-노드 리소스 관리:
-├── 시스템 예약 리소스 (system-reserved)
-├── kubelet 예약 리소스 (kube-reserved)
-├── 축출 임계값 (eviction-threshold)
-├── 노드 압박 상황 처리
-├── 우선순위 기반 Pod 축출
-└── 노드 상태 및 조건 관리
-```
-
-## 3. 이론: 오토스케일링 메커니즘 (10분)
-
-### 오토스케일링 아키텍처
-
-```
-Kubernetes 오토스케일링 계층:
-
-Horizontal Pod Autoscaler (HPA):
-├── Pod 복제본 수 자동 조정
-├── CPU, 메모리 사용률 기반
-├── 커스텀 메트릭 지원 (Prometheus, 외부 메트릭)
-├── 다중 메트릭 조합 정책
-├── 스케일 업/다운 정책 및 안정화
-├── 최소/최대 복제본 수 제한
-└── 배치 작업 제외 (Deployment, ReplicaSet 대상)
-
-Vertical Pod Autoscaler (VPA):
-├── Pod 리소스 요청량 자동 조정
-├── 과거 사용량 패턴 학습
-├── 추천 모드 vs 자동 적용 모드
-├── 업데이트 정책 (Off, Initial, Auto)
-├── 컨테이너별 개별 조정
-├── 리소스 효율성 극대화
-└── HPA와 동시 사용 제한
-
-Cluster Autoscaler:
-├── 노드 수 자동 조정
-├── 스케줄링 불가능한 Pod 감지
-├── 노드 그룹별 확장/축소
-├── 클라우드 제공업체 통합
-├── 비용 최적화 고려
-├── 스케일 다운 지연 및 안전장치
-└── 다중 노드 풀 지원
-
-오토스케일링 정책:
-├── 메트릭 기반 정책:
-│   ├── 리소스 메트릭 (CPU, 메모리)
-│   ├── 커스텀 메트릭 (애플리케이션 메트릭)
-│   ├── 외부 메트릭 (클라우드 서비스 메트릭)
-│   └── 다중 메트릭 조합 및 가중치
-├── 행동 정책:
-│   ├── 스케일 업 정책 (빠른 반응)
-│   ├── 스케일 다운 정책 (안정화 우선)
-│   ├── 안정화 윈도우 (thrashing 방지)
-│   └── 백오프 및 쿨다운 기간
-└── 제약 조건:
-    ├── 최소/최대 복제본 수
-    ├── 리소스 쿼터 한계
-    ├── 노드 가용성 제약
-    └── 비용 예산 제한
+특수 DNS 기능:
+├── 와일드카드 DNS:
+│   ├── *.namespace.svc.cluster.local
+│   ├── 동적 서비스 매칭
+│   ├── 개발 환경 유연성
+│   └── 보안 고려사항 존재
+├── 조건부 전달:
+│   ├── 특정 도메인 외부 DNS 전달
+│   ├── 하이브리드 환경 지원
+│   ├── 기업 내부 DNS 통합
+│   └── 복잡한 네트워크 토폴로지
+├── DNS 정책:
+│   ├── Default: 클러스터 DNS 우선
+│   ├── ClusterFirst: 클러스터 DNS만
+│   ├── ClusterFirstWithHostNet: 호스트 네트워크 고려
+│   ├── None: 사용자 정의 설정
+│   └── 환경별 최적화
 ```
 
-## 4. 개념 예시: 스케줄링 및 리소스 관리 구성 (12분)
+## 3. Pod DNS 정책과 사용자 정의 설정 (10분)
 
-### 고급 스케줄링 구성 예시
+### Pod DNS 정책 비교
 
-```yaml
-# Pod 우선순위 클래스 (개념 예시)
-apiVersion: scheduling.k8s.io/v1
-kind: PriorityClass
-metadata:
-  name: high-priority
-value: 1000
-globalDefault: false
-description: "High priority class for critical workloads"
-
----
-# 토폴로지 분산 제약이 있는 Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-spec:
-  replicas: 6
-  selector:
-    matchLabels:
-      app: web-app
-  template:
-    metadata:
-      labels:
-        app: web-app
-    spec:
-      priorityClassName: high-priority
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app: web-app
-      - maxSkew: 2
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: web-app
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: node-type
-                operator: In
-                values: ["compute"]
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: instance-type
-                operator: In
-                values: ["c5.large", "c5.xlarge"]
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values: ["web-app"]
-              topologyKey: kubernetes.io/hostname
-      containers:
-      - name: web
-        image: nginx:1.21
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+```mermaid
+graph TB
+    subgraph "DNS 정책 타입"
+        A[Default] --> B[Node DNS + Cluster DNS]
+        C[ClusterFirst] --> D[Cluster DNS Only]
+        E[ClusterFirstWithHostNet] --> F[Host Network + Cluster DNS]
+        G[None] --> H[Custom DNS Config]
+    end
+    
+    subgraph "DNS 설정 구성"
+        I[nameservers] --> J[DNS Server List]
+        K[searches] --> L[Search Domain List]
+        M[options] --> N[DNS Options]
+    end
+    
+    subgraph "resolv.conf 생성"
+        O[Pod Spec] --> P[DNS Policy]
+        P --> Q[DNS Config]
+        Q --> R[/etc/resolv.conf]
+    end
+    
+    B --> I
+    D --> K
+    F --> M
+    H --> O
 ```
 
-### 리소스 쿼터 및 제한 정책 예시
+### Pod DNS 정책 상세 분석
+```
+Pod DNS 정책:
 
-```yaml
-# ResourceQuota (개념 예시)
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: team-quota
-  namespace: team-a
-spec:
-  hard:
-    requests.cpu: "10"
-    requests.memory: 20Gi
-    limits.cpu: "20"
-    limits.memory: 40Gi
-    requests.storage: 100Gi
-    persistentvolumeclaims: "10"
-    pods: "50"
-    services: "10"
-    secrets: "20"
-    configmaps: "20"
-  scopes:
-  - NotTerminating
-  scopeSelector:
-    matchExpressions:
-    - operator: In
-      scopeName: PriorityClass
-      values: ["high", "medium"]
+DNS 정책 타입:
+├── Default:
+│   ├── 노드의 DNS 설정 상속
+│   ├── /etc/resolv.conf 복사
+│   ├── 클러스터 DNS 추가
+│   ├── 하이브리드 해결 방식
+│   ├── 호스트 네트워크 Pod 기본값
+│   └── 외부 서비스 접근 우선
+├── ClusterFirst (기본):
+│   ├── 클러스터 DNS 우선 사용
+│   ├── CoreDNS를 첫 번째 네임서버로 설정
+│   ├── 클러스터 도메인 검색 우선
+│   ├── 외부 쿼리는 업스트림 전달
+│   ├── 대부분 Pod의 기본 정책
+│   └── 클러스터 서비스 최적화
+├── ClusterFirstWithHostNet:
+│   ├── 호스트 네트워크 Pod용
+│   ├── 클러스터 DNS + 호스트 DNS
+│   ├── 네트워크 네임스페이스 공유 시
+│   ├── DaemonSet 등에서 사용
+│   └── 특수한 네트워킹 요구사항
+├── None:
+│   ├── 완전 사용자 정의 설정
+│   ├── dnsConfig 필드 필수
+│   ├── 모든 DNS 설정 명시적 지정
+│   ├── 고급 사용자용
+│   └── 특별한 DNS 요구사항
 
----
-# LimitRange (개념 예시)
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: resource-limits
-  namespace: team-a
-spec:
-  limits:
-  - type: Container
-    default:
-      cpu: 200m
-      memory: 256Mi
-    defaultRequest:
-      cpu: 100m
-      memory: 128Mi
-    min:
-      cpu: 50m
-      memory: 64Mi
-    max:
-      cpu: 2
-      memory: 4Gi
-    maxLimitRequestRatio:
-      cpu: 4
-      memory: 8
-  - type: Pod
-    max:
-      cpu: 4
-      memory: 8Gi
-  - type: PersistentVolumeClaim
-    min:
-      storage: 1Gi
-    max:
-      storage: 100Gi
+사용자 정의 DNS 설정:
+├── dnsConfig 구조:
+│   ├── nameservers: DNS 서버 목록
+│   ├── searches: 검색 도메인 목록
+│   ├── options: DNS 옵션 설정
+│   └── 기존 설정과 병합 또는 대체
+├── nameservers 설정:
+│   ├── 최대 3개 DNS 서버
+│   ├── IP 주소 형태로 지정
+│   ├── 순서대로 쿼리 시도
+│   ├── 첫 번째 서버 우선 사용
+│   └── 장애 시 다음 서버 사용
+├── searches 설정:
+│   ├── 최대 6개 검색 도메인
+│   ├── 총 길이 256자 제한
+│   ├── 단축 이름 해결용
+│   ├── 순서대로 시도
+│   └── 성능 영향 고려
+├── options 설정:
+│   ├── ndots: 절대/상대 도메인 판단
+│   ├── timeout: DNS 쿼리 타임아웃
+│   ├── attempts: 재시도 횟수
+│   ├── rotate: 서버 순환 사용
+│   └── 기타 resolver 옵션
+
+고급 DNS 설정:
+├── ndots 최적화:
+│   ├── 기본값: 5
+│   ├── 점(.) 개수 기준 판단
+│   ├── 절대 도메인 판단 기준
+│   ├── 불필요한 검색 도메인 쿼리 방지
+│   ├── 성능 최적화 핵심 설정
+│   └── 애플리케이션별 튜닝 필요
+├── 타임아웃 설정:
+│   ├── 기본 타임아웃: 5초
+│   ├── 네트워크 지연 고려
+│   ├── 애플리케이션 요구사항 반영
+│   ├── 장애 감지 시간 단축
+│   └── 사용자 경험 최적화
+├── 캐싱 전략:
+│   ├── 클라이언트 측 캐싱
+│   ├── TTL 기반 만료 관리
+│   ├── 네거티브 캐싱
+│   ├── 메모리 사용량 제한
+│   └── 네트워크 트래픽 감소
+
+DNS 디버깅:
+├── 일반적인 문제:
+│   ├── DNS 해결 실패
+│   ├── 느린 DNS 응답
+│   ├── 잘못된 IP 반환
+│   ├── 검색 도메인 문제
+│   └── 네임서버 접근 불가
+├── 디버깅 도구:
+│   ├── nslookup: 기본 DNS 조회
+│   ├── dig: 상세 DNS 정보
+│   ├── host: 간단한 조회
+│   ├── systemd-resolve: systemd 환경
+│   └── kubectl exec 활용
+├── 로그 분석:
+│   ├── CoreDNS 로그 확인
+│   ├── Pod DNS 설정 검증
+│   ├── 네트워크 연결 상태
+│   ├── 방화벽 규칙 확인
+│   └── 성능 메트릭 분석
+
+모범 사례:
+├── 명시적 FQDN 사용
+├── ndots 값 최적화
+├── 불필요한 검색 도메인 제거
+├── DNS 캐싱 활용
+├── 모니터링 및 알림 설정
+└── 정기적인 성능 검토
 ```
 
-### 오토스케일링 구성 예시
+## 4. 외부 DNS 통합과 서비스 메시 연동 (10분)
 
-```yaml
-# HPA 구성 (개념 예시)
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: web-app-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  minReplicas: 3
-  maxReplicas: 50
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  - type: Pods
-    pods:
-      metric:
-        name: http_requests_per_second
-      target:
-        type: AverageValue
-        averageValue: "100"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-      - type: Percent
-        value: 100
-        periodSeconds: 15
-      - type: Pods
-        value: 4
-        periodSeconds: 15
-      selectPolicy: Max
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
+### 외부 DNS 통합 아키텍처
 
----
-# VPA 구성 (개념 예시)
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: web-app-vpa
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  updatePolicy:
-    updateMode: "Auto"
-  resourcePolicy:
-    containerPolicies:
-    - containerName: web
-      minAllowed:
-        cpu: 50m
-        memory: 64Mi
-      maxAllowed:
-        cpu: 1
-        memory: 2Gi
-      controlledResources: ["cpu", "memory"]
+```mermaid
+graph TB
+    subgraph "외부 DNS 통합"
+        A[External DNS Controller] --> B[Cloud DNS Provider]
+        A --> C[Ingress/Service Watch]
+        C --> D[DNS Record Creation]
+        D --> E[Public DNS Zone]
+    end
+    
+    subgraph "서비스 메시 DNS"
+        F[Service Mesh] --> G[Envoy Proxy]
+        G --> H[Service Discovery]
+        H --> I[DNS Interception]
+        I --> J[Mesh Internal DNS]
+    end
+    
+    subgraph "하이브리드 DNS"
+        K[CoreDNS] --> L[Cluster DNS]
+        K --> M[External Forwarder]
+        M --> N[Corporate DNS]
+        N --> O[Internet DNS]
+    end
+    
+    B --> F
+    E --> G
+    J --> K
+    O --> A
 ```
 
-## 5. 토론 및 정리 (8분)
+### 외부 DNS 및 서비스 메시 연동
+```
+외부 DNS 통합:
 
-### 핵심 개념 정리
-- **Kubernetes 스케줄러**의 2단계 알고리즘과 고급 배치 전략
-- **리소스 쿼터 시스템**을 통한 멀티 테넌시 및 리소스 거버넌스
-- **오토스케일링** 메커니즘을 통한 동적 리소스 관리
-- **QoS 클래스**와 **우선순위**를 통한 워크로드 차별화
+External DNS 컨트롤러:
+├── 기본 개념:
+│   ├── Kubernetes 리소스 기반 DNS 레코드 자동 생성
+│   ├── Ingress/Service 어노테이션 기반 동작
+│   ├── 클라우드 DNS 서비스 통합
+│   ├── 외부 접근 가능한 DNS 레코드 관리
+│   └── GitOps 워크플로우 지원
+├── 지원 DNS 제공자:
+│   ├── AWS Route 53
+│   ├── Google Cloud DNS
+│   ├── Azure DNS
+│   ├── Cloudflare
+│   ├── 기타 RFC2136 호환 서버
+│   └── 다중 제공자 동시 지원
+├── 동작 원리:
+│   ├── Ingress/Service 리소스 감시
+│   ├── 어노테이션 기반 설정 추출
+│   ├── DNS 제공자 API 호출
+│   ├── DNS 레코드 생성/업데이트/삭제
+│   └── 상태 동기화 및 모니터링
+
+서비스 메시 DNS 통합:
+├── Istio DNS:
+│   ├── Envoy 프록시 DNS 인터셉션
+│   ├── 서비스 메시 내부 DNS 해결
+│   ├── 트래픽 정책 기반 라우팅
+│   ├── 멀티 클러스터 서비스 디스커버리
+│   ├── 보안 정책 통합
+│   └── 관찰 가능성 향상
+├── Linkerd DNS:
+│   ├── 경량화된 DNS 프록시
+│   ├── 자동 TLS 및 로드 밸런싱
+│   ├── 서비스 프로파일 기반 라우팅
+│   ├── 메트릭 및 추적 통합
+│   └── 단순한 설정 및 관리
+├── Consul Connect:
+│   ├── Consul 기반 서비스 디스커버리
+│   ├── 다중 데이터센터 지원
+│   ├── 헬스 체크 통합
+│   ├── 동적 설정 업데이트
+│   └── 레거시 시스템 통합
+
+하이브리드 DNS 아키텍처:
+├── 계층적 DNS 구조:
+│   ├── 클러스터 DNS (CoreDNS)
+│   ├── 기업 내부 DNS
+│   ├── 퍼블릭 DNS
+│   ├── 조건부 전달 설정
+│   └── 캐싱 계층 최적화
+├── DNS 전달 규칙:
+│   ├── 내부 도메인: 기업 DNS
+│   ├── 클러스터 도메인: CoreDNS
+│   ├── 외부 도메인: 퍼블릭 DNS
+│   ├── 우선순위 기반 해결
+│   └── 장애 시 폴백 메커니즘
+├── 보안 고려사항:
+│   ├── DNS over HTTPS (DoH)
+│   ├── DNS over TLS (DoT)
+│   ├── DNSSEC 검증
+│   ├── DNS 필터링 및 차단
+│   └── 로깅 및 감사
+
+멀티 클러스터 DNS:
+├── 클러스터 간 서비스 디스커버리:
+│   ├── 글로벌 DNS 네임스페이스
+│   ├── 클러스터별 도메인 분리
+│   ├── 서비스 메시 통합
+│   ├── 로드 밸런싱 및 장애 조치
+│   └── 지리적 라우팅
+├── Admiral/Submariner:
+│   ├── 멀티 클러스터 네트워킹
+│   ├── 서비스 익스포트/임포트
+│   ├── DNS 자동 동기화
+│   ├── 네트워크 정책 통합
+│   └── 보안 터널링
+├── 구현 패턴:
+│   ├── 중앙집중식 DNS
+│   ├── 분산 DNS 동기화
+│   ├── 페더레이션 기반
+│   ├── 서비스 메시 통합
+│   └── 하이브리드 접근법
+
+DNS 성능 최적화:
+├── 캐싱 전략:
+│   ├── 다층 캐싱 구조
+│   ├── TTL 최적화
+│   ├── 프리페칭
+│   ├── 네거티브 캐싱
+│   └── 캐시 워밍
+├── 로드 밸런싱:
+│   ├── DNS 서버 분산
+│   ├── Anycast 라우팅
+│   ├── 지리적 분산
+│   ├── 헬스 체크 기반 라우팅
+│   └── 트래픽 분산 최적화
+├── 모니터링:
+│   ├── DNS 쿼리 메트릭
+│   ├── 응답 시간 추적
+│   ├── 오류율 모니터링
+│   ├── 캐시 히트율
+│   └── 용량 계획
+
+운영 고려사항:
+├── 장애 복구:
+│   ├── DNS 서버 이중화
+│   ├── 자동 장애 조치
+│   ├── 백업 DNS 설정
+│   ├── 복구 절차 자동화
+│   └── 재해 복구 계획
+├── 보안 관리:
+│   ├── DNS 쿼리 로깅
+│   ├── 악성 도메인 차단
+│   ├── DGA 탐지
+│   ├── DNS 터널링 방지
+│   └── 접근 제어 정책
+├── 규정 준수:
+│   ├── 데이터 주권 요구사항
+│   ├── 로그 보존 정책
+│   ├── 개인정보 보호
+│   ├── 감사 요구사항
+│   └── 규제 준수 보고
+```
+
+## 💬 그룹 토론: DNS 기반 서비스 디스커버리의 한계와 대안 (8분)
 
 ### 토론 주제
-"대규모 멀티 테넌트 클러스터에서 리소스 효율성과 워크로드 격리를 동시에 보장하는 최적의 스케줄링 전략은 무엇인가?"
+**"DNS 기반 서비스 디스커버리의 한계점은 무엇이며, 대규모 마이크로서비스 환경에서 어떤 대안 기술을 고려해야 하는가?"**
 
-## 💡 핵심 키워드
-- **스케줄링**: 필터링, 점수 매기기, 어피니티, 토폴로지 분산
-- **리소스 관리**: ResourceQuota, LimitRange, QoS 클래스
-- **오토스케일링**: HPA, VPA, Cluster Autoscaler, 메트릭 기반
-- **멀티 테넌시**: 네임스페이스, 우선순위, 격리 정책
+## 💡 핵심 개념 정리
+- **CoreDNS**: 플러그인 기반 DNS 서버, Kubernetes 네이티브 통합
+- **Service DNS**: FQDN 구조, A/SRV/CNAME 레코드, Headless Service
+- **Pod DNS 정책**: ClusterFirst, Default, None, 사용자 정의 설정
+- **외부 DNS**: External DNS 컨트롤러, 서비스 메시 통합
 
 ## 📚 참고 자료
-- [Kubernetes 스케줄러](https://kubernetes.io/docs/concepts/scheduling-eviction/)
-- [리소스 관리](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
-- [오토스케일링](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [CoreDNS](https://coredns.io/manual/toc/)
+- [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [External DNS](https://github.com/kubernetes-sigs/external-dns)
+
+## 다음 세션 준비
+다음 세션에서는 **네트워크 정책과 보안**에 대해 학습합니다.

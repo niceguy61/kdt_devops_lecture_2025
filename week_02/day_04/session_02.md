@@ -1,537 +1,567 @@
-# Session 2: 업그레이드 및 마이그레이션 전략
+# Session 2: 스토리지 클래스와 동적 프로비저닝
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 4 > Session 2**로, 클러스터 운영 관리 이해를 바탕으로 Kubernetes 클러스터의 안전한 업그레이드와 워크로드 마이그레이션 전략을 심화 분석합니다.
+이 세션은 **Week 2 > Day 4 > Session 2**로, Session 1에서 학습한 볼륨과 영구 볼륨을 바탕으로 스토리지 클래스와 동적 프로비저닝의 개념과 구현 방식을 학습합니다.
 
 ## 학습 목표 (5분)
-- **Kubernetes 버전 업그레이드** 전략과 **호환성 관리** 방법
-- **워크로드 마이그레이션** 기법과 **무중단 전환** 전략
-- **롤백 계획** 및 **리스크 관리** 방법론 수립
+- **스토리지 클래스** 개념과 **프로비저너** 역할 완전 이해
+- **동적 프로비저닝**과 **정적 프로비저닝** 비교 학습
+- **클라우드 스토리지** 통합과 **CSI** 드라이버 파악
+- **스토리지 매개변수**와 **정책** 설정 이해
 
-## 1. 이론: Kubernetes 버전 업그레이드 전략 (20분)
+## 1. 스토리지 클래스 개념과 프로비저너 역할 (15분)
 
-### 업그레이드 계획 및 준비
+### 스토리지 클래스 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Upgrade Planning"
-        A[Version Analysis] --> B[Compatibility Check]
-        B --> C[Risk Assessment]
-        C --> D[Rollback Plan]
+    subgraph "StorageClass 구조"
+        A[StorageClass] --> B[Provisioner]
+        A --> C[Parameters]
+        A --> D[ReclaimPolicy]
+        A --> E[VolumeBindingMode]
     end
     
-    subgraph "Upgrade Process"
-        E[Control Plane] --> F[Worker Nodes]
-        F --> G[Add-ons]
-        G --> H[Validation]
+    subgraph "동적 프로비저닝"
+        F[PVC 생성] --> G[StorageClass 참조]
+        G --> H[Provisioner 호출]
+        H --> I[PV 자동 생성]
+        I --> J[PVC 바인딩]
     end
     
-    subgraph "Post-Upgrade"
-        I[Testing] --> J[Monitoring]
-        J --> K[Documentation]
+    subgraph "CSI 드라이버"
+        K[CSI Controller] --> L[Volume Creation]
+        M[CSI Node] --> N[Volume Mount]
+        L --> O[Cloud Storage]
+        N --> P[Pod Volume]
     end
     
-    D --> E
-    H --> I
+    B --> H
+    I --> K
+    P --> F
 ```
 
-### 버전 호환성 및 업그레이드 경로
-
+### 스토리지 클래스 상세 분석
 ```
-Kubernetes 업그레이드 전략:
+StorageClass 기본 개념:
 
-버전 호환성 분석:
-├── Kubernetes 버전 정책:
-│   ├── 마이너 버전 간 호환성 (n-2 지원)
-│   ├── API 버전 지원 정책
-│   ├── 기능 게이트 생명주기
-│   ├── 사용 중단 정책 (Deprecation Policy)
-│   └── 보안 패치 및 백포트
-├── 컴포넌트 호환성:
-│   ├── kubelet 버전 스큐 정책
-│   ├── kube-proxy 호환성
-│   ├── kubectl 클라이언트 호환성
-│   ├── 컨테이너 런타임 지원
-│   └── CNI/CSI 플러그인 호환성
-├── 애플리케이션 호환성:
-│   ├── API 버전 변경 영향 분석
-│   ├── 사용 중단된 API 사용 현황
-│   ├── 커스텀 리소스 호환성
-│   ├── 헬름 차트 호환성
-│   └── 서드파티 도구 호환성
-└── 인프라 호환성:
-    ├── 클라우드 제공업체 지원
-    ├── 네트워크 플러그인 호환성
-    ├── 스토리지 드라이버 지원
-    ├── 모니터링 도구 호환성
-    └── 보안 도구 통합
+스토리지 클래스 역할:
+├── 스토리지 추상화:
+│   ├── 스토리지 타입별 템플릿 제공
+│   ├── 프로비저닝 정책 정의
+│   ├── 성능 특성 분류
+│   ├── 비용 최적화 옵션
+│   └── 사용자 친화적 인터페이스
+├── 동적 프로비저닝 지원:
+│   ├── PVC 요청 시 자동 PV 생성
+│   ├── 스토리지 백엔드 자동 할당
+│   ├── 용량 및 성능 자동 설정
+│   ├── 라이프사이클 자동 관리
+│   └── 리소스 효율성 향상
+├── 정책 기반 관리:
+│   ├── 회수 정책 표준화
+│   ├── 바인딩 모드 제어
+│   ├── 확장 정책 설정
+│   ├── 백업 정책 통합
+│   └── 보안 정책 적용
 
-업그레이드 준비 단계:
-├── 현재 상태 분석:
-│   ├── 클러스터 버전 및 구성 확인
-│   ├── 워크로드 인벤토리 작성
-│   ├── API 사용 현황 분석
-│   ├── 리소스 사용량 평가
-│   └── 의존성 매핑
-├── 호환성 검증:
-│   ├── kubectl convert를 통한 API 변환 테스트
-│   ├── 사용 중단 API 식별 및 마이그레이션
-│   ├── 애드온 및 오퍼레이터 호환성 확인
-│   ├── 커스텀 컨트롤러 테스트
-│   └── 통합 테스트 수행
-├── 백업 및 스냅샷:
-│   ├── etcd 클러스터 전체 백업
-│   ├── 애플리케이션 데이터 백업
-│   ├── 설정 파일 및 시크릿 백업
-│   ├── 인프라 상태 스냅샷
-│   └── 복구 절차 검증
-└── 테스트 환경 구성:
-    ├── 프로덕션 동일 환경 구성
-    ├── 업그레이드 시나리오 테스트
-    ├── 성능 및 안정성 검증
-    ├── 롤백 시나리오 테스트
-    └── 자동화 스크립트 검증
+프로비저너 (Provisioner):
+├── 내장 프로비저너:
+│   ├── kubernetes.io/aws-ebs
+│   ├── kubernetes.io/gce-pd
+│   ├── kubernetes.io/azure-disk
+│   ├── kubernetes.io/azure-file
+│   ├── kubernetes.io/cinder
+│   ├── kubernetes.io/vsphere-volume
+│   └── kubernetes.io/no-provisioner (정적)
+├── 외부 프로비저너:
+│   ├── CSI 드라이버 기반
+│   ├── 벤더별 전용 프로비저너
+│   ├── 오픈소스 프로비저너
+│   ├── 커뮤니티 프로비저너
+│   └── 커스텀 프로비저너
+├── 프로비저너 기능:
+│   ├── 볼륨 생성 및 삭제
+│   ├── 스냅샷 생성 및 관리
+│   ├── 볼륨 확장 지원
+│   ├── 클론 및 복제
+│   └── 메트릭 및 모니터링
 
-업그레이드 실행 전략:
-├── 단계적 업그레이드:
-│   ├── 컨트롤 플레인 우선 업그레이드
-│   ├── 워커 노드 순차 업그레이드
-│   ├── 애드온 및 시스템 컴포넌트
-│   ├── 사용자 워크로드 검증
-│   └── 모니터링 및 검증
-├── 블루-그린 업그레이드:
-│   ├── 새로운 클러스터 구성
-│   ├── 워크로드 점진적 이동
-│   ├── 트래픽 전환 및 검증
-│   ├── 기존 클러스터 유지 (롤백용)
-│   └── 완전 전환 후 정리
-├── 카나리 업그레이드:
-│   ├── 일부 노드만 업그레이드
-│   ├── 제한된 워크로드 테스트
-│   ├── 점진적 확대 적용
-│   ├── 문제 발생 시 즉시 롤백
-│   └── 전체 클러스터 업그레이드
-└── 인플레이스 업그레이드:
-    ├── 기존 클러스터 직접 업그레이드
-    ├── 최소 다운타임 목표
-    ├── 자동화된 업그레이드 도구 활용
-    ├── 실시간 모니터링 및 검증
-    └── 빠른 롤백 메커니즘
-```
-
-### 컨트롤 플레인 업그레이드
-
-```
-컨트롤 플레인 업그레이드 절차:
-
-etcd 업그레이드:
-├── 백업 및 스냅샷 생성
-├── 멤버별 순차 업그레이드
-├── 클러스터 상태 검증
-├── 데이터 무결성 확인
-└── 성능 메트릭 모니터링
-
-API 서버 업그레이드:
-├── 로드 밸런서에서 제거
-├── 새 버전으로 교체
-├── 헬스 체크 통과 확인
-├── 로드 밸런서에 재추가
-└── API 호환성 검증
-
-기타 컴포넌트:
-├── kube-controller-manager
-├── kube-scheduler
-├── cloud-controller-manager
-├── DNS 및 네트워크 애드온
-└── 모니터링 및 로깅 스택
+스토리지 클래스 구성 요소:
+├── provisioner:
+│   ├── 스토리지 프로비저너 지정
+│   ├── 볼륨 생성 담당 컴포넌트
+│   ├── 클라우드별 전용 프로비저너
+│   ├── CSI 드라이버 이름
+│   └── 커스텀 프로비저너 지원
+├── parameters:
+│   ├── 프로비저너별 설정 매개변수
+│   ├── 스토리지 타입 (SSD, HDD)
+│   ├── 성능 등급 (IOPS, 처리량)
+│   ├── 가용성 영역 지정
+│   ├── 암호화 설정
+│   ├── 복제 정책
+│   └── 백업 설정
+├── reclaimPolicy:
+│   ├── Delete (기본값)
+│   ├── Retain
+│   ├── 동적 생성 PV 정책
+│   └── 데이터 보존 전략
+├── volumeBindingMode:
+│   ├── Immediate (즉시 바인딩)
+│   ├── WaitForFirstConsumer (지연 바인딩)
+│   ├── 토폴로지 인식 스케줄링
+│   └── 노드 어피니티 고려
+├── allowVolumeExpansion:
+│   ├── 볼륨 확장 허용 여부
+│   ├── 온라인 확장 지원
+│   ├── 파일시스템 자동 확장
+│   └── 다운타임 없는 확장
+└── mountOptions:
+    ├── 마운트 시 추가 옵션
+    ├── 성능 튜닝 옵션
+    ├── 보안 관련 옵션
+    └── 파일시스템별 옵션
 ```
 
-## 2. 이론: 워크로드 마이그레이션 전략 (15분)
+## 2. 동적 프로비저닝과 정적 프로비저닝 비교 (12분)
 
-### 마이그레이션 패턴 및 전략
+### 프로비저닝 방식 비교
 
 ```mermaid
-sequenceDiagram
-    participant Source as Source Cluster
-    participant Migration as Migration Tool
-    participant Target as Target Cluster
-    participant LB as Load Balancer
+graph TB
+    subgraph "정적 프로비저닝"
+        A[Admin Creates PV] --> B[User Creates PVC]
+        B --> C[Binding Process]
+        C --> D[Pod Uses Volume]
+    end
     
-    Source->>Migration: Export workloads
-    Migration->>Target: Import workloads
-    Target->>Target: Validate deployment
-    Migration->>LB: Update traffic routing
-    LB->>Target: Route traffic
-    Migration->>Source: Drain workloads
+    subgraph "동적 프로비저닝"
+        E[User Creates PVC] --> F[StorageClass Reference]
+        F --> G[Provisioner Creates PV]
+        G --> H[Auto Binding]
+        H --> I[Pod Uses Volume]
+    end
+    
+    subgraph "비교 요소"
+        J[관리 복잡성] --> K[리소스 효율성]
+        K --> L[확장성]
+        L --> M[비용 최적화]
+        M --> N[운영 자동화]
+    end
+    
+    D --> J
+    I --> J
+    N --> A
+    N --> E
 ```
 
-### 마이그레이션 방법론
-
+### 프로비저닝 방식 상세 비교
 ```
-워크로드 마이그레이션 전략:
+동적 vs 정적 프로비저닝 비교:
 
-마이그레이션 패턴:
-├── Lift and Shift:
-│   ├── 최소한의 변경으로 이동
-│   ├── 기존 구성 그대로 복제
-│   ├── 빠른 마이그레이션 가능
-│   ├── 최적화 기회 제한
-│   └── 호환성 문제 가능성
-├── Re-platforming:
-│   ├── 플랫폼 특화 최적화
-│   ├── 클라우드 네이티브 기능 활용
-│   ├── 성능 및 비용 최적화
-│   ├── 중간 수준의 변경 필요
-│   └── 점진적 개선 가능
-├── Refactoring:
-│   ├── 아키텍처 재설계
-│   ├── 마이크로서비스 분해
-│   ├── 클라우드 네이티브 패턴 적용
-│   ├── 높은 변경 비용
-│   └── 장기적 이익 극대화
-└── Hybrid Approach:
-    ├── 워크로드별 차별화 전략
-    ├── 위험도 기반 접근법
-    ├── 단계적 현대화
-    ├── 비즈니스 연속성 보장
-    └── 점진적 투자 회수
+정적 프로비저닝:
+├── 특징:
+│   ├── 관리자가 사전에 PV 생성
+│   ├── 미리 정의된 스토리지 풀
+│   ├── 수동 관리 및 할당
+│   ├── 예측 가능한 리소스
+│   └── 전통적인 관리 방식
+├── 장점:
+│   ├── 완전한 제어 가능
+│   ├── 예측 가능한 성능
+│   ├── 보안 정책 엄격 적용
+│   ├── 비용 예측 용이
+│   ├── 규정 준수 용이
+│   └── 특수 요구사항 대응
+├── 단점:
+│   ├── 높은 관리 부담
+│   ├── 리소스 낭비 가능성
+│   ├── 확장성 제한
+│   ├── 사용자 대기 시간
+│   ├── 운영 효율성 저하
+│   └── 자동화 어려움
+├── 적용 사례:
+│   ├── 고성능 전용 스토리지
+│   ├── 규정 준수 환경
+│   ├── 레거시 시스템 통합
+│   ├── 특수 하드웨어 활용
+│   └── 엄격한 보안 요구사항
 
-데이터 마이그레이션:
-├── 상태 비저장 워크로드:
-│   ├── 설정 및 시크릿 이동
-│   ├── 이미지 레지스트리 동기화
-│   ├── 네트워크 정책 복제
-│   ├── RBAC 권한 매핑
-│   └── 모니터링 설정 이전
-├── 상태 유지 워크로드:
-│   ├── 데이터베이스 마이그레이션
-│   ├── 볼륨 데이터 복제
-│   ├── 백업 및 복원 전략
-│   ├── 데이터 일관성 보장
-│   └── 다운타임 최소화
-├── 네트워크 구성:
-│   ├── 서비스 디스커버리 업데이트
-│   ├── 로드 밸런서 재구성
-│   ├── DNS 레코드 업데이트
-│   ├── 방화벽 규칙 조정
-│   └── 인증서 및 TLS 설정
-└── 보안 정책:
-    ├── RBAC 정책 이전
-    ├── 네트워크 정책 적용
-    ├── Pod 보안 표준 설정
-    ├── 시크릿 및 키 관리
-    └── 감사 로그 설정
+동적 프로비저닝:
+├── 특징:
+│   ├── PVC 생성 시 자동 PV 생성
+│   ├── StorageClass 기반 자동화
+│   ├── 필요 시점 리소스 할당
+│   ├── 클라우드 네이티브 방식
+│   └── 현대적 관리 패러다임
+├── 장점:
+│   ├── 관리 부담 최소화
+│   ├── 리소스 효율성 극대화
+│   ├── 높은 확장성
+│   ├── 빠른 프로비저닝
+│   ├── 사용자 셀프서비스
+│   ├── 자동화 친화적
+│   └── 클라우드 최적화
+├── 단점:
+│   ├── 제어 수준 제한
+│   ├── 예측하기 어려운 비용
+│   ├── 보안 정책 복잡성
+│   ├── 벤더 종속성 위험
+│   ├── 디버깅 복잡성
+│   └── 네트워크 의존성
+├── 적용 사례:
+│   ├── 클라우드 네이티브 애플리케이션
+│   ├── 개발/테스트 환경
+│   ├── 마이크로서비스 아키텍처
+│   ├── 자동 스케일링 환경
+│   └── DevOps 파이프라인
 
-마이그레이션 도구:
-├── Velero:
-│   ├── 클러스터 백업 및 복원
-│   ├── 네임스페이스 단위 마이그레이션
-│   ├── 볼륨 스냅샷 지원
-│   ├── 스케줄된 백업
-│   └── 재해 복구 지원
-├── Kubernetes Migration Tools:
-│   ├── kubectl을 통한 리소스 내보내기
-│   ├── Helm 차트 기반 배포
-│   ├── Kustomize 오버레이 활용
-│   ├── GitOps 기반 동기화
-│   └── 커스텀 마이그레이션 스크립트
-├── 클라우드 제공업체 도구:
-│   ├── AWS Migration Hub
-│   ├── Azure Migrate
-│   ├── Google Cloud Migrate
-│   ├── 관리형 마이그레이션 서비스
-│   └── 네이티브 통합 지원
-└── 서드파티 솔루션:
-    ├── Portworx PX-Migrate
-    ├── Kasten K10
-    ├── Rancher Fleet
-    ├── 상용 마이그레이션 도구
-    └── 컨설팅 서비스 활용
-```
+선택 기준:
+├── 조직 성숙도:
+│   ├── 클라우드 네이티브 역량
+│   ├── 자동화 수준
+│   ├── 운영 프로세스
+│   └── 기술 전문성
+├── 비즈니스 요구사항:
+│   ├── 확장성 요구사항
+│   ├── 비용 최적화 목표
+│   ├── 서비스 수준 목표
+│   └── 규정 준수 요구사항
+├── 기술적 제약사항:
+│   ├── 기존 인프라 호환성
+│   ├── 보안 정책 요구사항
+│   ├── 성능 요구사항
+│   └── 가용성 요구사항
+└── 운영 모델:
+    ├── 중앙집중식 vs 분산형
+    ├── 셀프서비스 vs 관리형
+    ├── 자동화 vs 수동 관리
+    └── 표준화 vs 맞춤형
 
-## 3. 이론: 롤백 및 리스크 관리 (10분)
-
-### 롤백 전략 및 복구 계획
-
-```
-롤백 및 복구 전략:
-
-롤백 시나리오:
-├── 업그레이드 실패:
-│   ├── 컨트롤 플레인 장애
-│   ├── 워커 노드 문제
-│   ├── 네트워크 연결 실패
-│   ├── 스토리지 접근 불가
-│   └── 애플리케이션 호환성 문제
-├── 성능 저하:
-│   ├── 응답 시간 증가
-│   ├── 처리량 감소
-│   ├── 리소스 사용량 급증
-│   ├── 메모리 누수 발생
-│   └── CPU 사용률 급증
-├── 기능 장애:
-│   ├── API 호환성 문제
-│   ├── 기능 동작 오류
-│   ├── 데이터 손실 위험
-│   ├── 보안 취약점 노출
-│   └── 통합 서비스 실패
-└── 비즈니스 영향:
-    ├── 서비스 중단
-    ├── 사용자 경험 저하
-    ├── 매출 손실 발생
-    ├── SLA 위반
-    └── 고객 신뢰도 하락
-
-롤백 메커니즘:
-├── 자동 롤백:
-│   ├── 헬스 체크 기반 자동 감지
-│   ├── 메트릭 임계값 기반 트리거
-│   ├── 사전 정의된 롤백 스크립트
-│   ├── 최소 개입으로 빠른 복구
-│   └── 알림 및 로깅 자동화
-├── 수동 롤백:
-│   ├── 운영팀 판단 기반 실행
-│   ├── 상황별 맞춤 대응
-│   ├── 부분 롤백 및 선택적 복구
-│   ├── 근본 원인 분석 병행
-│   └── 문서화된 절차 준수
-├── 점진적 롤백:
-│   ├── 단계별 순차 롤백
-│   ├── 영향 범위 최소화
-│   ├── 서비스 연속성 보장
-│   ├── 데이터 일관성 유지
-│   └── 사용자 영향 최소화
-└── 완전 롤백:
-    ├── 전체 시스템 이전 상태 복원
-    ├── 백업에서 완전 복구
-    ├── 모든 변경 사항 되돌리기
-    ├── 최대 안정성 확보
-    └── 최대 다운타임 발생
-
-리스크 관리:
-├── 사전 위험 평가:
-│   ├── 업그레이드 영향 분석
-│   ├── 의존성 위험 평가
-│   ├── 비즈니스 연속성 계획
-│   ├── 복구 시간 목표 설정
-│   └── 위험 완화 전략 수립
-├── 모니터링 및 알림:
-│   ├── 실시간 상태 모니터링
-│   ├── 이상 징후 조기 감지
-│   ├── 자동 알림 및 에스컬레이션
-│   ├── 대시보드 및 시각화
-│   └── 로그 분석 및 추적
-└── 커뮤니케이션:
-    ├── 이해관계자 사전 통보
-    ├── 진행 상황 실시간 공유
-    ├── 문제 발생 시 즉시 보고
-    ├── 복구 완료 후 사후 분석
-    └── 교훈 학습 및 개선
+하이브리드 접근법:
+├── 계층별 전략:
+│   ├── 중요 워크로드: 정적
+│   ├── 일반 워크로드: 동적
+│   ├── 개발 환경: 동적
+│   └── 프로덕션: 혼합
+├── 단계적 전환:
+│   ├── 정적에서 동적으로 점진적 이동
+│   ├── 파일럿 프로젝트 적용
+│   ├── 경험 축적 후 확대
+│   └── 위험 최소화 접근법
+└── 정책 기반 선택:
+    ├── 워크로드 특성별 자동 선택
+    ├── 라벨 기반 정책 적용
+    ├── 네임스페이스별 기본 정책
+    └── 사용자 권한 기반 제한
 ```
 
-## 4. 개념 예시: 업그레이드 및 마이그레이션 구성 (12분)
+## 3. 클라우드 스토리지 통합과 CSI 드라이버 (10분)
 
-### kubeadm 업그레이드 예시
+### CSI 아키텍처
 
-```bash
-# Kubernetes 클러스터 업그레이드 (개념 예시)
-
-# 1. 현재 버전 확인
-kubectl version --short
-kubeadm version
-
-# 2. 업그레이드 계획 확인
-kubeadm upgrade plan
-
-# 3. 컨트롤 플레인 업그레이드
-sudo kubeadm upgrade apply v1.28.0
-
-# 4. kubelet 및 kubectl 업그레이드
-sudo apt-mark unhold kubeadm kubelet kubectl
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.28.0-00 kubelet=1.28.0-00 kubectl=1.28.0-00
-sudo apt-mark hold kubeadm kubelet kubectl
-
-# 5. kubelet 재시작
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# 6. 워커 노드 업그레이드 (각 노드에서)
-kubectl drain <node-name> --ignore-daemonsets
-sudo kubeadm upgrade node
-sudo systemctl restart kubelet
-kubectl uncordon <node-name>
+```mermaid
+graph TB
+    subgraph "CSI 구조"
+        A[CSI Driver] --> B[Controller Plugin]
+        A --> C[Node Plugin]
+        
+        B --> D[CreateVolume]
+        B --> E[DeleteVolume]
+        B --> F[ControllerPublishVolume]
+        
+        C --> G[NodeStageVolume]
+        C --> H[NodePublishVolume]
+        C --> I[NodeUnpublishVolume]
+    end
+    
+    subgraph "Kubernetes 통합"
+        J[External Provisioner] --> K[CSI Controller]
+        L[External Attacher] --> K
+        M[External Resizer] --> K
+        N[External Snapshotter] --> K
+        
+        O[kubelet] --> P[CSI Node]
+    end
+    
+    subgraph "스토리지 백엔드"
+        Q[Cloud Storage] --> R[AWS EBS]
+        Q --> S[GCE PD]
+        Q --> T[Azure Disk]
+        Q --> U[Custom Storage]
+    end
+    
+    K --> A
+    P --> C
+    D --> Q
 ```
 
-### Velero 백업 및 마이그레이션 예시
+### CSI 드라이버 상세 분석
+```
+Container Storage Interface (CSI):
 
-```yaml
-# Velero 백업 구성 (개념 예시)
-apiVersion: velero.io/v1
-kind: Backup
-metadata:
-  name: full-cluster-backup
-  namespace: velero
-spec:
-  includedNamespaces:
-  - "*"
-  excludedNamespaces:
-  - kube-system
-  - velero
-  includedResources:
-  - "*"
-  excludedResources:
-  - events
-  - events.events.k8s.io
-  labelSelector:
-    matchLabels:
-      backup: "true"
-  snapshotVolumes: true
-  ttl: 720h0m0s
-  storageLocation: default
-  volumeSnapshotLocations:
-  - default
+CSI 표준 개요:
+├── 목적 및 배경:
+│   ├── 스토리지 벤더 중립적 인터페이스
+│   ├── Kubernetes 외부 표준
+│   ├── 플러그인 기반 확장성
+│   ├── 벤더 종속성 해결
+│   └── 표준화된 스토리지 통합
+├── CSI vs In-tree 드라이버:
+│   ├── In-tree: Kubernetes 코어에 포함
+│   ├── CSI: 외부 플러그인 형태
+│   ├── 독립적 개발 및 배포
+│   ├── 버전 호환성 개선
+│   └── 유지보수성 향상
+├── CSI 구성 요소:
+│   ├── CSI Controller: 볼륨 생명주기 관리
+│   ├── CSI Node: 노드별 볼륨 작업
+│   ├── External Components: Kubernetes 통합
+│   ├── gRPC 인터페이스: 표준 통신
+│   └── 사이드카 컨테이너: 보조 기능
 
----
-# 복원 구성
-apiVersion: velero.io/v1
-kind: Restore
-metadata:
-  name: full-cluster-restore
-  namespace: velero
-spec:
-  backupName: full-cluster-backup
-  includedNamespaces:
-  - production
-  - staging
-  excludedResources:
-  - nodes
-  - events
-  restorePVs: true
+CSI 드라이버 구현:
+├── Controller Plugin:
+│   ├── CreateVolume: 볼륨 생성
+│   ├── DeleteVolume: 볼륨 삭제
+│   ├── ControllerPublishVolume: 노드에 볼륨 연결
+│   ├── ControllerUnpublishVolume: 노드에서 볼륨 분리
+│   ├── ValidateVolumeCapabilities: 볼륨 기능 검증
+│   ├── ListVolumes: 볼륨 목록 조회
+│   ├── GetCapacity: 용량 정보 조회
+│   ├── CreateSnapshot: 스냅샷 생성
+│   └── ControllerExpandVolume: 볼륨 확장
+├── Node Plugin:
+│   ├── NodeStageVolume: 노드에 볼륨 준비
+│   ├── NodeUnstageVolume: 노드에서 볼륨 정리
+│   ├── NodePublishVolume: Pod에 볼륨 마운트
+│   ├── NodeUnpublishVolume: Pod에서 볼륨 언마운트
+│   ├── NodeGetVolumeStats: 볼륨 사용량 조회
+│   ├── NodeExpandVolume: 노드에서 볼륨 확장
+│   └── NodeGetCapabilities: 노드 기능 조회
+├── Identity Service:
+│   ├── GetPluginInfo: 플러그인 정보
+│   ├── GetPluginCapabilities: 플러그인 기능
+│   └── Probe: 플러그인 상태 확인
+
+주요 CSI 드라이버:
+├── 클라우드 제공업체:
+│   ├── AWS EBS CSI Driver
+│   ├── AWS EFS CSI Driver
+│   ├── GCE PD CSI Driver
+│   ├── Azure Disk CSI Driver
+│   ├── Azure File CSI Driver
+│   └── 각 클라우드별 전용 기능
+├── 스토리지 벤더:
+│   ├── NetApp Trident
+│   ├── Pure Storage
+│   ├── Dell EMC
+│   ├── HPE Storage
+│   ├── IBM Storage
+│   └── 엔터프라이즈 스토리지 통합
+├── 오픈소스:
+│   ├── Ceph CSI
+│   ├── GlusterFS CSI
+│   ├── OpenEBS
+│   ├── Longhorn
+│   ├── Portworx
+│   └── 커뮤니티 기반 솔루션
+└── 특수 목적:
+    ├── Local Path Provisioner
+    ├── NFS CSI Driver
+    ├── iSCSI CSI Driver
+    ├── SMB CSI Driver
+    └── 프로토콜별 드라이버
+
+CSI 사이드카 컨테이너:
+├── external-provisioner:
+│   ├── PVC 감시 및 볼륨 생성 요청
+│   ├── StorageClass 기반 프로비저닝
+│   ├── 볼륨 생성 상태 관리
+│   └── PV 객체 생성 및 바인딩
+├── external-attacher:
+│   ├── VolumeAttachment 객체 감시
+│   ├── 볼륨 연결/분리 관리
+│   ├── 노드별 볼륨 상태 추적
+│   └── 연결 실패 시 재시도
+├── external-resizer:
+│   ├── PVC 크기 변경 감지
+│   ├── 볼륨 확장 요청 처리
+│   ├── 파일시스템 확장 지원
+│   └── 온라인 확장 관리
+├── external-snapshotter:
+│   ├── VolumeSnapshot 객체 관리
+│   ├── 스냅샷 생성/삭제 처리
+│   ├── 스냅샷 메타데이터 관리
+│   └── 복원 기능 지원
+└── node-driver-registrar:
+    ├── kubelet에 CSI 드라이버 등록
+    ├── Unix 도메인 소켓 통신
+    ├── 드라이버 상태 모니터링
+    └── 플러그인 생명주기 관리
 ```
 
-### 업그레이드 자동화 스크립트 예시
+## 4. 스토리지 매개변수와 정책 설정 (10분)
 
-```bash
-#!/bin/bash
-# Kubernetes 업그레이드 자동화 스크립트 (개념 예시)
+### 스토리지 매개변수 구성
 
-set -e
-
-TARGET_VERSION="1.28.0"
-BACKUP_NAME="pre-upgrade-$(date +%Y%m%d-%H%M%S)"
-
-echo "Starting Kubernetes upgrade to version $TARGET_VERSION"
-
-# 1. 사전 백업
-echo "Creating backup..."
-velero backup create $BACKUP_NAME --wait
-
-# 2. 업그레이드 전 검증
-echo "Pre-upgrade validation..."
-kubectl get nodes
-kubectl get pods --all-namespaces | grep -v Running | grep -v Completed
-
-# 3. 컨트롤 플레인 업그레이드
-echo "Upgrading control plane..."
-kubeadm upgrade plan
-kubeadm upgrade apply $TARGET_VERSION -y
-
-# 4. 워커 노드 업그레이드
-echo "Upgrading worker nodes..."
-for node in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}' | grep -v master); do
-    echo "Upgrading node: $node"
-    kubectl drain $node --ignore-daemonsets --delete-emptydir-data --force
+```mermaid
+graph TB
+    subgraph "StorageClass Parameters"
+        A[Performance Tier] --> B[IOPS Settings]
+        A --> C[Throughput Limits]
+        
+        D[Availability] --> E[Replication Factor]
+        D --> F[Zone Distribution]
+        
+        G[Security] --> H[Encryption]
+        G --> I[Access Control]
+        
+        J[Cost Optimization] --> K[Storage Type]
+        J --> L[Lifecycle Policies]
+    end
     
-    # SSH to node and upgrade
-    ssh $node "
-        kubeadm upgrade node
-        systemctl restart kubelet
-    "
+    subgraph "Policy Configuration"
+        M[Reclaim Policy] --> N[Delete/Retain]
+        O[Binding Mode] --> P[Immediate/WaitForFirstConsumer]
+        Q[Expansion Policy] --> R[Allow/Deny]
+        S[Mount Options] --> T[Performance Tuning]
+    end
     
-    kubectl uncordon $node
-    kubectl wait --for=condition=Ready node/$node --timeout=300s
-done
-
-# 5. 업그레이드 후 검증
-echo "Post-upgrade validation..."
-kubectl version
-kubectl get nodes
-kubectl get pods --all-namespaces
-
-echo "Upgrade completed successfully!"
+    B --> M
+    F --> O
+    I --> Q
+    L --> S
 ```
 
-### 마이그레이션 체크리스트 예시
+### 매개변수 및 정책 상세 분석
+```
+스토리지 매개변수 설정:
 
-```yaml
-# 마이그레이션 체크리스트 (개념 예시)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: migration-checklist
-data:
-  pre-migration.md: |
-    # Pre-Migration Checklist
-    
-    ## Infrastructure
-    - [ ] Target cluster provisioned and configured
-    - [ ] Network connectivity established
-    - [ ] Storage systems prepared
-    - [ ] Backup systems configured
-    
-    ## Security
-    - [ ] RBAC policies reviewed and updated
-    - [ ] Secrets and certificates migrated
-    - [ ] Network policies configured
-    - [ ] Security scanning completed
-    
-    ## Applications
-    - [ ] Application inventory completed
-    - [ ] Dependencies mapped
-    - [ ] Configuration externalized
-    - [ ] Health checks configured
-    
-    ## Testing
-    - [ ] Migration scripts tested
-    - [ ] Rollback procedures verified
-    - [ ] Performance benchmarks established
-    - [ ] Monitoring and alerting configured
-  
-  post-migration.md: |
-    # Post-Migration Checklist
-    
-    ## Validation
-    - [ ] All workloads running successfully
-    - [ ] Network connectivity verified
-    - [ ] Data integrity confirmed
-    - [ ] Performance metrics within acceptable range
-    
-    ## Cleanup
-    - [ ] Source cluster resources cleaned up
-    - [ ] Temporary migration resources removed
-    - [ ] Documentation updated
-    - [ ] Team training completed
+성능 관련 매개변수:
+├── IOPS 설정:
+│   ├── 프로비저닝된 IOPS (AWS gp3, io1/io2)
+│   ├── 버스트 가능 IOPS (gp2)
+│   ├── 최대 IOPS 제한
+│   ├── 읽기/쓰기 IOPS 분리
+│   └── 워크로드별 최적화
+├── 처리량 설정:
+│   ├── 대역폭 제한 (MB/s)
+│   ├── 순차/랜덤 I/O 최적화
+│   ├── 네트워크 처리량 고려
+│   ├── 버퍼 크기 조정
+│   └── 캐시 정책 설정
+├── 지연시간 최적화:
+│   ├── SSD vs HDD 선택
+│   ├── 로컬 vs 네트워크 스토리지
+│   ├── 캐시 계층 활용
+│   ├── 압축 및 중복제거
+│   └── 큐 깊이 최적화
+
+가용성 및 내구성:
+├── 복제 정책:
+│   ├── 복제본 수 설정
+│   ├── 지역 간 복제
+│   ├── 동기/비동기 복제
+│   ├── 일관성 수준 선택
+│   └── 장애 복구 시간 목표
+├── 가용성 영역:
+│   ├── 다중 AZ 배치
+│   ├── 영역별 복제본 분산
+│   ├── 영역 장애 대응
+│   ├── 네트워크 지연 고려
+│   └── 비용 vs 가용성 균형
+├── 백업 및 스냅샷:
+│   ├── 자동 스냅샷 정책
+│   ├── 백업 주기 설정
+│   ├── 보존 기간 정책
+│   ├── 증분 백업 지원
+│   └── 크로스 리전 백업
+
+보안 설정:
+├── 암호화:
+│   ├── 저장 시 암호화 (Encryption at Rest)
+│   ├── 전송 중 암호화 (Encryption in Transit)
+│   ├── 키 관리 서비스 통합
+│   ├── 고객 관리 키 (CMK)
+│   ├── 하드웨어 보안 모듈 (HSM)
+│   └── 암호화 성능 영향 고려
+├── 접근 제어:
+│   ├── IAM 정책 통합
+│   ├── 네트워크 ACL 설정
+│   ├── VPC 엔드포인트 사용
+│   ├── 보안 그룹 규칙
+│   └── 감사 로깅 활성화
+├── 컴플라이언스:
+│   ├── 데이터 주권 요구사항
+│   ├── 규정 준수 인증
+│   ├── 감사 추적 보장
+│   ├── 데이터 분류 정책
+│   └── 보존 정책 준수
+
+비용 최적화:
+├── 스토리지 계층화:
+│   ├── 핫 데이터: 고성능 스토리지
+│   ├── 웜 데이터: 표준 스토리지
+│   ├── 콜드 데이터: 저비용 스토리지
+│   ├── 아카이브: 장기 보관용
+│   └── 자동 계층화 정책
+├── 라이프사이클 관리:
+│   ├── 데이터 에이징 정책
+│   ├── 자동 삭제 규칙
+│   ├── 압축 및 중복제거
+│   ├── 사용량 기반 최적화
+│   └── 비용 모니터링 및 알림
+├── 리소스 최적화:
+│   ├── 오버프로비저닝 방지
+│   ├── 사용률 기반 스케일링
+│   ├── 예약 인스턴스 활용
+│   ├── 스팟 인스턴스 고려
+│   └── 멀티 클라우드 비용 비교
+
+정책 설정 모범 사례:
+├── 환경별 정책:
+│   ├── 개발: 비용 최적화 우선
+│   ├── 스테이징: 프로덕션 유사 설정
+│   ├── 프로덕션: 성능 및 가용성 우선
+│   ├── 재해복구: 지역 간 복제
+│   └── 아카이브: 장기 보관 최적화
+├── 워크로드별 정책:
+│   ├── 데이터베이스: 고성능, 고가용성
+│   ├── 로그 저장: 대용량, 저비용
+│   ├── 미디어 파일: 대용량, 아카이브
+│   ├── 캐시: 고성능, 임시 저장
+│   └── 백업: 내구성, 비용 효율성
+├── 자동화 정책:
+│   ├── 라벨 기반 자동 분류
+│   ├── 사용 패턴 기반 최적화
+│   ├── 정책 위반 자동 감지
+│   ├── 비용 임계값 알림
+│   └── 자동 정리 및 최적화
+└── 거버넌스:
+    ├── 정책 승인 프로세스
+    ├── 변경 관리 절차
+    ├── 정기적 정책 검토
+    ├── 컴플라이언스 모니터링
+    └── 교육 및 문서화
 ```
 
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **체계적 업그레이드 계획**과 **호환성 검증** 프로세스
-- **다양한 마이그레이션 패턴**과 **상황별 최적 전략**
-- **롤백 메커니즘**과 **리스크 관리** 체계
-- **자동화 도구** 활용을 통한 **안전하고 효율적인 전환**
+## 💬 그룹 토론: 동적 프로비저닝의 장점과 운영 복잡성 (8분)
 
 ### 토론 주제
-"대규모 프로덕션 환경에서 무중단 업그레이드와 마이그레이션을 보장하면서도 리스크를 최소화하는 전략은 무엇인가?"
+**"동적 프로비저닝이 가져다주는 운영 효율성과 함께 발생할 수 있는 복잡성을 어떻게 관리해야 하는가?"**
 
-## 💡 핵심 키워드
-- **업그레이드 전략**: 버전 호환성, 단계적 업그레이드, 블루-그린
-- **마이그레이션**: Lift and Shift, Re-platforming, 데이터 마이그레이션
-- **롤백 계획**: 자동 롤백, 리스크 평가, 복구 전략
-- **자동화 도구**: kubeadm, Velero, 마이그레이션 스크립트
+## 💡 핵심 개념 정리
+- **StorageClass**: 스토리지 템플릿, 프로비저너, 정책 정의
+- **동적 프로비저닝**: 자동 PV 생성, 리소스 효율성, 운영 자동화
+- **CSI 드라이버**: 표준 인터페이스, 벤더 중립성, 플러그인 확장
+- **스토리지 정책**: 성능, 가용성, 보안, 비용 최적화
 
 ## 📚 참고 자료
-- [Kubernetes 업그레이드 가이드](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
-- [Velero 백업 솔루션](https://velero.io/docs/)
-- [클러스터 마이그레이션 모범 사례](https://kubernetes.io/docs/setup/production-environment/)
+- [Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
+- [CSI Drivers](https://kubernetes-csi.github.io/docs/)
+- [Dynamic Volume Provisioning](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/)
+
+## 다음 세션 준비
+다음 세션에서는 **StatefulSet과 영구 스토리지**에 대해 학습합니다.

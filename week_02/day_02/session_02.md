@@ -1,370 +1,285 @@
-# Session 2: 이미지 최적화 및 빌드 전략
+# Session 2: ReplicaSet과 Deployment
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 2 > Session 2**로, 컨테이너 리소스 관리 이해를 바탕으로 Docker 이미지 최적화와 효율적인 빌드 전략을 심화 분석합니다.
+이 세션은 **Week 2 > Day 2 > Session 2**로, Pod의 복제본 관리와 선언적 배포를 담당하는 ReplicaSet과 Deployment의 개념과 관계를 학습합니다.
 
 ## 학습 목표 (5분)
-- **멀티 스테이지 빌드** 고급 기법과 **이미지 최적화** 전략
-- **빌드 캐시 메커니즘**과 **레이어 최적화** 기법
-- **보안 강화**와 **성능 향상**을 위한 이미지 설계 원리
+- **ReplicaSet**의 **복제본 관리** 역할과 **동작 원리** 이해
+- **Deployment**의 **선언적 배포** 모델과 **추상화** 개념 학습
+- **롤링 업데이트**와 **배포 전략** 이론 파악
+- **버전 관리**와 **롤백** 메커니즘 이해
 
-## 1. 이론: 멀티 스테이지 빌드 아키텍처 (20분)
+## 1. ReplicaSet의 복제본 관리 역할 (15분)
 
-### 멀티 스테이지 빌드 구조 분석
+### ReplicaSet 동작 원리
 
 ```mermaid
 graph TB
-    subgraph "Build Stage"
-        A[Source Code] --> B[Build Tools]
-        B --> C[Dependencies]
-        C --> D[Compiled Binary]
+    subgraph "ReplicaSet Controller"
+        A[Desired Replicas: 3] --> B[Current Replicas 확인]
+        B --> C{상태 비교}
+        C -->|부족| D[새 Pod 생성]
+        C -->|초과| E[기존 Pod 삭제]
+        C -->|일치| F[상태 유지]
+        
+        D --> G[Pod Template 사용]
+        E --> H[Label Selector 기준]
+        F --> I[지속적 모니터링]
     end
     
-    subgraph "Runtime Stage"
-        E[Minimal Base Image] --> F[Runtime Dependencies]
-        F --> G[Application Binary]
-        G --> H[Final Image]
+    subgraph "Pod 관리"
+        J[Pod 1] --> K[Pod 2]
+        K --> L[Pod 3]
+        
+        M[Label: app=web] --> J
+        M --> K
+        M --> L
     end
     
-    D --> G
-    
-    subgraph "Benefits"
-        I[Reduced Size]
-        J[Enhanced Security]
-        K[Faster Deployment]
-        L[Clean Runtime]
-    end
-    
-    H --> I
+    G --> J
     H --> J
-    H --> K
-    H --> L
+    I --> B
 ```
 
-### 고급 멀티 스테이지 패턴
+### ReplicaSet 핵심 기능
+```
+ReplicaSet 핵심 기능:
 
-```dockerfile
-# 고급 멀티 스테이지 빌드 예시 (개념 예시)
+복제본 관리:
+├── 원하는 Pod 수 유지
+├── 장애 Pod 자동 교체
+├── 스케일링 지원 (수평적 확장)
+├── Label Selector 기반 Pod 선택
+└── Pod Template 기반 생성
 
-# 1. 의존성 캐시 스테이지
-FROM node:16-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+상태 조정 (Reconciliation):
+├── Desired State vs Current State 비교
+├── 부족한 Pod 자동 생성
+├── 초과한 Pod 자동 삭제
+├── 지속적인 상태 모니터링
+└── Control Loop 패턴 구현
 
-# 2. 개발 의존성 스테이지
-FROM node:16-alpine AS dev-deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+Pod 선택 메커니즘:
+├── Label Selector를 통한 Pod 식별
+├── 소유권 관계 설정
+├── 고아 Pod 입양 (Adoption)
+├── 중복 관리 방지
+└── 네임스페이스 범위 내 동작
 
-# 3. 빌드 스테이지
-FROM dev-deps AS builder
-COPY . .
-RUN npm run build && npm run test
-
-# 4. 런타임 스테이지
-FROM node:16-alpine AS runtime
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
-USER nextjs
-EXPOSE 3000
-CMD ["node", "dist/server.js"]
+제한사항:
+├── 직접적인 업데이트 불가
+├── 롤링 업데이트 미지원
+├── 배포 히스토리 관리 없음
+└── 고급 배포 전략 부재
 ```
 
-### 이미지 크기 최적화 전략
+## 2. Deployment의 선언적 배포 모델 (12분)
 
-```
-이미지 최적화 기법:
+### Deployment 아키텍처
 
-베이스 이미지 선택:
-├── Alpine Linux: 최소 크기 (5MB)
-├── Distroless: Google의 보안 강화 이미지
-├── Scratch: 정적 바이너리용 빈 이미지
-├── Slim 태그: 공식 이미지의 경량 버전
-├── 특정 언어 런타임: node:alpine, python:slim
-└── 보안 패치 주기 고려
-
-레이어 최적화:
-├── RUN 명령어 체이닝으로 레이어 수 감소
-├── 패키지 설치와 정리를 동일 레이어에서
-├── 임시 파일 생성과 삭제 통합
-├── .dockerignore로 불필요한 파일 제외
-├── COPY 명령어 순서 최적화
-└── 자주 변경되지 않는 레이어를 하위에 배치
-
-불필요한 요소 제거:
-├── 패키지 매니저 캐시 정리
-├── 개발 도구 및 헤더 파일 제거
-├── 문서 및 매뉴얼 페이지 삭제
-├── 로그 파일 및 임시 파일 정리
-├── 테스트 파일 및 예제 코드 제외
-└── 바이너리 스트리핑 (디버그 정보 제거)
-
-압축 및 최적화:
-├── 이미지 압축 알고리즘 활용
-├── 중복 파일 제거 및 하드링크
-├── 심볼릭 링크 최적화
-├── 파일 권한 최소화
-├── 환경 변수 최적화
-└── 메타데이터 정리
+```mermaid
+graph TB
+    subgraph "Deployment"
+        A[Deployment Spec] --> B[Deployment Controller]
+        B --> C[ReplicaSet 관리]
+    end
+    
+    subgraph "ReplicaSet 버전 관리"
+        D[ReplicaSet v1] --> E[Pod v1-1]
+        D --> F[Pod v1-2]
+        
+        G[ReplicaSet v2] --> H[Pod v2-1]
+        G --> I[Pod v2-2]
+        G --> J[Pod v2-3]
+    end
+    
+    subgraph "배포 전략"
+        K[Rolling Update] --> L[Blue-Green]
+        L --> M[Canary]
+        M --> N[Recreate]
+    end
+    
+    C --> D
+    C --> G
+    B --> K
 ```
 
-## 2. 이론: 빌드 캐시 최적화 메커니즘 (15분)
+### Deployment vs ReplicaSet 비교
+```
+Deployment vs ReplicaSet:
 
-### Docker 빌드 캐시 동작 원리
+ReplicaSet (저수준):
+├── Pod 복제본 직접 관리
+├── 단순한 스케일링만 지원
+├── 업데이트 시 수동 관리 필요
+├── 롤백 기능 없음
+├── 배포 히스토리 미제공
+└── 직접 사용 비권장
+
+Deployment (고수준):
+├── ReplicaSet을 통한 간접 관리
+├── 선언적 업데이트 지원
+├── 자동 롤링 업데이트
+├── 롤백 및 히스토리 관리
+├── 다양한 배포 전략 지원
+└── 권장되는 워크로드 관리 방식
+
+관계:
+├── Deployment → ReplicaSet → Pod
+├── 1:N 관계 (버전별 ReplicaSet)
+├── 소유권 체인 형성
+├── 계층적 추상화
+└── 상위 레벨 관리 권장
+```
+
+## 3. 롤링 업데이트와 배포 전략 이론 (10분)
+
+### 롤링 업데이트 프로세스
 
 ```mermaid
 sequenceDiagram
-    participant Client as Docker Client
-    participant Daemon as Docker Daemon
-    participant Cache as Build Cache
-    participant Registry as Image Registry
+    participant D as Deployment
+    participant RS1 as ReplicaSet v1
+    participant RS2 as ReplicaSet v2
+    participant P1 as Pod v1
+    participant P2 as Pod v2
     
-    Client->>Daemon: docker build
-    Daemon->>Cache: Check layer cache
+    D->>RS2: 새 ReplicaSet 생성
+    D->>RS2: 1개 Pod 생성 지시
+    RS2->>P2: 새 Pod 생성
     
-    alt Cache hit
-        Cache-->>Daemon: Return cached layer
-        Daemon-->>Client: Use cached layer
-    else Cache miss
-        Daemon->>Daemon: Execute instruction
-        Daemon->>Cache: Store new layer
-        Daemon-->>Client: New layer created
+    D->>RS1: 1개 Pod 삭제 지시
+    RS1->>P1: 기존 Pod 종료
+    
+    Note over D: maxSurge/maxUnavailable 확인
+    
+    loop 점진적 교체
+        D->>RS2: Pod 증가
+        D->>RS1: Pod 감소
     end
     
-    Daemon->>Registry: Push final image
+    D->>RS1: 0개로 스케일 다운
+    Note over RS2: 새 버전 완전 배포
 ```
 
-### 캐시 무효화 최소화 전략
-
+### 배포 전략 비교
 ```
-빌드 캐시 최적화:
+주요 배포 전략:
 
-레이어 순서 최적화:
-├── 자주 변경되지 않는 명령어를 상위에 배치
-├── 종속성 설치를 소스 코드 복사보다 먼저
-├── 설정 파일을 애플리케이션 코드와 분리
-├── 환경별 설정을 마지막에 적용
-├── 빌드 인수(ARG)를 적절한 위치에 배치
-└── 조건부 빌드 로직 최적화
+Rolling Update (기본):
+├── 점진적 Pod 교체
+├── 무중단 배포 가능
+├── 리소스 효율적
+├── 일시적 버전 혼재
+└── 가장 일반적인 방식
 
-파일 변경 감지 최적화:
-├── .dockerignore를 통한 불필요한 파일 제외
-├── COPY 명령어의 세밀한 제어
-├── 파일 체크섬 기반 캐시 무효화
-├── 타임스탬프 변경 최소화
-├── 빌드 컨텍스트 크기 최소화
-└── 네트워크 리소스 캐싱
+Recreate:
+├── 모든 Pod 동시 교체
+├── 다운타임 발생
+├── 리소스 절약
+├── 버전 일관성 보장
+└── 개발/테스트 환경 적합
 
-외부 캐시 활용:
-├── Docker BuildKit 고급 캐시 기능
-├── 레지스트리 기반 캐시 공유
-├── 로컬 캐시 볼륨 활용
-├── CI/CD 파이프라인 캐시 통합
-├── 분산 빌드 캐시 시스템
-└── 캐시 정책 및 만료 관리
+Blue-Green (외부 도구):
+├── 완전한 환경 복제
+├── 즉시 전환 가능
+├── 빠른 롤백
+├── 높은 리소스 비용
+└── 미션 크리티컬 서비스
 
-BuildKit 고급 기능:
-├── --cache-from: 외부 이미지에서 캐시 가져오기
-├── --cache-to: 캐시를 외부로 내보내기
-├── 병렬 빌드 및 의존성 해결
-├── 마운트 캐시 (RUN --mount=type=cache)
-├── 시크릿 마운트 (RUN --mount=type=secret)
-└── SSH 에이전트 포워딩
+Canary (외부 도구):
+├── 일부 트래픽만 새 버전
+├── 점진적 트래픽 증가
+├── 위험 최소화
+├── 복잡한 트래픽 관리
+└── A/B 테스트 가능
 ```
 
-## 3. 이론: 보안 강화 이미지 설계 (10분)
+## 4. 버전 관리와 롤백 메커니즘 (10분)
 
-### 보안 중심 이미지 구성
+### 배포 히스토리 관리
 
-```
-보안 강화 전략:
-
-최소 권한 원칙:
-├── 비특권 사용자로 실행 (USER 지시어)
-├── 필요한 권한만 부여 (Linux Capabilities)
-├── 읽기 전용 루트 파일시스템
-├── 임시 파일용 tmpfs 볼륨 사용
-├── 불필요한 setuid/setgid 비트 제거
-└── 파일 권한 최소화 (chmod 644/755)
-
-취약점 최소화:
-├── 최신 베이스 이미지 사용
-├── 보안 패치 정기 적용
-├── 불필요한 패키지 설치 금지
-├── 개발 도구 제거 (컴파일러, 디버거)
-├── 네트워크 서비스 최소화
-└── 기본 계정 및 패스워드 변경
-
-시크릿 관리:
-├── 이미지에 시크릿 정보 포함 금지
-├── 빌드 시 시크릿 마운트 활용
-├── 환경 변수 대신 파일 기반 시크릿
-├── 런타임 시크릿 주입
-├── 시크릿 로테이션 지원
-└── 접근 로그 및 감사
-
-이미지 서명 및 검증:
-├── Docker Content Trust (DCT) 활용
-├── Notary를 통한 이미지 서명
-├── 공급망 보안 강화
-├── 이미지 스캔 자동화
-├── 취약점 데이터베이스 연동
-└── 정책 기반 이미지 승인
+```mermaid
+graph TB
+    subgraph "Deployment History"
+        A[Revision 1] --> B[ReplicaSet-abc123]
+        C[Revision 2] --> D[ReplicaSet-def456]
+        E[Revision 3] --> F[ReplicaSet-ghi789]
+        
+        G[Current] --> E
+        H[Previous] --> C
+        I[Older] --> A
+    end
+    
+    subgraph "Rollback Process"
+        J[kubectl rollout undo] --> K[이전 ReplicaSet 활성화]
+        K --> L[현재 ReplicaSet 스케일 다운]
+        L --> M[롤백 완료]
+    end
+    
+    G --> J
 ```
 
-### Distroless 및 Scratch 이미지 활용
+### 롤백 메커니즘
+```
+롤백 메커니즘:
 
-```dockerfile
-# Distroless 이미지 예시 (개념 예시)
-FROM golang:1.19-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+히스토리 관리:
+├── revisionHistoryLimit 설정 (기본 10)
+├── 각 배포마다 새 ReplicaSet 생성
+├── 이전 ReplicaSet 보존 (0개로 스케일)
+├── 배포 원인 및 시간 기록
+└── 어노테이션을 통한 메타데이터 저장
 
-FROM gcr.io/distroless/static-debian11
-COPY --from=builder /app/main /
-USER 65534:65534
-EXPOSE 8080
-ENTRYPOINT ["/main"]
+롤백 프로세스:
+├── 이전 ReplicaSet 식별
+├── 이전 버전으로 스케일 업
+├── 현재 버전 스케일 다운
+├── 롤링 업데이트 방식 적용
+└── 새로운 리비전 번호 할당
 
-# Scratch 이미지 예시 (개념 예시)
-FROM golang:1.19-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o main .
+롤백 전략:
+├── 즉시 롤백: 문제 발견 시 즉시 실행
+├── 자동 롤백: 헬스체크 실패 시 자동
+├── 부분 롤백: 특정 Pod만 이전 버전
+├── 완전 롤백: 전체 배포 이전 상태
+└── 점진적 롤백: 단계적 이전 버전 적용
 
-FROM scratch
-COPY --from=builder /app/main /main
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-USER 1000:1000
-EXPOSE 8080
-ENTRYPOINT ["/main"]
+모니터링 포인트:
+├── 배포 진행 상황 추적
+├── Pod 상태 및 헬스체크
+├── 애플리케이션 메트릭 모니터링
+├── 에러율 및 응답시간 확인
+└── 사용자 피드백 수집
 ```
 
-## 4. 개념 예시: 최적화 기법 적용 (12분)
-
-### Node.js 애플리케이션 최적화 예시
-
-```dockerfile
-# 최적화된 Node.js Dockerfile (개념 예시)
-# 1. 베이스 이미지 선택
-FROM node:18-alpine AS base
-RUN apk add --no-cache dumb-init
-WORKDIR /app
-COPY package*.json ./
-
-# 2. 의존성 설치 (프로덕션)
-FROM base AS deps
-RUN npm ci --only=production && npm cache clean --force
-
-# 3. 개발 의존성 및 빌드
-FROM base AS build
-RUN npm ci
-COPY . .
-RUN npm run build && npm run test
-
-# 4. 최종 런타임 이미지
-FROM node:18-alpine AS runtime
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 && \
-    apk add --no-cache dumb-init
-WORKDIR /app
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=build --chown=nextjs:nodejs /app/dist ./dist
-COPY --from=build --chown=nextjs:nodejs /app/package.json ./package.json
-USER nextjs
-EXPOSE 3000
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/server.js"]
-```
-
-### Python 애플리케이션 최적화 예시
-
-```dockerfile
-# 최적화된 Python Dockerfile (개념 예시)
-FROM python:3.11-slim AS base
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# 시스템 의존성 설치
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Python 의존성 설치
-FROM base AS deps
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
-
-# 애플리케이션 빌드
-FROM base AS build
-COPY . .
-RUN python -m compileall .
-
-# 최종 런타임 이미지
-FROM python:3.11-slim AS runtime
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/home/appuser/.local/bin:$PATH"
-
-RUN useradd --create-home --shell /bin/bash appuser
-WORKDIR /app
-COPY --from=deps --chown=appuser:appuser /root/.local /home/appuser/.local
-COPY --from=build --chown=appuser:appuser /app .
-USER appuser
-EXPOSE 8000
-CMD ["python", "app.py"]
-```
-
-### 빌드 성능 측정 예시
-
-```bash
-# 빌드 시간 측정 (개념 예시)
-time docker build -t myapp:optimized .
-
-# 이미지 크기 비교 (개념 예시)
-docker images | grep myapp
-# myapp:optimized    latest    abc123    50MB
-# myapp:original     latest    def456    200MB
-
-# 레이어 분석 (개념 예시)
-docker history myapp:optimized --no-trunc
-
-# 빌드 캐시 효과 확인 (개념 예시)
-docker build -t myapp:cached . --progress=plain
-# => CACHED [2/8] COPY package*.json ./
-# => CACHED [3/8] RUN npm ci --only=production
-```
-
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **멀티 스테이지 빌드**를 통한 이미지 크기 최소화
-- **빌드 캐시 최적화**로 빌드 시간 단축
-- **보안 강화** 이미지 설계 원칙
-- **성능과 보안**의 균형잡힌 최적화
+## 💬 그룹 토론: 선언적 배포 모델의 장점과 실무 적용 (8분)
 
 ### 토론 주제
-"이미지 최적화에서 크기, 보안, 빌드 시간의 트레이드오프를 어떻게 균형있게 관리할 것인가?"
+**"Kubernetes의 선언적 배포 모델이 기존 명령적 배포 방식과 비교해 어떤 장점을 제공하며, 실무에서 어떻게 활용해야 하는가?"**
 
-## 💡 핵심 키워드
-- **멀티 스테이지**: 빌드 분리, 크기 최적화, 보안 강화
-- **빌드 캐시**: 레이어 캐싱, 무효화 최소화, BuildKit
-- **이미지 최적화**: Alpine, Distroless, Scratch, 레이어 최적화
-- **보안 설계**: 최소 권한, 취약점 관리, 시크릿 보호
+### 토론 가이드라인
 
-## 📚 참고 자료
-- [Docker 멀티 스테이지 빌드](https://docs.docker.com/develop/dockerfile_best-practices/)
-- [BuildKit 고급 기능](https://docs.docker.com/engine/reference/builder/)
+#### 선언적 vs 명령적 (3분)
+- **선언적**: 원하는 최종 상태 정의, 시스템이 자동 달성
+- **명령적**: 단계별 명령 실행, 수동 상태 관리
+- **멱등성**: 동일한 결과 보장 vs 실행 순서 의존
+
+#### 실무 장점 (3분)
+- **자동화**: 수동 개입 최소화, 오류 감소
+- **일관성**: 환경 간 동일한 배포 보장
+- **복구**: 자동 상태 조정 및 복구
+
+#### 적용 전략 (2분)
+- **GitOps**: 코드로 관리되는 배포 상태
+- **CI/CD 통합**: 파이프라인과의 자연스러운 연결
+- **모니터링**: 상태 기반 알림 및 대응
+
+## 💡 핵심 개념 정리
+- **ReplicaSet**: Pod 복제본 관리, Control Loop 패턴
+- **Deployment**: 선언적 배포, ReplicaSet 추상화
+- **롤링 업데이트**: 무중단 점진적 배포
+- **롤백**: 이전 버전으로 안전한 복구
+
+## 다음 세션 준비
+다음 세션에서는 **Service와 네트워킹**에 대해 학습합니다.

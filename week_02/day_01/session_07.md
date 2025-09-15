@@ -1,311 +1,295 @@
-# Session 7: 컨테이너 생태계 및 표준화 동향
+# Session 7: kubelet과 kube-proxy
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 7**로, Docker Compose 오케스트레이션 이해를 바탕으로 컨테이너 생태계 전반과 표준화 동향을 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 7**로, 워커 노드의 핵심 구성 요소인 kubelet과 kube-proxy의 역할과 기능을 심화 학습합니다.
 
 ## 학습 목표 (5분)
-- **컨테이너 생태계**와 **OCI 표준** 완전 이해
-- **컨테이너 런타임** 비교 분석과 **CRI 인터페이스** 구조
-- **클라우드 네이티브** 트렌드와 **미래 발전 방향** 전망
+- **kubelet**의 **노드 에이전트** 역할과 **Pod 관리** 기능 이해
+- **Container Runtime Interface (CRI)** 개념과 **구현체** 학습
+- **kube-proxy**의 **네트워킹** 기능과 **트래픽 라우팅** 메커니즘 파악
+- **Service 추상화**와 **로드 밸런싱** 원리 이해
 
-## 1. 이론: 컨테이너 표준화 및 OCI (20분)
+## 1. kubelet의 노드 에이전트 역할 (15분)
 
-### Open Container Initiative (OCI) 표준
+### kubelet 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "OCI Standards"
-        A[Runtime Specification] --> B[Image Specification]
-        B --> C[Distribution Specification]
+    subgraph "kubelet"
+        A[API Server 통신] --> B[Pod 스펙 수신]
+        B --> C[Container Runtime 호출]
+        C --> D[Pod 생성/관리]
+        D --> E[상태 모니터링]
+        E --> F[상태 보고]
+        F --> A
     end
     
-    subgraph "Implementation"
-        D[runc] --> E[containerd]
-        E --> F[Docker Engine]
-        E --> G[Kubernetes CRI]
+    subgraph "관리 기능"
+        G[Pod 라이프사이클] --> H[볼륨 관리]
+        H --> I[네트워크 설정]
+        I --> J[헬스체크]
+        J --> K[리소스 모니터링]
+        K --> G
     end
     
-    subgraph "Ecosystem"
-        H[Podman]
-        I[CRI-O]
-        J[Buildah]
-        K[Skopeo]
+    subgraph "시스템 통합"
+        L[OS 커널] --> M[cgroups]
+        M --> N[네임스페이스]
+        N --> O[파일시스템]
+        O --> L
     end
     
-    A --> D
-    B --> H
-    C --> K
+    D --> G
+    E --> K
+    C --> L
 ```
 
-### OCI 표준 구성 요소
-
+### kubelet 핵심 기능
 ```
-OCI 표준 상세 분석:
+kubelet 핵심 기능:
 
-Runtime Specification:
-├── 컨테이너 실행 환경 표준 정의
-├── 파일시스템 번들 구조 명세
-├── 설정 파일 (config.json) 형식
-├── 라이프사이클 관리 (create, start, kill, delete)
-├── 리소스 제한 및 보안 설정
-├── 네임스페이스 및 cgroups 구성
-├── 플랫폼별 특화 설정 지원
-└── 런타임 간 호환성 보장
+Pod 관리:
+├── Pod 스펙 해석 및 검증
+├── 컨테이너 생성 및 시작
+├── 라이프사이클 관리 (생성→실행→종료)
+├── 재시작 정책 적용
+└── 리소스 할당 및 제한
 
-Image Specification:
-├── 컨테이너 이미지 형식 표준화
-├── 매니페스트 (manifest) 구조 정의
-├── 레이어 압축 및 해시 알고리즘
-├── 이미지 메타데이터 형식
-├── 멀티 아키텍처 이미지 지원
-├── 이미지 서명 및 검증 체계
-├── 콘텐츠 주소 지정 방식
-└── 레지스트리 간 호환성
+상태 모니터링:
+├── Liveness Probe: 컨테이너 생존 확인
+├── Readiness Probe: 서비스 준비 상태 확인
+├── Startup Probe: 초기 시작 확인
+├── 리소스 사용량 수집
+└── 노드 상태 보고
 
-Distribution Specification:
-├── 이미지 배포 프로토콜 표준
-├── HTTP API 엔드포인트 정의
-├── 인증 및 권한 부여 메커니즘
-├── 이미지 업로드/다운로드 프로세스
-├── 태그 및 레퍼런스 관리
-├── 콘텐츠 검색 및 디스커버리
-├── 미러링 및 복제 지원
-└── 보안 및 무결성 보장
+볼륨 관리:
+├── 볼륨 마운트 및 언마운트
+├── 스토리지 드라이버 연동
+├── 데이터 영속성 보장
+├── 볼륨 플러그인 관리
+└── 백업 및 복구 지원
+
+네트워크 설정:
+├── Pod IP 할당
+├── 네트워크 네임스페이스 생성
+├── CNI 플러그인 호출
+├── 네트워크 정책 적용
+└── 트래픽 라우팅 설정
 ```
 
-### 컨테이너 런타임 생태계
+## 2. Container Runtime Interface (CRI) 개념 (12분)
 
-```
-주요 컨테이너 런타임:
-
-High-level Runtime:
-├── containerd: Docker, Kubernetes 기본 런타임
-├── CRI-O: Kubernetes 전용 경량 런타임
-├── Podman: 데몬리스 컨테이너 엔진
-├── LXD: 시스템 컨테이너 전문
-├── rkt (CoreOS): 보안 중심 런타임 (deprecated)
-└── gVisor: 샌드박스 기반 보안 런타임
-
-Low-level Runtime:
-├── runc: OCI 표준 참조 구현
-├── crun: C 언어 기반 고성능 런타임
-├── kata-containers: VM 기반 보안 런타임
-├── firecracker: AWS Lambda 기반 마이크로VM
-├── youki: Rust 언어 기반 런타임
-└── runsc: gVisor 샌드박스 런타임
-
-특수 목적 런타임:
-├── Singularity: HPC 및 과학 컴퓨팅
-├── Charliecloud: 비특권 HPC 컨테이너
-├── Sysbox: 시스템 컨테이너 런타임
-├── WasmEdge: WebAssembly 런타임
-└── Krustlet: Kubernetes WebAssembly 노드
-```
-
-## 2. 이론: Container Runtime Interface (CRI) (15분)
-
-### CRI 아키텍처 분석
+### CRI 아키텍처
 
 ```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes
-    participant CRI as CRI Runtime
-    participant containerd as containerd
-    participant runc as runc
+graph TB
+    subgraph "kubelet"
+        A[Pod Manager] --> B[CRI Client]
+    end
     
-    K8s->>CRI: RunPodSandbox
-    CRI->>containerd: Create sandbox
-    containerd->>runc: Create container
-    runc-->>containerd: Container created
-    containerd-->>CRI: Sandbox ready
-    CRI-->>K8s: Pod running
+    subgraph "CRI Interface"
+        C[Runtime Service] --> D[Image Service]
+    end
     
-    K8s->>CRI: CreateContainer
-    CRI->>containerd: Create container
-    containerd->>runc: Execute container
-    runc-->>containerd: Container started
-    containerd-->>CRI: Container running
-    CRI-->>K8s: Container ready
+    subgraph "Container Runtime"
+        E[containerd] --> F[Docker]
+        F --> G[CRI-O]
+        G --> H[기타 Runtime]
+    end
+    
+    subgraph "Low-level Runtime"
+        I[runc] --> J[kata-containers]
+        J --> K[gVisor]
+    end
+    
+    B --> C
+    C --> E
+    D --> E
+    E --> I
+    F --> I
+    G --> I
 ```
 
-### CRI 인터페이스 구조
-
+### CRI 구현체 비교
 ```
-CRI 핵심 기능:
+주요 CRI 구현체:
 
-Pod Lifecycle Management:
-├── RunPodSandbox: Pod 네트워크 네임스페이스 생성
-├── StopPodSandbox: Pod 네트워크 정리
-├── RemovePodSandbox: Pod 리소스 완전 제거
-├── PodSandboxStatus: Pod 상태 조회
-├── ListPodSandbox: Pod 목록 조회
-└── 네트워크 및 스토리지 격리 관리
+containerd:
+├── CNCF 졸업 프로젝트
+├── Docker에서 분리된 런타임
+├── 경량화 및 성능 최적화
+├── Kubernetes 기본 런타임
+└── 산업 표준으로 자리잡음
 
-Container Lifecycle:
-├── CreateContainer: 컨테이너 생성
-├── StartContainer: 컨테이너 시작
-├── StopContainer: 컨테이너 정지
-├── RemoveContainer: 컨테이너 제거
-├── ContainerStatus: 컨테이너 상태 조회
-├── ListContainers: 컨테이너 목록 조회
-├── ExecSync: 동기 명령 실행
-└── Exec: 비동기 명령 실행
+Docker (dockershim):
+├── 초기 Kubernetes 기본 런타임
+├── Kubernetes 1.24부터 제거
+├── 개발 환경에서 여전히 사용
+├── Docker Desktop 통합
+└── 레거시 지원 목적
 
-Image Management:
-├── ListImages: 이미지 목록 조회
-├── ImageStatus: 이미지 상태 확인
-├── PullImage: 이미지 다운로드
-├── RemoveImage: 이미지 삭제
-├── ImageFsInfo: 이미지 파일시스템 정보
-└── 이미지 캐시 및 정리 관리
+CRI-O:
+├── Kubernetes 전용 런타임
+├── OCI 표준 완전 준수
+├── 최소한의 기능만 제공
+├── Red Hat 주도 개발
+└── 엔터프라이즈 환경 최적화
 
-Runtime Information:
-├── Version: 런타임 버전 정보
-├── Status: 런타임 상태 확인
-├── UpdateRuntimeConfig: 런타임 설정 업데이트
-└── 런타임 메트릭 및 통계 정보
+성능 비교:
+├── 시작 시간: CRI-O < containerd < Docker
+├── 메모리 사용: CRI-O < containerd < Docker
+├── 기능 풍부함: Docker > containerd > CRI-O
+└── Kubernetes 통합: CRI-O > containerd > Docker
 ```
 
-## 3. 이론: 클라우드 네이티브 생태계 (10분)
+## 3. kube-proxy의 네트워킹 기능 (10분)
 
-### CNCF 프로젝트 생태계
+### kube-proxy 동작 모드
 
-```
-Cloud Native Computing Foundation:
-
-Graduated Projects:
-├── Kubernetes: 컨테이너 오케스트레이션
-├── Prometheus: 모니터링 및 알림
-├── Envoy: 서비스 프록시
-├── CoreDNS: DNS 서버
-├── containerd: 컨테이너 런타임
-├── Fluentd: 로그 수집 및 처리
-├── Jaeger: 분산 추적
-├── TiKV: 분산 키-값 스토어
-├── Vitess: 데이터베이스 클러스터링
-└── Helm: Kubernetes 패키지 관리
-
-Incubating Projects:
-├── Istio: 서비스 메시
-├── gRPC: 고성능 RPC 프레임워크
-├── CNI: 컨테이너 네트워크 인터페이스
-├── Notary: 콘텐츠 신뢰 및 서명
-├── SPIFFE/SPIRE: 보안 ID 프레임워크
-├── Open Policy Agent: 정책 엔진
-├── Falco: 런타임 보안 모니터링
-└── Linkerd: 서비스 메시
-
-Sandbox Projects:
-├── 새로운 혁신 기술들
-├── 실험적 프로젝트들
-├── 커뮤니티 주도 개발
-└── 미래 기술 트렌드 반영
+```mermaid
+graph TB
+    subgraph "kube-proxy 모드"
+        A[userspace] --> B[iptables]
+        B --> C[ipvs]
+        C --> D[kernelspace]
+    end
+    
+    subgraph "트래픽 처리"
+        E[클라이언트 요청] --> F[Service IP]
+        F --> G[kube-proxy 규칙]
+        G --> H[Pod IP 선택]
+        H --> I[트래픽 전달]
+    end
+    
+    subgraph "로드 밸런싱"
+        J[Round Robin] --> K[Session Affinity]
+        K --> L[Weighted]
+        L --> M[Health Check]
+    end
+    
+    B --> G
+    C --> G
+    G --> J
 ```
 
-### 컨테이너 보안 발전 방향
-
+### 네트워킹 모드 비교
 ```
-보안 기술 트렌드:
+kube-proxy 동작 모드:
 
-Zero Trust Architecture:
-├── 네트워크 경계 보안에서 ID 기반 보안으로
-├── 모든 통신 암호화 및 인증
-├── 최소 권한 원칙 적용
-├── 지속적인 검증 및 모니터링
-├── 마이크로세그멘테이션
-└── 정책 기반 접근 제어
+iptables 모드:
+├── 기본 모드 (대부분 환경)
+├── 커널 수준 패킷 처리
+├── 높은 성능과 안정성
+├── 복잡한 규칙 관리
+└── 대규모 환경에서 성능 저하
 
-Supply Chain Security:
-├── 소프트웨어 공급망 보안 강화
-├── 이미지 서명 및 검증 의무화
-├── SBOM (Software Bill of Materials)
-├── 취약점 스캔 자동화
-├── 컴플라이언스 자동 검사
-└── 보안 정책 as Code
+IPVS 모드:
+├── 고성능 로드 밸런싱
+├── 다양한 스케줄링 알고리즘
+├── 대규모 서비스 지원
+├── 커널 모듈 의존성
+└── 복잡한 설정 필요
 
-Runtime Security:
-├── 행동 기반 이상 탐지
-├── 머신러닝 기반 위협 분석
-├── 실시간 보안 모니터링
-├── 자동화된 대응 체계
-├── 포렌식 및 감사 로그
-└── 보안 오케스트레이션
+userspace 모드 (레거시):
+├── 초기 구현 방식
+├── 사용자 공간에서 처리
+├── 성능 제한
+├── 호환성 목적으로만 사용
+└── 새로운 환경에서 비추천
 ```
 
-## 4. 개념 예시: 생태계 도구 비교 (12분)
+## 4. Service 추상화와 트래픽 라우팅 (10분)
 
-### 런타임 비교 분석 예시
+### Service 추상화 모델
 
-```bash
-# Docker 런타임 정보 (개념 예시)
-docker system info | grep -i runtime
-# Default Runtime: runc
-# Runtimes: runc
-
-# Podman 사용 예시 (개념 예시)
-podman run --rm alpine echo "Hello from Podman"
-# 데몬리스 실행, 루트리스 지원
-
-# containerd 직접 사용 예시 (개념 예시)
-ctr images pull docker.io/library/alpine:latest
-ctr run docker.io/library/alpine:latest mycontainer
+```mermaid
+graph TB
+    subgraph "Service 추상화"
+        A[Service] --> B[Stable IP]
+        B --> C[DNS Name]
+        C --> D[Port Mapping]
+        D --> E[Load Balancing]
+    end
+    
+    subgraph "Backend Pods"
+        F[Pod 1] --> G[Pod 2]
+        G --> H[Pod 3]
+        H --> I[Pod N]
+    end
+    
+    subgraph "트래픽 플로우"
+        J[Client] --> K[Service IP:Port]
+        K --> L[kube-proxy 규칙]
+        L --> M[Pod IP:Port 선택]
+        M --> N[실제 Pod]
+    end
+    
+    E --> F
+    E --> G
+    E --> H
+    E --> I
+    
+    J --> A
+    L --> F
+    L --> G
+    L --> H
 ```
 
-### OCI 호환성 테스트 예시
+### 로드 밸런싱 전략
+```
+Service 로드 밸런싱:
 
-```bash
-# OCI 번들 생성 (개념 예시)
-mkdir mycontainer
-cd mycontainer
-runc spec
+기본 전략:
+├── Round Robin: 순차적 분산
+├── Random: 무작위 선택
+├── Session Affinity: 세션 유지
+└── Weighted: 가중치 기반
 
-# config.json 구조 확인 (개념 예시)
-cat config.json | jq '.process.args'
-# ["sh"]
+고급 기능:
+├── Health Check: 건강한 Pod만 선택
+├── Readiness Gate: 준비 상태 확인
+├── Topology Aware: 지역 기반 라우팅
+└── External Traffic Policy: 외부 트래픽 정책
 
-# OCI 런타임으로 실행 (개념 예시)
-sudo runc run mycontainer
+성능 최적화:
+├── Connection Pooling: 연결 재사용
+├── Keep-Alive: 연결 유지
+├── Circuit Breaker: 장애 격리
+└── Retry Logic: 재시도 메커니즘
 ```
 
-### CNCF 도구 통합 예시
-
-```yaml
-# Cloud Native 스택 예시 (개념 예시)
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cloud-native-app
-  annotations:
-    prometheus.io/scrape: "true"
-    linkerd.io/inject: enabled
-spec:
-  containers:
-  - name: app
-    image: myapp:latest
-    ports:
-    - containerPort: 8080
-  - name: envoy-proxy
-    image: envoyproxy/envoy:latest
-```
-
-## 5. 토론 및 정리 (8분)
-
-### 핵심 개념 정리
-- **OCI 표준**을 통한 컨테이너 생태계 표준화
-- **CRI 인터페이스**로 Kubernetes와 런타임 분리
-- **CNCF 생태계**의 클라우드 네이티브 기술 발전
-- **보안 및 공급망** 관리의 중요성 증대
+## 💬 그룹 토론: 네트워킹 추상화가 가져다주는 가치 (8분)
 
 ### 토론 주제
-"컨테이너 기술의 표준화가 클라우드 네이티브 생태계 발전에 미치는 영향과 미래 전망은 무엇인가?"
+**"Kubernetes의 네트워킹 추상화(Service, kube-proxy)가 애플리케이션 개발과 운영에 미치는 영향은 무엇인가?"**
 
-## 💡 핵심 키워드
-- **표준화**: OCI, Runtime Spec, Image Spec, Distribution Spec
-- **런타임 생태계**: containerd, CRI-O, Podman, runc
-- **클라우드 네이티브**: CNCF, Kubernetes, 서비스 메시
-- **보안 트렌드**: Zero Trust, Supply Chain, Runtime Security
+### 토론 가이드라인
+
+#### 개발자 관점 (3분)
+- **단순화**: 복잡한 네트워킹 로직 숨김
+- **이식성**: 환경에 독립적인 서비스 통신
+- **확장성**: 자동 로드 밸런싱과 서비스 디스커버리
+
+#### 운영자 관점 (3분)
+- **관리 효율성**: 중앙집중식 네트워크 정책
+- **모니터링**: 트래픽 가시성과 디버깅
+- **보안**: 네트워크 분할과 접근 제어
+
+#### 비즈니스 관점 (2분)
+- **안정성**: 자동 장애 복구와 트래픽 재분산
+- **성능**: 최적화된 라우팅과 로드 밸런싱
+- **비용**: 리소스 효율성과 운영 비용 절감
+
+## 💡 핵심 개념 정리
+- **kubelet**: 워커 노드의 에이전트, Pod 라이프사이클 관리
+- **CRI**: 컨테이너 런타임 표준 인터페이스, 런타임 추상화
+- **kube-proxy**: 네트워크 프록시, Service 구현체
+- **Service 추상화**: 안정적인 네트워크 엔드포인트 제공
 
 ## 📚 참고 자료
-- [OCI 표준 문서](https://opencontainers.org/)
-- [CNCF 프로젝트](https://www.cncf.io/projects/)
-- [CRI 인터페이스](https://kubernetes.io/docs/concepts/architecture/cri/)
+- [kubelet 공식 문서](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/)
+- [Container Runtime Interface](https://kubernetes.io/docs/concepts/architecture/cri/)
+- [kube-proxy 구성](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)
+
+## 다음 세션 준비
+다음 세션에서는 **아키텍처 종합 및 토론**을 통해 Day 1에서 학습한 모든 내용을 통합적으로 정리합니다.

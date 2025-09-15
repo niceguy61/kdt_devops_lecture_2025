@@ -1,106 +1,125 @@
-# Week 2: Docker 심화 이론 및 컨테이너 생태계
+# Week 2: Kubernetes + 클라우드 보안 이론 (80% 이론 + 20% 개념 예시) 🔄 재구성
 
-## 📅 주간 커리큘럼
+## 🎯 학습 목표 (KT Cloud 모델 기반)
+- **Kubernetes 아키텍처**와 **오케스트레이션 개념** 완전 이해
+- **컨테이너 오케스트레이션**의 **필요성**과 **설계 원칙** 학습
+- **Kubernetes 핵심 오브젝트**와 **네트워킹 모델** 심화 분석
+- **DevSecOps 개념**과 **클라우드 보안 모델** 이론적 토대 구축
+- **RBAC과 접근 제어** 프레임워크 이해
 
-### Day 1: Docker 내부 아키텍처 및 컴포넌트
-- **Session 1**: Docker Engine 아키텍처 심화 분석
-- **Session 2**: containerd와 runc 내부 구조
-- **Session 3**: 네임스페이스와 cgroups 이론
-- **Session 4**: 스토리지 드라이버와 파일시스템
-- **Session 5**: 네트워크 드라이버 아키텍처
-- **Session 6**: 보안 모델과 격리 메커니즘
-- **Session 7**: 리소스 관리와 제한 이론
-- **Session 8**: 모니터링과 로깅 아키텍처
+## 🌟 KT Cloud 모델 적용 학습 방식
+- **내용 비중**: 이론 80% + 개념 예시 20%
+- **학습 방식**: 아키텍처 분석 + 개념 설명 + 사례 연구 + 토론
+- **시각화 도구**: Mermaid, SVG 다이어그램 적극 활용
+- **개념 실습**: 간단한 구조 확인용 실습만 포함
+- **실무 연계**: Kubernetes 설계 원칙을 실무 프로젝트로 연결 준비
 
-### Day 2: 컨테이너 이미지와 레지스트리
-- **Session 1**: 이미지 레이어 아키텍처
-- **Session 2**: 이미지 빌드 최적화 이론
-- **Session 3**: 멀티 스테이지 빌드 설계
-- **Session 4**: 레지스트리 아키텍처와 보안
-- **Session 5**: 이미지 배포 전략
-- **Session 6**: 취약점 스캔과 보안 정책
-- **Session 7**: 이미지 서명과 신뢰성 검증
-- **Session 8**: 프라이빗 레지스트리 설계
+## 주간 일정
 
-### Day 3: 컨테이너 네트워킹 심화
-- **Session 1**: CNM (Container Network Model)
-- **Session 2**: 네트워크 드라이버 상세 분석
-- **Session 3**: 오버레이 네트워크 이론
-- **Session 4**: 서비스 디스커버리 메커니즘
-- **Session 5**: DNS와 로드 밸런싱 이론
-- **Session 6**: 네트워크 보안과 정책
-- **Session 7**: IPv6와 멀티 호스트 네트워킹
-- **Session 8**: 네트워크 트러블슈팅 이론
+### [Day 1: Kubernetes 기본 개념 및 아키텍처](./day_01/README.md) 🆕 신규 구성
+**세션 1**: Kubernetes란 무엇인가?
+**세션 2**: 컨테이너 오케스트레이션의 필요성
+**세션 3**: Kubernetes 클러스터 아키텍처
+**세션 4**: 마스터 노드와 워커 노드
+**세션 5**: etcd와 API 서버
+**세션 6**: 스케줄러와 컨트롤러
+**세션 7**: kubelet과 kube-proxy
+**세션 8**: 아키텍처 종합 및 토론
 
-### Day 4: 스토리지와 데이터 관리
-- **Session 1**: 스토리지 드라이버 아키텍처
-- **Session 2**: 볼륨 드라이버와 플러그인
-- **Session 3**: 데이터 영속성 전략
-- **Session 4**: 백업과 복구 아키텍처
-- **Session 5**: 분산 스토리지 이론
-- **Session 6**: 캐시와 임시 스토리지
-- **Session 7**: 스토리지 보안과 암호화
-- **Session 8**: 성능 최적화 전략
+### [Day 2: Kubernetes 핵심 오브젝트 이론](./day_02/README.md) 🆕 신규 구성
+**세션 1**: Pod 개념과 설계 원리
+**세션 2**: ReplicaSet과 Deployment
+**세션 3**: Service와 네트워킹
+**세션 4**: ConfigMap과 Secret
+**세션 5**: Volume과 PersistentVolume
+**세션 6**: Namespace와 리소스 격리
+**세션 7**: Labels과 Selectors
+**세션 8**: 오브젝트 관계 및 설계 패턴
 
-### Day 5: Docker Compose와 멀티 컨테이너
-- **Session 1**: Compose 파일 설계 원리
-- **Session 2**: 서비스 정의와 의존성 이론
-- **Session 3**: 환경 변수와 설정 관리
-- **Session 4**: 네트워크와 볼륨 설계
-- **Session 5**: 스케일링과 로드 밸런싱 이론
-- **Session 6**: 롤링 업데이트와 배포 전략
-- **Session 7**: 헬스체크와 복구 메커니즘
-- **Session 8**: 프로덕션 환경 설계 원칙
+### [Day 3: Kubernetes 네트워킹 이론](./day_03/README.md) 🆕 신규 구성
+**세션 1**: 클러스터 네트워킹 개념
+**세션 2**: CNI(Container Network Interface)
+**세션 3**: Service 타입별 특징
+**세션 4**: Ingress와 로드 밸런싱
+**세션 5**: NetworkPolicy와 보안
+**세션 6**: DNS와 서비스 디스커버리
+**세션 7**: 멀티 클러스터 네트워킹
+**세션 8**: 네트워킹 모범 사례
 
-## 🎯 학습 목표
+### [Day 4: 클라우드 보안 기초 이론](./day_04/README.md) 🆕 신규 구성
+**세션 1**: DevSecOps 개념과 원칙
+**세션 2**: 컨테이너 보안 위협 모델
+**세션 3**: 이미지 보안과 취약점 스캔
+**세션 4**: 런타임 보안과 모니터링
+**세션 5**: Kubernetes 보안 모델
+**세션 6**: RBAC과 접근 제어
+**세션 7**: 네트워크 보안 정책
+**세션 8**: 보안 모범 사례
 
-### 기술적 목표
-- Docker 내부 아키텍처 완벽 이해
-- 컨테이너 기술의 핵심 원리 습득
-- 고급 네트워킹과 스토리지 개념 파악
-- 보안 및 성능 최적화 전략 수립
+### [Day 5: Kubernetes 고급 개념 및 통합](./day_05/README.md) 🆕 신규 구성
+**세션 1**: StatefulSet과 상태 관리
+**세션 2**: DaemonSet과 Job
+**세션 3**: HPA와 VPA (오토스케일링)
+**세션 4**: 클러스터 오토스케일링
+**세션 5**: 헬름(Helm)과 패키지 관리
+**세션 6**: 커스텀 리소스와 오퍼레이터
+**세션 7**: Kubernetes 생태계
+**세션 8**: 이론 종합 및 토론
 
-### 이론적 목표
-- 컨테이너 기술의 이론적 기반 확립
-- 분산 시스템 아키텍처 이해
-- 마이크로서비스 설계 원칙 습득
-- DevOps 철학과 실천 방안 연계
+## 📊 Week 2 학습 성과 목표 (KT Cloud 모델)
 
-## 📚 학습 자료
+### 이론 이해도 목표
+```
+Kubernetes 아키텍처:
+├── 클러스터 구조 이해    ████████████ 100%
+├── 핵심 오브젝트 개념    ████████████ 100%
+├── 네트워킹 모델        ████████████ 100%
+└── 보안 프레임워크      ████████████ 100%
 
-### 필수 문서
-- [Docker 엔진 아키텍처](https://docs.docker.com/engine/)
-- [컨테이너 런타임 스펙](https://github.com/opencontainers/runtime-spec)
-- [Docker 네트워킹](https://docs.docker.com/network/)
-- [Docker 스토리지](https://docs.docker.com/storage/)
+실무 연계 준비도:
+├── 아키텍처 설계 능력   ███████████  90%
+├── 보안 정책 수립      ██████████   85%
+├── 사례 분석 역량      ████████████ 90%
+└── 취업 준비 기초      ██████████   80%
+```
 
-### 추천 도서
-- "Docker Deep Dive" by Nigel Poulton
-- "Docker: Up & Running" by Sean P. Kane
-- "Container Security" by Liz Rice
+### 추가 구성 요소 (KT Cloud 모델)
+- **업계 전문가 특강**: 매주 금요일 Session 8 (Kubernetes 전문가)
+- **아키텍처 설계 과제**: Kubernetes 클러스터 설계
+- **사례 연구**: 대기업 Kubernetes 도입 사례
+- **취업 준비**: Kubernetes 관련 기술 면접 대비
 
-## 🔍 평가 방법
+## 🎯 Week 3 준비 완료 (CI/CD + 모니터링/로깅 이론)
 
-### 이론 평가 (80%)
-- 아키텍처 이해도 테스트
-- 개념 설명 및 분석
-- 사례 연구 리포트
-- 설계 문서 작성
+### 이론적 토대 구축 완료
+- **Kubernetes 아키텍처** → CI/CD 파이프라인 통합 준비
+- **오브젝트 모델** → 배포 자동화 전략 준비
+- **네트워킹 이론** → 서비스 메시 연결 준비
+- **보안 모델** → DevSecOps 통합 준비
+- **고급 개념** → 모니터링 시스템 연결 준비
 
-### 개념 적용 (20%)
-- 아키텍처 다이어그램 작성
-- 시스템 설계 제안
-- 토론 참여도
-- 문제 해결 능력
+### Week 3 이론 학습 준비사항
+- [ ] Week 2 Kubernetes + 보안 이론 복습
+- [ ] CI/CD 파이프라인 기본 개념 예습
+- [ ] 모니터링 시스템 기초 개념 예습
+- [ ] 아키텍처 설계 과제 준비
+- [ ] 사례 연구 자료 준비
 
-## 🔄 Week 1 연계
-- Docker 기본 개념 심화
-- 컨테이너 이론 확장
-- 실무 적용 방안 모색
-- 아키텍처 관점 확립
+## 💡 Week 2 핵심 개념 (KT Cloud 모델)
+- **오케스트레이션**: 자동화, 스케일링, 고가용성, 서비스 디스커버리
+- **Kubernetes 아키텍처**: 마스터-워커, API 서버, etcd, 스케줄러
+- **핵심 오브젝트**: Pod, Service, Deployment, ConfigMap, Secret
+- **네트워킹**: CNI, Service 타입, Ingress, NetworkPolicy
+- **보안 모델**: RBAC, 네트워크 정책, 이미지 보안, 런타임 보안
 
-## 🚀 Week 3 준비
-- Kubernetes 아키텍처 학습 준비
-- 컨테이너 오케스트레이션 개념 연계
-- 분산 시스템 이해 기반 마련
-- 클라우드 네이티브 전환 준비
+## 📚 참고 자료
+- [Kubernetes 공식 문서](https://kubernetes.io/docs/)
+- [CNCF Landscape](https://landscape.cncf.io/)
+- [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/)
+- [Container Security](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+
+---
+**Week 2 재구성 완료! KT Cloud 모델에 따라 Kubernetes와 클라우드 보안 이론을 체계적으로 학습합니다!** 🚀
+
+**이전**: [Week 1 - DevOps 기초 + Docker 이론](../week_01/README.md)
+**다음**: [Week 3 - CI/CD + 모니터링/로깅 이론 (70% 이론 + 30% 개념 실습)](../week_03/README.md)

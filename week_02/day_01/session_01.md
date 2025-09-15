@@ -1,268 +1,277 @@
-# Session 1: Docker Engine 아키텍처 심화 분석
+# Session 1: Kubernetes란 무엇인가?
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 2 > Day 1 > Session 1**로, Week 1에서 학습한 Docker 기본 개념을 바탕으로 Docker Engine의 내부 아키텍처를 심화 분석합니다.
+이 세션은 **Week 2 > Day 1 > Session 1**로, Kubernetes의 기본 개념과 등장 배경을 이해하는 첫 번째 단계입니다. Week 1에서 학습한 Docker와 컨테이너 기술을 바탕으로 오케스트레이션의 필요성을 학습합니다.
 
 ## 학습 목표 (5분)
-- **Docker Engine** 내부 구조와 **컴포넌트** 완전 이해
-- **Client-Server 아키텍처** 및 **API 통신** 방식 분석
-- **Docker Daemon** 역할과 **프로세스 관리** 메커니즘
+- **Kubernetes의 정의**와 **핵심 가치** 완전 이해
+- **컨테이너 오케스트레이션**의 **개념**과 **등장 배경** 학습
+- **Google Borg**에서 **Kubernetes**로의 **진화 과정** 파악
+- **CNCF 생태계**에서의 **Kubernetes 위치** 이해
 
-## 1. 이론: Docker Engine 전체 아키텍처 (20분)
+## 1. Kubernetes 정의와 핵심 가치 (15분)
 
-### Docker Engine 구성 요소
+### Kubernetes란?
+
+```mermaid
+mindmap
+  root((Kubernetes))
+    정의
+      컨테이너 오케스트레이션 플랫폼
+      자동화된 배포, 스케일링, 관리
+      선언적 구성 관리
+      클라우드 네이티브 애플리케이션 지원
+    
+    핵심 가치
+      자동화
+        배포 자동화
+        스케일링 자동화
+        복구 자동화
+        업데이트 자동화
+      
+      추상화
+        인프라 추상화
+        네트워킹 추상화
+        스토리지 추상화
+        서비스 추상화
+      
+      확장성
+        수평적 확장
+        수직적 확장
+        멀티 클라우드
+        하이브리드 클라우드
+```
+
+### 공식 정의 분석
+> "Kubernetes는 컨테이너화된 워크로드와 서비스를 관리하기 위한 이식 가능하고 확장 가능한 오픈소스 플랫폼으로, 선언적 구성과 자동화를 모두 용이하게 합니다."
+
+**핵심 키워드 분석:**
+- **이식 가능(Portable)**: 다양한 환경에서 동일하게 작동
+- **확장 가능(Extensible)**: 플러그인과 확장을 통한 기능 확장
+- **선언적 구성(Declarative)**: 원하는 상태를 선언하면 자동으로 달성
+- **자동화(Automation)**: 수동 작업을 최소화하는 자동화 시스템
+
+## 2. 컨테이너 오케스트레이션 개념 (10분)
+
+### 오케스트레이션이란?
 
 ```mermaid
 graph TB
-    subgraph "Docker Client"
-        A[Docker CLI] --> B[REST API Calls]
+    subgraph "단일 컨테이너 관리"
+        A1[컨테이너 실행] --> A2[수동 모니터링]
+        A2 --> A3[수동 복구]
+        A3 --> A4[수동 스케일링]
     end
     
-    subgraph "Docker Host"
-        C[Docker Daemon] --> D[containerd]
-        D --> E[runc]
-        E --> F[Container Process]
-        
-        C --> G[Images]
-        C --> H[Containers]
-        C --> I[Networks]
-        C --> J[Volumes]
+    subgraph "오케스트레이션"
+        B1[선언적 구성] --> B2[자동 배포]
+        B2 --> B3[자동 모니터링]
+        B3 --> B4[자동 복구]
+        B4 --> B5[자동 스케일링]
+        B5 --> B6[로드 밸런싱]
     end
     
-    subgraph "Registry"
-        K[Docker Hub]
-        L[Private Registry]
-    end
-    
-    B --> C
-    C --> K
-    C --> L
+    A4 -.->|진화| B1
 ```
 
-### 핵심 컴포넌트 분석
-
-#### Docker Daemon (dockerd)
+### 오케스트레이션의 핵심 기능
 ```
-Docker Daemon 역할:
-├── REST API 서버 역할
-├── 이미지 관리 (빌드, 태그, 푸시/풀)
-├── 컨테이너 라이프사이클 관리
-├── 네트워크 및 볼륨 관리
-├── 보안 및 권한 제어
-└── 플러그인 시스템 관리
+컨테이너 오케스트레이션 기능:
 
-통신 방식:
-├── Unix Socket: /var/run/docker.sock
-├── TCP Socket: 2376 (TLS), 2375 (비보안)
-├── Named Pipe: Windows 환경
-└── REST API: HTTP/HTTPS 프로토콜
-```
+배포 관리:
+├── 롤링 업데이트
+├── 블루-그린 배포
+├── 카나리 배포
+└── 롤백 관리
 
-#### containerd
-```
-containerd 특징:
-├── 컨테이너 런타임 관리
-├── 이미지 전송 및 저장
-├── 컨테이너 실행 및 감독
-├── 네트워크 인터페이스 관리
-└── OCI 표준 준수
+리소스 관리:
+├── CPU/메모리 할당
+├── 스토리지 관리
+├── 네트워크 구성
+└── 보안 정책
 
-아키텍처:
-├── gRPC API 제공
-├── 플러그인 아키텍처
-├── CRI (Container Runtime Interface) 지원
-└── Kubernetes와 직접 통합 가능
+운영 자동화:
+├── 헬스 체크
+├── 자동 복구
+├── 스케일링
+└── 로드 밸런싱
+
+서비스 관리:
+├── 서비스 디스커버리
+├── 구성 관리
+├── 시크릿 관리
+└── 모니터링
 ```
 
-#### runc
-```
-runc 역할:
-├── OCI Runtime Specification 구현
-├── 컨테이너 프로세스 실제 실행
-├── 네임스페이스 및 cgroups 설정
-├── 보안 컨텍스트 적용
-└── 컨테이너 격리 보장
+## 3. Google Borg에서 Kubernetes로의 진화 (10분)
 
-기술적 특징:
-├── Go 언어로 구현
-├── libcontainer 라이브러리 사용
-├── 경량화된 바이너리
-└── 표준 준수로 호환성 보장
-```
-
-## 2. 이론: Docker API 및 통신 메커니즘 (15분)
-
-### REST API 구조 분석
-
-```
-Docker Engine API v1.41:
-
-컨테이너 관리:
-├── POST /containers/create
-├── POST /containers/{id}/start
-├── POST /containers/{id}/stop
-├── GET /containers/json
-└── DELETE /containers/{id}
-
-이미지 관리:
-├── GET /images/json
-├── POST /images/create
-├── POST /build
-├── DELETE /images/{name}
-└── POST /images/{name}/push
-
-시스템 정보:
-├── GET /info
-├── GET /version
-├── GET /events
-└── GET /_ping
-```
-
-### 클라이언트-서버 통신 흐름
+### 기술 진화 과정
 
 ```mermaid
-sequenceDiagram
-    participant CLI as Docker CLI
-    participant API as Docker API
-    participant Daemon as Docker Daemon
-    participant containerd as containerd
-    participant runc as runc
+timeline
+    title 컨테이너 오케스트레이션 진화
     
-    CLI->>API: docker run nginx
-    API->>Daemon: POST /containers/create
-    Daemon->>containerd: Create container
-    containerd->>runc: Execute container
-    runc-->>containerd: Container started
-    containerd-->>Daemon: Success response
-    Daemon-->>API: HTTP 201 Created
-    API-->>CLI: Container ID
+    section Google 내부
+        2003-2004 : Google Borg 개발 시작
+                  : 내부 워크로드 관리
+                  : 대규모 클러스터 운영
+        
+        2013      : Omega 시스템
+                  : Borg의 차세대 버전
+                  : 더 유연한 스케줄링
+    
+    section 오픈소스화
+        2014      : Kubernetes 오픈소스 공개
+                  : Borg의 경험을 바탕으로 설계
+                  : 커뮤니티 기반 개발
+        
+        2015      : CNCF 창립
+                  : Kubernetes 기부
+                  : 클라우드 네이티브 생태계 구축
+    
+    section 생태계 확장
+        2016-현재  : 산업 표준화
+                  : 주요 클라우드 제공업체 지원
+                  : 엔터프라이즈 도입 확산
 ```
 
-## 3. 이론: 프로세스 격리 및 보안 모델 (10분)
-
-### Linux 네임스페이스 활용
-
+### Borg vs Kubernetes 비교
 ```
-네임스페이스 종류:
+Google Borg → Kubernetes 진화:
 
-PID Namespace:
-├── 프로세스 ID 격리
-├── 컨테이너 내부에서 PID 1부터 시작
-├── 호스트 프로세스와 완전 분리
-└── 프로세스 트리 격리
+설계 철학:
+├── Borg: Google 내부 최적화
+└── Kubernetes: 범용성과 이식성
 
-Network Namespace:
-├── 네트워크 인터페이스 격리
-├── IP 주소 및 라우팅 테이블 분리
-├── 포트 번호 공간 격리
-└── 방화벽 규칙 독립성
+아키텍처:
+├── Borg: 중앙집중식 모놀리식
+└── Kubernetes: 모듈화된 마이크로서비스
 
-Mount Namespace:
-├── 파일시스템 마운트 포인트 격리
-├── 루트 파일시스템 변경 가능
-├── 볼륨 마운트 독립성
-└── 파일시스템 보안 강화
+사용성:
+├── Borg: 복잡한 내부 도구
+└── Kubernetes: 사용자 친화적 API
 
-UTS Namespace:
-├── 호스트명 및 도메인명 격리
-├── 컨테이너별 독립적 식별
-└── 네트워크 식별자 분리
+확장성:
+├── Borg: Google 규모 특화
+└── Kubernetes: 다양한 규모 지원
 
-IPC Namespace:
-├── 프로세스 간 통신 격리
-├── 공유 메모리 세그먼트 분리
-├── 세마포어 및 메시지 큐 격리
-└── 시스템 V IPC 객체 분리
-
-User Namespace:
-├── 사용자 및 그룹 ID 매핑
-├── 권한 격리 및 보안 강화
-├── 루트 권한 제한
-└── 호스트 시스템 보호
+생태계:
+├── Borg: 폐쇄적 내부 시스템
+└── Kubernetes: 오픈소스 생태계
 ```
 
-### cgroups 리소스 제어
+## 4. CNCF와 오픈소스 생태계 (10분)
 
-```
-Control Groups (cgroups) 기능:
+### CNCF(Cloud Native Computing Foundation) 역할
 
-CPU 제어:
-├── CPU 사용률 제한
-├── CPU 가중치 설정
-├── CPU 코어 할당
-└── 실시간 스케줄링
-
-메모리 제어:
-├── 메모리 사용량 제한
-├── 스왑 메모리 제어
-├── OOM (Out of Memory) 관리
-└── 메모리 통계 수집
-
-블록 I/O 제어:
-├── 디스크 읽기/쓰기 제한
-├── IOPS 제한
-├── 대역폭 제어
-└── I/O 우선순위 설정
-
-네트워크 제어:
-├── 네트워크 대역폭 제한
-├── 패킷 우선순위 설정
-├── 트래픽 셰이핑
-└── QoS 정책 적용
-```
-
-## 4. 개념 예시: 아키텍처 분석 (7분)
-
-### Docker 시스템 정보 분석 예시
-
-```bash
-# Docker 시스템 정보 확인 (개념 예시)
-docker system info
-
-# 예상 출력 분석:
-# Server Version: 20.10.21
-# Storage Driver: overlay2
-# Logging Driver: json-file
-# Cgroup Driver: cgroupfs
-# Plugins:
-#  Volume: local
-#  Network: bridge host ipvlan macvlan null overlay
-#  Log: awslogs fluentd gcplogs gelf journald json-file local
+```mermaid
+graph TB
+    subgraph "CNCF 생태계"
+        A[CNCF] --> B[Kubernetes]
+        A --> C[Prometheus]
+        A --> D[Envoy]
+        A --> E[Helm]
+        A --> F[Istio]
+        
+        B --> G[컨테이너 오케스트레이션]
+        C --> H[모니터링]
+        D --> I[서비스 프록시]
+        E --> J[패키지 관리]
+        F --> K[서비스 메시]
+    end
+    
+    subgraph "클라우드 네이티브 스택"
+        G --> L[애플리케이션 플랫폼]
+        H --> L
+        I --> L
+        J --> L
+        K --> L
+    end
 ```
 
-### 프로세스 구조 분석 예시
+### Kubernetes의 생태계 위치
+```
+클라우드 네이티브 생태계에서의 Kubernetes:
 
-```bash
-# Docker 관련 프로세스 확인 (개념 예시)
-ps aux | grep docker
+핵심 플랫폼:
+├── 컨테이너 오케스트레이션의 사실상 표준
+├── 다른 CNCF 프로젝트의 기반 플랫폼
+├── 클라우드 제공업체의 관리형 서비스 기반
+└── 엔터프라이즈 솔루션의 핵심 구성 요소
 
-# 예상 프로세스 구조:
-# dockerd (Docker Daemon)
-# ├── containerd (Container Runtime)
-# │   ├── containerd-shim (Container Shim)
-# │   │   └── runc (OCI Runtime)
-# │   │       └── nginx (Container Process)
-# └── docker-proxy (Port Forwarding)
+주요 특징:
+├── 벤더 중립성 (Vendor Neutral)
+├── 커뮤니티 기반 개발
+├── 광범위한 산업 지원
+└── 지속적인 혁신과 발전
+
+영향력:
+├── 컨테이너 표준화 주도
+├── 클라우드 네이티브 패러다임 정의
+├── DevOps 문화 확산
+└── 마이크로서비스 아키텍처 활성화
 ```
 
-## 5. 토론 및 정리 (3분)
+## 5. Kubernetes의 핵심 특징 (5분)
 
-### 핵심 개념 정리
-- Docker Engine은 **모듈러 아키텍처**로 구성
-- **containerd**와 **runc**의 분리로 표준화 달성
-- **네임스페이스**와 **cgroups**를 통한 완전한 격리
-- **REST API**를 통한 표준화된 인터페이스 제공
+### 주요 특징 분석
+
+```mermaid
+graph LR
+    subgraph "Kubernetes 핵심 특징"
+        A[선언적 구성] --> B[자동화]
+        B --> C[확장성]
+        C --> D[이식성]
+        D --> E[자가 치유]
+        E --> F[서비스 디스커버리]
+        F --> A
+    end
+    
+    subgraph "비즈니스 가치"
+        G[운영 효율성]
+        H[개발 생산성]
+        I[비용 최적화]
+        J[안정성 향상]
+    end
+    
+    A --> G
+    B --> H
+    C --> I
+    E --> J
+```
+
+## 💬 그룹 토론: Kubernetes가 컨테이너 생태계에 미친 혁신적 영향 (10분)
 
 ### 토론 주제
-"Docker Engine의 모듈러 아키텍처가 가져다주는 장점과 Kubernetes 생태계에서의 의미는 무엇인가?"
+**"Kubernetes가 컨테이너 생태계와 소프트웨어 개발 문화에 미친 가장 혁신적인 영향은 무엇인가?"**
 
-## 💡 핵심 키워드
-- **Docker Engine**: dockerd, containerd, runc
-- **아키텍처**: Client-Server, REST API, 모듈러 설계
-- **격리 기술**: Namespace, cgroups, 보안 모델
-- **표준화**: OCI, CRI, 호환성
+### 토론 가이드라인
+
+#### 기술적 영향 (3분)
+- **표준화**: 컨테이너 오케스트레이션의 사실상 표준
+- **추상화**: 인프라 복잡성 숨김
+- **자동화**: 운영 작업의 자동화
+
+#### 문화적 영향 (4분)
+- **DevOps 가속화**: 개발과 운영의 통합
+- **클라우드 네이티브**: 새로운 애플리케이션 설계 패러다임
+- **마이크로서비스**: 서비스 분해와 독립적 배포
+
+#### 비즈니스 영향 (3분)
+- **디지털 전환**: 기업의 클라우드 전환 가속화
+- **혁신 속도**: 더 빠른 제품 출시
+- **비용 효율성**: 리소스 활용도 향상
+
+## 💡 핵심 개념 정리
+- **Kubernetes**: 컨테이너 오케스트레이션을 위한 오픈소스 플랫폼
+- **오케스트레이션**: 컨테이너의 배포, 관리, 스케일링을 자동화
+- **선언적 구성**: 원하는 상태를 선언하면 시스템이 자동으로 달성
+- **CNCF**: 클라우드 네이티브 기술의 발전을 주도하는 재단
 
 ## 📚 참고 자료
-- [Docker Engine 아키텍처](https://docs.docker.com/get-started/overview/)
-- [containerd 아키텍처](https://containerd.io/docs/)
-- [OCI Runtime Specification](https://github.com/opencontainers/runtime-spec)
+- [Kubernetes 공식 문서](https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/)
+- [CNCF 공식 사이트](https://www.cncf.io/)
+- [Google Borg 논문](https://research.google/pubs/pub43438/)
+
+## 다음 세션 준비
+다음 세션에서는 **컨테이너 오케스트레이션의 필요성**에 대해 더 자세히 알아보겠습니다. 단일 컨테이너 관리의 한계와 대규모 운영에서 발생하는 문제들을 분석할 예정입니다.
