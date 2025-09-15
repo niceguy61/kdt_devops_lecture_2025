@@ -1,41 +1,162 @@
-# Session 1: Docker CLI 기초
+# Session 1: Docker CLI 아키텍처와 명령어 체계
 
 ## 📍 교과과정에서의 위치
-이 세션은 **Week 1 > Day 3 > Session 1**로, 본격적인 Docker 실습의 시작점입니다. 지난 이틀간 학습한 이론적 기초를 바탕으로 실제 Docker CLI를 사용하여 컨테이너를 조작하는 실무 기술을 습득합니다.
+이 세션은 **Week 1 > Day 3 > Session 1**로, Docker의 이론적 기초를 바탕으로 실제 Docker CLI 아키텍처와 명령어 체계를 심층 분석합니다. 컨테이너 기술의 실무 적용을 위한 핵심 인터페이스를 완전히 이해합니다.
 
 ## 학습 목표 (5분)
-- Docker CLI의 구조와 명령어 체계 이해
-- 도움말 시스템 효과적 활용법 학습
-- 기본 명령어 패턴과 옵션 구조 파악
-- Docker 명령어의 일관된 사용 패턴 습득
+- Docker CLI 아키텍처와 클라이언트-서버 모델 완전 이해
+- 명령어 체계의 설계 철학과 일관성 원칙 학습
+- 도움말 시스템의 계층적 구조와 효율적 활용법 습득
+- Docker 명령어 패턴의 확장성과 호환성 분석
+- 엔터프라이즈 환경에서의 CLI 활용 전략 이해
 
-## 1. Docker CLI 구조 이해 (15분)
+## 1. Docker CLI 아키텍처와 설계 철학 (20분)
 
-### Docker CLI의 기본 구조
-**Docker CLI(Command Line Interface)**는 **계층적이고 일관된 명령어 구조**를 가지고 있습니다.
+### Docker CLI의 아키텍처럴 설계
+**Docker CLI는 클라이언트-서버 아키텍처를 기반으로 한 정교한 명령어 인터페이스**입니다.
 
 ![Docker CLI Structure](../images/docker-cli-structure.svg)
 
-#### 기본 명령어 패턴
-**Docker 명령어는 다음과 같은 일관된 패턴을 따릅니다:**
+#### Docker 아키텍처의 다층 구조
+```
+Docker 전체 아키텍처:
+
+클라이언트 층 (Client Layer):
+├── Docker CLI (docker 명령어)
+│   ├── 명령어 파싱 및 검증
+│   ├── REST API 호출 변환
+│   ├── 인증 및 보안 처리
+│   ├── 오류 처리 및 사용자 피드백
+│   └── 로컬/원격 데몬 연결 관리
+├── Docker Compose CLI
+├── Docker Desktop GUI
+└── 서드파티 도구 통합
+
+통신 층 (Communication Layer):
+├── Docker Engine API (REST API)
+│   ├── HTTP/HTTPS 프로토콜
+│   ├── JSON 데이터 형식
+│   ├── 비동기 스트리밍 지원
+│   ├── 버전 호환성 관리
+│   └── 인증 및 권한 부여
+├── Unix Domain Socket (Local)
+├── TCP Socket (Remote)
+└── Named Pipes (Windows)
+
+서버 층 (Server Layer):
+├── Docker Daemon (dockerd)
+│   ├── API 서버 및 요청 처리
+│   ├── 이미지 관리 엔진
+│   ├── 컨테이너 라이프사이클 관리
+│   ├── 네트워크 및 스토리지 관리
+│   ├── 보안 및 접근 제어
+│   └── 로깅 및 모니터링
+├── containerd (컨테이너 런타임)
+├── runc (OCI 런타임)
+└── Linux Kernel (커널 기능)
+```
+
+### 명령어 체계의 설계 철학
+
+#### 1. 일관성 원칙 (Consistency Principle)
+**Docker CLI는 모든 명령어에서 일관된 패턴을 유지합니다:**
 
 ```
-Docker CLI 구조:
-docker [전역옵션] 명령어 [명령어옵션] [인수...]
+Docker CLI 일관성 원칙:
 
-예시 구조:
-docker --host tcp://remote:2376 container run --name web nginx
-│      │                        │         │   │          │
-│      └─ 전역옵션               │         │   └─ 인수    │
-└─ 기본명령어                   │         └─ 명령어옵션  │
-                                └─ 관리명령어 + 하위명령어
+기본 구조 패턴:
+docker [전역옵션] <관리명령어> <하위명령어> [옵션] [인수]
+
+예시 분석:
+docker --debug container run --name web -p 80:80 nginx:latest
+│      │       │         │   │          │        │
+│      │       │         │   │          │        └─ 인수 (이미지)
+│      │       │         │   │          └─ 옵션 (포트 매핑)
+│      │       │         │   └─ 옵션 (컨테이너 이름)
+│      │       │         └─ 하위명령어 (실행)
+│      │       └─ 관리명령어 (컨테이너 관리)
+│      └─ 전역옵션 (디버그 모드)
+└─ 기본 명령어
+
+일관성 규칙:
+1. 모든 옵션은 -- 또는 - 로 시작
+2. 짧은 옵션(-p)과 긴 옵션(--port) 병존
+3. 옵션 순서는 유연하지만 관례적 순서 존재
+4. 도움말은 --help 또는 -h로 통일
+5. 상호작용 모드는 -i, 터미널은 -t로 통일
 ```
 
-**구성 요소 설명:**
-- **docker**: 기본 명령어
-- **[OPTIONS]**: 전역 옵션 (모든 명령어에 적용)
-- **COMMAND**: 실행할 작업 (run, pull, build 등)
-- **[ARG...]**: 명령어별 인수와 옵션
+#### 2. 계층적 구조 (Hierarchical Structure)
+**복잡한 기능을 논리적으로 그룹화하여 학습과 사용을 용이하게 합니다:**
+
+```
+Docker CLI 계층 구조:
+
+최상위 레벨 (docker):
+└── 전역 설정과 공통 기능
+
+관리 명령어 레벨 (Management Commands):
+├── container: 컨테이너 전체 라이프사이클 관리
+│   ├── create, start, stop, restart, pause, unpause
+│   ├── run, exec, attach, logs
+│   ├── ls, inspect, stats, top
+│   └── rm, prune, kill
+├── image: 이미지 전체 라이프사이클 관리
+│   ├── build, pull, push, save, load
+│   ├── ls, inspect, history, tag
+│   └── rm, prune
+├── network: 네트워크 인프라 관리
+│   ├── create, connect, disconnect
+│   ├── ls, inspect
+│   └── rm, prune
+├── volume: 스토리지 볼륨 관리
+│   ├── create, mount, unmount
+│   ├── ls, inspect
+│   └── rm, prune
+├── system: 전체 시스템 관리
+│   ├── info, version, df
+│   ├── prune, events
+│   └── auth, config
+└── context: 다중 Docker 환경 관리
+    ├── create, use, update
+    ├── ls, inspect, show
+    └── rm, export, import
+
+레거시 명령어 레벨 (Legacy Commands):
+├── 직접 실행 명령어 (하위 호환성)
+├── run, ps, images, pull, push, build
+├── start, stop, restart, rm, rmi
+└── exec, logs, inspect, stats
+```
+
+#### 3. 확장성 원칙 (Extensibility Principle)
+**Docker CLI는 플러그인 아키텍처를 통해 확장 가능하게 설계되었습니다:**
+
+```
+Docker CLI 확장성 메커니즘:
+
+플러그인 시스템:
+├── 커스텀 명령어 추가 가능
+│   ├── docker-compose (멀티 컨테이너 관리)
+│   ├── docker-machine (도커 호스트 관리)
+│   ├── docker-buildx (고급 빌드 기능)
+│   └── docker-scan (보안 스캔)
+├── 서드파티 통합:
+│   ├── Kubernetes 통합 (docker stack)
+│   ├── Docker Swarm 통합
+│   ├── CI/CD 도구 통합
+│   └── 모니터링 도구 통합
+├── API 확장성:
+│   ├── REST API 직접 호출
+│   ├── SDK 라이브러리 활용
+│   ├── 웹훅 및 이벤트 시스템
+│   └── 커스텀 인증 시스템
+└── 설정 확장성:
+    ├── 환경 변수 기반 설정
+    ├── 설정 파일 커스터마이징
+    ├── 다중 컨텍스트 관리
+    └── 사용자 정의 에일리어스
+```
 
 #### 명령어 카테고리
 **Docker CLI 명령어는 기능별로 그룹화되어 있습니다:**
