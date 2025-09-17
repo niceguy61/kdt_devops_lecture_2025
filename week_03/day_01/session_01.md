@@ -16,9 +16,9 @@
 ```mermaid
 graph TB
     subgraph "Deployment (무상태)"
-        A[Pod-1 `(random-abc)`] --> B[임시 스토리지]
-        C[Pod-2 `(random-def)`] --> D[임시 스토리지]
-        E[Pod-3 `(random-ghi)`] --> F[임시 스토리지]
+        A[Pod-1 random-abc] --> B[임시 스토리지]
+        C[Pod-2 random-def] --> D[임시 스토리지]
+        E[Pod-3 random-ghi] --> F[임시 스토리지]
         
         G[Service] --> A
         G --> C
