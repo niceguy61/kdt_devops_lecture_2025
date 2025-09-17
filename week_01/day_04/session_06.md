@@ -581,11 +581,11 @@ echo "=== Registry 상태 확인 ==="
 ```
 
 ## 핵심 키워드 정리
-- **Docker Registry**: 이미지 저장 및 배포를 위한 중앙 저장소
-- **프라이빗 Registry**: 조직 내부용 보안 이미지 저장소
-- **인증 시스템**: htpasswd, JWT 토큰 기반 접근 제어
-- **클라우드 Registry**: AWS ECR, GCR, ACR 등 관리형 서비스
-- **멀티 Registry**: 여러 저장소를 활용한 분산 배포 전략
+- Docker Registry: 이미지 저장 및 배포를 위한 중앙 저장소
+- 프라이빗 Registry: 조직 내부용 보안 이미지 저장소
+- 인증 시스템: htpasswd, JWT 토큰 기반 접근 제어
+- 클라우드 Registry: AWS ECR, GCR, ACR 등 관리형 서비스
+- 멀티 Registry: 여러 저장소를 활용한 분산 배포 전략
 
 ## 참고 자료
 - [Docker Registry 공식 문서](https://docs.docker.com/registry/)

@@ -515,10 +515,10 @@ Scale Down (축소):
 **"StatefulSet을 사용해야 하는 시나리오와 효과적인 설계 전략은 무엇이며, 운영 시 주의해야 할 점은 무엇인가?"**
 
 ## 💡 핵심 개념 정리
-- **StatefulSet**: 순서 보장, 안정적 네트워크 신원, 영구 스토리지
-- **VolumeClaimTemplate**: Pod별 개별 PVC 생성, 데이터 영속성
-- **순서 보장**: 순차적 생성/삭제, 롤링 업데이트 제어
-- **스케일링**: Scale Up 자동화, Scale Down 수동 정리
+- StatefulSet: 순서 보장, 안정적 네트워크 신원, 영구 스토리지
+- VolumeClaimTemplate: Pod별 개별 PVC 생성, 데이터 영속성
+- 순서 보장: 순차적 생성/삭제, 롤링 업데이트 제어
+- 스케일링: Scale Up 자동화, Scale Down 수동 정리
 
 ## 📚 참고 자료
 - [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)

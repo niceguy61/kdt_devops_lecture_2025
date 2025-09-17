@@ -433,26 +433,26 @@ DNS 기반 서비스 매핑:
 ### 토론 가이드라인
 
 #### Service 타입별 적용 시나리오 (3분)
-- **ClusterIP**: 내부 마이크로서비스 통신, API 게이트웨이
-- **NodePort**: 개발/테스트 환경, 온프레미스 외부 접근
-- **LoadBalancer**: 프로덕션 외부 서비스, 클라우드 환경
-- **ExternalName**: 외부 서비스 통합, 레거시 시스템 연결
+- ClusterIP: 내부 마이크로서비스 통신, API 게이트웨이
+- NodePort: 개발/테스트 환경, 온프레미스 외부 접근
+- LoadBalancer: 프로덕션 외부 서비스, 클라우드 환경
+- ExternalName: 외부 서비스 통합, 레거시 시스템 연결
 
 #### 설계 전략 고려사항 (3분)
-- **성능**: 네트워크 홉, 로드 밸런싱 효율성
-- **보안**: 외부 노출 최소화, 트래픽 암호화
-- **가용성**: 장애 복구, 헬스 체크, 다중화
+- 성능: 네트워크 홉, 로드 밸런싱 효율성
+- 보안: 외부 노출 최소화, 트래픽 암호화
+- 가용성: 장애 복구, 헬스 체크, 다중화
 
 #### 실무 적용 경험 (2분)
-- **마이그레이션**: Service 타입 전환 경험
-- **트러블슈팅**: 네트워킹 이슈 해결 사례
-- **최적화**: 성능 튜닝 및 모니터링 방안
+- 마이그레이션: Service 타입 전환 경험
+- 트러블슈팅: 네트워킹 이슈 해결 사례
+- 최적화: 성능 튜닝 및 모니터링 방안
 
 ## 💡 핵심 개념 정리
-- **ClusterIP**: 내부 로드 밸런싱, 가상 IP, Endpoint 관리
-- **NodePort**: 외부 접근, 포트 바인딩, 트래픽 정책
-- **LoadBalancer**: 클라우드 통합, 자동 프로비저닝, 고가용성
-- **ExternalName**: DNS 매핑, 외부 서비스 추상화
+- ClusterIP: 내부 로드 밸런싱, 가상 IP, Endpoint 관리
+- NodePort: 외부 접근, 포트 바인딩, 트래픽 정책
+- LoadBalancer: 클라우드 통합, 자동 프로비저닝, 고가용성
+- ExternalName: DNS 매핑, 외부 서비스 추상화
 
 ## 📚 참고 자료
 - [Service Types](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)

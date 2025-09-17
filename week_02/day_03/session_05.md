@@ -536,10 +536,10 @@ IngressClass 개념:
 **"대규모 프로덕션 환경에서 Ingress 컨트롤러를 선택하고 고가용성을 보장하기 위한 설계 전략은 무엇인가?"**
 
 ## 💡 핵심 개념 정리
-- **Ingress 컨트롤러**: L7 로드 밸런싱, HTTP/HTTPS 라우팅
-- **TLS 종료**: 인증서 관리, 보안 최적화
-- **라우팅 패턴**: Host 기반, Path 기반, 혼합 전략
-- **IngressClass**: 다중 컨트롤러 관리, 명시적 선택
+- Ingress 컨트롤러: L7 로드 밸런싱, HTTP/HTTPS 라우팅
+- TLS 종료: 인증서 관리, 보안 최적화
+- 라우팅 패턴: Host 기반, Path 기반, 혼합 전략
+- IngressClass: 다중 컨트롤러 관리, 명시적 선택
 
 ## 📚 참고 자료
 - [Ingress Controllers](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/)

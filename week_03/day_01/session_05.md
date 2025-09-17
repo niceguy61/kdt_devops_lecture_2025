@@ -669,25 +669,25 @@ Operator Lifecycle Manager (OLM):
 ### 토론 가이드라인
 
 #### 기술적 고려사항 (3분)
-- **복잡성 관리**: Operator 개발과 유지보수의 복잡성
-- **성능 영향**: 컨트롤러 루프와 API 서버 부하
-- **보안 고려사항**: 권한 관리와 보안 모델
+- 복잡성 관리: Operator 개발과 유지보수의 복잡성
+- 성능 영향: 컨트롤러 루프와 API 서버 부하
+- 보안 고려사항: 권한 관리와 보안 모델
 
 #### 조직적 고려사항 (3분)
-- **개발 역량**: 필요한 기술 스킬과 학습 곡선
-- **운영 모델**: 기존 운영 프로세스와의 통합
-- **거버넌스**: Operator 승인과 관리 프로세스
+- 개발 역량: 필요한 기술 스킬과 학습 곡선
+- 운영 모델: 기존 운영 프로세스와의 통합
+- 거버넌스: Operator 승인과 관리 프로세스
 
 #### 도입 전략 (2분)
-- **점진적 도입**: 파일럿 프로젝트와 단계별 확장
-- **기존 도구 활용**: Helm, Kustomize 등과의 관계
-- **커뮤니티 활용**: 오픈소스 Operator 활용 vs 자체 개발
+- 점진적 도입: 파일럿 프로젝트와 단계별 확장
+- 기존 도구 활용: Helm, Kustomize 등과의 관계
+- 커뮤니티 활용: 오픈소스 Operator 활용 vs 자체 개발
 
 ## 💡 핵심 개념 정리
-- **CRD**: Kubernetes API 확장을 통한 커스텀 리소스 정의
-- **Operator 패턴**: 도메인 지식을 코드로 구현한 자동화 컨트롤러
-- **Reconcile Loop**: 현재 상태와 원하는 상태를 지속적으로 조정
-- **확장 가능한 플랫폼**: OLM과 Operator 생태계를 활용한 플랫폼 구축
+- CRD: Kubernetes API 확장을 통한 커스텀 리소스 정의
+- Operator 패턴: 도메인 지식을 코드로 구현한 자동화 컨트롤러
+- Reconcile Loop: 현재 상태와 원하는 상태를 지속적으로 조정
+- 확장 가능한 플랫폼: OLM과 Operator 생태계를 활용한 플랫폼 구축
 
 ## 📚 참고 자료
 - [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)

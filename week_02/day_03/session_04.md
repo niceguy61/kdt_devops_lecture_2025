@@ -498,25 +498,25 @@ EndpointSlice 구조:
 ### 토론 가이드라인
 
 #### 모드 선택 기준 (3분)
-- **클러스터 규모**: 서비스 수, Pod 수, 노드 수
-- **성능 요구사항**: 처리량, 지연시간, 확장성
-- **운영 복잡성**: 설정, 디버깅, 모니터링
+- 클러스터 규모: 서비스 수, Pod 수, 노드 수
+- 성능 요구사항: 처리량, 지연시간, 확장성
+- 운영 복잡성: 설정, 디버깅, 모니터링
 
 #### 성능 최적화 전략 (3분)
-- **IPVS 알고리즘**: 워크로드별 최적 알고리즘 선택
-- **세션 어피니티**: 애플리케이션 특성에 따른 설정
-- **EndpointSlice**: 대규모 환경에서의 활용
+- IPVS 알고리즘: 워크로드별 최적 알고리즘 선택
+- 세션 어피니티: 애플리케이션 특성에 따른 설정
+- EndpointSlice: 대규모 환경에서의 활용
 
 #### 실무 적용 경험 (2분)
-- **마이그레이션**: iptables → IPVS 전환 경험
-- **트러블슈팅**: 네트워크 성능 이슈 해결
-- **모니터링**: kube-proxy 성능 측정 및 튜닝
+- 마이그레이션: iptables → IPVS 전환 경험
+- 트러블슈팅: 네트워크 성능 이슈 해결
+- 모니터링: kube-proxy 성능 측정 및 튜닝
 
 ## 💡 핵심 개념 정리
-- **kube-proxy**: Service 구현, 네트워크 규칙 관리, 로드 밸런싱
-- **iptables vs IPVS**: 성능, 확장성, 알고리즘 다양성
-- **로드 밸런싱**: Round Robin, Least Connection, Source Hashing
-- **EndpointSlice**: 확장성 개선, 분산 저장, 토폴로지 인식
+- kube-proxy: Service 구현, 네트워크 규칙 관리, 로드 밸런싱
+- iptables vs IPVS: 성능, 확장성, 알고리즘 다양성
+- 로드 밸런싱: Round Robin, Least Connection, Source Hashing
+- EndpointSlice: 확장성 개선, 분산 저장, 토폴로지 인식
 
 ## 📚 참고 자료
 - [kube-proxy](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)

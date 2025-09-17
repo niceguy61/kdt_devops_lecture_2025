@@ -806,25 +806,25 @@ CPU 최적화:
 ### 토론 가이드라인
 
 #### 성능 vs 비용 (3분)
-- **오버프로비저닝**: 성능 보장을 위한 여유 리소스 vs 비용 증가
-- **리소스 효율성**: 높은 활용률 추구 vs 성능 저하 위험
-- **동적 조정**: 실시간 최적화 vs 관리 복잡성
+- 오버프로비저닝: 성능 보장을 위한 여유 리소스 vs 비용 증가
+- 리소스 효율성: 높은 활용률 추구 vs 성능 저하 위험
+- 동적 조정: 실시간 최적화 vs 관리 복잡성
 
 #### 안정성 vs 효율성 (3분)
-- **QoS 클래스**: Guaranteed vs Burstable 선택 기준
-- **리소스 격리**: 안정성 보장 vs 리소스 낭비
-- **장애 대응**: 빠른 복구 vs 리소스 예약
+- QoS 클래스: Guaranteed vs Burstable 선택 기준
+- 리소스 격리: 안정성 보장 vs 리소스 낭비
+- 장애 대응: 빠른 복구 vs 리소스 예약
 
 #### 거버넌스 vs 유연성 (2분)
-- **정책 엄격성**: 엄격한 제한 vs 개발 생산성
-- **자동화 수준**: 완전 자동화 vs 수동 제어
-- **예외 처리**: 정책 일관성 vs 특수 요구사항 대응
+- 정책 엄격성: 엄격한 제한 vs 개발 생산성
+- 자동화 수준: 완전 자동화 vs 수동 제어
+- 예외 처리: 정책 일관성 vs 특수 요구사항 대응
 
 ## 💡 핵심 개념 정리
-- **리소스 관리**: requests/limits를 통한 리소스 할당과 제한
-- **QoS 클래스**: Guaranteed, Burstable, BestEffort 기반 우선순위 관리
-- **리소스 거버넌스**: ResourceQuota와 LimitRange를 통한 정책 적용
-- **성능 최적화**: CPU, 메모리, I/O, 네트워크 최적화를 통한 효율성 향상
+- 리소스 관리: requests/limits를 통한 리소스 할당과 제한
+- QoS 클래스: Guaranteed, Burstable, BestEffort 기반 우선순위 관리
+- 리소스 거버넌스: ResourceQuota와 LimitRange를 통한 정책 적용
+- 성능 최적화: CPU, 메모리, I/O, 네트워크 최적화를 통한 효율성 향상
 
 ## 📚 참고 자료
 - [Resource Management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)

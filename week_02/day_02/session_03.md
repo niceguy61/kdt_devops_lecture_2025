@@ -261,10 +261,10 @@ Health Check:
 **"Kubernetes Service 추상화가 마이크로서비스 아키텍처 구현과 운영에 미치는 영향과 가치는 무엇인가?"**
 
 ## 💡 핵심 개념 정리
-- **Service**: 네트워크 추상화, 안정적인 접근점 제공
-- **타입**: ClusterIP, NodePort, LoadBalancer, ExternalName
-- **Endpoint**: 동적 Pod 목록 관리, 서비스 디스커버리
-- **DNS**: 이름 기반 서비스 해결, CoreDNS 통합
+- Service: 네트워크 추상화, 안정적인 접근점 제공
+- 타입: ClusterIP, NodePort, LoadBalancer, ExternalName
+- Endpoint: 동적 Pod 목록 관리, 서비스 디스커버리
+- DNS: 이름 기반 서비스 해결, CoreDNS 통합
 
 ## 다음 세션 준비
 다음 세션에서는 **ConfigMap과 Secret**에 대해 학습합니다.

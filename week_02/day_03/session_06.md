@@ -562,10 +562,10 @@ DNS 성능 최적화:
 **"DNS 기반 서비스 디스커버리의 한계점은 무엇이며, 대규모 마이크로서비스 환경에서 어떤 대안 기술을 고려해야 하는가?"**
 
 ## 💡 핵심 개념 정리
-- **CoreDNS**: 플러그인 기반 DNS 서버, Kubernetes 네이티브 통합
-- **Service DNS**: FQDN 구조, A/SRV/CNAME 레코드, Headless Service
-- **Pod DNS 정책**: ClusterFirst, Default, None, 사용자 정의 설정
-- **외부 DNS**: External DNS 컨트롤러, 서비스 메시 통합
+- CoreDNS: 플러그인 기반 DNS 서버, Kubernetes 네이티브 통합
+- Service DNS: FQDN 구조, A/SRV/CNAME 레코드, Headless Service
+- Pod DNS 정책: ClusterFirst, Default, None, 사용자 정의 설정
+- 외부 DNS: External DNS 컨트롤러, 서비스 메시 통합
 
 ## 📚 참고 자료
 - [CoreDNS](https://coredns.io/manual/toc/)

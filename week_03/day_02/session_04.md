@@ -516,25 +516,25 @@ Istio와 Network Policy 통합:
 ### 토론 가이드라인
 
 #### 보안 계층 설계 (3분)
-- **계층별 역할**: Network Policy vs Service Mesh 역할 분담
-- **정책 우선순위**: 충돌 시 정책 적용 순서
-- **보안 깊이**: 다층 방어 구조 설계
+- 계층별 역할: Network Policy vs Service Mesh 역할 분담
+- 정책 우선순위: 충돌 시 정책 적용 순서
+- 보안 깊이: 다층 방어 구조 설계
 
 #### 운영 효율성 (3분)
-- **정책 관리**: 통합 정책 관리 방안
-- **자동화**: 정책 생성 및 적용 자동화
-- **모니터링**: 통합 모니터링 및 분석 체계
+- 정책 관리: 통합 정책 관리 방안
+- 자동화: 정책 생성 및 적용 자동화
+- 모니터링: 통합 모니터링 및 분석 체계
 
 #### 성능 고려사항 (2분)
-- **성능 영향**: 네트워크 정책이 성능에 미치는 영향
-- **최적화**: CNI 선택과 설정 최적화
-- **확장성**: 대규모 환경에서의 확장성 고려
+- 성능 영향: 네트워크 정책이 성능에 미치는 영향
+- 최적화: CNI 선택과 설정 최적화
+- 확장성: 대규모 환경에서의 확장성 고려
 
 ## 💡 핵심 개념 정리
-- **마이크로세그멘테이션**: Pod 단위의 세밀한 네트워크 격리
-- **Network Policy**: Ingress/Egress 규칙을 통한 트래픽 제어
-- **CNI 플러그인**: 각 플러그인별 Network Policy 지원 차이
-- **통합 보안**: Service Mesh와의 조합을 통한 다층 보안
+- 마이크로세그멘테이션: Pod 단위의 세밀한 네트워크 격리
+- Network Policy: Ingress/Egress 규칙을 통한 트래픽 제어
+- CNI 플러그인: 각 플러그인별 Network Policy 지원 차이
+- 통합 보안: Service Mesh와의 조합을 통한 다층 보안
 
 ## 📚 참고 자료
 - [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)

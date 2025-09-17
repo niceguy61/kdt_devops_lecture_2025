@@ -25,10 +25,10 @@ pyramid
 ```
 
 **각 계층의 상호 의존성:**
-- **문화와 철학 (40%)**: DevOps의 근본 기반
-- **방법론과 프로세스 (30%)**: 문화를 구현하는 체계
-- **도구와 기술 (20%)**: 방법론을 지원하는 수단
-- **메트릭과 측정 (10%)**: 성과를 측정하는 지표
+- 문화와 철학 (40%): DevOps의 근본 기반
+- 방법론과 프로세스 (30%): 문화를 구현하는 체계
+- 도구와 기술 (20%): 방법론을 지원하는 수단
+- 메트릭과 측정 (10%): 성과를 측정하는 지표
 
 ### CALMS 모델의 통합적 이해
 **5가지 요소의 순환적 상호작용:**
@@ -61,9 +61,9 @@ graph TB
 | **책임 소재** | 역할별 분리 | 공동 책임 |
 
 ### 변화 관리 관점
-- **문화적 변화**: 개인 성과 → 팀 성과
-- **프로세스 변화**: 순차적 → 병렬적
-- **도구 변화**: 수동 → 자동화
+- 문화적 변화: 개인 성과 → 팀 성과
+- 프로세스 변화: 순차적 → 병렬적
+- 도구 변화: 수동 → 자동화
 
 ## 3. DevOps 도구 생태계 이해 (10분)
 
@@ -115,9 +115,9 @@ graph TB
 ## 5. 다음 학습 준비 (5분)
 
 ### Day 2 학습 내용 미리보기
-- **컨테이너 기술 이론**: 가상화 기술의 발전사
-- **아키텍처 비교**: 하이퍼바이저 vs 컨테이너
-- **Linux 기반 기술**: 네임스페이스와 cgroups 개념
+- 컨테이너 기술 이론: 가상화 기술의 발전사
+- 아키텍처 비교: 하이퍼바이저 vs 컨테이너
+- Linux 기반 기술: 네임스페이스와 cgroups 개념
 
 ### 사전 학습 권장사항
 - 가상화 기술에 대한 기본 이해
@@ -130,10 +130,10 @@ graph TB
 - [DORA Metrics 가이드](https://www.devops-research.com/research.html)
 
 ## 💡 핵심 키워드
-- **DevOps 문화**: 협업, 자동화, 측정, 공유
-- **CALMS 모델**: Culture, Automation, Lean, Measurement, Sharing
-- **지속적 개선**: 빠른 피드백 루프를 통한 점진적 발전
-- **크로스 펑셔널 팀**: 다양한 역할이 협업하는 팀 구조
+- DevOps 문화: 협업, 자동화, 측정, 공유
+- CALMS 모델: Culture, Automation, Lean, Measurement, Sharing
+- 지속적 개선: 빠른 피드백 루프를 통한 점진적 발전
+- 크로스 펑셔널 팀: 다양한 역할이 협업하는 팀 구조
 
 # 2. 설치 후 Applications 폴더로 이동
 # 3. Docker Desktop 실행
@@ -248,7 +248,7 @@ docker rm my-nginx
 ### 핵심 개념 복습
 
 #### DevOps 정의
-**7주 과정의 기초가 되는 핵심 개념**:
+7주 과정의 기초가 되는 핵심 개념:
 - Development + Operations
 - 협업 문화와 자동화 방법론
 - CALMS 모델 (Culture, Automation, Lean, Measurement, Sharing)
@@ -267,17 +267,17 @@ docker rm my-nginx
 ```
 
 ### 주요 도구 체인
-- **코드 관리**: Git, GitHub
-- **CI/CD**: Jenkins, GitHub Actions
-- **컨테이너**: Docker, Kubernetes
-- **모니터링**: Prometheus, Grafana
+- 코드 관리: Git, GitHub
+- CI/CD: Jenkins, GitHub Actions
+- 컨테이너: Docker, Kubernetes
+- 모니터링: Prometheus, Grafana
 
 ## 5. 질의응답 및 토론 (10분)
 
 ### 자주 묻는 질문
 
 #### Q1: DevOps 엔지니어가 되려면 어떤 기술을 먼저 배워야 하나요?
-**A**: 다음 순서를 권장합니다:
+A: 다음 순서를 권장합니다:
 1. Linux 기초 및 Shell 스크립팅
 2. Git 버전 관리
 3. Docker 컨테이너 기술
@@ -287,15 +287,15 @@ docker rm my-nginx
 7. Infrastructure as Code (Terraform)
 
 #### Q2: 작은 회사에서도 DevOps를 도입할 수 있나요?
-**A**: 네, 가능합니다. 오히려 작은 회사가 더 빠르게 도입할 수 있습니다:
+A: 네, 가능합니다. 오히려 작은 회사가 더 빠르게 도입할 수 있습니다:
 - 간단한 CI/CD 파이프라인부터 시작
 - 클라우드 서비스 활용으로 초기 비용 절약
 - GitHub Actions 같은 무료 도구 활용
 
 #### Q3: DevOps와 SRE의 차이점은?
-**A**: 
-- **DevOps**: 개발과 운영의 협업 문화
-- **SRE**: Google에서 시작된 운영 방법론, 소프트웨어 엔지니어링으로 운영 문제 해결
+A: 
+- DevOps: 개발과 운영의 협업 문화
+- SRE: Google에서 시작된 운영 방법론, 소프트웨어 엔지니어링으로 운영 문제 해결
 
 ### 오픈 토론
 - 현재 조직의 DevOps 도입 가능성

@@ -639,10 +639,10 @@ Kubernetes 제로 트러스트 구현:
 **"Kubernetes 환경에서 제로 트러스트 네트워킹을 구현하기 위한 네트워크 보안 정책 설계 전략과 실무 적용 방안은 무엇인가?"**
 
 ## 💡 핵심 개념 정리
-- **NetworkPolicy**: 트래픽 제어, Ingress/Egress 규칙, 선택자 패턴
-- **마이크로세그멘테이션**: 네임스페이스 격리, 세밀한 접근 제어
-- **제로 트러스트**: Never Trust Always Verify, 최소 권한, 지속적 검증
-- **보안 자동화**: Policy as Code, 동적 정책, 컴플라이언스
+- NetworkPolicy: 트래픽 제어, Ingress/Egress 규칙, 선택자 패턴
+- 마이크로세그멘테이션: 네임스페이스 격리, 세밀한 접근 제어
+- 제로 트러스트: Never Trust Always Verify, 최소 권한, 지속적 검증
+- 보안 자동화: Policy as Code, 동적 정책, 컴플라이언스
 
 ## 📚 참고 자료
 - [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
