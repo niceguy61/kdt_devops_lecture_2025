@@ -93,40 +93,40 @@ docker --debug container run --name web -p 80:80 nginx:latest
 Docker CLI 계층 구조:
 
 최상위 레벨 (docker):
-└── 전역 설정과 공통 기능
+   🔹 전역 설정과 공통 기능
 
 관리 명령어 레벨 (Management Commands):
-├── container: 컨테이너 전체 라이프사이클 관리
-│   ├── create, start, stop, restart, pause, unpause
-│   ├── run, exec, attach, logs
-│   ├── ls, inspect, stats, top
-│   └── rm, prune, kill
-├── image: 이미지 전체 라이프사이클 관리
-│   ├── build, pull, push, save, load
-│   ├── ls, inspect, history, tag
-│   └── rm, prune
-├── network: 네트워크 인프라 관리
-│   ├── create, connect, disconnect
-│   ├── ls, inspect
-│   └── rm, prune
-├── volume: 스토리지 볼륨 관리
-│   ├── create, mount, unmount
-│   ├── ls, inspect
-│   └── rm, prune
-├── system: 전체 시스템 관리
-│   ├── info, version, df
-│   ├── prune, events
-│   └── auth, config
-└── context: 다중 Docker 환경 관리
-    ├── create, use, update
-    ├── ls, inspect, show
-    └── rm, export, import
+   🔹 container: 컨테이너 전체 라이프사이클 관리
+      • create, start, stop, restart, pause, unpause
+      • run, exec, attach, logs
+      • ls, inspect, stats, top
+      • rm, prune, kill
+   🔹 image: 이미지 전체 라이프사이클 관리
+      • build, pull, push, save, load
+      • ls, inspect, history, tag
+      • rm, prune
+   🔹 network: 네트워크 인프라 관리
+      • create, connect, disconnect
+      • ls, inspect
+      • rm, prune
+   🔹 volume: 스토리지 볼륨 관리
+      • create, mount, unmount
+      • ls, inspect
+      • rm, prune
+   🔹 system: 전체 시스템 관리
+      • info, version, df
+      • prune, events
+      • auth, config
+   🔹 context: 다중 Docker 환경 관리
+   🔹 create, use, update
+   🔹 ls, inspect, show
+   🔹 rm, export, import
 
 레거시 명령어 레벨 (Legacy Commands):
-├── 직접 실행 명령어 (하위 호환성)
-├── run, ps, images, pull, push, build
-├── start, stop, restart, rm, rmi
-└── exec, logs, inspect, stats
+   🔹 직접 실행 명령어 (하위 호환성)
+   🔹 run, ps, images, pull, push, build
+   🔹 start, stop, restart, rm, rmi
+   🔹 exec, logs, inspect, stats
 ```
 
 #### 3. 확장성 원칙 (Extensibility Principle)
@@ -136,26 +136,26 @@ Docker CLI 계층 구조:
 Docker CLI 확장성 메커니즘:
 
 플러그인 시스템:
-├── 커스텀 명령어 추가 가능
-│   ├── docker-compose (멀티 컨테이너 관리)
-│   ├── docker-machine (도커 호스트 관리)
-│   ├── docker-buildx (고급 빌드 기능)
-│   └── docker-scan (보안 스캔)
-├── 서드파티 통합:
-│   ├── Kubernetes 통합 (docker stack)
-│   ├── Docker Swarm 통합
-│   ├── CI/CD 도구 통합
-│   └── 모니터링 도구 통합
-├── API 확장성:
-│   ├── REST API 직접 호출
-│   ├── SDK 라이브러리 활용
-│   ├── 웹훅 및 이벤트 시스템
-│   └── 커스텀 인증 시스템
-└── 설정 확장성:
-    ├── 환경 변수 기반 설정
-    ├── 설정 파일 커스터마이징
-    ├── 다중 컨텍스트 관리
-    └── 사용자 정의 에일리어스
+   🔹 커스텀 명령어 추가 가능
+      • docker-compose (멀티 컨테이너 관리)
+      • docker-machine (도커 호스트 관리)
+      • docker-buildx (고급 빌드 기능)
+      • docker-scan (보안 스캔)
+   🔹 서드파티 통합:
+      • Kubernetes 통합 (docker stack)
+      • Docker Swarm 통합
+      • CI/CD 도구 통합
+      • 모니터링 도구 통합
+   🔹 API 확장성:
+      • REST API 직접 호출
+      • SDK 라이브러리 활용
+      • 웹훅 및 이벤트 시스템
+      • 커스텀 인증 시스템
+   🔹 설정 확장성:
+   🔹 환경 변수 기반 설정
+   🔹 설정 파일 커스터마이징
+   🔹 다중 컨텍스트 관리
+   🔹 사용자 정의 에일리어스
 ```
 
 #### 명령어 카테고리
@@ -241,21 +241,21 @@ graph TD
 ### 도움말 구조 분석
 ```
 1단계: 전체 개요 (docker --help)
-├── Usage 패턴
-├── Management Commands 목록
-├── Legacy Commands 목록
-└── Global Options
+   🔹 Usage 패턴
+   🔹 Management Commands 목록
+   🔹 Legacy Commands 목록
+   🔹 Global Options
 
 2단계: 관리 명령어 그룹 (docker container --help)
-├── 하위 명령어 목록
-├── 각 명령어 간단 설명
-└── 사용 예시
+   🔹 하위 명령어 목록
+   🔹 각 명령어 간단 설명
+   🔹 사용 예시
 
 3단계: 특정 명령어 (docker container run --help)
-├── 상세 사용법
-├── 모든 옵션 설명
-├── 예제 코드
-└── 관련 명령어 참조
+   🔹 상세 사용법
+   🔹 모든 옵션 설명
+   🔹 예제 코드
+   🔹 관련 명령어 참조
 ```
 # 
 # Options:
