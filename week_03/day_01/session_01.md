@@ -16,9 +16,9 @@
 ```mermaid
 graph TB
     subgraph "Deployment (무상태)"
-        A[Pod-1 (random-abc)] --> B[임시 스토리지]
-        C[Pod-2 (random-def)] --> D[임시 스토리지]
-        E[Pod-3 (random-ghi)] --> F[임시 스토리지]
+        A[Pod-1 `(random-abc)`] --> B[임시 스토리지]
+        C[Pod-2 `(random-def)`] --> D[임시 스토리지]
+        E[Pod-3 `(random-ghi)`] --> F[임시 스토리지]
         
         G[Service] --> A
         G --> C
@@ -26,9 +26,9 @@ graph TB
     end
     
     subgraph "StatefulSet (상태 저장)"
-        H[Pod-0 (app-0)] --> I[PVC-0 → PV-0]
-        J[Pod-1 (app-1)] --> K[PVC-1 → PV-1]
-        L[Pod-2 (app-2)] --> M[PVC-2 → PV-2]
+        H[Pod-0 `(app-0)`] --> I[PVC-0 → PV-0]
+        J[Pod-1 `(app-1)`] --> K[PVC-1 → PV-1]
+        L[Pod-2 `(app-2)`] --> M[PVC-2 → PV-2]
         
         N[Headless Service] --> H
         N --> J
