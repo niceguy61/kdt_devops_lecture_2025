@@ -74,8 +74,24 @@ graph TB
     style C2 fill:#e8f5e8
 ```
 
-**🖼️ 서버 활용률 비교**
-![Server Utilization](https://miro.medium.com/max/1400/1*8xZmrWafDdkVlzlWgWbCKg.png)
+**📊 서버 활용률 비교**
+```mermaid
+graph TB
+    subgraph "전통적 서버 (활용률 10-15%)"
+        A1[물리 서버 1<br/>CPU: 15% 사용]
+        A2[물리 서버 2<br/>CPU: 12% 사용]
+        A3[물리 서버 3<br/>CPU: 10% 사용]
+    end
+    
+    subgraph "가상화 서버 (활용률 70-80%)"
+        B1[물리 서버<br/>CPU: 75% 사용<br/>VM1 + VM2 + VM3]
+    end
+    
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style A3 fill:#ffebee
+    style B1 fill:#e8f5e8
+```
 *전통적 서버 vs 가상화 활용률*
 
 ### 🔍 개념 2: 가상머신(VM)의 등장 (12분)
@@ -109,8 +125,23 @@ graph TB
     style F fill:#e8f5e8
 ```
 
-**🖼️ 가상화 기술 진화**
-![Virtualization Evolution](https://miro.medium.com/max/1400/1*wE7TrQmFyRTDwh6VpbkbMQ.png)
+**🔄 가상화 기술 진화**
+```mermaid
+graph LR
+    A[물리 서버<br/>1990년대] --> B[가상머신<br/>2000년대]
+    B --> C[컨테이너<br/>2010년대]
+    C --> D[서버리스<br/>2020년대]
+    
+    A --> A1["낮은 활용률<br/>높은 비용"]
+    B --> B1["높은 활용률<br/>무거운 구조"]
+    C --> C1["경량화<br/>빠른 배포"]
+    D --> D1["완전 추상화<br/>이벤트 기반"]
+    
+    style A fill:#ffebee
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#e3f2fd
+```
 *가상화 기술의 진화 과정*
 
 ### 🔍 개념 3: 컨테이너의 혁신 (11분)
@@ -146,12 +177,61 @@ graph LR
     style B5 fill:#e8f5e8
 ```
 
-**🖼️ VM vs 컨테이너 아키텍처 비교**
-![VM vs Container](https://miro.medium.com/max/1400/1*V5N9gJdnToIrgAgVJTR_Yw.png)
+**🏗️ VM vs 컨테이너 아키텍처 상세 비교**
+```mermaid
+graph TB
+    subgraph "가상머신 아키텍처"
+        VM1[물리 서버<br/>Infrastructure]
+        VM2[호스트 OS<br/>Host Operating System]
+        VM3[하이퍼바이저<br/>Hypervisor]
+        VM4[게스트 OS 1<br/>Guest OS]
+        VM5[게스트 OS 2<br/>Guest OS]
+        VM6[앱 A<br/>Application]
+        VM7[앱 B<br/>Application]
+        
+        VM1 --> VM2
+        VM2 --> VM3
+        VM3 --> VM4
+        VM3 --> VM5
+        VM4 --> VM6
+        VM5 --> VM7
+    end
+    
+    subgraph "컨테이너 아키텍처"
+        C1[물리 서버<br/>Infrastructure]
+        C2[호스트 OS<br/>Host Operating System]
+        C3[컨테이너 엔진<br/>Container Engine]
+        C4[컨테이너 1<br/>App A + 라이브러리]
+        C5[컨테이너 2<br/>App B + 라이브러리]
+        
+        C1 --> C2
+        C2 --> C3
+        C3 --> C4
+        C3 --> C5
+    end
+    
+    style VM4 fill:#ffebee
+    style VM5 fill:#ffebee
+    style C4 fill:#e8f5e8
+    style C5 fill:#e8f5e8
+```
 *VM과 컨테이너 아키텍처 비교*
 
-**🖼️ 컨테이너 성능 비교**
-![Container Performance](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
+**⚡ 컨테이너 성능 비교**
+```mermaid
+graph TB
+    subgraph "성능 비교 지표"
+        A[시작 시간<br/>VM: 수분<br/>컨테이너: 수초]
+        B[메모리 사용<br/>VM: GB 단위<br/>컨테이너: MB 단위]
+        C[디스크 사용<br/>VM: 수GB<br/>컨테이너: 수십MB]
+        D[성능 오버헤드<br/>VM: 5-10%<br/>컨테이너: 1-2%]
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+```
 *컨테이너의 높은 자원 효율성*
 
 **성능 비교표**:

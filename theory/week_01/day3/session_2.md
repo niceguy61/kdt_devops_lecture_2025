@@ -81,7 +81,23 @@ CMD ["npm", "start"]
 > **정의**: 여러 단계로 나누어 최종 이미지 크기를 최소화하는 빌드 방법
 
 **🖼️ Dockerfile 베스트 프랙티스**
-![Dockerfile Best Practices](https://miro.medium.com/max/1400/1*8kGlUznXaDqjeqh7ha_Xmg.png)
+```mermaid
+graph TB
+    subgraph "Dockerfile 베스트 프랙티스"
+        A[경량 베이스<br/>Alpine Linux 사용] --> F[효율적 이미지]
+        B[레이어 최적화<br/>RUN 명령어 결합] --> F
+        C[캐시 활용<br/>자주 변경되지 않는 파일 먼저] --> F
+        D[보안 강화<br/>비root 사용자 사용] --> F
+        E[불필요한 파일 제외<br/>.dockerignore 활용] --> F
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#4caf50
+```
 *Dockerfile 작성 베스트 프랙티스*
 
 **멀티스테이지 빌드 예시**:
@@ -123,7 +139,28 @@ graph LR
 > **정의**: 효율적이고 안전한 Dockerfile 작성을 위한 권장사항들
 
 **🖼️ Dockerfile 레이어 최적화**
-![Dockerfile Layer Optimization](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
+```mermaid
+graph TB
+    subgraph "레이어 최적화 전략"
+        A[비효율적 방식<br/>매번 전체 재빌드] --> D[빌드 시간 증가]
+        B[효율적 방식<br/>레이어 캐시 활용] --> E[빌드 시간 단축]
+    end
+    
+    subgraph "캐시 활용 순서"
+        F[1. 베이스 이미지] --> G[2. 시스템 의존성]
+        G --> H[3. 애플리케이션 의존성]
+        H --> I[4. 애플리케이션 코드]
+    end
+    
+    style A fill:#ffebee
+    style B fill:#e8f5e8
+    style D fill:#f44336
+    style E fill:#4caf50
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#e3f2fd
+```
 *레이어 캠시와 최적화 전략*
 
 **베스트 프랙티스 목록**:

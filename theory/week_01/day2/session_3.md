@@ -40,8 +40,26 @@
 
 > **정의**: 컨테이너를 실행하고 관리하는 핵심 엔진
 
-**🖼️ Docker Engine 아키텍처**
-![Docker Engine Architecture](https://miro.medium.com/max/1400/1*V5N9gJdnToIrgAgVJTR_Yw.png)
+**⚙️ Docker Engine 아키텍처**
+```mermaid
+graph TB
+    subgraph "Docker Engine 내부 구조"
+        A[Docker CLI<br/>명령어 인터페이스] --> B[Docker Daemon<br/>dockerd]
+        B --> C[containerd<br/>컨테이너 런타임]
+        C --> D[runc<br/>OCI 런타임]
+        D --> E[Linux Kernel<br/>namespaces + cgroups]
+    end
+    
+    F[사용자] --> A
+    E --> G[컨테이너 프로세스]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#f3e5f5
+    style E fill:#ffebee
+    style G fill:#4caf50
+```
 *Docker Engine 내부 구조*
 
 **Docker Engine 내부 구조**:
@@ -104,8 +122,40 @@ graph LR
 
 > **정의**: Linux 커널 기능을 활용한 컨테이너 격리 기술
 
-**🖼️ Linux 커널 격리 기술**
-![Linux Kernel Isolation](https://miro.medium.com/max/1400/1*wE7TrQmFyRTDwh6VpbkbMQ.png)
+**🔒 Linux 커널 격리 기술**
+```mermaid
+graph TB
+    subgraph "Linux 커널 격리 기술"
+        A[Namespaces<br/>네임스페이스] --> A1[PID: 프로세스 격리]
+        A --> A2[NET: 네트워크 격리]
+        A --> A3[MNT: 파일시스템 격리]
+        A --> A4[UTS: 호스트명 격리]
+        A --> A5[IPC: 프로세스간 통신 격리]
+        
+        B[Cgroups<br/>컨트롤 그룹] --> B1[CPU 사용률 제한]
+        B --> B2[메모리 사용량 제한]
+        B --> B3[디스크 I/O 제한]
+        B --> B4[네트워크 대역폭 제한]
+    end
+    
+    C[컨테이너 격리<br/>• 보안성 향상<br/>• 리소스 관리<br/>• 성능 최적화]
+    
+    A --> C
+    B --> C
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style A5 fill:#e8f5e8
+    style B1 fill:#f3e5f5
+    style B2 fill:#f3e5f5
+    style B3 fill:#f3e5f5
+    style B4 fill:#f3e5f5
+    style C fill:#4caf50
+```
 *Linux 커널의 격리 기술*
 
 **격리 기술들**:

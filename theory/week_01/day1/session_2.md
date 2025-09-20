@@ -74,8 +74,29 @@ graph TB
     style C fill:#e8f5e8
 ```
 
-**🖼️ DevOps 무한 루프 (미비우스의 띠)**
-![DevOps Infinity Loop](https://www.edureka.co/blog/wp-content/uploads/2016/11/DevOps-tutorial-What-is-DevOps-Edureka.png)
+**🔄 DevOps 무한 루프 (지속적 개선 사이클)**
+```mermaid
+graph TB
+    subgraph "DevOps 무한 루프"
+        A[Plan<br/>계획] --> B[Code<br/>개발]
+        B --> C[Build<br/>빌드]
+        C --> D[Test<br/>테스트]
+        D --> E[Release<br/>릴리스]
+        E --> F[Deploy<br/>배포]
+        F --> G[Operate<br/>운영]
+        G --> H[Monitor<br/>모니터링]
+        H --> A
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#ffebee
+    style F fill:#e0f2f1
+    style G fill:#fce4ec
+    style H fill:#f1f8e9
+```
 *DevOps의 지속적인 개선 사이클*
 
 ### 🔍 개념 2: 전통적 방식 vs DevOps (12분)
@@ -103,9 +124,14 @@ graph TB
   - 한계점: 문화 변화의 어려움, 초기 투자 비용
 - **대안 기술**: Agile, Lean, Site Reliability Engineering (SRE)
 
-**🖼️ DevOps 성숙도 모델**
-![DevOps Maturity Model](https://miro.medium.com/max/1400/1*8kGlUznXaDqjeqh7ha_Xmg.png)
-*DevOps 성숙도 단계별 발전 과정*
+**📈 DevOps 성숙도 모델**
+```
+Level 1: 기초    │ 수동 배포, 기본 도구 사용
+Level 2: 반복    │ 일부 자동화, CI 도입
+Level 3: 정의    │ 표준화된 프로세스, CD 구축
+Level 4: 관리    │ 전체 파이프라인 자동화
+Level 5: 최적화  │ 지속적 개선, 예측적 운영
+```
 
 ### 🔍 개념 3: DevOps 핵심 가치 - CALMS (11분)
 
@@ -123,9 +149,14 @@ graph LR
     style F fill:#f3e5f5
 ```
 
-**🖼️ DevOps 도구 체인**
-![DevOps Toolchain](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
-*DevOps 도구 체인 예시*
+**🛠️ DevOps 도구 체인**
+```
+Plan → Code → Build → Test → Release → Deploy → Operate → Monitor
+ │      │      │       │      │        │        │         │
+Jira   Git   Jenkins Unit   GitHub   K8s    Grafana  Prometheus
+       │     Maven   Test   Actions  Docker  ELK      AlertMgr
+    GitHub   Gradle  Sonar  ArgoCD   Helm   Kibana   Datadog
+```
 
 #### 각 요소별 상세 설명
 - **Culture (문화)**: 협업, 신뢰, 투명성을 바탕으로 한 조직 문화

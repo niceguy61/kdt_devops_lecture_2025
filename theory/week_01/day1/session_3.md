@@ -48,8 +48,29 @@ graph LR
 
 > **정의**: DevOps 구현을 위한 다양한 도구들의 통합적 활용 환경
 
-**🖼️ DevOps 도구 체인 전체 뷰**
-![DevOps Toolchain Complete](https://miro.medium.com/max/1400/1*7lTI-kV30eUubel_gNtNSA.png)
+**🔧 DevOps 도구 체인 전체 뷰**
+```mermaid
+graph TB
+    subgraph "DevOps 도구 체인"
+        A[Plan<br/>Jira, Trello] --> B[Code<br/>Git, GitHub]
+        B --> C[Build<br/>Maven, Gradle]
+        C --> D[Test<br/>JUnit, Selenium]
+        D --> E[Release<br/>Jenkins, GitLab CI]
+        E --> F[Deploy<br/>Docker, Kubernetes]
+        F --> G[Operate<br/>AWS, Azure]
+        G --> H[Monitor<br/>Prometheus, Grafana]
+        H --> A
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#ffebee
+    style F fill:#e0f2f1
+    style G fill:#fce4ec
+    style H fill:#f1f8e9
+```
 *DevOps 도구 체인 전체 뷰*
 
 #### 주요 DevOps 도구 카테고리
@@ -96,8 +117,47 @@ graph TB
 
 > **정의**: 현재 주목받고 있는 DevOps 기술과 문화적 변화 동향
 
-**🖼️ 2025 DevOps 트렌드 맵**
-![DevOps Trends 2025](https://miro.medium.com/max/1400/1*Hm4X4E8KjVWk8VkJcVQKBw.png)
+**📊 2025 DevOps 트렌드 맵**
+```mermaid
+graph TB
+    subgraph "2025 핵심 트렌드"
+        A[Platform Engineering<br/>개발자 경험 향상]
+        B[FinOps<br/>클라우드 비용 최적화]
+        C[AI/MLOps<br/>인공지능 운영]
+        D[Green DevOps<br/>지속가능한 개발]
+        E[GitOps 2.0<br/>선언적 배포]
+        F[DevSecOps<br/>보안 통합]
+    end
+    
+    subgraph "주목받는 도구"
+        G[Backstage]
+        H[ArgoCD]
+        I[Kubeflow]
+        J[Istio]
+        K[Terraform]
+        L[Vault]
+    end
+    
+    A --> G
+    B --> H
+    C --> I
+    D --> J
+    E --> K
+    F --> L
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#e3f2fd
+    style J fill:#f3e5f5
+    style K fill:#f3e5f5
+    style L fill:#f3e5f5
+```
 *2025 DevOps 트렌드 맵*
 
 #### 핫한 기술 트렌드
@@ -123,8 +183,29 @@ graph TB
     D --> H
 ```
 
-**🖼️ Platform Engineering 개념**
-![Platform Engineering](https://miro.medium.com/max/1400/1*9kGlUznXaDqjeqh7ha_Xmg.png)
+**🏗️ Platform Engineering 개념**
+```mermaid
+graph TB
+    subgraph "Platform Engineering 생태계"
+        A[개발자 포털<br/>Backstage, Port]
+        B[셀프서비스 인프라<br/>Terraform, Crossplane]
+        C[Golden Path<br/>표준화된 워크플로우]
+        D[내부 도구<br/>CI/CD, 모니터링]
+    end
+    
+    E[개발자 경험 향상<br/>• 빠른 온보딩<br/>• 일관된 도구<br/>• 자동화된 워크플로우]
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#4caf50
+```
 *Platform Engineering 개념도*
 
 #### 각 트렌드별 상세 설명

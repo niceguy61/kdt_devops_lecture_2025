@@ -40,9 +40,29 @@
 
 > **정의**: 클라이언트-서버 구조로 동작하는 컨테이너 플랫폼
 
-**🖼️ VM vs Docker 아키텍처 비교**
-![VM vs Docker Architecture](https://docs.docker.com/images/VM%402x.png)
-*출처: Docker 공식 문서*
+**🏗️ VM vs Docker 아키텍처 비교**
+```mermaid
+graph TB
+    subgraph "가상머신 방식"
+        A1[물리 서버] --> A2[호스트 OS]
+        A2 --> A3[하이퍼바이저]
+        A3 --> A4[VM1: 게스트OS + 앱]
+        A3 --> A5[VM2: 게스트OS + 앱]
+    end
+    
+    subgraph "Docker 방식"
+        B1[물리 서버] --> B2[호스트 OS]
+        B2 --> B3[Docker Engine]
+        B3 --> B4[컨테이너 1: 앱]
+        B3 --> B5[컨테이너 2: 앱]
+    end
+    
+    style A4 fill:#ffebee
+    style A5 fill:#ffebee
+    style B4 fill:#e8f5e8
+    style B5 fill:#e8f5e8
+```
+*VM vs Docker 아키텍처 비교*
 
 **Docker 아키텍처 구성**:
 ```mermaid
@@ -67,8 +87,35 @@ graph TB
 ```
 
 **🌐 Docker 전체 에코시스템**
-![Docker Ecosystem](https://docs.docker.com/images/architecture.svg)
-*출처: Docker 공식 문서*
+```mermaid
+graph TB
+    subgraph "Docker 에코시스템"
+        A[Docker Client<br/>CLI 명령어] --> B[Docker Host]
+        
+        subgraph B["Docker Host"]
+            C[Docker Daemon<br/>dockerd]
+            D[Images]
+            E[Containers]
+            F[Networks]
+            G[Volumes]
+        end
+        
+        H[Docker Registry<br/>Docker Hub] --> C
+        C --> D
+        C --> E
+        C --> F
+        C --> G
+    end
+    
+    style A fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#f3e5f5
+```
+*Docker 전체 에코시스템*
 
 **주요 구성 요소**:
 - **Docker Client**: 사용자가 명령어를 입력하는 인터페이스
@@ -77,17 +124,60 @@ graph TB
 - **Docker Containers**: 실행 중인 애플리케이션 인스턴스
 - **Docker Registry**: 이미지를 저장하고 공유하는 저장소
 
-**🖼️ DevOps 무한 루프 (미비우스의 띠)**
-![DevOps Infinity Loop](https://www.edureka.co/blog/wp-content/uploads/2016/11/DevOps-tutorial-What-is-DevOps-Edureka.png)
-*DevOps의 지속적인 개선 사이클*
+**🔄 DevOps 무한 루프 (지속적 개선)**
+```mermaid
+graph TB
+    subgraph "DevOps 사이클"
+        A[Plan] --> B[Code]
+        B --> C[Build]
+        C --> D[Test]
+        D --> E[Release]
+        E --> F[Deploy]
+        F --> G[Operate]
+        G --> H[Monitor]
+        H --> A
+    end
+    
+    I[Docker는 Build, Deploy,<br/>Operate 단계에서<br/>핵심 역할 수행]
+    
+    C --> I
+    F --> I
+    G --> I
+    
+    style C fill:#4caf50
+    style F fill:#4caf50
+    style G fill:#4caf50
+    style I fill:#e3f2fd
+```
+*DevOps 사이클에서 Docker의 역할*
 
 ### 🔍 개념 2: Docker 이미지와 컨테이너 (12분)
 
 > **정의**: 이미지는 실행 파일, 컨테이너는 실행 중인 프로세스
 
-**🖼️ Docker 이미지 레이어 구조**
-![Docker Image Layers](https://docs.docker.com/images/container-layers.jpg)
-*출처: Docker 공식 문서*
+**📊 Docker 이미지 레이어 구조**
+```mermaid
+graph TB
+    subgraph "이미지 레이어"
+        A[Container Layer<br/>읽기/쓰기 가능]
+        B[Image Layer 3<br/>애플리케이션]
+        C[Image Layer 2<br/>라이브러리]
+        D[Image Layer 1<br/>기본 OS]
+        
+        A --> B
+        B --> C
+        C --> D
+    end
+    
+    E[이미지는 읽기 전용<br/>컨테이너만 쓰기 가능]
+    
+    style A fill:#ffebee
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e3f2fd
+```
+*Docker 이미지 레이어 구조*
 
 **이미지 vs 컨테이너 관계**:
 ```mermaid
@@ -105,7 +195,28 @@ graph LR
 ```
 
 **🐳 Docker 로고와 컨테이너 개념**
-![Docker Logo](https://www.docker.com/wp-content/uploads/2022/03/horizontal-logo-monochromatic-white.png)
+```mermaid
+graph LR
+    subgraph "고래 배 (Docker Host)"
+        A[컨테이너 1<br/>Web App]
+        B[컨테이너 2<br/>Database]
+        C[컨테이너 3<br/>Cache]
+        D[컨테이너 4<br/>API]
+    end
+    
+    E[바다 (Network)<br/>컨테이너 간 통신]
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e3f2fd
+```
 *Docker의 고래 로고는 컨테이너를 운반하는 배를 상징*
 
 **실생활 비유**:
@@ -117,9 +228,31 @@ graph LR
 
 > **정의**: 컨테이너 간 통신과 데이터 영속성을 위한 시스템
 
-**🖼️ Docker 네트워크 아키텍처**
-![Docker Networking](https://docs.docker.com/network/images/bridge_network.png)
-*출처: Docker 공식 문서*
+**🌐 Docker 네트워크 아키텍처**
+```mermaid
+graph TB
+    subgraph "Docker 네트워크"
+        A[Host Network<br/>호스트와 동일]
+        B[Bridge Network<br/>기본 네트워크]
+        C[Custom Network<br/>사용자 정의]
+        D[None Network<br/>네트워크 없음]
+    end
+    
+    E[컨테이너 1] --> B
+    F[컨테이너 2] --> B
+    G[컨테이너 3] --> C
+    H[컨테이너 4] --> A
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#e8f5e8
+```
+*Docker 네트워크 아키텍처*
 
 **네트워킹 구조**:
 ```mermaid
@@ -140,9 +273,30 @@ graph TB
     style F fill:#e8f5e8
 ```
 
-**🖼️ Docker 볼륨 유형**
-![Docker Volumes](https://docs.docker.com/storage/images/types-of-mounts-volume.png)
-*출처: Docker 공식 문서*
+**💾 Docker 볼륨 유형**
+```mermaid
+graph TB
+    subgraph "Docker 스토리지 옵션"
+        A[Volumes<br/>Docker 관리<br/>영속적 데이터]
+        B[Bind Mounts<br/>호스트 파일시스템<br/>직접 연결]
+        C[tmpfs Mounts<br/>메모리에 임시 저장<br/>컨테이너 종료 시 삭제]
+    end
+    
+    D[컨테이너] --> A
+    D --> B
+    D --> C
+    
+    E[데이터 영속성<br/>• Volumes: 최고
+• Bind Mounts: 중간
+• tmpfs: 없음]
+    
+    style A fill:#4caf50
+    style B fill:#ff9800
+    style C fill:#f44336
+    style D fill:#e8f5e8
+    style E fill:#e3f2fd
+```
+*Docker 볼륨 유형*
 
 **스토리지 옵션**:
 - **Volumes**: Docker가 관리하는 영속적 데이터 저장

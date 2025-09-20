@@ -41,7 +41,20 @@
 > **정의**: 컨테이너 간 통신과 외부 네트워크 연결을 위한 시스템
 
 **🖼️ Docker 네트워크 유형**
-![Docker Network Types](https://docs.docker.com/network/images/bridge_network.png)
+```mermaid
+graph TB
+    subgraph "Docker 네트워크 유형"
+        A[bridge<br/>기본 네트워크] --> E[컨테이너 통신]
+        B[host<br/>호스트 네트워크] --> E
+        C[none<br/>네트워크 없음] --> E
+        D[overlay<br/>멀티 호스트] --> E
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#ffebee
+    style D fill:#e3f2fd
+```
 *출처: Docker 공식 문서*
 
 **네트워크 드라이버 종류**:
@@ -71,7 +84,20 @@ graph TB
 > **정의**: 컨테이너가 삭제되어도 데이터를 보존하는 방법들
 
 **🖼️ Docker 스토리지 옵션**
-![Docker Storage Options](https://docs.docker.com/storage/images/types-of-mounts.png)
+```mermaid
+graph TB
+    subgraph "Docker 스토리지 옵션"
+        A[Volumes<br/>Docker 관리<br/>영속적 데이터] --> D[데이터 영속성]
+        B[Bind Mounts<br/>호스트 경로<br/>직접 연결] --> D
+        C[tmpfs<br/>메모리 저장<br/>임시 데이터] --> E[임시 데이터]
+    end
+    
+    style A fill:#4caf50
+    style B fill:#ff9800
+    style C fill:#2196f3
+    style D fill:#e8f5e8
+    style E fill:#ffebee
+```
 *출처: Docker 공식 문서*
 
 **데이터 저장 방식 비교**:
@@ -111,7 +137,9 @@ graph LR
         C -.-> D
     end
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#fff3e0
 ```
 

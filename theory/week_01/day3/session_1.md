@@ -40,9 +40,29 @@
 
 > **정의**: Docker 이미지는 여러 개의 읽기 전용 레이어가 쌓인 구조
 
-**🖼️ Docker 이미지 레이어 구조**
-![Docker Image Layers](https://docs.docker.com/storage/storagedriver/images/container-layers.jpg)
-*출처: Docker 공식 문서*
+**📊 Docker 이미지 레이어 구조**
+```mermaid
+graph TB
+    subgraph "이미지 레이어 스택"
+        A[Container Layer<br/>읽기/쓰기 가능<br/>실행 시 생성]
+        B[Image Layer 4<br/>애플리케이션 코드<br/>읽기 전용]
+        C[Image Layer 3<br/>pip 패키지 설치<br/>읽기 전용]
+        D[Image Layer 2<br/>Python 설치<br/>읽기 전용]
+        E[Base Layer<br/>Ubuntu 20.04<br/>읽기 전용]
+        
+        A --> B
+        B --> C
+        C --> D
+        D --> E
+    end
+    
+    style A fill:#ffebee
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#e3f2fd
+```
+*Docker 이미지의 레이어 구조*
 
 **레이어 시스템의 장점**:
 ```mermaid
@@ -58,13 +78,38 @@ graph TB
     G[또 다른 이미지] --> B
     
     style A fill:#e3f2fd
-    style B,C,D fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
     style E fill:#e8f5e8
-    style F,G fill:#f3e5f5
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
 ```
 
-**🖼️ 이미지 공유 효율성**
-![Image Sharing](https://docs.docker.com/storage/storagedriver/images/sharing-layers.jpg)
+**🔄 이미지 공유 효율성**
+```mermaid
+graph TB
+    subgraph "공유 레이어 시스템"
+        A[Ubuntu Base Layer<br/>공유됨]
+        
+        A --> B[Python Image<br/>+ Python Layer]
+        A --> C[Node.js Image<br/>+ Node.js Layer]
+        A --> D[Java Image<br/>+ JDK Layer]
+        
+        B --> E[App1 Image<br/>+ App1 Layer]
+        B --> F[App2 Image<br/>+ App2 Layer]
+    end
+    
+    G[저장 공간 절약<br/>Ubuntu 레이어 1번만 저장]
+    
+    style A fill:#4caf50
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e3f2fd
+```
 *동일한 레이어를 여러 이미지가 공유*
 
 **레이어 공유의 효율성**:
@@ -98,9 +143,28 @@ graph LR
 
 > **정의**: 이미지 크기를 줄이고 성능을 향상시키는 방법들
 
-**🖼️ 멀티스테이지 빌드 개념**
-![Multi-stage Build](https://docs.docker.com/build/images/multi-stage.png)
-*출처: Docker 공식 문서*
+**🏗️ 멀티스테이지 빌드 개념**
+```mermaid
+graph LR
+    subgraph "Stage 1: Build"
+        A[Build Image<br/>golang:1.19]
+        A --> B[소스 코드 컴파일]
+        B --> C[실행 파일 생성]
+    end
+    
+    subgraph "Stage 2: Runtime"
+        D[Runtime Image<br/>alpine:latest]
+        D --> E[실행 파일만 복사]
+        E --> F[최종 경량 이미지]
+    end
+    
+    C -.-> E
+    
+    style A fill:#ffebee
+    style D fill:#e8f5e8
+    style F fill:#4caf50
+```
+*빌드와 런타임 환경 분리*
 
 **최적화 전략**:
 ```mermaid
@@ -112,12 +176,31 @@ graph TB
         D[레이어 수 최소화] --> E
     end
     
-    style A,B,C,D fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
     style E fill:#4caf50
 ```
 
-**🖼️ 이미지 크기 비교**
-![Image Size Comparison](https://www.docker.com/wp-content/uploads/2021/08/Whats-the-Diff-Blog-B-2021-08-12-at-2.43.31-PM-1024x465.png)
+**📊 이미지 크기 비교**
+```mermaid
+graph TB
+    subgraph "베이스 이미지 크기 비교"
+        A[ubuntu:20.04<br/>72MB] --> E[이미지 선택]
+        B[node:18<br/>993MB] --> E
+        C[node:18-alpine<br/>174MB] --> E
+        D[node:18-slim<br/>244MB] --> E
+    end
+    
+    F[최적화 전략<br/>• Alpine 사용<br/>• 멀티스테이지<br/>• 불필요 파일 제거]
+    
+    style A fill:#e8f5e8
+    style C fill:#e8f5e8
+    style B fill:#ffebee
+    style D fill:#fff3e0
+    style F fill:#e3f2fd
+```
 *베이스 이미지별 크기 차이*
 
 **크기 비교 예시**:
