@@ -54,8 +54,10 @@ graph TB
     E --> G[Container Process]
     
     style A fill:#e3f2fd
-    style B,C fill:#fff3e0
-    style D,E fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
     style G fill:#f3e5f5
 ```
 
@@ -115,8 +117,14 @@ graph TB
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style A1,A2,A3,A4 fill:#e8f5e8
-    style B1,B2,B3,B4 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style B1 fill:#f3e5f5
+    style B2 fill:#f3e5f5
+    style B3 fill:#f3e5f5
+    style B4 fill:#f3e5f5
 ```
 
 **실무 활용**:

@@ -55,7 +55,10 @@ graph TB
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style C,D,E,F fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
     style G fill:#f3e5f5
 ```
 
@@ -78,7 +81,8 @@ graph LR
     C --> D[docker commit]
     D --> E[New Image<br/>새로운 이미지]
     
-    style A,E fill:#e8f5e8
+    style A fill:#e8f5e8
+    style E fill:#e8f5e8
     style C fill:#fff3e0
     style B,D fill:#f3e5f5
 ```
@@ -103,8 +107,12 @@ graph TB
         C --> F[Container 3]
     end
     
-    style A,B,C fill:#e3f2fd
-    style D,E,F fill:#e8f5e8
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
 ```
 
 **스토리지 옵션**:
