@@ -159,7 +159,8 @@ graph TB
     A2 --> B2
     A3 --> B3
     
-    style A1,A2,A3 fill:#ffebee
+    style A1 fill:#ffebee
+    style A2,A3 fill:#ffebee
     style B1,B2,B3 fill:#e8f5e8
 ```
 
