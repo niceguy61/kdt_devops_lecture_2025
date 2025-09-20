@@ -113,9 +113,6 @@ graph TB
     B --> F
     C --> G
     D --> H
-    
-    style A,B,C,D fill:#e3f2fd
-    style E,F,G,H fill:#fff3e0
 ```
 
 #### 각 트렌드별 상세 설명
