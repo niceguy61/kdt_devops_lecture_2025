@@ -41,8 +41,8 @@
 > **정의**: 컨테이너를 실행하고 관리하는 핵심 엔진
 
 **🖼️ Docker Engine 아키텍처**
-![Docker Engine Architecture](https://docs.docker.com/engine/images/engine-components-flow.png)
-*출처: Docker 공식 문서*
+![Docker Engine Architecture](https://miro.medium.com/max/1400/1*V5N9gJdnToIrgAgVJTR_Yw.png)
+*Docker Engine 내부 구조*
 
 **Docker Engine 내부 구조**:
 ```mermaid
@@ -105,8 +105,8 @@ graph LR
 > **정의**: Linux 커널 기능을 활용한 컨테이너 격리 기술
 
 **🖼️ Linux 커널 격리 기술**
-![Linux Kernel Isolation](https://www.redhat.com/rhdc/managed-files/styles/wysiwyg_full_width/public/container-what-is-it.png)
-*출처: Red Hat*
+![Linux Kernel Isolation](https://miro.medium.com/max/1400/1*wE7TrQmFyRTDwh6VpbkbMQ.png)
+*Linux 커널의 격리 기술*
 
 **격리 기술들**:
 ```mermaid

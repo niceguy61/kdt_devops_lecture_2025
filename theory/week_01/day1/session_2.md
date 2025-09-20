@@ -104,7 +104,7 @@ graph TB
 - **대안 기술**: Agile, Lean, Site Reliability Engineering (SRE)
 
 **🖼️ DevOps 성숙도 모델**
-![DevOps Maturity Model](https://www.devopsgroup.com/wp-content/uploads/2019/01/DevOps-Maturity-Model.png)
+![DevOps Maturity Model](https://miro.medium.com/max/1400/1*8kGlUznXaDqjeqh7ha_Xmg.png)
 *DevOps 성숙도 단계별 발전 과정*
 
 ### 🔍 개념 3: DevOps 핵심 가치 - CALMS (11분)
@@ -124,8 +124,8 @@ graph LR
 ```
 
 **🖼️ DevOps 도구 체인**
-![DevOps Toolchain](https://www.atlassian.com/dam/jcr:cc2c3d9a-7e8e-4b4b-9b8a-6b7b5b5b5b5b/devops-toolchain.png)
-*출처: Atlassian*
+![DevOps Toolchain](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
+*DevOps 도구 체인 예시*
 
 #### 각 요소별 상세 설명
 - **Culture (문화)**: 협업, 신뢰, 투명성을 바탕으로 한 조직 문화

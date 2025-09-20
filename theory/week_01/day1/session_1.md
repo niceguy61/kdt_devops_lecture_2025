@@ -53,7 +53,7 @@ graph LR
 ```
 
 **🖼️ 클라우드 네이티브 로드맵**
-![Cloud Native Roadmap](https://landscape.cncf.io/images/landscape.png)
+![Cloud Native Roadmap](https://raw.githubusercontent.com/cncf/landscape/master/images/landscape.png)
 *출처: CNCF Landscape*
 
 #### 과정의 특별함
@@ -75,8 +75,8 @@ graph LR
 ```
 
 **🖼️ DevOps 시장 성장 전망**
-![DevOps Market Growth](https://www.grandviewresearch.com/static/img/research/global-devops-market-size.png)
-*출처: Grand View Research*
+![DevOps Market Growth](https://miro.medium.com/max/1400/1*8xZmrWafDdkVlzlWgWbCKg.png)
+*DevOps 시장 성장 추이*
 
 ### 👨🏫 강사 소개 및 교육 철학 (10분)
 
@@ -123,7 +123,7 @@ graph LR
 - 각자의 인생 경험이 만드는 독특한 학습 환경
 
 **🖼️ 다양성이 만드는 혁신**
-![Diversity Innovation](https://www.mckinsey.com/~/media/mckinsey/business%20functions/people%20and%20organizational%20performance/our%20insights/delivering%20through%20diversity/delivering-through-diversity_full-report.pdf)
+![Diversity Innovation](https://miro.medium.com/max/1400/1*QJ6LA6pWdGMuE1zcmmr23Q.png)
 *다양성이 혁신과 성과를 만드는 원동력*
 
 ### 💡 이해도 체크 질문

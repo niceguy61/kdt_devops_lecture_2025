@@ -41,8 +41,8 @@
 > **정의**: 개발, 스테이징, 프로덕션 환경에 맞는 설정 관리 방법
 
 **🖼️ 환경별 배포 파이프라인**
-![Environment Pipeline](https://www.redhat.com/rhdc/managed-files/ci-cd-flow-desktop_0.png)
-*출처: Red Hat*
+![Environment Pipeline](https://miro.medium.com/max/1400/1*8xZmrWafDdkVlzlWgWbCKg.png)
+*개발부터 프로덕션까지 배포 파이프라인*
 
 **환경별 차이점**:
 ```mermaid
@@ -110,8 +110,8 @@ API_KEY=prod_api_key_here
 ```
 
 **🖼️ 시크릿 관리 전략**
-![Secrets Management](https://www.hashicorp.com/img/products/vault/vault-triangle.png)
-*출처: HashiCorp Vault*
+![Secrets Management](https://miro.medium.com/max/1400/1*V5N9gJdnToIrgAgVJTR_Yw.png)
+*보안 시크릿 관리 전략*
 
 **시크릿 관리 베스트 프랙티스**:
 - **환경 변수**: 민감하지 않은 설정

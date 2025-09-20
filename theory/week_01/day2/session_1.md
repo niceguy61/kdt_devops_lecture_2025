@@ -75,8 +75,8 @@ graph TB
 ```
 
 **🖼️ 서버 활용률 비교**
-![Server Utilization](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/images/gallery/thumbnails/tn-server-utilization.jpg)
-*출처: VMware*
+![Server Utilization](https://miro.medium.com/max/1400/1*8xZmrWafDdkVlzlWgWbCKg.png)
+*전통적 서버 vs 가상화 활용률*
 
 ### 🔍 개념 2: 가상머신(VM)의 등장 (12분)
 
@@ -110,8 +110,8 @@ graph TB
 ```
 
 **🖼️ 가상화 기술 진화**
-![Virtualization Evolution](https://www.redhat.com/rhdc/managed-files/virtualization-vs-containers-traditional-server.png)
-*출처: Red Hat*
+![Virtualization Evolution](https://miro.medium.com/max/1400/1*wE7TrQmFyRTDwh6VpbkbMQ.png)
+*가상화 기술의 진화 과정*
 
 ### 🔍 개념 3: 컨테이너의 혁신 (11분)
 
@@ -147,11 +147,11 @@ graph LR
 ```
 
 **🖼️ VM vs 컨테이너 아키텍처 비교**
-![VM vs Container](https://www.docker.com/wp-content/uploads/2021/11/docker-containerized-appliction-blue-border_2.png)
-*출처: Docker 공식 문서*
+![VM vs Container](https://miro.medium.com/max/1400/1*V5N9gJdnToIrgAgVJTR_Yw.png)
+*VM과 컨테이너 아키텍처 비교*
 
 **🖼️ 컨테이너 성능 비교**
-![Container Performance](https://www.redhat.com/rhdc/managed-files/styles/wysiwyg_full_width/public/server-usage-500x131.png)
+![Container Performance](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
 *컨테이너의 높은 자원 효율성*
 
 **성능 비교표**:

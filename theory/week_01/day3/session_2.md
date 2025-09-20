@@ -81,8 +81,8 @@ CMD ["npm", "start"]
 > **정의**: 여러 단계로 나누어 최종 이미지 크기를 최소화하는 빌드 방법
 
 **🖼️ Dockerfile 베스트 프랙티스**
-![Dockerfile Best Practices](https://docs.docker.com/develop/images/dockerfile_best-practices.png)
-*출처: Docker 공식 문서*
+![Dockerfile Best Practices](https://miro.medium.com/max/1400/1*8kGlUznXaDqjeqh7ha_Xmg.png)
+*Dockerfile 작성 베스트 프랙티스*
 
 **멀티스테이지 빌드 예시**:
 ```dockerfile
@@ -123,7 +123,7 @@ graph LR
 > **정의**: 효율적이고 안전한 Dockerfile 작성을 위한 권장사항들
 
 **🖼️ Dockerfile 레이어 최적화**
-![Dockerfile Layer Optimization](https://docs.docker.com/develop/images/dockerfile-layers.png)
+![Dockerfile Layer Optimization](https://miro.medium.com/max/1400/1*WHdyW8bjhbhZvNuF8VcLzg.png)
 *레이어 캠시와 최적화 전략*
 
 **베스트 프랙티스 목록**:
