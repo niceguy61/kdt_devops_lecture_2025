@@ -114,25 +114,25 @@ graph TB
 - Day 4: 컨테이너 오케스트레이션 개념
 - Day 5: Week 1-2 종합 정리
 
-### Week 3-4: Kubernetes & 오케스트레이션
-**목표**: 실무 핵심 기술 습득
+### Week 3-4: Kubernetes & 클라우드 네이티브
+**목표**: 실무 핵심 기술 습득 및 클라우드 네이티브 아키텍처 이해
 
-#### [Week 3: Kubernetes 기초](./theory/week_03/README.md)
-- Day 1: Kubernetes 아키텍처
-- Day 2: Pod와 기본 오브젝트
-- Day 3: Service와 네트워킹
-- Day 4: Deployment와 ReplicaSet
-- Day 5: ConfigMap과 Secret
+#### [Week 3: Kubernetes 운영과 관리](./theory/week_03/README.md)
+- Day 1: 클러스터 설치와 구성
+- Day 2: 워크로드 관리
+- Day 3: 서비스 메시 개념
+- Day 4: 모니터링과 로깅
+- Day 5: 트러블슈팅과 디버깅
 
-#### [Week 4: Kubernetes 심화](./theory/week_04/README.md)
-- Day 1: 스토리지와 PersistentVolume
-- Day 2: Ingress와 로드밸런싱
-- Day 3: 모니터링과 로깅
-- Day 4: 보안과 RBAC
-- Day 5: Week 3-4 종합 정리
+#### [Week 4: 클라우드 네이티브 아키텍처](./theory/week_04/README.md)
+- Day 1: 마이크로서비스 아키텍처
+- Day 2: API Gateway와 서비스 디스커버리
+- Day 3: 데이터 관리와 상태 관리
+- Day 4: 보안과 컴플라이언스
+- Day 5: FinOps와 클라우드 비용 최적화
 
-### Week 5-6: CI/CD & 클라우드 네이티브
-**목표**: 통합 시스템 이해
+### Week 5-6: CI/CD & 최신 DevOps 트렌드
+**목표**: 통합 시스템 이해 및 최신 트렌드 적용
 
 #### [Week 5: CI/CD 파이프라인](./theory/week_05/README.md)
 - Day 1: CI/CD 개념과 도구
@@ -141,12 +141,12 @@ graph TB
 - Day 4: 컨테이너 기반 배포
 - Day 5: GitOps와 선언적 배포
 
-#### [Week 6: 클라우드 네이티브 통합](./theory/week_06/README.md)
-- Day 1: 마이크로서비스 아키텍처
-- Day 2: API Gateway와 서비스 메시
-- Day 3: 관측성과 모니터링
-- Day 4: 보안과 컴플라이언스
-- Day 5: 6주 종합 정리 및 프로젝트 준비
+#### [Week 6: 최신 DevOps 트렌드와 통합 운영](./theory/week_06/README.md)
+- Day 1: Infrastructure as Code
+- Day 2: 관측성과 AIOps
+- Day 3: 플랫폼 엔지니어링과 개발자 경험
+- Day 4: AI/MLOps와 최신 DevOps 트렌드
+- Day 5: DevOps 미래 전망과 종합 정리
 
 ## 🤝 협업 학습 시스템
 
@@ -172,6 +172,32 @@ graph TB
 - **상호 학습**: 가르치는 사람도 배우는 사람도 모두 성장
 - **지식 공유**: 학습 결과물과 경험을 자연스럽게 공유
 
+## 🚀 2025 최신 DevOps 트렌드 반영
+
+### 📈 핵심 트렌드 학습
+- **🏗️ Platform Engineering**: 개발자 경험 향상과 셀프서비스 플랫폼
+- **💰 FinOps**: 클라우드 비용 최적화와 재무 운영
+- **🤖 AI/MLOps**: 머신러닝 모델 운영과 자동화
+- **🌱 Green DevOps**: 지속가능한 소프트웨어 개발
+- **🔍 관측성 & AIOps**: 예측적 분석과 자동 복구
+
+### 🛠️ 최신 도구 스택
+```mermaid
+graph TB
+    subgraph "2025 DevOps 도구 생태계"
+        A[Backstage<br/>개발자 포털] --> E[통합 플랫폼]
+        B[ArgoCD<br/>GitOps] --> E
+        C[Prometheus<br/>관측성] --> E
+        D[Kubeflow<br/>MLOps] --> E
+    end
+    
+    style A fill:#e3f2fd
+    style B fill:#e8f5e8
+    style C fill:#fff3e0
+    style D fill:#ffebee
+    style E fill:#f3e5f5
+```
+
 ## 📊 평가 및 피드백
 
 ### 📈 통합 성공 지표
@@ -179,12 +205,14 @@ graph TB
 - **협업 만족도**: 팀 프로젝트 및 상호 학습 만족도 4.5/5 이상
 - **개인 성장**: 각자의 강점 발견과 역량 향상 체감도 4.5/5 이상
 - **실무 역량**: 프로젝트 완성도와 실무 적용 가능성 90% 이상
+- **트렌드 적응**: 최신 DevOps 트렌드 이해도 80% 이상
 
 ### 🔄 피드백 시스템
 - **일일 회고**: 학습 내용과 협업 경험 공유
 - **주간 조사**: 학습 만족도 및 협업 효과 평가
 - **상호 피드백**: 동료 간 자연스러운 피드백과 격려
 - **지속적 개선**: 학습 환경과 방법의 지속적 최적화
+- **트렌드 추적**: 최신 기술 동향 학습 효과 측정
 
 ## 🎯 다음 단계 준비
 
@@ -202,8 +230,8 @@ graph TB
 
 <div align="center">
 
-**🎓 체계적 이론 학습** • **🤝 협업 중심 교육** • **🚀 실무 연계 강화**
+**🎓 체계적 이론 학습** • **🤝 협업 중심 교육** • **🚀 실무 연계 강화** • **📈 최신 트렌드 반영**
 
-*6주간의 집중 이론 교육을 통해 클라우드 네이티브 전문가로 성장*
+*6주간의 집중 이론 교육을 통해 2025년 DevOps 전문가로 성장*
 
 </div>
