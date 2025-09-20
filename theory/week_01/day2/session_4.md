@@ -13,41 +13,23 @@
 ## 🕘 세션 정보
 
 **시간**: 13:00-15:00 (120분)  
-**목표**: Docker 설치부터 기본 사용법까지 완전 습득  
-**방식**: 단계별 실습 + 페어 프로그래밍 + 문제 해결
+**목표**: Docker 기본 명령어부터 스크립트 작성까지 완전 습득  
+**방식**: 단계별 실습 + 페어 프로그래밍 + 스크립트 작성
 
 ---
 
 ## 🎯 실습 목표
 
 ### 📚 학습 목표
-- **기본 목표**: Docker 설치 및 기본 명령어 완전 습득
+- **기본 목표**: Docker 기본 명령어 완전 습득 및 스크립트 작성
 - **응용 목표**: 컨테이너 생명주기 직접 체험 및 관리
 - **협업 목표**: 페어 프로그래밍을 통한 상호 학습 및 문제 해결
 
 ---
 
-## 🚀 Phase 1: Docker 설치 & 환경 확인 (30분)
+## 🚀 Phase 1: Docker 환경 확인 & 기본 명령어 (20분)
 
-### 💾 Docker Desktop 설치
-
-#### 📥 운영체제별 다운로드
-
-**🪟 Windows**
-- **다운로드**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
-- **요구사항**: Windows 10 64-bit 또는 Windows 11
-- **설치**: 다운로드 후 실행하여 기본 설정으로 설치
-
-**🍎 macOS**
-- **다운로드**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
-- **Intel/Apple Silicon 자동 감지**
-- **설치**: DMG 파일 다운로드 후 Applications 폴더로 드래그
-
-**🐧 Linux**
-- **다운로드**: [Docker Desktop for Linux](https://www.docker.com/products/docker-desktop/)
-- **또는 패키지 매니저로 Docker Engine 설치**
-
-#### 🔧 설치 후 확인
+### 🔧 Docker 설치 확인
 **Step 1: Docker 설치 확인**
 ```bash
 # Docker 버전 확인
@@ -84,15 +66,14 @@ docker images
 - **인기 이미지**: nginx, ubuntu, python, node, mysql, postgres, redis 등
 
 ### ✅ Phase 1 체크포인트
-- [ ] 운영체제에 맞는 Docker 설치 완료
-- [ ] Docker 정상 설치 및 실행 확인
+- [ ] Docker 정상 실행 확인
 - [ ] hello-world 컨테이너 성공적 실행
 - [ ] 기본 이미지들 다운로드 완료
 - [ ] docker images, docker ps 명령어 이해
 
 ---
 
-## 🌟 Phase 2: 컨테이너 생명주기 실습 (45분)
+## 🌟 Phase 2: 컨테이너 생명주기 실습 (40분)
 
 ### 🔄 생명주기 단계별 체험
 **Step 1: 컨테이너 생성 및 시작**
@@ -150,7 +131,7 @@ docker images | grep my-ubuntu
 
 ---
 
-## 🏆 Phase 3: 웹 서버 실습 (30분)
+## 🏆 Phase 3: 웹 서버 실습 (25분)
 
 ### 🌐 Nginx 웹 서버 실행
 **Step 1: 기본 웹 서버**
@@ -225,7 +206,106 @@ exit
 
 ---
 
-## 🚀 숙련자 추가 미션 (20분)
+## 📜 Phase 5: Docker 스크립트 작성 실습 (25분)
+
+### 📝 자동화 스크립트 작성
+**미션**: Docker 작업을 자동화하는 스크립트 작성
+
+**스크립트 1: 개발 환경 설정**
+```bash
+#!/bin/bash
+# dev-setup.sh - 개발 환경 자동 설정
+
+echo "🚀 개발 환경 설정 시작..."
+
+# 기본 이미지 다운로드
+docker pull nginx:alpine
+docker pull node:18-alpine
+docker pull mysql:8.0
+
+# 개발용 네트워크 생성
+docker network create dev-network
+
+# 개발용 볼륨 생성
+docker volume create dev-data
+
+echo "✅ 개발 환경 설정 완료!"
+```
+
+**스크립트 2: 웹 서비스 시작**
+```bash
+#!/bin/bash
+# start-web.sh - 웹 서비스 시작
+
+echo "🌐 웹 서비스 시작..."
+
+# Nginx 웹 서버 시작
+docker run -d \
+  --name web-server \
+  --network dev-network \
+  -p 8080:80 \
+  -v $(pwd)/html:/usr/share/nginx/html \
+  nginx:alpine
+
+# MySQL 데이터베이스 시작
+docker run -d \
+  --name mysql-db \
+  --network dev-network \
+  -e MYSQL_ROOT_PASSWORD=password \
+  -e MYSQL_DATABASE=testdb \
+  -v dev-data:/var/lib/mysql \
+  mysql:8.0
+
+echo "✅ 웹 서비스 시작 완료!"
+echo "🌐 http://localhost:8080 에서 확인하세요"
+```
+
+**스크립트 3: 정리 스크립트**
+```bash
+#!/bin/bash
+# cleanup.sh - Docker 정리
+
+echo "🧹 Docker 정리 시작..."
+
+# 모든 컨테이너 정지
+docker stop $(docker ps -q) 2>/dev/null
+
+# 모든 컨테이너 삭제
+docker rm $(docker ps -aq) 2>/dev/null
+
+# 사용하지 않는 이미지 삭제
+docker image prune -f
+
+# 사용하지 않는 네트워크 삭제
+docker network prune -f
+
+# 사용하지 않는 볼륨 삭제
+docker volume prune -f
+
+echo "✅ Docker 정리 완료!"
+```
+
+### 🛠️ 스크립트 실행 방법
+```bash
+# 스크립트 실행 권한 부여
+chmod +x dev-setup.sh start-web.sh cleanup.sh
+
+# 스크립트 실행
+./dev-setup.sh
+./start-web.sh
+./cleanup.sh
+```
+
+### ✅ Phase 5 체크포인트
+- [ ] Docker 자동화 스크립트 작성
+- [ ] 스크립트 실행 권한 설정
+- [ ] 개발 환경 자동 설정 성공
+- [ ] 웹 서비스 자동 시작 성공
+- [ ] Docker 정리 스크립트 작동
+
+---
+
+## 🚀 숙련자 추가 미션 (10분)
 
 ### 🔥 고급 미션
 **미션 1: 멀티 컨테이너 네트워킹**
