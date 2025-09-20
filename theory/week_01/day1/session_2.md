@@ -182,9 +182,6 @@ graph LR
     A[Session 1<br/>과정 소개 ✅] --> B[Session 2<br/>DevOps 기초 ✅]
     B --> C[Session 3<br/>트렌드와 미래]
     C --> D[Session 4<br/>실습 준비]
-    
-    style A,B fill:#4caf50
-    style C,D fill:#e0e0e0
 ```
 
 ---
