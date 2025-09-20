@@ -2,6 +2,10 @@
 
 <div align="center">
 
+![Day 2](https://img.shields.io/badge/Day-2-blue?style=for-the-badge)
+![Sessions](https://img.shields.io/badge/Sessions-3-green?style=for-the-badge)
+![Duration](https://img.shields.io/badge/Duration-8h-orange?style=for-the-badge)
+
 **🐳 컨테이너 기술 핵심** • **🏗️ Docker 아키텍처**
 
 *가상화에서 컨테이너로, Docker의 전체 구조 이해*
