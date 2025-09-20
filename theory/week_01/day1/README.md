@@ -234,6 +234,6 @@ graph TB
 
 **세션 목록**: [Session 1](./session_1.md) | [Session 2](./session_2.md) | [Session 3](./session_3.md) | [Session 4](./session_4.md) | [Session 5](./session_5.md) | [Session 6](./session_6.md)
 
-**다음**: [Day 2 - 컨테이너 기술 이론](../day2/README.md)
+**다음**: [Day 2 - 컨테이너 기술 & Docker 아키텍처](../day2/README.md)
 
 </div>

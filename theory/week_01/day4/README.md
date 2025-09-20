@@ -794,12 +794,13 @@ graph TB
 ```mermaid
 graph LR
     A[Week 1 ✅] --> B[Week 2]
-    B --> C[Week 4]
-    C --> D[Week 5]
-    D --> E[Week 6]
+    B --> C[Week 3]
+    C --> D[Week 4]
+    D --> E[Week 5]
+    E --> F[Week 6]
     
     style A fill:#4caf50
-    style B,C,D,E fill:#e0e0e0
+    style B,C,D,E,F fill:#e0e0e0
 ```
 
 ---
@@ -810,6 +811,6 @@ graph LR
 
 *Week 1을 통해 DevOps와 컨테이너 기술의 탄탄한 기초를 완성했습니다*
 
-**다음 주**: [Week 2 - Docker 심화 & Kubernetes 준비](../week_02/README.md)
+**다음 주**: [Week 2 - 컨테이너 오케스트레이션 기초](../week_02/README.md)
 
 </div>

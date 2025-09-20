@@ -582,6 +582,10 @@ graph LR
     B --> C[Day 2 ✅]
     C --> D[Day 3 ✅]
     D --> E[Day 4]
+    
+    style A fill:#4caf50
+    style B,C,D fill:#4caf50
+    style E fill:#e0e0e0
 ```
 
 ---

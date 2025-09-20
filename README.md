@@ -101,18 +101,17 @@ graph TB
 **목표**: 전체 학생 기본 개념 통일
 
 #### [Week 1: DevOps 문화와 Docker 기초](./theory/week_01/README.md)
-- Day 1: DevOps 개념 및 문화
-- Day 2: 컨테이너 기술 이론  
-- Day 3: Docker 아키텍처
-- Day 4: Docker 이미지와 레지스트리
-- Day 5: Docker 네트워킹과 스토리지
+- Day 1: 오리엔테이션 & DevOps 개념 소개
+- Day 2: 컨테이너 기술 & Docker 아키텍처
+- Day 3: Docker 이미지 & 네트워킹 & 스토리지
+- Day 4: Docker Compose & 멀티 컨테이너
 
-#### [Week 2: Docker 심화와 컨테이너 생태계](./theory/week_02/README.md)
-- Day 1: Docker Compose와 멀티 컨테이너
-- Day 2: 컨테이너 보안과 최적화
-- Day 3: 컨테이너 모니터링과 로깅
-- Day 4: 컨테이너 오케스트레이션 개념
-- Day 5: Week 1-2 종합 정리
+#### [Week 2: 컨테이너 오케스트레이션 기초](./theory/week_02/README.md)
+- Day 1: 오케스트레이션 개념과 필요성
+- Day 2: Kubernetes 아키텍처
+- Day 3: Kubernetes 핵심 오브젝트
+- Day 4: Kubernetes 네트워킹과 스토리지
+- Day 5: Kubernetes 보안과 모니터링
 
 ### Week 3-4: Kubernetes & 클라우드 네이티브
 **목표**: 실무 핵심 기술 습득 및 클라우드 네이티브 아키텍처 이해

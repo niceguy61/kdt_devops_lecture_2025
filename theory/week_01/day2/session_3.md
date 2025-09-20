@@ -1,10 +1,10 @@
-# Week 1 Day 2 Session 3: Docker 아키텍처와 구성 요소
+# Week 1 Day 2 Session 3: Docker Engine & 런타임
 
 <div align="center">
 
-**🐳 Docker 생태계 완전 분석** • **클라이언트-서버 아키텍처**
+**⚙️ Docker 내부 동작 원리** • **컨테이너 생명주기**
 
-*Docker Engine부터 Registry까지, 전체 Docker 생태계의 구조와 동작 원리*
+*Docker Engine의 구조와 컨테이너 실행 메커니즘*
 
 </div>
 
@@ -13,350 +13,170 @@
 ## 🕘 세션 정보
 
 **시간**: 11:00-11:50 (50분)  
-**목표**: Docker 전체 아키텍처와 각 구성 요소의 역할 완전 이해  
-**방식**: 이론 설명 + 팀별 아키텍처 다이어그램 작성 + 구성 요소 역할 분석
+**목표**: Docker Engine 내부 동작 원리와 컨테이너 생명주기 이해  
+**방식**: 구조 분석 + 생명주기 체험 + 실습 연계
 
 ---
 
 ## 🎯 세션 목표
 
 ### 📚 학습 목표
-- **이해 목표**: Docker Engine, 클라이언트-서버 구조, Registry 등 전체 아키텍처 파악
-- **적용 목표**: Docker 생태계의 각 구성 요소가 어떻게 협력하여 동작하는지 이해
-- **협업 목표**: 팀별로 Docker 아키텍처 다이어그램을 공동 작성하고 발표
+- **이해 목표**: Docker Engine의 내부 동작 원리와 런타임 이해
+- **적용 목표**: 컨테이너 생명주기와 상태 관리 실습 준비
+- **협업 목표**: 페어 토론을 통한 Docker 내부 동작 원리 이해
 
 ### 🤔 왜 필요한가? (5분)
-**Docker 아키텍처 이해의 중요성**:
-- 💼 **실무 필요성**: Docker 문제 해결과 최적화를 위해 전체 구조 이해 필수
-- 🏠 **일상 비유**: 스마트폰 앱 사용법만 아는 것과 전체 시스템 구조까지 아는 차이
-- 📊 **확장성**: 복잡한 컨테이너 환경 구축을 위한 기반 지식
 
-**학습 전후 비교**:
-```mermaid
-graph LR
-    A[학습 전<br/>Docker = 단일 도구<br/>명령어 중심<br/>부분적 이해] --> B[학습 후<br/>Docker = 생태계<br/>아키텍처 중심<br/>전체적 이해]
-    
-    style A fill:#ffebee
-    style B fill:#e8f5e8
-```
+**Docker Engine 이해의 중요성**:
+- 💼 **문제 해결**: 컨테이너 오류 발생 시 근본 원인 파악
+- 🏠 **일상 비유**: 자동차 엔진 구조를 알면 고장 진단이 쉬운 것처럼
+- 📊 **성능 최적화**: 내부 구조 이해를 통한 성능 튜닝
 
 ---
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: Docker 전체 아키텍처 개요 (12분)
+### 🔍 개념 1: Docker Engine 구조 (12분)
 
-> **정의**: Docker는 클라이언트-서버 아키텍처를 기반으로 하는 컨테이너 플랫폼으로, 여러 구성 요소가 협력하여 컨테이너 생명주기를 관리
+> **정의**: 컨테이너를 실행하고 관리하는 핵심 엔진
 
-#### Docker 전체 아키텍처
-```mermaid
-graph TB
-    subgraph "Docker Client"
-        A[docker CLI]
-        B[Docker Compose]
-        C[Docker Desktop]
-    end
-    
-    subgraph "Docker Host"
-        D[Docker Daemon<br/>dockerd]
-        E[containerd]
-        F[runc]
-        
-        G[Images]
-        H[Containers]
-        I[Networks]
-        J[Volumes]
-    end
-    
-    subgraph "Docker Registry"
-        K[Docker Hub]
-        L[Private Registry]
-        M[Cloud Registry<br/>ECR, ACR, GCR]
-    end
-    
-    A --> D
-    B --> D
-    C --> D
-    
-    D --> E
-    E --> F
-    
-    D --> G
-    D --> H
-    D --> I
-    D --> J
-    
-    D <--> K
-    D <--> L
-    D <--> M
-    
-    style A,B,C fill:#e3f2fd
-    style D,E,F fill:#fff3e0
-    style G,H,I,J fill:#e8f5e8
-    style K,L,M fill:#f3e5f5
-```
-
-#### 주요 구성 요소 개요
-- **Docker Client**: 사용자 인터페이스 (CLI, GUI, API)
-- **Docker Host**: 컨테이너 실행 환경 (Daemon, Runtime, Storage)
-- **Docker Registry**: 이미지 저장소 (Public, Private, Cloud)
-
-#### 통신 흐름
-1. **Client → Daemon**: REST API를 통한 명령 전달
-2. **Daemon → containerd**: 컨테이너 생명주기 관리 요청
-3. **containerd → runc**: 실제 컨테이너 실행
-4. **Daemon ↔ Registry**: 이미지 pull/push 작업
-
-### 🔍 개념 2: Docker Engine 상세 구조 (12분)
-
-> **정의**: Docker Engine은 Docker의 핵심 구성 요소로, Docker Daemon, containerd, runc로 구성된 계층적 아키텍처
-
-#### Docker Engine 계층 구조
+**Docker Engine 내부 구조**:
 ```mermaid
 graph TB
     subgraph "Docker Engine"
-        A[Docker CLI<br/>사용자 인터페이스]
-        B[Docker Daemon<br/>dockerd<br/>API 서버, 이미지 관리]
-        C[containerd<br/>컨테이너 런타임<br/>생명주기 관리]
-        D[runc<br/>OCI 런타임<br/>실제 컨테이너 실행]
+        A[Docker CLI] --> B[Docker API]
+        B --> C[containerd]
+        C --> D[runc]
+        D --> E[Linux Kernel<br/>namespaces, cgroups]
     end
     
-    E[Linux Kernel<br/>Namespaces, cgroups]
+    F[사용자] --> A
+    E --> G[Container Process]
     
-    A --> B
-    B --> C
-    C --> D
-    D --> E
+    style A fill:#e3f2fd
+    style B,C fill:#fff3e0
+    style D,E fill:#e8f5e8
+    style G fill:#f3e5f5
+```
+
+**각 구성 요소 역할**:
+- **Docker CLI**: 사용자 명령어 인터페이스
+- **Docker API**: REST API를 통한 통신
+- **containerd**: 컨테이너 생명주기 관리
+- **runc**: 실제 컨테이너 실행
+- **Linux Kernel**: 격리 기술 제공
+
+### 🔍 개념 2: 컨테이너 생명주기 (12분)
+
+> **정의**: 컨테이너가 생성부터 삭제까지 거치는 단계들
+
+**생명주기 단계**:
+```mermaid
+graph LR
+    A[Created<br/>생성됨] --> B[Running<br/>실행 중]
+    B --> C[Paused<br/>일시정지]
+    C --> B
+    B --> D[Stopped<br/>정지됨]
+    D --> B
+    D --> E[Removed<br/>삭제됨]
+    
+    style A fill:#e8f5e8
+    style B fill:#4caf50
+    style C fill:#ff9800
+    style D fill:#f44336
+    style E fill:#9e9e9e
+```
+
+**상태별 특징**:
+- **Created**: 이미지에서 컨테이너 생성, 아직 실행 안됨
+- **Running**: 프로세스가 실행 중인 상태
+- **Paused**: 프로세스가 일시정지된 상태
+- **Stopped**: 프로세스가 종료된 상태
+- **Removed**: 컨테이너가 완전히 삭제된 상태
+
+### 🔍 개념 3: 리소스 관리와 격리 (11분)
+
+> **정의**: Linux 커널 기능을 활용한 컨테이너 격리 기술
+
+**격리 기술들**:
+```mermaid
+graph TB
+    subgraph "Linux 커널 격리 기술"
+        A[Namespaces<br/>네임스페이스] --> A1[PID - 프로세스 격리]
+        A --> A2[NET - 네트워크 격리]
+        A --> A3[MNT - 파일시스템 격리]
+        A --> A4[UTS - 호스트명 격리]
+        
+        B[Cgroups<br/>컨트롤 그룹] --> B1[CPU 제한]
+        B --> B2[메모리 제한]
+        B --> B3[디스크 I/O 제한]
+        B --> B4[네트워크 대역폭 제한]
+    end
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style C fill:#e8f5e8
-    style D fill:#f3e5f5
-    style E fill:#ffebee
+    style A1,A2,A3,A4 fill:#e8f5e8
+    style B1,B2,B3,B4 fill:#f3e5f5
 ```
 
-#### 각 계층의 역할
-**Docker Daemon (dockerd)**:
-- REST API 서버 역할
-- 이미지 관리 (빌드, 태깅, 저장)
-- 네트워크 및 볼륨 관리
-- 클라이언트 요청 처리
-
-**containerd**:
-- 컨테이너 생명주기 관리
-- 이미지 전송 및 저장
-- 네트워크 네임스페이스 관리
-- OCI 런타임과의 인터페이스
-
-**runc**:
-- OCI(Open Container Initiative) 표준 구현
-- 실제 컨테이너 프로세스 생성
-- 네임스페이스 및 cgroups 설정
-- 컨테이너 보안 정책 적용
-
-#### 실무 연결
-- **모듈화**: 각 계층의 독립적 업그레이드 가능
-- **표준화**: OCI 표준 준수로 호환성 보장
-- **안정성**: 계층 분리로 장애 격리 효과
-
-### 🔍 개념 3: Docker Registry와 이미지 관리 (11분)
-
-> **정의**: Docker Registry는 Docker 이미지를 저장, 관리, 배포하는 중앙 저장소로, 컨테이너 생태계의 핵심 인프라
-
-#### Registry 생태계
-```mermaid
-graph TB
-    subgraph "Public Registries"
-        A[Docker Hub<br/>공식 저장소]
-        B[Quay.io<br/>Red Hat]
-        C[GitHub Container Registry<br/>GHCR]
-    end
-    
-    subgraph "Cloud Registries"
-        D[Amazon ECR]
-        E[Azure ACR]
-        F[Google GCR]
-        G[KT Cloud Registry]
-    end
-    
-    subgraph "Private Registries"
-        H[Harbor<br/>Enterprise]
-        I[Nexus Repository]
-        J[GitLab Registry]
-    end
-    
-    subgraph "Docker Host"
-        K[Docker Daemon]
-    end
-    
-    A --> K
-    B --> K
-    C --> K
-    D --> K
-    E --> K
-    F --> K
-    G --> K
-    H --> K
-    I --> K
-    J --> K
-    
-    style A,B,C fill:#e8f5e8
-    style D,E,F,G fill:#fff3e0
-    style H,I,J fill:#f3e5f5
-    style K fill:#e3f2fd
-```
-
-#### 이미지 관리 워크플로우
-```mermaid
-sequenceDiagram
-    participant D as Developer
-    participant DH as Docker Host
-    participant R as Registry
-    
-    D->>DH: docker build
-    Note over DH: 이미지 빌드
-    
-    D->>DH: docker tag
-    Note over DH: 이미지 태깅
-    
-    D->>DH: docker push
-    DH->>R: 이미지 업로드
-    Note over R: 이미지 저장
-    
-    D->>DH: docker pull
-    DH->>R: 이미지 다운로드
-    Note over DH: 로컬 저장
-    
-    D->>DH: docker run
-    Note over DH: 컨테이너 실행
-```
-
-#### Registry 선택 기준
-| 구분 | Public Registry | Cloud Registry | Private Registry |
-|------|-----------------|----------------|------------------|
-| **비용** | 무료/저렴 | 사용량 기반 | 구축/운영 비용 |
-| **보안** | 공개 | 클라우드 보안 | 완전 제어 |
-| **성능** | 인터넷 의존 | 리전별 최적화 | 내부 네트워크 |
-| **관리** | 제한적 | 관리형 서비스 | 완전 제어 |
-| **적용 사례** | 오픈소스, 학습 | 클라우드 네이티브 | 기업 내부 |
-
-#### 실무 연결
-- **이미지 전략**: 베이스 이미지 선택과 레이어 최적화
-- **보안 관리**: 이미지 스캔과 취약점 관리
-- **배포 전략**: 이미지 버전 관리와 롤백 전략
+**실무 활용**:
+- **개발 환경**: 각 개발자마다 독립적인 환경
+- **마이크로서비스**: 서비스별 리소스 격리
+- **멀티 테넌트**: 고객별 격리된 환경 제공
 
 ---
 
 ## 💭 함께 생각해보기 (10분)
 
-### 🤝 팀별 아키텍처 다이어그램 작성 (7분)
-**팀 구성**: 3-4명씩 3개 팀으로 구성
+### 🤝 페어 토론 (7분)
+**토론 주제**:
+1. **내부 동작**: "Docker 명령어를 실행했을 때 내부에서 어떤 일이 일어날까요?"
+2. **리소스 관리**: "컨테이너의 CPU나 메모리를 제한해야 하는 상황은?"
+3. **실무 적용**: "컨테이너 생명주기 관리에서 주의할 점은?"
 
-**팀별 작성 주제**:
-- **Team 1**: "웹 애플리케이션 개발 환경"
-  - 개발자 로컬 환경에서의 Docker 아키텍처
-  - 코드 변경부터 컨테이너 실행까지의 흐름
-  - 개발 효율성을 위한 구성 요소 배치
-
-- **Team 2**: "프로덕션 배포 환경"
-  - CI/CD 파이프라인에서의 Docker 아키텍처
-  - 이미지 빌드부터 프로덕션 배포까지의 흐름
-  - 보안과 안정성을 위한 구성 요소 배치
-
-- **Team 3**: "마이크로서비스 환경"
-  - 여러 서비스가 있는 환경에서의 Docker 아키텍처
-  - 서비스 간 통신과 데이터 공유 방법
-  - 확장성과 관리 효율성을 위한 구성
-
-**활동 가이드**:
-- 📊 **다이어그램 작성**: 화이트보드나 종이에 아키텍처 그리기
-- 🔄 **흐름 표시**: 데이터와 명령의 흐름 화살표로 표시
-- 💡 **핵심 포인트**: 해당 환경에서 중요한 구성 요소 강조
-
-### 🎯 팀별 발표 및 아키텍처 비교 (3분)
-- **Team 발표**: 각 팀 1분씩 아키텍처 다이어그램 설명
-- **차이점 분석**: 환경별 아키텍처 차이점과 이유 토론
-- **통합 이해**: Docker 아키텍처의 유연성과 확장성 이해
-
-### 💡 이해도 체크 질문
-- ✅ "Docker 클라이언트와 데몬 간의 통신 방식을 설명할 수 있나요?"
-- ✅ "Docker Engine의 3계층 구조를 설명할 수 있나요?"
-- ✅ "상황에 따른 Registry 선택 기준을 설명할 수 있나요?"
+### 🎯 전체 공유 (3분)
+- **이해도 확인**: Docker Engine 동작 원리 이해 점검
+- **실습 연결**: 오후 실습에서 확인할 내용들 정리
 
 ---
 
 ## 🔑 핵심 키워드
 
-### Docker 아키텍처
-- **Client-Server Architecture**: 클라이언트-서버 구조
-- **Docker Client**: 사용자 인터페이스 (CLI, GUI, API)
-- **Docker Host**: 컨테이너 실행 환경
-- **Docker Registry**: 이미지 저장소
+### Docker Engine 구성
+- **containerd**: 컨테이너 런타임, 이미지 관리, 생명주기 관리
+- **runc**: OCI 런타임 구현체, 실제 컨테이너 실행
+- **Docker API**: RESTful API, 클라이언트-데몬 통신
+- **Docker CLI**: 명령행 인터페이스, 사용자 도구
 
-### Docker Engine
-- **Docker Daemon (dockerd)**: Docker 서비스 프로세스
-- **containerd**: 컨테이너 런타임 관리자
-- **runc**: OCI 런타임 구현체
-- **REST API**: 클라이언트-데몬 간 통신 인터페이스
-
-### Registry 관리
-- **Docker Hub**: 공식 퍼블릭 레지스트리
-- **Private Registry**: 기업 내부 레지스트리
-- **Cloud Registry**: 클라우드 제공 레지스트리
-- **Image Repository**: 이미지 저장 단위
-
-### 이미지 관리
-- **Image Layer**: 이미지 계층 구조
-- **Image Tag**: 이미지 버전 관리
-- **Image Manifest**: 이미지 메타데이터
-- **Image Digest**: 이미지 고유 식별자
+### 격리 기술
+- **Namespaces**: 프로세스, 네트워크, 파일시스템 격리
+- **Cgroups**: 리소스 제한 및 모니터링
+- **Union File System**: 레이어드 파일시스템
+- **Container Runtime**: 컨테이너 실행 환경
 
 ---
 
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
-- [ ] Docker 전체 아키텍처와 구성 요소 완전 이해
-- [ ] Docker Engine의 계층적 구조 파악
-- [ ] Registry 생태계와 이미지 관리 워크플로우 이해
-- [ ] 팀별 아키텍처 다이어그램 작성 및 발표 완료
+- [ ] Docker Engine 내부 구조 완전 이해
+- [ ] 컨테이너 생명주기 각 단계 파악
+- [ ] Linux 커널 격리 기술 이해
+- [ ] 실습을 위한 이론적 기반 완성
 
-### 🎯 다음 세션 준비
-- **주제**: Docker 실습 - 기본 명령어와 컨테이너 생명주기
-- **연결고리**: Docker 아키텍처 이해 → 실제 Docker 명령어 사용
-- **준비사항**: 오늘 배운 구성 요소들이 명령어 실행 시 어떻게 동작하는지 생각해보기
-
-### 📊 학습 진도 체크
-```mermaid
-graph LR
-    A[Session 1<br/>가상화 진화 ✅] --> B[Session 2<br/>컨테이너 원리 ✅]
-    B --> C[Session 3<br/>Docker 구조 ✅]
-    C --> D[Session 4<br/>Docker 실습]
-    D --> E[Session 5<br/>이미지 관리]
-    
-    style A,B,C fill:#4caf50
-    style D,E fill:#e0e0e0
-```
-
-### 🔮 이론에서 실습으로
-**오전 이론 학습 완료**:
-- 가상화 기술의 진화 과정 이해 ✅
-- 컨테이너 핵심 기술 원리 파악 ✅
-- Docker 전체 아키텍처 구조 완성 ✅
-
-**오후 실습 준비**:
-- Docker 명령어를 통한 실제 조작
-- 컨테이너 생명주기 직접 체험
-- 이미지 빌드와 관리 실습
+### 🎯 실습 챌린지 준비
+- **연결고리**: 이론 학습 → 실제 Docker 설치 및 사용
+- **실습 내용**: 컨테이너 생명주기 직접 체험
+- **준비사항**: Docker 명령어로 내부 동작 확인해보기
 
 ---
 
 <div align="center">
 
-**🐳 Docker 아키텍처를 완전히 이해했습니다**
+**⚙️ Docker Engine 구조를 완전히 이해했습니다**
 
-*클라이언트부터 Registry까지, 전체 생태계 구조 완성*
+*내부 동작 원리와 컨테이너 생명주기 완전 파악*
 
-**이전**: [Session 2 - 컨테이너 기술 원리](./session_2.md) | **다음**: [Session 4 - Docker 기본 실습](./session_4.md)
+**다음**: [실습 챌린지 - Docker 설치 & 기본 실습](../README.md#실습-챌린지)
 
 </div>
