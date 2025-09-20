@@ -1,370 +1,392 @@
-# Week 2 Day 3 Session 2: 이미지 최적화 & 성능 튜닝
+# Week 2 Day 3 Session 2: Docker 고급 네트워킹
 
 <div align="center">
-**⚡ 성능 최적화** • **📊 성능 모니터링**
-*컨테이너 이미지 최적화와 성능 튜닝 기법 완전 습득*
+
+**🌐 고급 네트워킹** • **🔗 컨테이너 통신**
+
+*Docker 네트워킹 심화와 컨테이너 간 통신 완전 정복*
+
 </div>
 
 ---
 
 ## 🕘 세션 정보
-**시간**: 10:00-10:50 (50분)
-**목표**: 컨테이너 이미지 최적화와 성능 튜닝 기법 완전 습득
-**방식**: 이론 강의 + 페어 토론
 
-## 🎯 세션 목표
-### 📚 학습 목표
-- **이해 목표**: 컨테이너 이미지 최적화와 성능 튜닝 기법 완전 이해
-- **적용 목표**: 실무에서 사용할 수 있는 최적화 도구와 기법 습득
-- **협업 목표**: 개별 학습 후 경험 공유 및 질의응답
-
-## 📖 핵심 개념 (35분)
-
-### 🔍 개념 1: 이미지 크기 최적화 (12분)
-> **정의**: 컨테이너 이미지의 크기를 최소화하여 배포 속도와 저장 비용을 개선하는 기법
-
-**이미지 최적화 전략**:
-```mermaid
-graph TB
-    subgraph "이미지 최적화 기법"
-        A[멀티스테이지 빌드<br/>Multi-stage Build] --> E[최적화된 이미지]
-        B[Alpine 베이스<br/>Alpine Base] --> E
-        C[불필요한 파일 제거<br/>Clean up] --> E
-        D[레이어 최적화<br/>Layer Optimization] --> E
-    end
-    
-    subgraph "크기 비교"
-        F[일반 이미지<br/>500MB+] --> G[최적화 후<br/>50MB-]
-    end
-    
-    E --> G
-    
-    style A fill:#e8f5e8
-    style B fill:#e8f5e8
-    style C fill:#e8f5e8
-    style D fill:#e8f5e8
-    style E fill:#4caf50
-    style F fill:#ffebee
-    style G fill:#c8e6c9
-```
-
-**멀티스테이지 빌드 예시**:
-```dockerfile
-# 빌드 스테이지
-FROM node:18 AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-# 프로덕션 스테이지
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY . .
-RUN npm run build && \
-    npm prune --production && \
-    rm -rf src/ tests/ *.md
-
-USER node
-EXPOSE 3000
-CMD ["node", "dist/server.js"]
-```
-
-**이미지 크기 분석**:
-```bash
-# 이미지 크기 확인
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
-
-# 이미지 레이어 분석
-docker history myapp:latest
-
-# dive 도구로 상세 분석
-dive myapp:latest
-```
-
-### 🔍 개념 2: 성능 모니터링과 프로파일링 (12분)
-> **정의**: 컨테이너 애플리케이션의 성능을 측정하고 병목 지점을 식별하는 방법
-
-**성능 메트릭 계층**:
-```mermaid
-graph TB
-    subgraph "성능 메트릭"
-        A[애플리케이션 메트릭<br/>Response Time, Throughput] --> D[종합 성능 분석]
-        B[시스템 메트릭<br/>CPU, Memory, I/O] --> D
-        C[네트워크 메트릭<br/>Latency, Bandwidth] --> D
-    end
-    
-    subgraph "모니터링 도구"
-        E[Prometheus<br/>메트릭 수집] --> F[Grafana<br/>시각화]
-        G[cAdvisor<br/>컨테이너 메트릭] --> E
-        H[Node Exporter<br/>시스템 메트릭] --> E
-    end
-    
-    D --> E
-    
-    style A fill:#e8f5e8
-    style B fill:#e8f5e8
-    style C fill:#e8f5e8
-    style D fill:#4caf50
-    style E fill:#fff3e0
-    style F fill:#2196f3
-    style G fill:#fff3e0
-    style H fill:#fff3e0
-```
-
-**성능 모니터링 설정**:
-```yaml
-# docker-compose.monitoring.yml
-version: '3.8'
-services:
-  app:
-    image: myapp:latest
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    ports:
-      - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-```
-
-### 🔍 개념 3: 리소스 최적화 (11분)
-> **정의**: CPU, 메모리, 네트워크 등 시스템 리소스를 효율적으로 사용하는 최적화 기법
-
-**리소스 최적화 전략**:
-```mermaid
-graph TB
-    subgraph "CPU 최적화"
-        A[멀티스레딩<br/>Multi-threading] --> D[성능 향상]
-        B[비동기 처리<br/>Async Processing] --> D
-    end
-    
-    subgraph "메모리 최적화"
-        C[메모리 풀링<br/>Memory Pooling] --> E[메모리 효율성]
-        F[가비지 컬렉션 튜닝<br/>GC Tuning] --> E
-    end
-    
-    subgraph "I/O 최적화"
-        G[캐싱<br/>Caching] --> H[응답 속도 개선]
-        I[연결 풀링<br/>Connection Pooling] --> H
-    end
-    
-    D --> J[전체 성능 최적화]
-    E --> J
-    H --> J
-    
-    style A fill:#e8f5e8
-    style B fill:#e8f5e8
-    style C fill:#e8f5e8
-    style D fill:#fff3e0
-    style E fill:#fff3e0
-    style F fill:#e8f5e8
-    style G fill:#e8f5e8
-    style H fill:#fff3e0
-    style I fill:#e8f5e8
-    style J fill:#4caf50
-```
-
-**리소스 제한 설정**:
-```bash
-# CPU 제한 (0.5 코어)
-docker run --cpus="0.5" myapp:latest
-
-# 메모리 제한 (512MB)
-docker run --memory="512m" myapp:latest
-
-# 복합 리소스 제한
-docker run \
-  --cpus="0.5" \
-  --memory="512m" \
-  --memory-swap="1g" \
-  myapp:latest
-```
-
-**성능 최적화 실무 기법**:
-
-**1. JVM 최적화 (Java 애플리케이션)**:
-```dockerfile
-FROM openjdk:11-jre-slim
-
-# JVM 튜닝 파라미터
-ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
-
-# 애플리케이션 설정
-COPY app.jar /app/
-WORKDIR /app
-
-# 비특권 사용자
-RUN adduser --disabled-password --gecos '' appuser
-USER appuser
-
-# 성능 모니터링 포트 노출
-EXPOSE 8080 9090
-
-CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-```
-
-**2. Node.js 최적화**:
-```dockerfile
-FROM node:18-alpine AS builder
-
-# 빌드 최적화
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-
-# 소스 복사 및 빌드
-COPY . .
-RUN npm run build
-
-# 프로덕션 스테이지
-FROM node:18-alpine
-WORKDIR /app
-
-# Node.js 성능 튜닝
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=1024 --optimize-for-size"
-
-# 필요한 파일만 복사
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY package*.json ./
-
-# 비특권 사용자
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-USER nextjs
-
-EXPOSE 3000
-CMD ["node", "dist/server.js"]
-```
-
-**3. 데이터베이스 연결 최적화**:
-```javascript
-// 연결 풀 설정 예시
-const mysql = require('mysql2/promise');
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  connectionLimit: 20,        // 최대 연결 수
-  acquireTimeout: 60000,      // 연결 획득 타임아웃
-  timeout: 60000,             // 쿼리 타임아웃
-  reconnect: true,            // 자동 재연결
-  idleTimeout: 300000,        // 유휴 연결 타임아웃
-});
-
-// 캐싱 전략
-const Redis = require('redis');
-const redis = Redis.createClient({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 3,
-});
-```
-
-**4. 성능 벤치마크 자동화**:
-```bash
-#!/bin/bash
-# performance-benchmark.sh
-
-APP_URL="http://localhost:8080"
-RESULT_DIR="./benchmark-results"
-mkdir -p $RESULT_DIR
-
-echo "Starting performance benchmark..."
-
-# 1. 기본 로드 테스트
-echo "Running basic load test..."
-ab -n 10000 -c 100 -g "$RESULT_DIR/basic-load.dat" $APP_URL/ > "$RESULT_DIR/basic-load.txt"
-
-# 2. 스트레스 테스트
-echo "Running stress test..."
-ab -n 50000 -c 500 -g "$RESULT_DIR/stress-test.dat" $APP_URL/ > "$RESULT_DIR/stress-test.txt"
-
-# 3. 지속성 테스트
-echo "Running endurance test..."
-ab -t 300 -c 50 -g "$RESULT_DIR/endurance.dat" $APP_URL/ > "$RESULT_DIR/endurance.txt"
-
-# 4. 리소스 모니터링
-echo "Monitoring resources during test..."
-docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" \
-  --no-stream > "$RESULT_DIR/resource-usage.txt"
-
-# 5. 결과 분석
-echo "Analyzing results..."
-python3 << EOF
-import json
-import re
-
-# 결과 파싱 및 분석
-with open('$RESULT_DIR/basic-load.txt', 'r') as f:
-    content = f.read()
-    
-# 주요 메트릭 추출
-rps_match = re.search(r'Requests per second:\s+([\d.]+)', content)
-total_time_match = re.search(r'Time taken for tests:\s+([\d.]+)', content)
-mean_time_match = re.search(r'Time per request:\s+([\d.]+).*\(mean\)', content)
-
-if rps_match and total_time_match and mean_time_match:
-    print(f"Performance Summary:")
-    print(f"- Requests per second: {rps_match.group(1)}")
-    print(f"- Total time: {total_time_match.group(1)} seconds")
-    print(f"- Mean response time: {mean_time_match.group(1)} ms")
-EOF
-
-echo "Benchmark completed. Results saved in $RESULT_DIR"
-```
-
-## 💭 함께 생각해보기 (15분)
-
-### 🤝 페어 토론 (10분)
-**토론 주제**:
-1. **최적화 우선순위**: "이미지 크기, CPU, 메모리 중 어떤 것을 먼저 최적화해야 할까요?"
-2. **성능 vs 안정성**: "성능 최적화와 시스템 안정성 사이의 균형점은?"
-3. **모니터링 전략**: "어떤 메트릭을 가장 중요하게 모니터링해야 할까요?"
-
-### 🎯 전체 공유 (5분)
-- **최적화 경험**: 성능 최적화 경험과 효과적인 방법
-- **도구 활용**: 성능 모니터링 도구의 실무 활용 방안
-
-## 🔑 핵심 키워드
-- **Multi-stage Build**: 멀티스테이지 빌드
-- **Alpine Linux**: 경량 리눅스 배포판
-- **Layer Optimization**: 레이어 최적화
-- **Resource Limits**: 리소스 제한
-- **Performance Profiling**: 성능 프로파일링
-
-## 📝 세션 마무리
-### ✅ 오늘 세션 성과
-- 이미지 최적화 기법 완전 습득
-- 성능 모니터링 도구와 방법 학습
-- 리소스 최적화 전략 이해
-
-### 🎯 다음 세션 준비
-- **Session 3**: 모니터링 & 관측성
-- **연결**: 성능 최적화와 모니터링의 통합
+**시간**: 10:00-10:50 (50분)  
+**목표**: Docker 고급 네트워킹과 컨테이너 간 통신 방법 완전 이해  
+**방식**: 네트워킹 이론 + 실습 + 문제 해결
 
 ---
 
+## 🎯 세션 목표
+
+### 📚 학습 목표
+- **이해 목표**: Docker 네트워킹 모델과 드라이버별 특징 완전 이해
+- **적용 목표**: 복잡한 네트워크 구성과 컨테이너 간 통신 설정 능력
+- **협업 목표**: 네트워킹 문제 해결을 위한 팀 협업과 지식 공유
+
+### 🤔 왜 필요한가? (5분)
+
+**현실 문제 상황**:
+- 💼 **마이크로서비스**: 여러 컨테이너가 서로 통신해야 하는 복잡한 아키텍처
+- 🏠 **일상 비유**: 아파트 단지에서 각 세대가 서로 연결되는 네트워크 구조
+- 📊 **실무 필요성**: 프로덕션 환경에서 안전하고 효율적인 컨테이너 통신
+
+---
+
+## 📖 핵심 개념 (35분)
+
+### 🔍 개념 1: Docker 네트워크 드라이버 (12분)
+
+> **정의**: Docker에서 제공하는 다양한 네트워크 드라이버와 각각의 특징 및 사용 사례
+
+**네트워크 드라이버 종류**:
+```mermaid
+graph TB
+    subgraph "Docker 네트워크 드라이버"
+        A[bridge<br/>기본 네트워크] --> F[컨테이너 통신]
+        B[host<br/>호스트 네트워크] --> F
+        C[overlay<br/>멀티 호스트] --> F
+        D[macvlan<br/>물리적 네트워크] --> F
+        E[none<br/>네트워크 없음] --> F
+    end
+    
+    subgraph "사용 사례"
+        G[단일 호스트<br/>개발 환경]
+        H[고성능<br/>네트워킹]
+        I[Docker Swarm<br/>클러스터]
+        J[레거시 시스템<br/>통합]
+        K[보안 격리<br/>환경]
+    end
+    
+    A --> G
+    B --> H
+    C --> I
+    D --> J
+    E --> K
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#ffebee
+    style D fill:#f3e5f5
+    style E fill:#e0f2f1
+```
+
+**네트워크 드라이버 상세 비교**:
+
+| 드라이버 | 특징 | 사용 사례 | 장점 | 단점 |
+|----------|------|-----------|------|------|
+| **bridge** | 기본 네트워크, NAT 사용 | 단일 호스트 개발 | 간단한 설정, 격리성 | 성능 오버헤드 |
+| **host** | 호스트 네트워크 직접 사용 | 고성능 요구 애플리케이션 | 최고 성능 | 포트 충돌 위험 |
+| **overlay** | 멀티 호스트 네트워킹 | Docker Swarm, 분산 환경 | 확장성, 암호화 | 복잡한 설정 |
+| **macvlan** | 물리적 MAC 주소 할당 | 레거시 시스템 통합 | 네이티브 성능 | 네트워크 제약 |
+| **none** | 네트워크 비활성화 | 최대 보안 격리 | 완전 격리 | 통신 불가 |
+
+**기본 네트워크 명령어**:
+```bash
+# 네트워크 목록 확인
+docker network ls
+
+# 네트워크 상세 정보
+docker network inspect bridge
+
+# 커스텀 네트워크 생성
+docker network create --driver bridge my-network
+
+# 컨테이너를 특정 네트워크에 연결
+docker run --network my-network nginx
+
+# 실행 중인 컨테이너를 네트워크에 연결
+docker network connect my-network container-name
+
+# 네트워크에서 컨테이너 분리
+docker network disconnect my-network container-name
+```
+
+### 🔍 개념 2: 고급 네트워크 구성 (12분)
+
+> **정의**: 복잡한 네트워크 토폴로지와 고급 네트워킹 기능 구현
+
+**멀티 네트워크 아키텍처**:
+```mermaid
+graph TB
+    subgraph "프론트엔드 네트워크"
+        A[Web Server<br/>nginx] --> B[Load Balancer<br/>haproxy]
+    end
+    
+    subgraph "백엔드 네트워크"
+        C[API Server<br/>node.js] --> D[Database<br/>postgresql]
+        E[Cache<br/>redis] --> C
+    end
+    
+    subgraph "관리 네트워크"
+        F[Monitoring<br/>prometheus] --> G[Logging<br/>elasticsearch]
+    end
+    
+    B --> C
+    F -.-> A
+    F -.-> C
+    F -.-> D
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+```
+
+**고급 네트워크 설정 예시**:
+
+**1. 서브넷과 IP 범위 지정**:
+```bash
+# 커스텀 서브넷으로 네트워크 생성
+docker network create \
+  --driver bridge \
+  --subnet=172.20.0.0/16 \
+  --ip-range=172.20.240.0/20 \
+  --gateway=172.20.0.1 \
+  custom-network
+
+# 고정 IP로 컨테이너 실행
+docker run --network custom-network --ip 172.20.0.10 nginx
+```
+
+**2. 네트워크 별칭과 DNS**:
+```bash
+# 네트워크 별칭 설정
+docker run --network my-network --network-alias web nginx
+docker run --network my-network --network-alias api node:alpine
+
+# DNS 해석 테스트
+docker run --network my-network alpine nslookup web
+```
+
+**3. 포트 매핑과 노출**:
+```bash
+# 특정 인터페이스에 포트 바인딩
+docker run -p 127.0.0.1:8080:80 nginx
+
+# 포트 범위 매핑
+docker run -p 8000-8010:8000-8010 myapp
+
+# UDP 포트 매핑
+docker run -p 53:53/udp dns-server
+```
+
+### 🔍 개념 3: 네트워크 보안과 격리 (11분)
+
+> **정의**: 컨테이너 네트워크의 보안 강화와 트래픽 격리 방법
+
+**네트워크 보안 계층**:
+```mermaid
+graph TB
+    subgraph "네트워크 보안 계층"
+        A[방화벽 규칙<br/>iptables] --> D[보안 통신]
+        B[네트워크 격리<br/>Namespace] --> D
+        C[암호화 통신<br/>TLS/SSL] --> D
+    end
+    
+    subgraph "보안 정책"
+        E[접근 제어<br/>ACL] --> F[트래픽 제어]
+        G[포트 제한<br/>Port Security] --> F
+        H[프로토콜 필터링<br/>Protocol Filter] --> F
+    end
+    
+    D --> F
+    
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#f44336
+    style E fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style F fill:#ff9800
+```
+
+**네트워크 보안 실습**:
+
+**1. 네트워크 격리 구현**:
+```bash
+# 격리된 네트워크 생성
+docker network create --internal secure-network
+
+# 외부 접근 차단된 컨테이너 실행
+docker run --network secure-network --name secure-app alpine
+
+# 내부 통신만 허용하는 구조
+docker run --network secure-network --name secure-db postgres
+```
+
+**2. 방화벽 규칙 설정**:
+```bash
+# Docker 방화벽 규칙 확인
+sudo iptables -L DOCKER
+
+# 특정 포트만 허용
+sudo iptables -I DOCKER-USER -p tcp --dport 80 -j ACCEPT
+sudo iptables -I DOCKER-USER -p tcp --dport 443 -j ACCEPT
+sudo iptables -I DOCKER-USER -j DROP
+```
+
+**3. TLS 암호화 통신**:
+```yaml
+# docker-compose.yml with TLS
+version: '3.8'
+services:
+  web:
+    image: nginx
+    volumes:
+      - ./ssl:/etc/nginx/ssl
+    ports:
+      - "443:443"
+    environment:
+      - SSL_CERT=/etc/nginx/ssl/cert.pem
+      - SSL_KEY=/etc/nginx/ssl/key.pem
+    networks:
+      - secure-net
+
+  app:
+    image: myapp
+    networks:
+      - secure-net
+    environment:
+      - TLS_ENABLED=true
+
+networks:
+  secure-net:
+    driver: bridge
+    driver_opts:
+      encrypted: "true"
+```
+
+**네트워크 문제 해결 도구**:
+
+**1. 네트워크 진단 명령어**:
+```bash
+# 컨테이너 네트워크 정보 확인
+docker exec container-name ip addr show
+docker exec container-name ip route show
+
+# 네트워크 연결 테스트
+docker exec container-name ping target-container
+docker exec container-name telnet target-host 80
+
+# DNS 해석 테스트
+docker exec container-name nslookup hostname
+docker exec container-name dig hostname
+```
+
+**2. 네트워크 모니터링**:
+```bash
+# 네트워크 트래픽 모니터링
+docker exec container-name netstat -tuln
+docker exec container-name ss -tuln
+
+# 패킷 캡처
+docker exec container-name tcpdump -i eth0
+
+# 네트워크 성능 테스트
+docker exec container-name iperf3 -c target-host
+```
+
+**3. 문제 해결 시나리오**:
+```bash
+#!/bin/bash
+# network-troubleshoot.sh
+
+echo "=== Docker Network Troubleshooting ==="
+
+# 1. 네트워크 목록 확인
+echo "1. Available Networks:"
+docker network ls
+
+# 2. 컨테이너 네트워크 상태
+echo -e "\n2. Container Network Status:"
+docker ps --format "table {{.Names}}\t{{.Networks}}\t{{.Ports}}"
+
+# 3. 네트워크 상세 정보
+echo -e "\n3. Network Details:"
+for network in $(docker network ls --format "{{.Name}}" | grep -v "bridge\|host\|none"); do
+    echo "Network: $network"
+    docker network inspect $network --format "{{.IPAM.Config}}"
+done
+
+# 4. 컨테이너 간 연결 테스트
+echo -e "\n4. Container Connectivity Test:"
+containers=$(docker ps --format "{{.Names}}")
+for container in $containers; do
+    echo "Testing connectivity from $container:"
+    docker exec $container ping -c 1 google.com > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "  ✓ Internet connectivity: OK"
+    else
+        echo "  ✗ Internet connectivity: FAILED"
+    fi
+done
+
+# 5. 포트 바인딩 확인
+echo -e "\n5. Port Bindings:"
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+```
+
+---
+
+## 💭 함께 생각해보기 (10분)
+
+### 🤝 페어 토론 (5분)
+
+**토론 주제**:
+1. **네트워크 설계**: "마이크로서비스 아키텍처에서 어떻게 네트워크를 설계하시겠어요?"
+2. **보안 고려사항**: "컨테이너 네트워크에서 가장 중요한 보안 요소는 무엇일까요?"
+3. **성능 최적화**: "네트워크 성능을 향상시키기 위한 방법은?"
+
+### 🎯 전체 공유 (5분)
+
+- **네트워크 아키텍처**: 효과적인 컨테이너 네트워크 설계 방안
+- **문제 해결**: 네트워킹 문제 진단과 해결 경험 공유
+
+---
+
+## 🔑 핵심 키워드
+
+- **Bridge Network**: 기본 브리지 네트워크
+- **Overlay Network**: 멀티 호스트 오버레이 네트워크
+- **Network Namespace**: 네트워크 네임스페이스
+- **Port Mapping**: 포트 매핑
+- **Network Isolation**: 네트워크 격리
+- **DNS Resolution**: DNS 해석
+
+---
+
+## 📝 세션 마무리
+
+### ✅ 오늘 세션 성과
+- [ ] Docker 네트워크 드라이버별 특징 완전 이해
+- [ ] 고급 네트워크 구성과 관리 방법 습득
+- [ ] 네트워크 보안과 격리 기법 학습
+- [ ] 네트워크 문제 진단과 해결 능력 개발
+
+### 🎯 다음 세션 준비
+- **주제**: 모니터링 & 관측성
+- **연결**: 네트워크 모니터링과 성능 분석
+
+### 🚀 실무 적용 포인트
+- **마이크로서비스**: 서비스 간 안전한 통신 구현
+- **보안 강화**: 네트워크 레벨에서의 보안 정책 적용
+- **성능 최적화**: 네트워크 병목 지점 식별과 개선
+- **문제 해결**: 네트워킹 이슈의 체계적 진단과 해결
+
+---
+
+<div align="center">
+
+**🌐 Docker 고급 네트워킹을 완전히 마스터했습니다!**
+
+*이제 복잡한 컨테이너 네트워크도 자유자재로 구성할 수 있습니다*
+
 **다음**: [Session 3 - 모니터링 & 관측성](./session_3.md)
+
+</div>
