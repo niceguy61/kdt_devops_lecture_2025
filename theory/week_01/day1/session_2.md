@@ -72,7 +72,6 @@ graph TB
     style A fill:#e3f2fd
     style B fill:#fff3e0
     style C fill:#e8f5e8
-    style D,E,F fill:#f3e5f5
 ```
 
 ### 🔍 개념 2: 전통적 방식 vs DevOps (12분)
