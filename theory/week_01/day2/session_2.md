@@ -84,7 +84,8 @@ graph LR
     style A fill:#e8f5e8
     style E fill:#e8f5e8
     style C fill:#fff3e0
-    style B,D fill:#f3e5f5
+    style B fill:#f3e5f5
+    style D fill:#f3e5f5
 ```
 
 **실생활 비유**:
