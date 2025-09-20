@@ -74,6 +74,10 @@ graph TB
     style C fill:#e8f5e8
 ```
 
+**🖼️ DevOps 무한 루프 (미비우스의 띠)**
+![DevOps Infinity Loop](https://www.edureka.co/blog/wp-content/uploads/2016/11/DevOps-tutorial-What-is-DevOps-Edureka.png)
+*DevOps의 지속적인 개선 사이클*
+
 ### 🔍 개념 2: 전통적 방식 vs DevOps (12분)
 
 > **정의**: 기존의 분리된 개발/운영 방식에서 통합된 협업 방식으로의 전환
@@ -99,6 +103,10 @@ graph TB
   - 한계점: 문화 변화의 어려움, 초기 투자 비용
 - **대안 기술**: Agile, Lean, Site Reliability Engineering (SRE)
 
+**🖼️ DevOps 성숙도 모델**
+![DevOps Maturity Model](https://www.devopsgroup.com/wp-content/uploads/2019/01/DevOps-Maturity-Model.png)
+*DevOps 성숙도 단계별 발전 과정*
+
 ### 🔍 개념 3: DevOps 핵심 가치 - CALMS (11분)
 
 > **정의**: DevOps 성공을 위한 5가지 핵심 요소
@@ -114,6 +122,10 @@ graph LR
     
     style F fill:#f3e5f5
 ```
+
+**🖼️ DevOps 도구 체인**
+![DevOps Toolchain](https://www.atlassian.com/dam/jcr:cc2c3d9a-7e8e-4b4b-9b8a-6b7b5b5b5b5b/devops-toolchain.png)
+*출처: Atlassian*
 
 #### 각 요소별 상세 설명
 - **Culture (문화)**: 협업, 신뢰, 투명성을 바탕으로 한 조직 문화

@@ -52,6 +52,10 @@ graph LR
     style E fill:#e0f2f1
 ```
 
+**🖼️ 클라우드 네이티브 로드맵**
+![Cloud Native Roadmap](https://landscape.cncf.io/images/landscape.png)
+*출처: CNCF Landscape*
+
 #### 과정의 특별함
 - 🏢 **KT Cloud 직접 운영**: 국내 최대 클라우드 인프라 경험
 - 👨💼 **현직자 멘토링**: 실무 전문가와 함께하는 학습
@@ -69,6 +73,10 @@ graph LR
 클라우드 네이티브 전문가 수요
 현재 대비 300% 증가 예상 (2025년까지)
 ```
+
+**🖼️ DevOps 시장 성장 전망**
+![DevOps Market Growth](https://www.grandviewresearch.com/static/img/research/global-devops-market-size.png)
+*출처: Grand View Research*
 
 ### 👨🏫 강사 소개 및 교육 철학 (10분)
 
@@ -113,6 +121,10 @@ graph LR
 - CS 전공자와 비전공자의 창의적 관점 융합  
 - 신입부터 경력자까지 상호 보완적 지식 공유
 - 각자의 인생 경험이 만드는 독특한 학습 환경
+
+**🖼️ 다양성이 만드는 혁신**
+![Diversity Innovation](https://www.mckinsey.com/~/media/mckinsey/business%20functions/people%20and%20organizational%20performance/our%20insights/delivering%20through%20diversity/delivering-through-diversity_full-report.pdf)
+*다양성이 혁신과 성과를 만드는 원동력*
 
 ### 💡 이해도 체크 질문
 - ✅ "7개월 과정의 전체 구조를 설명할 수 있나요?"

@@ -40,6 +40,10 @@
 
 > **정의**: Docker 이미지는 여러 개의 읽기 전용 레이어가 쌓인 구조
 
+**🖼️ Docker 이미지 레이어 구조**
+![Docker Image Layers](https://docs.docker.com/storage/storagedriver/images/container-layers.jpg)
+*출처: Docker 공식 문서*
+
 **레이어 시스템의 장점**:
 ```mermaid
 graph TB
@@ -58,6 +62,10 @@ graph TB
     style E fill:#e8f5e8
     style F,G fill:#f3e5f5
 ```
+
+**🖼️ 이미지 공유 효율성**
+![Image Sharing](https://docs.docker.com/storage/storagedriver/images/sharing-layers.jpg)
+*동일한 레이어를 여러 이미지가 공유*
 
 **레이어 공유의 효율성**:
 - **저장 공간 절약**: 동일한 베이스 이미지 공유
@@ -90,6 +98,10 @@ graph LR
 
 > **정의**: 이미지 크기를 줄이고 성능을 향상시키는 방법들
 
+**🖼️ 멀티스테이지 빌드 개념**
+![Multi-stage Build](https://docs.docker.com/build/images/multi-stage.png)
+*출처: Docker 공식 문서*
+
 **최적화 전략**:
 ```mermaid
 graph TB
@@ -103,6 +115,10 @@ graph TB
     style A,B,C,D fill:#e8f5e8
     style E fill:#4caf50
 ```
+
+**🖼️ 이미지 크기 비교**
+![Image Size Comparison](https://www.docker.com/wp-content/uploads/2021/08/Whats-the-Diff-Blog-B-2021-08-12-at-2.43.31-PM-1024x465.png)
+*베이스 이미지별 크기 차이*
 
 **크기 비교 예시**:
 | 베이스 이미지 | 크기 | 용도 |

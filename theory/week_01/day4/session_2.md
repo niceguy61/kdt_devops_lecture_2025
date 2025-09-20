@@ -40,6 +40,10 @@
 
 > **정의**: 프레젠테이션, 비즈니스 로직, 데이터 계층으로 분리된 구조
 
+**🖼️ 3-Tier 아키텍처 패턴**
+![3-Tier Architecture](https://www.redhat.com/rhdc/managed-files/styles/wysiwyg_full_width/public/3-tier-application-architecture.png)
+*출처: Red Hat*
+
 **3-Tier 구조**:
 ```mermaid
 graph TB
@@ -81,6 +85,10 @@ graph TB
 
 > **정의**: 각 서비스가 독립적으로 배포되고 확장되는 아키텍처
 
+**🖼️ 마이크로서비스 아키텍처**
+![Microservices Architecture](https://www.redhat.com/rhdc/managed-files/microservices-1680.png)
+*출처: Red Hat*
+
 **마이크로서비스 구조**:
 ```mermaid
 graph TB
@@ -114,6 +122,10 @@ graph TB
 ### 🔍 개념 3: 모니터링과 로깅 통합 (11분)
 
 > **정의**: 멀티 컨테이너 환경에서의 관측성 확보 방안
+
+**🖼️ 관측성 스택 (ELK + Prometheus)**
+![Observability Stack](https://www.elastic.co/guide/en/beats/filebeat/current/images/beats-platform.png)
+*출처: Elastic*
 
 **관측성 스택**:
 ```mermaid

@@ -40,6 +40,10 @@
 
 > **정의**: 여러 컨테이너로 구성된 애플리케이션을 정의하고 실행하는 도구
 
+**🖼️ Docker Compose 아키텍처**
+![Docker Compose Architecture](https://docs.docker.com/compose/images/compose-application.png)
+*출처: Docker 공식 문서*
+
 **Compose의 장점**:
 ```mermaid
 graph TB
@@ -57,6 +61,10 @@ graph TB
     style A4 fill:#ffebee
     style B3 fill:#e8f5e8
 ```
+
+**🖼️ 멀티 컨테이너 애플리케이션**
+![Multi-container App](https://docs.docker.com/get-started/images/multi-container.png)
+*전형적인 3-tier 애플리케이션 구조*
 
 **Compose 사용 시나리오**:
 - **개발 환경**: 로컬에서 전체 스택 실행
@@ -108,6 +116,10 @@ networks:
 
 > **정의**: 컨테이너 간의 실행 순서와 통신 방법 정의
 
+**🖼️ Docker Compose 워크플로우**
+![Compose Workflow](https://docs.docker.com/compose/images/compose-workflow.png)
+*개발부터 배포까지의 전체 워크플로우*
+
 **의존성 관리**:
 ```mermaid
 graph TB
@@ -126,6 +138,10 @@ graph TB
     style C fill:#e8f5e8
     style D fill:#f3e5f5
 ```
+
+**🖼️ YAML 문법 가이드**
+![YAML Syntax](https://www.redhat.com/sysadmin/sites/default/files/styles/embed_large/public/2019-06/yaml-document-start.png)
+*YAML 파일의 기본 구조와 문법*
 
 **서비스 간 통신**:
 ```yaml

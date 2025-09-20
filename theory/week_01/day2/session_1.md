@@ -74,6 +74,10 @@ graph TB
     style C2 fill:#e8f5e8
 ```
 
+**🖼️ 서버 활용률 비교**
+![Server Utilization](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/images/gallery/thumbnails/tn-server-utilization.jpg)
+*출처: VMware*
+
 ### 🔍 개념 2: 가상머신(VM)의 등장 (12분)
 
 > **정의**: 하나의 물리 서버에서 여러 개의 가상 서버를 실행하는 기술
@@ -104,6 +108,10 @@ graph TB
     style E fill:#e8f5e8
     style F fill:#e8f5e8
 ```
+
+**🖼️ 가상화 기술 진화**
+![Virtualization Evolution](https://www.redhat.com/rhdc/managed-files/virtualization-vs-containers-traditional-server.png)
+*출처: Red Hat*
 
 ### 🔍 개념 3: 컨테이너의 혁신 (11분)
 
@@ -137,6 +145,14 @@ graph LR
     style B4 fill:#e8f5e8
     style B5 fill:#e8f5e8
 ```
+
+**🖼️ VM vs 컨테이너 아키텍처 비교**
+![VM vs Container](https://www.docker.com/wp-content/uploads/2021/11/docker-containerized-appliction-blue-border_2.png)
+*출처: Docker 공식 문서*
+
+**🖼️ 컨테이너 성능 비교**
+![Container Performance](https://www.redhat.com/rhdc/managed-files/styles/wysiwyg_full_width/public/server-usage-500x131.png)
+*컨테이너의 높은 자원 효율성*
 
 **성능 비교표**:
 | 구분 | 가상머신 | 컨테이너 |

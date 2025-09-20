@@ -40,6 +40,10 @@
 
 > **정의**: 개발, 스테이징, 프로덕션 환경에 맞는 설정 관리 방법
 
+**🖼️ 환경별 배포 파이프라인**
+![Environment Pipeline](https://www.redhat.com/rhdc/managed-files/ci-cd-flow-desktop_0.png)
+*출처: Red Hat*
+
 **환경별 차이점**:
 ```mermaid
 graph TB
@@ -104,6 +108,10 @@ NODE_ENV=production
 DATABASE_URL=postgresql://user:pass@prod-db:5432/myapp
 API_KEY=prod_api_key_here
 ```
+
+**🖼️ 시크릿 관리 전략**
+![Secrets Management](https://www.hashicorp.com/img/products/vault/vault-triangle.png)
+*출처: HashiCorp Vault*
 
 **시크릿 관리 베스트 프랙티스**:
 - **환경 변수**: 민감하지 않은 설정

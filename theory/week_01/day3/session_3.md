@@ -40,6 +40,10 @@
 
 > **정의**: 컨테이너 간 통신과 외부 네트워크 연결을 위한 시스템
 
+**🖼️ Docker 네트워크 유형**
+![Docker Network Types](https://docs.docker.com/network/images/bridge_network.png)
+*출처: Docker 공식 문서*
+
 **네트워크 드라이버 종류**:
 ```mermaid
 graph TB
@@ -65,6 +69,10 @@ graph TB
 ### 🔍 개념 2: 볼륨과 데이터 관리 (12분)
 
 > **정의**: 컨테이너가 삭제되어도 데이터를 보존하는 방법들
+
+**🖼️ Docker 스토리지 옵션**
+![Docker Storage Options](https://docs.docker.com/storage/images/types-of-mounts.png)
+*출처: Docker 공식 문서*
 
 **데이터 저장 방식 비교**:
 ```mermaid

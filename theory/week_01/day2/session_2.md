@@ -40,6 +40,10 @@
 
 > **정의**: 클라이언트-서버 구조로 동작하는 컨테이너 플랫폼
 
+**🖼️ VM vs Docker 아키텍처 비교**
+![VM vs Docker Architecture](https://docs.docker.com/images/VM%402x.png)
+*출처: Docker 공식 문서*
+
 **Docker 아키텍처 구성**:
 ```mermaid
 graph TB
@@ -62,6 +66,10 @@ graph TB
     style G fill:#f3e5f5
 ```
 
+**🌐 Docker 전체 에코시스템**
+![Docker Ecosystem](https://docs.docker.com/images/architecture.svg)
+*출처: Docker 공식 문서*
+
 **주요 구성 요소**:
 - **Docker Client**: 사용자가 명령어를 입력하는 인터페이스
 - **Docker Daemon**: 실제 컨테이너를 관리하는 백그라운드 서비스
@@ -69,9 +77,17 @@ graph TB
 - **Docker Containers**: 실행 중인 애플리케이션 인스턴스
 - **Docker Registry**: 이미지를 저장하고 공유하는 저장소
 
+**🖼️ DevOps 무한 루프 (미비우스의 띠)**
+![DevOps Infinity Loop](https://www.edureka.co/blog/wp-content/uploads/2016/11/DevOps-tutorial-What-is-DevOps-Edureka.png)
+*DevOps의 지속적인 개선 사이클*
+
 ### 🔍 개념 2: Docker 이미지와 컨테이너 (12분)
 
 > **정의**: 이미지는 실행 파일, 컨테이너는 실행 중인 프로세스
+
+**🖼️ Docker 이미지 레이어 구조**
+![Docker Image Layers](https://docs.docker.com/images/container-layers.jpg)
+*출처: Docker 공식 문서*
 
 **이미지 vs 컨테이너 관계**:
 ```mermaid
@@ -88,14 +104,22 @@ graph LR
     style D fill:#f3e5f5
 ```
 
+**🐳 Docker 로고와 컨테이너 개념**
+![Docker Logo](https://www.docker.com/wp-content/uploads/2022/03/horizontal-logo-monochromatic-white.png)
+*Docker의 고래 로고는 컨테이너를 운반하는 배를 상징*
+
 **실생활 비유**:
 - **이미지**: 요리 레시피 (한 번 작성하면 여러 번 사용)
 - **컨테이너**: 실제 요리 (레시피로 만든 음식)
 - **Registry**: 레시피 책 (여러 레시피를 모아둔 곳)
 
-### 🔍 개념 3: Docker 네트워킹과 스토리지 (11분)
+### 🔍 개념 3: Docker 네트워킹과 스토리지 (11뵔)
 
 > **정의**: 컨테이너 간 통신과 데이터 영속성을 위한 시스템
+
+**🖼️ Docker 네트워크 아키텍처**
+![Docker Networking](https://docs.docker.com/network/images/bridge_network.png)
+*출처: Docker 공식 문서*
 
 **네트워킹 구조**:
 ```mermaid
@@ -115,6 +139,10 @@ graph TB
     style E fill:#e8f5e8
     style F fill:#e8f5e8
 ```
+
+**🖼️ Docker 볼륨 유형**
+![Docker Volumes](https://docs.docker.com/storage/images/types-of-mounts-volume.png)
+*출처: Docker 공식 문서*
 
 **스토리지 옵션**:
 - **Volumes**: Docker가 관리하는 영속적 데이터 저장
@@ -159,6 +187,11 @@ graph TB
 - [ ] 이미지와 컨테이너의 관계 파악
 - [ ] 네트워킹과 스토리지 개념 습득
 - [ ] 실습 준비를 위한 기본 지식 완성
+
+### 🖼️ 추가 시각 자료
+- **DevOps 로드맵**: [DevOps RoadMap 2024](https://roadmap.sh/devops)
+- **Docker 공식 가이드**: [Docker Get Started](https://docs.docker.com/get-started/)
+- **컨테이너 생태계**: [CNCF Landscape](https://landscape.cncf.io/)
 
 ### 🎯 다음 세션 준비
 - **주제**: Docker Engine과 런타임 구조

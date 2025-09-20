@@ -48,6 +48,10 @@ graph LR
 
 > **정의**: DevOps 구현을 위한 다양한 도구들의 통합적 활용 환경
 
+**🖼️ DevOps 도구 체인 전체 뷰**
+![DevOps Toolchain Complete](https://www.redhat.com/rhdc/managed-files/devops-toolchain-overview.png)
+*출처: Red Hat*
+
 #### 주요 DevOps 도구 카테고리
 ```mermaid
 graph TB
@@ -92,6 +96,10 @@ graph TB
 
 > **정의**: 현재 주목받고 있는 DevOps 기술과 문화적 변화 동향
 
+**🖼️ 2025 DevOps 트렌드 맵**
+![DevOps Trends 2025](https://www.gartner.com/imagesrv/media-products/pdf/red-hat/red-hat-1-1BQZV8G.png)
+*출처: Gartner*
+
 #### 핫한 기술 트렌드
 ```mermaid
 graph TB
@@ -114,6 +122,10 @@ graph TB
     C --> G
     D --> H
 ```
+
+**🖼️ Platform Engineering 개념**
+![Platform Engineering](https://www.cncf.io/wp-content/uploads/2023/02/platform-engineering-diagram.png)
+*출처: CNCF*
 
 #### 각 트렌드별 상세 설명
 1. **Platform Engineering**: 
