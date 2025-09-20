@@ -135,6 +135,88 @@ graph TB
     style H fill:#fff3e0
 ```
 
+**고급 보안 기법**:
+
+**1. 컨테이너 이미지 서명**:
+```bash
+# Docker Content Trust 활성화
+export DOCKER_CONTENT_TRUST=1
+
+# 이미지 서명 및 검증
+docker trust sign myregistry.com/myapp:v1.0
+docker trust inspect myregistry.com/myapp:v1.0
+
+# Notary를 사용한 서명 검증
+notary verify myregistry.com/myapp v1.0
+```
+
+**2. 런타임 보안 정책**:
+```yaml
+# AppArmor 프로파일
+#include <tunables/global>
+
+profile docker-default flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  
+  # 네트워크 접근 제한
+  network inet tcp,
+  network inet udp,
+  network inet icmp,
+  
+  # 파일 시스템 접근 제한
+  /etc/passwd r,
+  /etc/group r,
+  /tmp/** rw,
+  /var/tmp/** rw,
+  
+  # 시스템 콜 제한
+  deny @{PROC}/sys/kernel/** w,
+  deny /sys/kernel/security/** w,
+}
+```
+
+**3. 보안 스캔 자동화**:
+```yaml
+# CI/CD 파이프라인에서 보안 스캔
+name: Security Scan
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: docker build -t myapp:${{ github.sha }} .
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'myapp:${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Fail on high vulnerabilities
+      run: |
+        HIGH_VULNS=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image --severity HIGH,CRITICAL --format json myapp:${{ github.sha }} | \
+          jq '.Results[].Vulnerabilities | length')
+        if [ "$HIGH_VULNS" -gt 0 ]; then
+          echo "High/Critical vulnerabilities found: $HIGH_VULNS"
+          exit 1
+        fi
+```
+
 **보안 강화 Dockerfile 예시**:
 ```dockerfile
 FROM node:18-alpine

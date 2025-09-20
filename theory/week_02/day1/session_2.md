@@ -61,6 +61,48 @@ graph TB
 | `ubuntu:20.04` | 72MB | `alpine:3.18` | 5MB (93% 감소) |
 | `node:18` | 993MB | `node:18-alpine` | 174MB (82% 감소) |
 | `python:3.9` | 885MB | `python:3.9-alpine` | 45MB (95% 감소) |
+| `openjdk:11` | 628MB | `openjdk:11-jre-slim` | 204MB (67% 감소) |
+| `nginx:latest` | 142MB | `nginx:alpine` | 23MB (84% 감소) |
+
+**이미지 최적화 전략 상세**:
+
+**1. 베이스 이미지 선택**:
+- **Alpine Linux**: 가장 작은 크기, 보안성 우수
+- **Distroless**: Google의 미니멀 이미진
+- **Slim 버전**: 기본 이미지의 경량화 버전
+- **Scratch**: 빈 이미지 (정적 바이너리용)
+
+**2. 레이어 최적화 기법**:
+```dockerfile
+# 비효율적인 예시
+RUN apt-get update
+RUN apt-get install -y curl
+RUN apt-get install -y wget
+RUN rm -rf /var/lib/apt/lists/*
+
+# 효율적인 예시 (레이어 결합)
+RUN apt-get update && \
+    apt-get install -y curl wget && \
+    rm -rf /var/lib/apt/lists/*
+```
+
+**3. .dockerignore 활용**:
+```bash
+# .dockerignore 예시
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.cache
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+```
 
 ### 🔍 개념 2: 런타임 성능 최적화 (12분)
 
@@ -113,6 +155,74 @@ USER nginx
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
+
+**성능 벤치마크 도구**:
+- **Apache Bench (ab)**: HTTP 로드 테스트
+- **wrk**: 현대적인 HTTP 벤치마킹 도구
+- **hey**: Go로 작성된 가벼운 로드 테스터
+- **JMeter**: GUI 기반 종합 테스트 도구
+
+**성능 모니터링 스크립트**:
+```bash
+#!/bin/bash
+# performance-monitor.sh
+
+echo "=== 컨테이너 성능 모니터링 ==="
+
+# CPU 사용률
+echo "CPU Usage:"
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}" | head -10
+
+# 메모리 사용률
+echo -e "\nMemory Usage:"
+docker stats --no-stream --format "table {{.Container}}\t{{.MemUsage}}\t{{.MemPerc}}" | head -10
+
+# 네트워크 I/O
+echo -e "\nNetwork I/O:"
+docker stats --no-stream --format "table {{.Container}}\t{{.NetIO}}" | head -10
+
+# 디스크 I/O
+echo -e "\nDisk I/O:"
+docker stats --no-stream --format "table {{.Container}}\t{{.BlockIO}}" | head -10
+
+# 시스템 리소스
+echo -e "\nSystem Resources:"
+echo "Load Average: $(uptime | awk -F'load average:' '{print $2}')"
+echo "Disk Usage: $(df -h / | awk 'NR==2{print $5}')"
+echo "Memory Usage: $(free | awk 'NR==2{printf "%.2f%%", $3*100/$2}')"
+```
+
+**리소스 제한 및 최적화**:
+```bash
+# CPU 제한 (0.5 코어)
+docker run --cpus="0.5" myapp:latest
+
+# 메모리 제한 (512MB)
+docker run --memory="512m" myapp:latest
+
+# 복합 리소스 제한
+docker run \
+  --cpus="0.5" \
+  --memory="512m" \
+  --memory-swap="1g" \
+  --oom-kill-disable=false \
+  myapp:latest
+
+# 네트워크 대역폭 제한
+docker run --network-bandwidth 100m myapp:latest
+```
+
+**성능 최적화 체크리스트**:
+- [ ] 멀티스테이지 빌드 적용
+- [ ] Alpine 베이스 이미지 사용
+- [ ] 불필요한 패키지 제거
+- [ ] .dockerignore 파일 작성
+- [ ] 레이어 최소화
+- [ ] 리소스 제한 설정
+- [ ] 헬스체크 구성
+- [ ] 성능 벤치마크 수행
+- [ ] 캐시 전략 최적화
+- [ ] 네트워크 연결 풀링
 
 ---
 

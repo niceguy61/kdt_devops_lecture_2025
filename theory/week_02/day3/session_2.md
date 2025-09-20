@@ -199,6 +199,143 @@ docker run \
   myapp:latest
 ```
 
+**성능 최적화 실무 기법**:
+
+**1. JVM 최적화 (Java 애플리케이션)**:
+```dockerfile
+FROM openjdk:11-jre-slim
+
+# JVM 튜닝 파라미터
+ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
+
+# 애플리케이션 설정
+COPY app.jar /app/
+WORKDIR /app
+
+# 비특권 사용자
+RUN adduser --disabled-password --gecos '' appuser
+USER appuser
+
+# 성능 모니터링 포트 노출
+EXPOSE 8080 9090
+
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+```
+
+**2. Node.js 최적화**:
+```dockerfile
+FROM node:18-alpine AS builder
+
+# 빌드 최적화
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# 소스 복사 및 빌드
+COPY . .
+RUN npm run build
+
+# 프로덕션 스테이지
+FROM node:18-alpine
+WORKDIR /app
+
+# Node.js 성능 튜닝
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024 --optimize-for-size"
+
+# 필요한 파일만 복사
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY package*.json ./
+
+# 비특권 사용자
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+USER nextjs
+
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+```
+
+**3. 데이터베이스 연결 최적화**:
+```javascript
+// 연결 풀 설정 예시
+const mysql = require('mysql2/promise');
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  connectionLimit: 20,        // 최대 연결 수
+  acquireTimeout: 60000,      // 연결 획득 타임아웃
+  timeout: 60000,             // 쿼리 타임아웃
+  reconnect: true,            // 자동 재연결
+  idleTimeout: 300000,        // 유휴 연결 타임아웃
+});
+
+// 캐싱 전략
+const Redis = require('redis');
+const redis = Redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  retryDelayOnFailover: 100,
+  maxRetriesPerRequest: 3,
+});
+```
+
+**4. 성능 벤치마크 자동화**:
+```bash
+#!/bin/bash
+# performance-benchmark.sh
+
+APP_URL="http://localhost:8080"
+RESULT_DIR="./benchmark-results"
+mkdir -p $RESULT_DIR
+
+echo "Starting performance benchmark..."
+
+# 1. 기본 로드 테스트
+echo "Running basic load test..."
+ab -n 10000 -c 100 -g "$RESULT_DIR/basic-load.dat" $APP_URL/ > "$RESULT_DIR/basic-load.txt"
+
+# 2. 스트레스 테스트
+echo "Running stress test..."
+ab -n 50000 -c 500 -g "$RESULT_DIR/stress-test.dat" $APP_URL/ > "$RESULT_DIR/stress-test.txt"
+
+# 3. 지속성 테스트
+echo "Running endurance test..."
+ab -t 300 -c 50 -g "$RESULT_DIR/endurance.dat" $APP_URL/ > "$RESULT_DIR/endurance.txt"
+
+# 4. 리소스 모니터링
+echo "Monitoring resources during test..."
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" \
+  --no-stream > "$RESULT_DIR/resource-usage.txt"
+
+# 5. 결과 분석
+echo "Analyzing results..."
+python3 << EOF
+import json
+import re
+
+# 결과 파싱 및 분석
+with open('$RESULT_DIR/basic-load.txt', 'r') as f:
+    content = f.read()
+    
+# 주요 메트릭 추출
+rps_match = re.search(r'Requests per second:\s+([\d.]+)', content)
+total_time_match = re.search(r'Time taken for tests:\s+([\d.]+)', content)
+mean_time_match = re.search(r'Time per request:\s+([\d.]+).*\(mean\)', content)
+
+if rps_match and total_time_match and mean_time_match:
+    print(f"Performance Summary:")
+    print(f"- Requests per second: {rps_match.group(1)}")
+    print(f"- Total time: {total_time_match.group(1)} seconds")
+    print(f"- Mean response time: {mean_time_match.group(1)} ms")
+EOF
+
+echo "Benchmark completed. Results saved in $RESULT_DIR"
+```
+
 ## 💭 함께 생각해보기 (15분)
 
 ### 🤝 페어 토론 (10분)

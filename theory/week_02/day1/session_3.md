@@ -130,6 +130,131 @@ echo -e "\n=== Recent Events ==="
 docker events --since 1h --until now
 ```
 
+**고급 모니터링 기법**:
+
+**1. 실시간 대시보드**:
+```bash
+#!/bin/bash
+# real-time-dashboard.sh
+
+while true; do
+    clear
+    echo "=================== Docker Monitoring Dashboard ==================="
+    echo "Time: $(date)"
+    echo
+    
+    echo "=== Top 5 CPU Consumers ==="
+    docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}" | \
+        sort -k2 -nr | head -6
+    echo
+    
+    echo "=== Top 5 Memory Consumers ==="
+    docker stats --no-stream --format "table {{.Container}}\t{{.MemUsage}}\t{{.MemPerc}}" | \
+        sort -k3 -nr | head -6
+    echo
+    
+    echo "=== Container Status ==="
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}" | head -10
+    echo
+    
+    echo "=== System Resources ==="
+    echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
+    echo "Disk: $(df -h / | awk 'NR==2{print $5" used"}')"
+    echo "Memory: $(free -h | awk 'NR==2{print $3"/"$2}')"
+    
+    sleep 5
+done
+```
+
+**2. 로그 분석 도구**:
+```bash
+# 로그 수집 및 분석
+#!/bin/bash
+# log-analyzer.sh
+
+CONTAINER_NAME=$1
+LOG_FILE="/tmp/${CONTAINER_NAME}_analysis.log"
+
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "Usage: $0 <container_name>"
+    exit 1
+fi
+
+echo "Analyzing logs for container: $CONTAINER_NAME"
+echo "Results will be saved to: $LOG_FILE"
+
+# 로그 수집
+docker logs --since 1h $CONTAINER_NAME > $LOG_FILE 2>&1
+
+# 에러 분석
+echo "=== Error Analysis ===" >> $LOG_FILE
+grep -i "error\|exception\|fail" $LOG_FILE | wc -l >> $LOG_FILE
+echo "Error patterns:" >> $LOG_FILE
+grep -i "error\|exception\|fail" $LOG_FILE | sort | uniq -c | sort -nr >> $LOG_FILE
+
+# 성능 지표 추출
+echo "=== Performance Metrics ===" >> $LOG_FILE
+grep -i "response time\|latency\|duration" $LOG_FILE | \
+    awk '{print $NF}' | sort -n | \
+    awk 'BEGIN{sum=0; count=0} {sum+=$1; count++} END{if(count>0) print "Average:", sum/count}' >> $LOG_FILE
+
+echo "Analysis complete. Check $LOG_FILE for results."
+```
+
+**3. 알림 시스템**:
+```bash
+#!/bin/bash
+# alert-system.sh
+
+# 임계값 설정
+CPU_THRESHOLD=80
+MEMORY_THRESHOLD=85
+DISK_THRESHOLD=90
+
+# Slack 웹훅 URL (예시)
+SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+function send_alert() {
+    local message="$1"
+    local severity="$2"
+    
+    # 로그 기록
+    echo "$(date): [$severity] $message" >> /var/log/docker-alerts.log
+    
+    # Slack 알림 (옵션)
+    if [ ! -z "$SLACK_WEBHOOK" ]; then
+        curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"[$severity] Docker Alert: $message\"}" \
+            $SLACK_WEBHOOK
+    fi
+    
+    # 이메일 알림 (옵션)
+    echo "$message" | mail -s "Docker Alert: $severity" admin@company.com
+}
+
+# CPU 사용률 체크
+for container in $(docker ps --format "{{.Names}}"); do
+    cpu_usage=$(docker stats --no-stream --format "{{.CPUPerc}}" $container | sed 's/%//')
+    if (( $(echo "$cpu_usage > $CPU_THRESHOLD" | bc -l) )); then
+        send_alert "Container $container CPU usage: ${cpu_usage}%" "WARNING"
+    fi
+done
+
+# 메모리 사용률 체크
+for container in $(docker ps --format "{{.Names}}"); do
+    mem_usage=$(docker stats --no-stream --format "{{.MemPerc}}" $container | sed 's/%//')
+    if (( $(echo "$mem_usage > $MEMORY_THRESHOLD" | bc -l) )); then
+        send_alert "Container $container Memory usage: ${mem_usage}%" "WARNING"
+    fi
+done
+
+# 디스크 사용률 체크
+disk_usage=$(df / | awk 'NR==2{print $5}' | sed 's/%//')
+if [ $disk_usage -gt $DISK_THRESHOLD ]; then
+    send_alert "Disk usage: ${disk_usage}%" "CRITICAL"
+fi
+```
+
 ---
 
 ## 💭 함께 생각해보기 (15분)

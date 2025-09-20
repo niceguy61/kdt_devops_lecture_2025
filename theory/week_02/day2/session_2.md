@@ -114,6 +114,78 @@ graph TB
 - **배포 속도 향상**: 수시간 → 수분으로 단축
 - **리소스 효율성**: 자동 스케일링으로 30% 비용 절약
 
+**오케스트레이션 주요 기능 상세**:
+
+**1. 자동 배포 (Automated Deployment)**
+```yaml
+# 선언적 배포 예시
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web
+        image: myapp:v2.0
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+```
+
+**2. 자동 스케일링 (Auto Scaling)**
+- **수평 스케일링**: 인스턴스 수 증가/감소
+- **수직 스케일링**: CPU/메모리 리소스 조정
+- **예측적 스케일링**: 패턴 분석 기반 사전 확장
+- **스케줄 기반 스케일링**: 시간대별 자동 조정
+
+**3. 자동 복구 (Self Healing)**
+```yaml
+# 헬스체크 설정 예시
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+```
+
+**4. 로드 밸런싱 전략**
+- **라운드 로빈**: 기본 분산 방식
+- **세션 어피니티**: 사용자 세션 유지
+- **가중치 기반**: 서버 성능에 따른 분산
+- **지리적 분산**: 지역별 트래픽 분산
+
 ---
 
 ## 💭 함께 생각해보기 (15분)

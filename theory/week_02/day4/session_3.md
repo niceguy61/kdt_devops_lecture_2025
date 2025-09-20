@@ -176,6 +176,259 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 - **문제 해결**: 실제 문제 상황을 통한 학습
 - **커뮤니티**: CNCF 커뮤니티 참여
 
+**Kubernetes 학습 로드맵 상세**:
+
+**1단계: 기초 개념 (Week 3 Day 1-2)**
+```mermaid
+graph LR
+    A[Pod 개념] --> B[Service 개념]
+    B --> C[Deployment 개념]
+    C --> D[기본 실습]
+    
+    A --> A1[컨테이너 vs Pod]
+    B --> B1[로드밸런싱 이해]
+    C --> C1[롤링 업데이트]
+    D --> D1[로컬 클러스터 구축]
+    
+    style A,B,C,D fill:#e8f5e8
+```
+
+**2단계: 심화 기능 (Week 3 Day 3-5)**
+```mermaid
+graph LR
+    A[ConfigMap/Secret] --> B[PV/PVC 스토리지]
+    B --> C[Ingress 네트워킹]
+    C --> D[RBAC 보안]
+    
+    A --> A1[설정 관리]
+    B --> B1[영구 데이터]
+    C --> C1[외부 접근]
+    D --> D1[권한 관리]
+    
+    style A,B,C,D fill:#fff3e0
+```
+
+**3단계: 운영 및 관리 (Week 4)**
+```mermaid
+graph LR
+    A[모니터링] --> B[로깅]
+    B --> C[오토스케일링]
+    C --> D[네트워크 정책]
+    
+    A --> A1[Prometheus/Grafana]
+    B --> B1[ELK Stack]
+    C --> C1[HPA/VPA]
+    D --> D1[NetworkPolicy]
+    
+    style A,B,C,D fill:#f3e5f5
+```
+
+**실무 프로젝트 예시**:
+
+**프로젝트 1: 마이크로서비스 애플리케이션**
+```yaml
+# 전체 애플리케이션 아키텍처
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microservices-demo
+---
+# 데이터베이스 서비스
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  namespace: microservices-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        env:
+        - name: POSTGRES_DB
+          value: "microservices"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+---
+# API 서비스
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: microservices-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+      - name: api
+        image: myregistry.com/api-service:v1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: database_url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+# 프론트엔드 서비스
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: microservices-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: myregistry.com/frontend:v1.0
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+```
+
+**프로젝트 2: CI/CD 파이프라인 통합**
+```yaml
+# GitHub Actions 워크플로우
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: myregistry.com
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          myregistry.com/myapp:${{ github.sha }}
+          myregistry.com/myapp:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Security scan
+      run: |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image --severity HIGH,CRITICAL \
+          myregistry.com/myapp:${{ github.sha }}
+    
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+    
+    - name: Deploy to Kubernetes
+      run: |
+        export KUBECONFIG=kubeconfig
+        kubectl set image deployment/myapp \
+          container=myregistry.com/myapp:${{ github.sha }} \
+          -n production
+        kubectl rollout status deployment/myapp -n production --timeout=300s
+    
+    - name: Run integration tests
+      run: |
+        # 통합 테스트 실행
+        npm run test:integration
+    
+    - name: Notify deployment status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
 ## 💭 함께 생각해보기 (15분)
 
 ### 🤝 페어 토론 (10분)

@@ -181,6 +181,229 @@ graph TB
 - **대시보드**: 역할별 맞춤 대시보드
 - **자동 대응**: 임계치 기반 자동 스케일링
 
+**엔터프라이즈 Docker 운영 전략**:
+
+**1. 컨테이너 레지스트리 전략**:
+```yaml
+# Harbor 레지스트리 설정
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: harbor-config
+data:
+  harbor.yml: |
+    hostname: registry.company.com
+    http:
+      port: 80
+    https:
+      port: 443
+      certificate: /data/cert/server.crt
+      private_key: /data/cert/server.key
+    
+    # 데이터베이스 설정
+    database:
+      password: harbor_password
+      max_idle_conns: 50
+      max_open_conns: 1000
+    
+    # 레디스 설정
+    redis:
+      password: redis_password
+    
+    # 스토리지 설정
+    storage_service:
+      s3:
+        region: us-west-1
+        bucket: harbor-storage
+        accesskey: AKIAIOSFODNN7EXAMPLE
+        secretkey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    
+    # 보안 스캔 설정
+    trivy:
+      ignore_unfixed: false
+      skip_update: false
+      insecure: false
+```
+
+**2. 컨테이너 라이프사이클 관리**:
+```bash
+#!/bin/bash
+# container-lifecycle-manager.sh
+
+# 컨테이너 라이프사이클 관리 스크립트
+
+LOG_FILE="/var/log/container-lifecycle.log"
+REGISTRY="registry.company.com"
+NAMESPACE="production"
+
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a $LOG_FILE
+}
+
+# 1. 이미지 보안 스캔
+scan_image() {
+    local image=$1
+    log "Scanning image: $image"
+    
+    # Trivy 스캔
+    trivy image --severity HIGH,CRITICAL --format json $image > /tmp/scan-result.json
+    
+    # 취약점 개수 확인
+    vulnerabilities=$(jq '.Results[].Vulnerabilities | length' /tmp/scan-result.json 2>/dev/null || echo 0)
+    
+    if [ "$vulnerabilities" -gt 0 ]; then
+        log "WARNING: $vulnerabilities vulnerabilities found in $image"
+        return 1
+    else
+        log "SUCCESS: No high/critical vulnerabilities in $image"
+        return 0
+    fi
+}
+
+# 2. 이미지 배포
+deploy_image() {
+    local image=$1
+    local deployment=$2
+    
+    log "Deploying image: $image to deployment: $deployment"
+    
+    # 보안 스캔 수행
+    if scan_image $image; then
+        # Kubernetes 배포 업데이트
+        kubectl set image deployment/$deployment container=$image -n $NAMESPACE
+        
+        # 배포 상태 확인
+        kubectl rollout status deployment/$deployment -n $NAMESPACE --timeout=300s
+        
+        if [ $? -eq 0 ]; then
+            log "SUCCESS: Deployment $deployment updated successfully"
+        else
+            log "ERROR: Deployment $deployment failed, rolling back"
+            kubectl rollout undo deployment/$deployment -n $NAMESPACE
+        fi
+    else
+        log "ERROR: Security scan failed for $image, deployment aborted"
+        return 1
+    fi
+}
+
+# 3. 오래된 이미지 정리
+cleanup_old_images() {
+    log "Starting cleanup of old images"
+    
+    # 30일 이상 된 이미지 삭제
+    docker image prune -a --filter "until=720h" --force
+    
+    # 레지스트리에서 오래된 이미지 삭제
+    # Harbor API 사용
+    curl -X DELETE \
+        -H "Authorization: Basic $(echo -n admin:Harbor12345 | base64)" \
+        "https://$REGISTRY/api/v2.0/projects/library/repositories/myapp/artifacts?q=push_time%3C$(date -d '30 days ago' +%s)"
+    
+    log "Cleanup completed"
+}
+
+# 4. 성능 모니터링
+monitor_performance() {
+    log "Monitoring container performance"
+    
+    # CPU 사용률 체크
+    high_cpu_containers=$(docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}" | \
+        awk 'NR>1 && $2+0 > 80 {print $1}')
+    
+    if [ ! -z "$high_cpu_containers" ]; then
+        log "WARNING: High CPU usage detected in containers: $high_cpu_containers"
+        # Slack 알림 전송
+        send_slack_alert "High CPU usage detected" "$high_cpu_containers"
+    fi
+    
+    # 메모리 사용률 체크
+    high_memory_containers=$(docker stats --no-stream --format "table {{.Container}}\t{{.MemPerc}}" | \
+        awk 'NR>1 && $2+0 > 85 {print $1}')
+    
+    if [ ! -z "$high_memory_containers" ]; then
+        log "WARNING: High memory usage detected in containers: $high_memory_containers"
+        send_slack_alert "High memory usage detected" "$high_memory_containers"
+    fi
+}
+
+# Slack 알림 전송
+send_slack_alert() {
+    local title="$1"
+    local message="$2"
+    
+    curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$title: $message\"}" \
+        $SLACK_WEBHOOK_URL
+}
+
+# 메인 실행 루프
+case "$1" in
+    scan)
+        scan_image "$2"
+        ;;
+    deploy)
+        deploy_image "$2" "$3"
+        ;;
+    cleanup)
+        cleanup_old_images
+        ;;
+    monitor)
+        monitor_performance
+        ;;
+    *)
+        echo "Usage: $0 {scan|deploy|cleanup|monitor} [args...]"
+        exit 1
+        ;;
+esac
+```
+
+**3. 비용 최적화 전략**:
+```yaml
+# 비용 모니터링 대시보드
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cost-monitoring-config
+data:
+  config.yaml: |
+    cost_allocation:
+      # 태그 기반 비용 할당
+      tag_keys:
+        - "team"
+        - "environment"
+        - "project"
+        - "cost-center"
+      
+      # 리소스 비용 계산
+      resource_costs:
+        cpu_hour: 0.05  # $0.05 per CPU hour
+        memory_gb_hour: 0.01  # $0.01 per GB memory hour
+        storage_gb_month: 0.10  # $0.10 per GB storage month
+        network_gb: 0.09  # $0.09 per GB network transfer
+      
+      # 알림 임계값
+      alerts:
+        daily_budget: 1000  # $1000 daily budget
+        monthly_budget: 25000  # $25000 monthly budget
+        cost_spike_threshold: 0.2  # 20% increase alert
+    
+    optimization:
+      # 자동 스케일링 설정
+      auto_scaling:
+        enabled: true
+        min_replicas: 2
+        max_replicas: 10
+        target_cpu_utilization: 70
+        target_memory_utilization: 80
+      
+      # 리소스 예약 인스턴스
+      reserved_instances:
+        enabled: true
+        utilization_threshold: 0.75  # 75% 이상 사용 시 예약
+        commitment_period: "1year"
+```
+
 **실무 모니터링 설정**:
 ```yaml
 # docker-compose.monitoring.yml
