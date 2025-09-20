@@ -97,8 +97,14 @@ graph TB
     E --> I[지속적 개선]
     
     style A fill:#e3f2fd
-    style B,C,D,E fill:#e8f5e8
-    style F,G,H,I fill:#fff3e0
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
 ```
 
 ### 🚀 2025년 DevOps 트렌드

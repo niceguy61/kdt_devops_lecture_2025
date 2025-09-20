@@ -72,9 +72,15 @@ graph TB
         C[물리 서버 3] --> C1[OS] --> C2[App C]
     end
     
-    style A,B,C fill:#ffebee
-    style A1,B1,C1 fill:#fff3e0
-    style A2,B2,C2 fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style A1 fill:#fff3e0
+    style B1 fill:#fff3e0
+    style C1 fill:#fff3e0
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
 ```
 
 **🔍 개념 2: 가상머신(VM)의 등장 (12분)**
@@ -102,7 +108,9 @@ graph TB
     style A fill:#e3f2fd
     style B fill:#fff3e0
     style C fill:#f3e5f5
-    style D,E,F fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
 ```
 
 **🔍 개념 3: 컨테이너의 혁신 (11분)**
@@ -131,8 +139,10 @@ graph LR
         B3 --> B5[컨테이너2<br/>앱만]
     end
     
-    style A4,A5 fill:#ffebee
-    style B4,B5 fill:#e8f5e8
+    style A4 fill:#ffebee
+    style A5 fill:#ffebee
+    style B4 fill:#e8f5e8
+    style B5 fill:#e8f5e8
 ```
 
 **성능 비교표**:
@@ -184,7 +194,10 @@ graph TB
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style C,D,E,F fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
     style G fill:#f3e5f5
 ```
 
@@ -206,9 +219,11 @@ graph LR
     C --> D[docker commit]
     D --> E[New Image<br/>새로운 이미지]
     
-    style A,E fill:#e8f5e8
+    style A fill:#e8f5e8
+    style E fill:#e8f5e8
     style C fill:#fff3e0
-    style B,D fill:#f3e5f5
+    style B fill:#f3e5f5
+    style D fill:#f3e5f5
 ```
 
 **실생활 비유**:
@@ -230,8 +245,12 @@ graph TB
         C --> F[Container 3]
     end
     
-    style A,B,C fill:#e3f2fd
-    style D,E,F fill:#e8f5e8
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
 ```
 
 **스토리지 옵션**:
@@ -277,8 +296,10 @@ graph TB
     E --> G[Container Process]
     
     style A fill:#e3f2fd
-    style B,C fill:#fff3e0
-    style D,E fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
     style G fill:#f3e5f5
 ```
 
@@ -336,8 +357,14 @@ graph TB
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style A1,A2,A3,A4 fill:#e8f5e8
-    style B1,B2,B3,B4 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style B1 fill:#f3e5f5
+    style B2 fill:#f3e5f5
+    style B3 fill:#f3e5f5
+    style B4 fill:#f3e5f5
 ```
 
 **실무 활용**:
@@ -529,8 +556,10 @@ graph LR
     D --> E[Day 4]
     
     style A fill:#4caf50
-    style B,C fill:#4caf50
-    style D,E fill:#e0e0e0
+    style B fill:#4caf50
+    style C fill:#4caf50
+    style D fill:#e0e0e0
+    style E fill:#e0e0e0
 ```
 
 ---
