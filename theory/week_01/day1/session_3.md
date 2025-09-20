@@ -280,7 +280,9 @@ graph LR
     B --> C[Session 3<br/>트렌드와 미래 ✅]
     C --> D[Session 4<br/>실습 환경 구축]
     
-    style A,B,C fill:#4caf50
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
     style D fill:#e0e0e0
 ```
 
