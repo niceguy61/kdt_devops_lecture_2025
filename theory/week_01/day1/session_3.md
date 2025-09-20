@@ -209,8 +209,12 @@ graph TB
     D --> G[대규모 변화 관리<br/>거버넌스와 효율성]
     
     style A fill:#e3f2fd
-    style B,C,D fill:#fff3e0
-    style E,F,G fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
 ```
 
 ### ⚠️ 실무 주의사항
