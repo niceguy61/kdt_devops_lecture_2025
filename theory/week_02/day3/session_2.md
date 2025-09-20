@@ -1,284 +1,233 @@
-# Week 2 Day 3 Session 2: 시스템 모니터링 도구
+# Week 2 Day 3 Session 2: 이미지 최적화 & 성능 튜닝
 
 <div align="center">
-**🖥️ 시스템 분석** • **🔍 성능 진단**
-*htop, iotop, netstat 등 시스템 모니터링 도구로 깊이 있는 성능 분석*
+**⚡ 성능 최적화** • **📊 성능 모니터링**
+*컨테이너 이미지 최적화와 성능 튜닝 기법 완전 습득*
 </div>
 
 ---
 
 ## 🕘 세션 정보
 **시간**: 10:00-10:50 (50분)
-**목표**: 시스템 레벨 모니터링 도구 활용법 습득
-**방식**: 개인별 실습 + 도구 비교 분석
+**목표**: 컨테이너 이미지 최적화와 성능 튜닝 기법 완전 습득
+**방식**: 이론 강의 + 페어 토론
 
 ## 🎯 세션 목표
 ### 📚 학습 목표
-- **시스템 도구**: htop, iotop, netstat 등 핵심 도구 활용
-- **성능 분석**: CPU, 메모리, 디스크, 네트워크 종합 분석
-- **병목 진단**: 시스템 성능 병목 지점 발견 방법
-- **컨테이너 연계**: 시스템 리소스와 컨테이너 관계 이해
-
-### 🤔 왜 필요한가? (5분)
-**Docker만으로는 부족한 이유**:
-```
-Docker stats: 컨테이너 관점의 리소스 사용량
-시스템 도구: 호스트 전체 관점의 성능 분석
-
-예시:
-- Docker stats에서는 정상으로 보이지만
-- 실제로는 호스트 시스템에 문제가 있을 수 있음
-```
-
-**시스템 모니터링의 중요성**:
-- **전체적 관점**: 호스트 시스템 전반의 상태 파악
-- **근본 원인**: 컨테이너 문제의 실제 원인 발견
-- **예방적 관리**: 문제 발생 전 사전 감지
-- **용량 계획**: 시스템 확장 시점 판단
-
----
+- **이해 목표**: 컨테이너 이미지 최적화와 성능 튜닝 기법 완전 이해
+- **적용 목표**: 실무에서 사용할 수 있는 최적화 도구와 기법 습득
+- **협업 목표**: 팀원들과 성능 최적화 전략 및 모니터링 방안 토론
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: htop - 고급 프로세스 모니터링 (12분)
+### 🔍 개념 1: 이미지 크기 최적화 (12분)
+> **정의**: 컨테이너 이미지의 크기를 최소화하여 배포 속도와 저장 비용을 개선하는 기법
 
-> **정의**: top 명령어의 향상된 버전으로 시각적이고 상호작용적인 프로세스 모니터링 도구
+**이미지 최적화 전략**:
+```mermaid
+graph TB
+    subgraph "이미지 최적화 기법"
+        A[멀티스테이지 빌드<br/>Multi-stage Build] --> E[최적화된 이미지]
+        B[Alpine 베이스<br/>Alpine Base] --> E
+        C[불필요한 파일 제거<br/>Clean up] --> E
+        D[레이어 최적화<br/>Layer Optimization] --> E
+    end
+    
+    subgraph "크기 비교"
+        F[일반 이미지<br/>500MB+] --> G[최적화 후<br/>50MB-]
+    end
+    
+    E --> G
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#4caf50
+    style F fill:#ffebee
+    style G fill:#c8e6c9
+```
 
-**설치 및 기본 사용**:
+**멀티스테이지 빌드 예시**:
+```dockerfile
+# 빌드 스테이지
+FROM node:18 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# 프로덕션 스테이지
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY . .
+RUN npm run build && \
+    npm prune --production && \
+    rm -rf src/ tests/ *.md
+
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+```
+
+**이미지 크기 분석**:
 ```bash
-# Ubuntu/Debian
-sudo apt install htop
+# 이미지 크기 확인
+docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
 
-# CentOS/RHEL
-sudo yum install htop
+# 이미지 레이어 분석
+docker history myapp:latest
 
-# 실행
-htop
+# dive 도구로 상세 분석
+dive myapp:latest
 ```
 
-**htop 화면 구성**:
-```
-CPU 사용률 막대그래프 (코어별)
-메모리/스왑 사용률 표시
-실행 중인 프로세스 목록 (PID, 사용자, CPU%, MEM%, 명령어)
+### 🔍 개념 2: 성능 모니터링과 프로파일링 (12분)
+> **정의**: 컨테이너 애플리케이션의 성능을 측정하고 병목 지점을 식별하는 방법
+
+**성능 메트릭 계층**:
+```mermaid
+graph TB
+    subgraph "성능 메트릭"
+        A[애플리케이션 메트릭<br/>Response Time, Throughput] --> D[종합 성능 분석]
+        B[시스템 메트릭<br/>CPU, Memory, I/O] --> D
+        C[네트워크 메트릭<br/>Latency, Bandwidth] --> D
+    end
+    
+    subgraph "모니터링 도구"
+        E[Prometheus<br/>메트릭 수집] --> F[Grafana<br/>시각화]
+        G[cAdvisor<br/>컨테이너 메트릭] --> E
+        H[Node Exporter<br/>시스템 메트릭] --> E
+    end
+    
+    D --> E
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#4caf50
+    style E fill:#fff3e0
+    style F fill:#2196f3
+    style G fill:#fff3e0
+    style H fill:#fff3e0
 ```
 
-**주요 단축키**:
-- **F1**: 도움말
-- **F2**: 설정
-- **F3**: 검색 (프로세스명으로 검색)
-- **F4**: 필터 (특정 조건으로 필터링)
-- **F5**: 트리 뷰 (프로세스 계층 구조)
-- **F6**: 정렬 기준 변경
-- **F9**: 프로세스 종료 (kill)
-- **F10**: 종료
+**성능 모니터링 설정**:
+```yaml
+# docker-compose.monitoring.yml
+version: '3.8'
+services:
+  app:
+    image: myapp:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+```
 
-**컨테이너 관련 분석**:
+### 🔍 개념 3: 리소스 최적화 (11분)
+> **정의**: CPU, 메모리, 네트워크 등 시스템 리소스를 효율적으로 사용하는 최적화 기법
+
+**리소스 최적화 전략**:
+```mermaid
+graph TB
+    subgraph "CPU 최적화"
+        A[멀티스레딩<br/>Multi-threading] --> D[성능 향상]
+        B[비동기 처리<br/>Async Processing] --> D
+    end
+    
+    subgraph "메모리 최적화"
+        C[메모리 풀링<br/>Memory Pooling] --> E[메모리 효율성]
+        F[가비지 컬렉션 튜닝<br/>GC Tuning] --> E
+    end
+    
+    subgraph "I/O 최적화"
+        G[캐싱<br/>Caching] --> H[응답 속도 개선]
+        I[연결 풀링<br/>Connection Pooling] --> H
+    end
+    
+    D --> J[전체 성능 최적화]
+    E --> J
+    H --> J
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#fff3e0
+    style I fill:#e8f5e8
+    style J fill:#4caf50
+```
+
+**리소스 제한 설정**:
 ```bash
-# Docker 관련 프로세스만 필터링
-htop에서 F4 누르고 "docker" 입력
+# CPU 제한 (0.5 코어)
+docker run --cpus="0.5" myapp:latest
 
-# 메모리 사용량 기준 정렬
-htop에서 F6 누르고 "PERCENT_MEM" 선택
+# 메모리 제한 (512MB)
+docker run --memory="512m" myapp:latest
 
-# CPU 사용량 기준 정렬  
-htop에서 F6 누르고 "PERCENT_CPU" 선택
+# 복합 리소스 제한
+docker run \
+  --cpus="0.5" \
+  --memory="512m" \
+  --memory-swap="1g" \
+  myapp:latest
 ```
 
-### 🔍 개념 2: iotop - 디스크 I/O 모니터링 (12분)
+## 💭 함께 생각해보기 (15분)
 
-> **정의**: 프로세스별 디스크 I/O 사용량을 실시간으로 모니터링하는 도구
+### 🤝 페어 토론 (10분)
+**토론 주제**:
+1. **최적화 우선순위**: "이미지 크기, CPU, 메모리 중 어떤 것을 먼저 최적화해야 할까요?"
+2. **성능 vs 안정성**: "성능 최적화와 시스템 안정성 사이의 균형점은?"
+3. **모니터링 전략**: "어떤 메트릭을 가장 중요하게 모니터링해야 할까요?"
 
-**설치 및 기본 사용**:
-```bash
-# Ubuntu/Debian
-sudo apt install iotop
-
-# CentOS/RHEL
-sudo yum install iotop
-
-# 실행 (root 권한 필요)
-sudo iotop
-```
-
-**주요 옵션**:
-```bash
-# 실제 I/O가 있는 프로세스만 표시
-sudo iotop -o
-
-# 누적 I/O 표시
-sudo iotop -a
-
-# 특정 프로세스만 모니터링
-sudo iotop -p PID
-
-# 배치 모드 (스크립트에서 사용)
-sudo iotop -b -n 1
-```
-
-**출력 정보 해석**:
-```
-Total DISK READ: 12.34 M/s | Total DISK WRITE: 5.67 M/s
-  TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN     IO>    COMMAND
- 1234  be/4  root       11.2 M/s     0.00 B/s  0.00 %  85.2%  docker-containerd
-```
-
-**컨테이너 I/O 분석**:
-```bash
-# Docker 컨테이너의 I/O 패턴 분석
-sudo iotop -o | grep docker
-
-# 특정 컨테이너의 I/O 모니터링
-docker exec container_name pidof process_name
-sudo iotop -p PID
-```
-
-### 🔍 개념 3: 네트워크 모니터링 도구들 (11분)
-
-> **정의**: 네트워크 연결 상태와 트래픽을 모니터링하는 다양한 도구들
-
-**netstat - 네트워크 연결 상태**:
-```bash
-# 모든 연결 표시
-netstat -tulpn
-
-# TCP 연결만 표시
-netstat -tln
-
-# UDP 연결만 표시  
-netstat -uln
-
-# 특정 포트 확인
-netstat -tulpn | grep :80
-
-# 연결 통계
-netstat -s
-```
-
-**ss - netstat의 현대적 대안**:
-```bash
-# 모든 연결 표시 (netstat보다 빠름)
-ss -tulpn
-
-# TCP 연결 상태별 통계
-ss -s
-
-# 특정 포트 리스닝 확인
-ss -tlnp | grep :3306
-```
-
-**iftop - 실시간 네트워크 트래픽**:
-```bash
-# 설치
-sudo apt install iftop
-
-# 실행 (특정 인터페이스)
-sudo iftop -i eth0
-
-# 포트별 트래픽 표시
-sudo iftop -P
-```
-
-**컨테이너 네트워크 분석**:
-```bash
-# 컨테이너의 네트워크 네임스페이스 확인
-docker exec container_name ip addr show
-
-# 컨테이너 포트 매핑 확인
-docker port container_name
-
-# 컨테이너 간 네트워크 연결 확인
-docker network ls
-docker network inspect bridge
-```
-
----
-
-## 💭 함께 생각해보기 (10분)
-
-### 🎯 종합 분석 시나리오
-**상황**: 웹 애플리케이션의 응답 속도가 급격히 느려졌습니다.
-
-**단계별 진단 과정**:
-
-**1단계: 전체 시스템 상태 확인**
-```bash
-# CPU와 메모리 전반적 상태
-htop
-
-# 시스템 로드 평균 확인
-uptime
-```
-
-**2단계: 디스크 I/O 분석**
-```bash
-# 디스크 I/O 병목 확인
-sudo iotop -o
-
-# 디스크 사용량 확인
-df -h
-```
-
-**3단계: 네트워크 상태 분석**
-```bash
-# 네트워크 연결 상태
-ss -tulpn
-
-# 네트워크 트래픽 (설치된 경우)
-sudo iftop -i eth0
-```
-
-**4단계: 컨테이너별 상세 분석**
-```bash
-# 컨테이너 리소스 사용량
-docker stats --no-stream
-
-# 문제 컨테이너 로그 확인
-docker logs problematic_container
-```
-
-### 🤝 개별 분석 활동
-**분석 체크리스트**:
-- [ ] **CPU 사용률**: 80% 이상인 프로세스가 있는가?
-- [ ] **메모리 사용률**: 스왑이 발생하고 있는가?
-- [ ] **디스크 I/O**: 읽기/쓰기 속도가 비정상적으로 높은가?
-- [ ] **네트워크**: 대기 중인 연결이 많은가?
-- [ ] **프로세스**: 좀비 프로세스나 무한 루프가 있는가?
-
-### 💡 이해도 체크 질문
-- ✅ "htop에서 Load average가 CPU 코어 수보다 높으면 무엇을 의미하나요?"
-- ✅ "iotop에서 SWAPIN이 높게 나타나면 어떤 문제인가요?"
-- ✅ "netstat에서 TIME_WAIT 상태가 많으면 무엇을 의미하나요?"
-- ✅ "컨테이너 성능 문제를 진단할 때 어떤 순서로 확인해야 하나요?"
-
----
+### 🎯 전체 공유 (5분)
+- **최적화 경험**: 성능 최적화 경험과 효과적인 방법
+- **도구 활용**: 성능 모니터링 도구의 실무 활용 방안
 
 ## 🔑 핵심 키워드
-- **htop**: 향상된 프로세스 모니터링 도구
-- **iotop**: 디스크 I/O 모니터링 도구
-- **netstat/ss**: 네트워크 연결 상태 확인 도구
-- **iftop**: 실시간 네트워크 트래픽 모니터링
-- **Load Average**: 시스템 부하 평균
-- **I/O Wait**: 디스크 I/O 대기 시간
-- **네트워크 소켓**: TCP/UDP 연결 상태
-- **시스템 병목**: 성능 제한 요소
+- **Multi-stage Build**: 멀티스테이지 빌드
+- **Alpine Linux**: 경량 리눅스 배포판
+- **Layer Optimization**: 레이어 최적화
+- **Resource Limits**: 리소스 제한
+- **Performance Profiling**: 성능 프로파일링
+
+## 📝 세션 마무리
+### ✅ 오늘 세션 성과
+- 이미지 최적화 기법 완전 습득
+- 성능 모니터링 도구와 방법 학습
+- 리소스 최적화 전략 이해
+
+### 🎯 다음 세션 준비
+- **Session 3**: 모니터링 & 관측성
+- **연결**: 성능 최적화와 모니터링의 통합
 
 ---
 
-## 📝 세션 마무리
-
-### ✅ 오늘 세션 성과
-- 시스템 레벨 모니터링 도구 활용법 습득
-- CPU, 메모리, 디스크, 네트워크 종합 분석 능력
-- 성능 병목 지점 진단 방법론 학습
-- 컨테이너와 호스트 시스템 관계 이해
-
-### 🎯 다음 세션 준비
-- **Session 3**: 로그 분석과 문제 해결에서 더 깊은 로그 분석 기법 학습
-- **복습**: htop, iotop, netstat 명령어 실습
-- **예습**: 로그 파일 위치와 로그 분석 도구에 대해 생각해보기
-
-<div align="center">
-**🖥️ 시스템의 모든 것을 꿰뚫어 보는 눈을 갖추었습니다! 🖥️**
-*이제 어떤 성능 문제도 숨을 수 없습니다!*
-</div>
+**다음**: [Session 3 - 모니터링 & 관측성](./session_3.md)

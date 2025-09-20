@@ -1,214 +1,190 @@
-# Week 2 Day 3 Session 1: Docker 모니터링 명령어
+# Week 2 Day 3 Session 1: 컨테이너 보안 기초
 
 <div align="center">
-**📊 CLI 모니터링** • **⚡ 실시간 분석**
-*Docker 기본 명령어로 컨테이너 상태를 실시간으로 모니터링하는 방법*
+**🔒 컨테이너 보안** • **📚 보안 위협 이해**
+*컨테이너 환경의 보안 위협과 대응 방안 완전 이해*
 </div>
 
 ---
 
 ## 🕘 세션 정보
 **시간**: 09:00-09:50 (50분)
-**목표**: Docker 기본 모니터링 명령어 완전 습득
-**방식**: 개인별 실습 + 명령어 연습
+**목표**: 컨테이너 환경의 보안 위협과 대응 방안 완전 이해
+**방식**: 이론 강의 + 페어 토론
 
 ## 🎯 세션 목표
 ### 📚 학습 목표
-- **기본 명령어**: docker stats, docker logs 완전 활용
-- **리소스 분석**: CPU, 메모리, 네트워크 사용량 해석
-- **실시간 모니터링**: 지속적인 시스템 상태 추적
-- **문제 발견**: 명령어를 통한 이상 징후 조기 발견
+- **이해 목표**: 컨테이너 환경의 보안 위협과 대응 방안 완전 이해
+- **적용 목표**: 실무에서 사용할 수 있는 보안 도구와 기법 습득
+- **협업 목표**: 팀원들과 보안 정책 수립 및 적용 전략 토론
 
 ### 🤔 왜 필요한가? (5분)
-**실무 상황**:
-```
-상황: 웹 서비스가 갑자기 느려짐
-문제: 어떤 컨테이너가 문제인지 모름
-해결: CLI 명령어로 즉시 원인 파악!
-```
-
-**CLI 모니터링의 장점**:
-- **즉시 사용**: 별도 도구 설치 없이 바로 사용
-- **가벼움**: 시스템 리소스를 거의 사용하지 않음
-- **정확함**: 실시간 정확한 데이터 제공
-- **범용성**: 모든 Docker 환경에서 동일하게 작동
-
----
+**현실 문제 상황**:
+- 💼 **보안 사고**: 컨테이너 취약점으로 인한 실제 보안 사고 급증
+- 🏠 **일상 비유**: 집의 문은 잠갔지만 창문을 열어둔 것과 같은 위험
+- 📊 **시장 동향**: DevSecOps로의 패러다임 전환, 보안의 Shift-Left
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: docker stats - 실시간 리소스 모니터링 (12분)
+### 🔍 개념 1: 컨테이너 보안 위협 모델 (12분)
+> **정의**: 컨테이너 환경에서 발생할 수 있는 다양한 보안 위협과 공격 벡터
 
-> **정의**: 실행 중인 컨테이너의 리소스 사용량을 실시간으로 표시하는 명령어
+**컨테이너 보안 계층**:
+```mermaid
+graph TB
+    subgraph "컨테이너 보안 계층"
+        A[애플리케이션 보안<br/>Application Security] --> B[컨테이너 런타임 보안<br/>Runtime Security]
+        B --> C[이미지 보안<br/>Image Security]
+        C --> D[호스트 보안<br/>Host Security]
+        D --> E[네트워크 보안<br/>Network Security]
+    end
+    
+    subgraph "주요 위협"
+        F[취약한 이미지<br/>Vulnerable Images] --> A
+        G[권한 상승<br/>Privilege Escalation] --> B
+        H[컨테이너 탈출<br/>Container Escape] --> C
+        I[호스트 침해<br/>Host Compromise] --> D
+        J[네트워크 공격<br/>Network Attacks] --> E
+    end
+    
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#ffebee
+    style F fill:#f44336
+    style G fill:#f44336
+    style H fill:#f44336
+    style I fill:#f44336
+    style J fill:#f44336
+```
 
-**기본 사용법**:
+**주요 보안 위협**:
+- **취약한 베이스 이미지**: 알려진 CVE가 포함된 이미지 사용
+- **과도한 권한**: root 권한으로 실행되는 컨테이너
+- **시크릿 노출**: 하드코딩된 패스워드나 API 키
+- **네트워크 노출**: 불필요한 포트 개방
+- **리소스 남용**: 무제한 리소스 사용으로 인한 DoS
+
+### 🔍 개념 2: 이미지 보안 스캔 (12분)
+> **정의**: 컨테이너 이미지의 취약점을 자동으로 검사하고 보고하는 프로세스
+
+**보안 스캔 워크플로우**:
+```mermaid
+graph LR
+    A[이미지 빌드] --> B[취약점 스캔<br/>Vulnerability Scan]
+    B --> C{보안 정책<br/>통과?}
+    C -->|Yes| D[레지스트리 푸시]
+    C -->|No| E[빌드 실패<br/>수정 필요]
+    E --> A
+    D --> F[배포 승인]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#ffeb3b
+    style D fill:#4caf50
+    style E fill:#f44336
+    style F fill:#2196f3
+```
+
+**주요 스캔 도구**:
+- **Trivy**: 오픈소스 취약점 스캐너
+- **Clair**: CoreOS의 정적 분석 도구
+- **Snyk**: 상용 보안 플랫폼
+- **Anchore**: 엔터프라이즈 이미지 스캔
+
+**스캔 실습 예시**:
 ```bash
-# 모든 컨테이너 실시간 모니터링
-docker stats
+# Trivy로 이미지 스캔
+trivy image nginx:latest
 
-# 특정 컨테이너만 모니터링
-docker stats web-server db-server
+# 심각도별 필터링
+trivy image --severity HIGH,CRITICAL nginx:latest
 
-# 한 번만 출력 (지속 모니터링 안함)
-docker stats --no-stream
-
-# 포맷 지정
-docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+# JSON 형태로 결과 출력
+trivy image --format json nginx:latest > scan-result.json
 ```
 
-**출력 정보 해석**:
-```
-CONTAINER ID   NAME       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
-a1b2c3d4e5f6   web-app    15.23%    256.7MiB / 2GiB      12.54%    1.2MB / 890kB     12.3MB / 4.56MB   23
-```
+### 🔍 개념 3: 런타임 보안 강화 (11분)
+> **정의**: 컨테이너 실행 시점에서 적용하는 보안 조치와 모니터링
 
-**각 항목 의미**:
-- **CPU %**: CPU 사용률 (전체 시스템 대비)
-- **MEM USAGE / LIMIT**: 현재 메모리 사용량 / 제한량
-- **MEM %**: 메모리 사용률
-- **NET I/O**: 네트워크 입출력 (받은 데이터 / 보낸 데이터)
-- **BLOCK I/O**: 디스크 입출력 (읽기 / 쓰기)
-- **PIDS**: 컨테이너 내 프로세스 수
-
-### 🔍 개념 2: docker logs - 로그 분석과 추적 (12분)
-
-> **정의**: 컨테이너에서 생성된 로그를 확인하고 분석하는 명령어
-
-**기본 사용법**:
-```bash
-# 전체 로그 출력
-docker logs web-container
-
-# 실시간 로그 추적 (tail -f와 유사)
-docker logs -f web-container
-
-# 최근 100줄만 출력
-docker logs --tail 100 web-container
-
-# 특정 시간 이후 로그
-docker logs --since "2024-01-01T10:00:00" web-container
-
-# 타임스탬프 포함
-docker logs -t web-container
+**런타임 보안 기법**:
+```mermaid
+graph TB
+    subgraph "런타임 보안 조치"
+        A[비root 사용자<br/>Non-root User] --> D[보안 강화]
+        B[읽기 전용 파일시스템<br/>Read-only Filesystem] --> D
+        C[리소스 제한<br/>Resource Limits] --> D
+    end
+    
+    subgraph "보안 모니터링"
+        E[파일 시스템 감시<br/>File System Monitoring] --> F[실시간 탐지]
+        G[네트워크 트래픽 분석<br/>Network Analysis] --> F
+        H[프로세스 모니터링<br/>Process Monitoring] --> F
+    end
+    
+    D --> F
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#4caf50
+    style E fill:#fff3e0
+    style F fill:#2196f3
+    style G fill:#fff3e0
+    style H fill:#fff3e0
 ```
 
-**로그 분석 기법**:
-```bash
-# 에러 로그만 필터링
-docker logs web-container 2>&1 | grep -i error
+**보안 강화 Dockerfile 예시**:
+```dockerfile
+FROM node:18-alpine
 
-# 특정 패턴 검색
-docker logs web-container | grep "404\|500\|error"
+# 보안 강화: 비root 사용자 생성
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 
-# 로그 통계 (에러 개수)
-docker logs web-container | grep -c "ERROR"
+# 애플리케이션 파일 복사
+COPY --chown=nextjs:nodejs . .
 
-# 시간대별 로그 분석
-docker logs -t web-container | grep "2024-01-01T14"
+# 비root 사용자로 전환
+USER nextjs
+
+# 읽기 전용 파일시스템 (docker run 시 --read-only 옵션)
+# 리소스 제한 (docker run 시 --memory, --cpus 옵션)
+
+EXPOSE 3000
+CMD ["node", "server.js"]
 ```
-
-### 🔍 개념 3: 고급 모니터링 명령어 (11분)
-
-> **정의**: docker stats와 logs 외에 상세한 정보를 제공하는 추가 명령어들
-
-**docker inspect - 상세 정보 조회**:
-```bash
-# 컨테이너 전체 정보
-docker inspect web-container
-
-# 특정 정보만 추출
-docker inspect --format='{{.State.Status}}' web-container
-docker inspect --format='{{.NetworkSettings.IPAddress}}' web-container
-docker inspect --format='{{.HostConfig.Memory}}' web-container
-```
-
-**docker top - 컨테이너 내 프로세스**:
-```bash
-# 컨테이너 내 실행 중인 프로세스
-docker top web-container
-
-# 상세한 프로세스 정보
-docker top web-container aux
-```
-
-**docker exec - 컨테이너 내부 명령 실행**:
-```bash
-# 컨테이너 내부 쉘 접속
-docker exec -it web-container /bin/bash
-
-# 특정 명령어 실행
-docker exec web-container ps aux
-docker exec web-container df -h
-docker exec web-container netstat -tulpn
-```
-
-**실시간 모니터링 조합**:
-```bash
-# 여러 명령어를 조합한 모니터링
-watch -n 1 'docker stats --no-stream'
-
-# 스크립트로 자동화
-#!/bin/bash
-while true; do
-    echo "=== $(date) ==="
-    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemPerc}}"
-    sleep 5
-done
-```
-
----
 
 ## 💭 함께 생각해보기 (10분)
 
-### 🎯 실습 시나리오
-**상황**: 웹 서버 컨테이너가 느려지고 있다는 신고가 들어왔습니다.
+### 🤝 페어 토론 (5분)
+**토론 주제**:
+1. **보안 vs 편의성**: "보안을 강화하면서도 개발 편의성을 유지하는 방법은?"
+2. **보안 정책**: "우리 조직에 맞는 컨테이너 보안 정책은 어떻게 수립해야 할까요?"
+3. **자동화**: "보안 검사를 CI/CD 파이프라인에 어떻게 통합할까요?"
 
-**실습 단계**:
-1. **현재 상태 확인**: docker stats로 리소스 사용량 체크
-2. **로그 분석**: docker logs로 에러 메시지 확인
-3. **상세 조사**: docker exec로 컨테이너 내부 상태 점검
-4. **원인 파악**: 수집한 정보를 바탕으로 문제점 분석
-
-### 🤝 개별 분석 활동
-**분석 포인트**:
-1. **리소스 사용 패턴**: CPU/메모리 사용량이 정상 범위인가?
-2. **로그 패턴**: 에러나 경고 메시지가 증가하고 있는가?
-3. **네트워크 상태**: 네트워크 I/O가 비정상적으로 높은가?
-4. **프로세스 상태**: 컨테이너 내 프로세스들이 정상 동작하는가?
-
-### 💡 이해도 체크 질문
-- ✅ "docker stats에서 CPU %가 100%라면 무엇을 의미하나요?"
-- ✅ "메모리 사용률이 90%를 넘으면 어떤 문제가 발생할까요?"
-- ✅ "docker logs -f와 docker logs의 차이점은 무엇인가요?"
-- ✅ "컨테이너가 갑자기 종료되었을 때 원인을 어떻게 찾을까요?"
-
----
+### 🎯 전체 공유 (5분)
+- **보안 인식**: 컨테이너 보안의 중요성과 실무 적용 방안
+- **도구 선택**: 조직 규모와 요구사항에 맞는 보안 도구 선택
 
 ## 🔑 핵심 키워드
-- **docker stats**: 실시간 리소스 사용량 모니터링
-- **docker logs**: 컨테이너 로그 조회 및 분석
-- **docker inspect**: 컨테이너 상세 정보 조회
-- **docker top**: 컨테이너 내 프로세스 목록
-- **docker exec**: 컨테이너 내부 명령 실행
-- **실시간 모니터링**: 지속적인 시스템 상태 추적
-- **로그 분석**: 로그를 통한 문제 진단 및 해결
+- **CVE (Common Vulnerabilities and Exposures)**: 공통 취약점 및 노출
+- **Shift-Left Security**: 개발 초기 단계부터 보안 적용
+- **Container Escape**: 컨테이너 탈출 공격
+- **Least Privilege**: 최소 권한 원칙
+- **Runtime Security**: 런타임 보안
+
+## 📝 세션 마무리
+### ✅ 오늘 세션 성과
+- 컨테이너 보안 위협 모델 완전 이해
+- 이미지 보안 스캔 도구와 프로세스 학습
+- 런타임 보안 강화 기법 습득
+
+### 🎯 다음 세션 준비
+- **Session 2**: 이미지 최적화 & 성능 튜닝
+- **연결**: 보안과 성능의 균형점 찾기
 
 ---
 
-## 📝 세션 마무리
-
-### ✅ 오늘 세션 성과
-- Docker 기본 모니터링 명령어 완전 습득
-- 리소스 사용량 데이터 해석 능력 개발
-- 로그 분석을 통한 문제 진단 기법 학습
-- 실시간 모니터링 워크플로우 구축
-
-### 🎯 다음 세션 준비
-- **Session 2**: 시스템 모니터링 도구에서 더 깊은 분석 도구 학습
-- **복습**: 오늘 배운 docker stats, logs 명령어 연습
-- **예습**: htop, iotop 같은 시스템 도구에 대해 생각해보기
-
-<div align="center">
-**📊 CLI 명령어로 시스템을 완전히 파악하는 첫걸음! 📊**
-*간단한 명령어가 강력한 모니터링 도구가 됩니다!*
-</div>
+**다음**: [Session 2 - 이미지 최적화 & 성능 튜닝](./session_2.md)

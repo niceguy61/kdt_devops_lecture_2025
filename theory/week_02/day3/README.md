@@ -15,8 +15,8 @@
 ### 📊 시간 배분
 ```
 📚 이론 강의: 2.5시간 (31.25%) - 50분×3세션
-🛠️ 실습 챌린지: 3시간 (37.5%) - K8s 환경 구축
-👥 학생 케어: 2.5시간 (31.25%) - 개별 지원 강화
+🛠️ 실습 챌린지: 4.5시간 (56.25%) - K8s 환경 구축 & 고급 실습
+👥 학생 케어: 1시간 (12.5%) - 핵심 지원
 ```
 
 ### 🗓️ 상세 스케줄
@@ -28,9 +28,8 @@
 | **10:50-11:00** | ☕ 휴식 | 10분 휴식 | |
 | **11:00-11:50** | 📚 이론 3 | 핵심 오브젝트 (50분) | Pod, Service, Deployment |
 | **11:50-13:00** | 🍽️ 점심 | 점심시간 (70분) | |
-| **13:00-16:00** | 🛠️ 챌린지 | K8s 환경 구축 & 기본 실습 (3시간) | 실무 적용 |
-| **16:00-16:15** | ☕ 휴식 | 15분 휴식 | |
-| **16:15-18:00** | 👥 케어 | 개별 멘토링 & 회고 (105분) | 맞춤 지원 |
+| **13:00-17:30** | 🛠️ 챌린지 | K8s 환경 구축 & 고급 실습 (4.5시간) | 실무 적용 |
+| **17:30-18:00** | 👥 케어 | 핵심 회고 & 다음 준비 (30분) | 효율적 지원 |
 
 ---
 
@@ -662,7 +661,186 @@ kubectl rollout undo deployment/nginx-deployment
 - [ ] Deployment 스케일링 및 업데이트 체험
 - [ ] 오브젝트 간 관계 이해
 
-### 🏆 Phase 3: 간단한 애플리케이션 배포 (15분)
+### 🏆 Phase 3: 고급 Kubernetes 실습 (90분)
+
+#### 🔧 고급 오브젝트 실습
+**Step 1: ConfigMap과 Secret 활용**
+```yaml
+# app-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  database_url: "postgresql://db:5432/myapp"
+  redis_url: "redis://redis:6379"
+  log_level: "INFO"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+data:
+  db_password: cGFzc3dvcmQxMjM=  # password123 base64 encoded
+  jwt_secret: bXlzZWNyZXRrZXk=     # mysecretkey base64 encoded
+```
+
+```bash
+# ConfigMap과 Secret 생성
+kubectl apply -f app-config.yaml
+
+# 확인
+kubectl get configmaps
+kubectl get secrets
+kubectl describe configmap app-config
+```
+
+**Step 2: Ingress 컨트롤러 설정**
+```bash
+# Nginx Ingress Controller 설치
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# 설치 확인
+kubectl get pods -n ingress-nginx
+kubectl get services -n ingress-nginx
+```
+
+```yaml
+# ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: myapp.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8000
+```
+
+**Step 3: PersistentVolume과 StatefulSet**
+```yaml
+# postgres-statefulset.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/postgres
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        env:
+        - name: POSTGRES_DB
+          value: myapp
+        - name: POSTGRES_USER
+          value: admin
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db_password
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        ports:
+        - containerPort: 5432
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+```
+
+**Step 4: HorizontalPodAutoscaler 설정**
+```yaml
+# hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+```
+
+```bash
+# HPA 생성 및 테스트
+kubectl apply -f hpa.yaml
+kubectl get hpa
+
+# 부하 테스트로 오토스케일링 확인
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh
+# 컨테이너 내에서
+while true; do wget -q -O- http://backend-service:8000/api/health; done
+```
+
+### 🎯 Phase 4: 간단한 애플리케이션 배포 (30분)
 
 #### 🤝 팀별 애플리케이션 배포
 **팀별 할당**:
@@ -721,37 +899,43 @@ spec:
   type: NodePort
 ```
 
-### 🎤 결과 발표 및 공유 (30분)
-**팀별 발표** (7분×4팀):
+### 🎤 결과 발표 및 공유 (40분)
+**팀별 발표** (10분×4팀):
 - 배포한 애플리케이션 아키텍처
-- 사용한 Kubernetes 오브젝트들
+- 사용한 Kubernetes 오브젝트들 (기본 + 고급)
+- ConfigMap, Secret, Ingress, StatefulSet 활용 경험
+- HPA를 통한 오토스케일링 테스트 결과
 - 배포 과정에서 겪은 어려움과 해결 방법
 - Kubernetes의 장점과 특징 체감
+- 실무 적용 가능성과 다음 학습 계획
 
 ---
 
-## 👥 학생 케어 (105분)
+## 👥 핵심 학생 케어 (30분)
 
-### 🟢 초급자 케어 (집중 지원) - 45분
-**개별 멘토링**:
-- Kubernetes 아키텍처 개념 완전 이해 확인
-- kubectl 명령어 사용법 반복 연습
-- YAML 파일 작성 및 문법 이해
-- 오브젝트 간 관계 시각화 지원
+### 🎯 전체 통합 회고 (20분)
+**오늘의 핵심 성과**:
+- Kubernetes 아키텍처 완전 이해
+- 기본부터 고급 오브젝트까지 실습 완료
+- 실무급 애플리케이션 배포 경험
+- 팀 협업을 통한 문제 해결 능력 향상
 
-### 🟡 중급자 케어 (리더십 개발) - 45분
-**그룹 멘토링**:
-- Kubernetes 고급 개념 미리보기
-- 실무 배포 전략과 베스트 프랙티스
-- 초급자 지원 경험 공유
-- 클러스터 운영 시나리오 토론
+**어려웠던 점과 해결 방법**:
+- YAML 문법과 들여쓰기 오류 → 팀원 간 상호 검토
+- 네트워킹 개념 이해 → 시각화와 실습을 통한 체득
+- 오브젝트 간 관계 파악 → 단계별 구축으로 이해
 
-### 🔴 고급자 케어 (전문성 강화) - 15분
-**심화 토론**:
-- Kubernetes 내부 구조 깊이 있는 분석
-- 커스텀 리소스와 오퍼레이터 패턴
-- 멀티 클러스터 관리 전략
-- CNCF 생태계 도구들과의 통합
+### 🚀 내일 준비 및 동기부여 (10분)
+**Week 2 Day 4 미리보기**:
+- Week 1-2 전체 기술 스택 통합 프로젝트
+- Docker + Kubernetes 완전 통합 워크플로우
+- 실무 수준의 애플리케이션 구축
+- Week 3 Kubernetes 심화 학습 준비
+
+**개인별 준비사항**:
+- 오늘 학습한 Kubernetes 개념 복습
+- kubectl 명령어 연습
+- 내일 통합 프로젝트를 위한 아이디어 구상
 
 ---
 
@@ -762,6 +946,9 @@ spec:
 - [ ] 마스터/워커 노드 역할과 책임 파악
 - [ ] 핵심 오브젝트 개념과 관계 습득
 - [ ] 로컬 K8s 환경 구축 및 기본 배포 체험
+- [ ] 고급 오브젝트 (ConfigMap, Secret, Ingress, StatefulSet) 실습 완료
+- [ ] HPA를 통한 오토스케일링 체험
+- [ ] 실무급 Kubernetes 애플리케이션 배포 경험
 
 ### 🎯 내일 준비사항
 - **예습**: Docker와 Kubernetes 통합 워크플로우

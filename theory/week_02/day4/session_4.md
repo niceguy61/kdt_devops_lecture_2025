@@ -1,417 +1,309 @@
-# Week 2 Day 4 Session 4: 오케스트레이션 체험 실습
+# Week 2 Day 4 Session 4: Week 1-2 통합 마스터 프로젝트
 
 <div align="center">
-**🛠️ 실습 체험** • **🎼 오케스트레이션 실감**
-*이론을 실제로 체험하며 오케스트레이션의 가치 확인*
+**🛠️ 통합 프로젝트** • **🏗️ 실무급 시스템** • **🎓 Docker 마스터리**
+*Week 1-2 모든 기술을 활용한 완전한 실무급 애플리케이션 구축*
 </div>
 
 ---
 
 ## 🕘 세션 정보
-**시간**: 13:00-16:00 (3시간)
-**목표**: 오케스트레이션의 실제 가치를 체험으로 확인
-**방식**: 3단계 실습 (문제 체험 → 해결 체험 → 미래 준비)
+**시간**: 13:00-17:30 (4.5시간)
+**목표**: Week 1-2 모든 기술을 활용한 완전한 실무급 애플리케이션 구축
+**방식**: 팀 기반 통합 프로젝트
 
-## 🎯 실습 목표
-### 📚 학습 목표
-- **문제 체험**: 단일 컨테이너 운영의 실제 한계 체감
-- **해결 체험**: Docker Swarm을 통한 자동화 효과 확인
-- **미래 준비**: Kubernetes 학습을 위한 환경과 마음가짐 준비
-
-### 🤝 협업 목표
-- **팀 실습**: 3-4명 팀으로 함께 문제 해결
-- **역할 분담**: 각자 다른 역할로 오케스트레이션 체험
-- **지식 공유**: 실습 과정에서 발견한 인사이트 공유
+## 🎯 프로젝트 목표
+### 📚 최종 통합 목표
+- Week 1-2 모든 기술을 활용한 완전한 실무급 애플리케이션
+- 보안, 최적화, 모니터링이 통합된 엔터프라이즈급 시스템
+- 오케스트레이션 준비가 완료된 컨테이너 애플리케이션
 
 ---
 
-## 🛠️ Phase 1: 단일 컨테이너 장애 시나리오 체험 (90분)
+## 📋 프로젝트 요구사항
 
-### 🎯 Phase 1 목표
-**"단일 컨테이너 운영이 왜 문제인지 몸으로 체험하기"**
+### 🏗️ 아키텍처 요구사항
+```mermaid
+graph TB
+    subgraph "Frontend Tier"
+        A[React/Vue App<br/>최적화된 이미지]
+    end
+    
+    subgraph "Backend Tier"
+        B[API Server<br/>보안 강화]
+        C[Background Worker<br/>비동기 처리]
+    end
+    
+    subgraph "Data Tier"
+        D[PostgreSQL<br/>데이터 영속성]
+        E[Redis<br/>캐시 & 세션]
+    end
+    
+    subgraph "Infrastructure"
+        F[Nginx<br/>리버스 프록시]
+        G[Prometheus<br/>메트릭 수집]
+        H[Grafana<br/>모니터링 대시보드]
+    end
+    
+    A --> F
+    F --> B
+    B --> D
+    B --> E
+    C --> D
+    C --> E
+    
+    B --> G
+    C --> G
+    G --> H
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+```
 
-### 📋 실습 환경 준비 (15분)
-#### 🔧 기본 환경 설정
-```bash
-# 실습용 디렉토리 생성
-mkdir -p ~/orchestration-lab/phase1
-cd ~/orchestration-lab/phase1
+### 📝 기능 요구사항
+1. **사용자 인증**: JWT 기반 로그인/회원가입
+2. **CRUD 기능**: 게시판 또는 상품 관리
+3. **실시간 기능**: WebSocket 또는 Server-Sent Events
+4. **파일 업로드**: 이미지 업로드 및 처리
+5. **검색 기능**: 전문 검색 또는 필터링
+6. **API 문서**: Swagger/OpenAPI 자동 생성
 
-# 간단한 웹 애플리케이션 준비
-cat > app.py << 'EOF'
-from flask import Flask
-import os
-import time
-import random
+### 🔒 보안 요구사항
+1. **이미지 보안**: 모든 이미지 취약점 스캔 통과
+2. **런타임 보안**: 비root 사용자, 읽기 전용 파일시스템
+3. **네트워크 보안**: HTTPS, 내부 통신 암호화
+4. **시크릿 관리**: 환경 변수 대신 Docker Secrets 사용
 
-app = Flask(__name__)
+### ⚡ 성능 요구사항
+1. **이미지 최적화**: 각 이미지 100MB 이하
+2. **빌드 최적화**: 멀티스테이지 빌드 적용
+3. **캐싱**: Redis 캐싱으로 응답 시간 단축
+4. **리소스 제한**: 모든 컨테이너 리소스 제한 설정
 
-@app.route('/')
-def hello():
-    hostname = os.environ.get('HOSTNAME', 'unknown')
-    # 가끔 느린 응답 시뮬레이션
-    if random.random() < 0.1:
-        time.sleep(2)
-    return f'''
-    <h1>Hello from {hostname}</h1>
-    <p>Request processed successfully!</p>
-    <p>Time: {time.strftime('%Y-%m-%d %H:%M:%S')}</p>
-    '''
+### 📊 모니터링 요구사항
+1. **메트릭 수집**: Prometheus로 애플리케이션 메트릭
+2. **로그 관리**: 구조화된 로그 출력
+3. **헬스 체크**: 모든 서비스 헬스 체크 엔드포인트
+4. **대시보드**: Grafana 대시보드 구성
 
-@app.route('/health')
-def health():
-    return 'OK'
+---
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-EOF
+## 🚀 Phase 1: 팀 구성 및 아키텍처 설계 (30분)
 
-# Dockerfile 생성
-cat > Dockerfile << 'EOF'
-FROM python:3.9-slim
+### 👥 팀 구성 (4팀, 3명씩)
+**팀별 프로젝트 주제**:
+- **Team 1**: E-commerce 플랫폼 (상품 관리 + 주문 처리)
+- **Team 2**: 블로그 플랫폼 (게시글 + 댓글 + 검색)
+- **Team 3**: 채팅 애플리케이션 (실시간 메시징 + 파일 공유)
+- **Team 4**: 프로젝트 관리 도구 (태스크 관리 + 협업)
+
+### 📋 아키텍처 설계
+**각 팀별 설계 문서 작성**:
+```markdown
+## 팀명: [팀 이름]
+### 프로젝트: [프로젝트 명]
+
+### 아키텍처 설계
+- Frontend: [기술 스택]
+- Backend: [기술 스택]
+- Database: [선택한 DB]
+- Cache: Redis
+- Monitoring: Prometheus + Grafana
+
+### 컨테이너 구성
+1. frontend: [이미지 크기 목표]
+2. backend: [이미지 크기 목표]
+3. database: [데이터 영속성 전략]
+4. cache: [캐시 전략]
+5. monitoring: [메트릭 수집 계획]
+
+### 보안 계획
+- 이미지 스캔 도구: [선택한 도구]
+- 런타임 보안: [보안 설정]
+- 네트워크 보안: [통신 암호화]
+
+### 성능 목표
+- 응답 시간: < 200ms
+- 이미지 크기: < 100MB
+- 메모리 사용량: < 512MB per container
+```
+
+---
+
+## 🌟 Phase 2: 통합 개발 및 구현 (180분)
+
+### 🔧 개발 단계별 진행
+**Step 1: 기본 애플리케이션 개발 (60분)**
+```dockerfile
+# 최적화된 Frontend Dockerfile
+FROM node:18-alpine AS builder
 WORKDIR /app
-COPY app.py .
-RUN pip install flask
-EXPOSE 5000
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+RUN adduser -D -s /bin/sh nginx
+USER nginx
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+```dockerfile
+# 보안 강화된 Backend Dockerfile
+FROM python:3.9-alpine AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:3.9-alpine
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY . .
+RUN adduser -D -s /bin/sh appuser
+USER appuser
+EXPOSE 8000
 CMD ["python", "app.py"]
-EOF
-
-# 이미지 빌드
-docker build -t simple-web:v1 .
 ```
 
-### 🚀 실습 1: 단일 컨테이너 배포 (25분)
-#### 📝 팀 역할 분담
-- **👨💻 개발자**: 애플리케이션 배포 담당
-- **🔧 운영자**: 모니터링 및 문제 대응
-- **📊 테스터**: 부하 테스트 및 성능 측정
-- **📋 기록자**: 문제 상황과 대응 과정 기록
-
-#### 🔧 단일 컨테이너 실행
+**Step 2: 보안 스캔 및 최적화 (60분)**
 ```bash
-# 단일 컨테이너 실행
-docker run -d --name web-app -p 8080:5000 simple-web:v1
+# 보안 스캔
+trivy image frontend:latest
+trivy image backend:latest
 
-# 상태 확인
-docker ps
-curl http://localhost:8080
+# 이미지 크기 최적화 확인
+docker images --format "table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}"
+
+# 성능 테스트
+ab -n 1000 -c 10 http://localhost:8080/api/health
 ```
 
-#### 📊 정상 상태 확인
-```bash
-# 기본 성능 테스트
-for i in {1..10}; do
-    curl -s http://localhost:8080 | grep "Hello"
-    sleep 1
-done
-
-# 리소스 사용량 확인
-docker stats web-app --no-stream
-```
-
-### ⚡ 실습 2: 부하 테스트와 성능 한계 (25분)
-#### 🔥 부하 테스트 도구 설치
-```bash
-# Apache Bench 설치 (Ubuntu/Debian)
-sudo apt-get update && sudo apt-get install -y apache2-utils
-
-# 또는 간단한 스크립트 사용
-cat > load_test.sh << 'EOF'
-#!/bin/bash
-echo "Starting load test..."
-for i in {1..100}; do
-    curl -s http://localhost:8080 > /dev/null &
-done
-wait
-echo "Load test completed"
-EOF
-chmod +x load_test.sh
-```
-
-#### 📈 부하 테스트 실행
-```bash
-# 가벼운 부하 테스트
-ab -n 100 -c 10 http://localhost:8080/
-
-# 리소스 사용량 실시간 모니터링
-docker stats web-app
-```
-
-#### 📊 성능 한계 확인
-**체크포인트**:
-- [ ] CPU 사용률 90% 이상 도달
-- [ ] 응답 시간 증가 확인
-- [ ] 일부 요청 실패 발생
-- [ ] 단일 컨테이너의 처리 한계 체감
-
-### 💥 실습 3: 장애 시뮬레이션 (25분)
-#### 🚨 컨테이너 강제 종료
-```bash
-# 컨테이너 강제 종료 (장애 시뮬레이션)
-docker kill web-app
-
-# 서비스 상태 확인
-curl http://localhost:8080
-# 결과: Connection refused
-
-# 서비스 중단 시간 측정
-echo "Service down at: $(date)"
-```
-
-#### 🔧 수동 복구 과정
-```bash
-# 1. 문제 인지 (사람이 직접 확인)
-docker ps -a | grep web-app
-
-# 2. 원인 분석
-docker logs web-app
-
-# 3. 수동 재시작
-docker start web-app
-
-# 4. 복구 확인
-curl http://localhost:8080
-echo "Service restored at: $(date)"
-```
-
-#### 📋 문제점 정리
-**팀별 토론 (10분)**:
-1. **다운타임**: 장애 인지부터 복구까지 소요 시간
-2. **수동 작업**: 사람의 개입이 필요한 모든 단계
-3. **확장성**: 트래픽 증가 시 대응의 어려움
-4. **단일 장애점**: 하나 실패하면 전체 실패
-
----
-
-## 🐳 Phase 2: Docker Swarm 기초 실습 (90분)
-
-### 🎯 Phase 2 목표
-**"오케스트레이션이 어떻게 문제를 해결하는지 직접 체험하기"**
-
-### 🔧 실습 4: Docker Swarm 클러스터 구성 (30분)
-#### 🏗️ Swarm 클러스터 초기화
-```bash
-# 새 디렉토리로 이동
-mkdir -p ~/orchestration-lab/phase2
-cd ~/orchestration-lab/phase2
-
-# Swarm 클러스터 초기화
-docker swarm init
-
-# 클러스터 상태 확인
-docker node ls
-docker info | grep Swarm
-```
-
-#### 📝 서비스 정의 파일 생성
+**Step 3: 모니터링 통합 (60분)**
 ```yaml
-# docker-compose.yml 생성
-cat > docker-compose.yml << 'EOF'
+# docker-compose.monitoring.yml
 version: '3.8'
 services:
-  web:
-    image: simple-web:v1
+  prometheus:
+    image: prom/prometheus:latest
     ports:
-      - "8080:5000"
-    deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-    networks:
-      - webnet
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
 
-networks:
-  webnet:
-    driver: overlay
-EOF
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+
+volumes:
+  grafana-data:
 ```
 
-### 🚀 실습 5: 서비스 배포와 자동 확장 (30분)
-#### 🎼 오케스트레이션 배포
+---
+
+## 🏆 Phase 3: 오케스트레이션 준비 및 배포 테스트 (60분)
+
+### 🔧 Docker Swarm 기초 체험
+**기본 Swarm 클러스터 구성**:
 ```bash
-# 스택 배포
-docker stack deploy -c docker-compose.yml webapp
+# Swarm 모드 초기화
+docker swarm init
+
+# 서비스 배포
+docker service create \
+  --name web-service \
+  --replicas 3 \
+  --publish 8080:80 \
+  myapp/frontend:latest
 
 # 서비스 상태 확인
 docker service ls
-docker service ps webapp_web
+docker service ps web-service
 
-# 컨테이너 분산 확인
-docker ps | grep webapp_web
+# 스케일링 테스트
+docker service scale web-service=5
 ```
 
-#### 📈 자동 스케일링 테스트
+### 📊 오케스트레이션 효과 체험
 ```bash
-# 서비스 스케일 업
-docker service scale webapp_web=5
+# 컨테이너 강제 종료로 자동 복구 테스트
+docker kill $(docker ps -q --filter "label=com.docker.swarm.service.name=web-service" | head -1)
 
-# 스케일링 과정 관찰
-watch docker service ps webapp_web
+# 자동 복구 확인
+watch -n 2 'docker service ps web-service'
 
-# 로드 밸런싱 확인
-for i in {1..10}; do
-    curl -s http://localhost:8080 | grep "Hello from"
-done
+# 로드 밸런싱 테스트
+for i in {1..10}; do curl http://localhost:8080; done
 ```
 
-### 🛡️ 실습 6: 자동 복구 체험 (30분)
-#### 💥 장애 시뮬레이션
-```bash
-# 실행 중인 컨테이너 확인
-docker ps | grep webapp_web
-
-# 컨테이너 하나 강제 종료
-CONTAINER_ID=$(docker ps | grep webapp_web | head -1 | awk '{print $1}')
-docker kill $CONTAINER_ID
-
-# 자동 복구 과정 관찰
-watch docker service ps webapp_web
-```
-
-#### ✨ 자동 복구 확인
-```bash
-# 서비스 가용성 확인 (중단 없이 계속 응답)
-while true; do
-    curl -s http://localhost:8080 | grep "Hello from" || echo "Failed"
-    sleep 1
-done
-```
-
-#### 🔄 롤링 업데이트 체험
-```bash
-# 새 버전 이미지 빌드 (app.py 수정)
-sed -i 's/Hello from/Greetings from/g' ../phase1/app.py
-cd ../phase1
-docker build -t simple-web:v2 .
-cd ../phase2
-
-# 롤링 업데이트 실행
-docker service update --image simple-web:v2 webapp_web
-
-# 업데이트 과정 관찰
-watch docker service ps webapp_web
-```
+### ✅ 최종 체크리스트
+- [ ] 모든 컨테이너 정상 실행
+- [ ] 보안 스캔 통과 (Critical: 0개)
+- [ ] 이미지 크기 목표 달성
+- [ ] 모니터링 대시보드 구성
+- [ ] Docker Swarm 기초 체험 완료
 
 ---
 
-## ☸️ Phase 3: Kubernetes 개념 이해와 준비 (30분)
+## 🎤 최종 발표 및 데모 (50분)
 
-### 🎯 Phase 3 목표
-**"Week 3 Kubernetes 학습을 위한 환경과 마음가짐 준비"**
+### 📊 팀별 발표 (12분×4팀)
+**발표 내용**:
+1. **프로젝트 개요**: 구현한 애플리케이션 소개
+2. **Docker 통합**: Week 1-2 모든 Docker 기술 통합 활용
+3. **아키텍처**: 전체 시스템 구조와 기술 선택
+4. **보안 & 최적화**: 적용한 보안 조치와 성능 최적화
+5. **모니터링**: 구축한 모니터링 시스템
+6. **오케스트레이션 준비**: Docker Swarm 체험과 Week 3 준비 상태
+7. **팀 협업**: 협업 과정과 배운 점
+8. **Week 3 준비**: 오케스트레이션 학습을 위한 준비 상태
 
-### 🔧 실습 7: Kubernetes 환경 준비 (20분)
-#### 🛠️ minikube 설치 및 설정
-```bash
-# minikube 설치 (Linux)
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-
-# kubectl 설치
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-# minikube 시작
-minikube start
-
-# 클러스터 상태 확인
-kubectl cluster-info
-kubectl get nodes
-```
-
-#### 🎯 간단한 Kubernetes 체험
-```bash
-# 간단한 배포 생성
-kubectl create deployment hello-k8s --image=simple-web:v1
-
-# 서비스 노출
-kubectl expose deployment hello-k8s --type=NodePort --port=5000
-
-# 서비스 접근
-minikube service hello-k8s --url
-```
-
-### 📚 실습 8: Week 3 학습 계획 수립 (10분)
-#### 🎯 팀별 학습 목표 설정
-**팀 토론 주제**:
-1. **개인 목표**: Week 3에서 각자 집중하고 싶은 Kubernetes 기능
-2. **팀 프로젝트**: 함께 구축하고 싶은 Kubernetes 기반 시스템
-3. **역할 분담**: Kubernetes 학습에서의 개인별 역할
-4. **도전 과제**: 어려울 것 같은 부분과 대응 방안
-
-#### 📋 학습 준비 체크리스트
-- [ ] Kubernetes 기본 환경 설치 완료
-- [ ] Docker Swarm과 Kubernetes 차이점 이해
-- [ ] Week 3 학습 목표 개인별 설정
-- [ ] 팀 프로젝트 아이디어 구상
-- [ ] 어려운 부분에 대한 상호 지원 계획
+### 🏅 상호 평가 및 피드백
+**평가 기준**:
+- **기술적 완성도**: 요구사항 구현 정도
+- **Docker 마스터리**: Week 1-2 기술 통합 활용도
+- **보안 & 성능**: 보안 조치와 최적화 수준
+- **모니터링**: 관측성 구현 정도
+- **오케스트레이션 준비**: Week 3 학습 준비도
+- **팀 협업**: 협업 과정과 결과
 
 ---
 
-## 📊 실습 성과 측정
+## 📝 프로젝트 마무리
 
-### ✅ Phase별 체크포인트
+### ✅ 프로젝트 성과
+- [ ] Week 1-2 모든 기술 스택 완전 통합 활용
+- [ ] 실무급 애플리케이션 구축 완료
+- [ ] 보안-성능-모니터링 통합 시스템 구현
+- [ ] Docker Swarm을 통한 오케스트레이션 기초 체험
+- [ ] 팀 협업을 통한 실무 경험 축적
+- [ ] Week 3 Kubernetes 학습 준비 완료
 
-#### Phase 1 성과
-- [ ] 단일 컨테이너의 성능 한계 직접 체험
-- [ ] 장애 발생 시 수동 복구 과정 경험
-- [ ] 확장성 문제와 운영 복잡성 실감
-- [ ] 오케스트레이션 필요성 완전 공감
-
-#### Phase 2 성과
-- [ ] Docker Swarm 클러스터 구성 성공
-- [ ] 자동 스케일링과 로드 밸런싱 확인
-- [ ] 자동 복구 기능 체험
-- [ ] 롤링 업데이트 과정 관찰
-
-#### Phase 3 성과
-- [ ] Kubernetes 환경 설치 완료
-- [ ] 기본 Kubernetes 명령어 체험
-- [ ] Week 3 학습 계획 수립
-- [ ] 팀 협업 방안 논의
-
-### 🎯 실습 후 인사이트 공유
-**팀별 발표 (5분×6팀 = 30분)**:
-1. **가장 인상적인 순간**: 실습에서 가장 놀랐던 부분
-2. **문제 해결 경험**: 어려웠던 문제와 해결 과정
-3. **오케스트레이션 가치**: 자동화의 실제 효과
-4. **Kubernetes 기대**: Week 3 학습에 대한 기대와 계획
+### 🎯 Week 3 준비사항
+- **기술적 준비**: Docker 전문가 수준 달성
+- **개념적 준비**: 오케스트레이션 필요성 완전 이해
+- **협업 준비**: 팀 기반 학습 및 프로젝트 경험
+- **도구 준비**: Kubernetes 학습 환경 구축
 
 ---
 
-## 🔑 실습 핵심 키워드
-
-### 🆕 체험한 개념
-- **자동 복구(Auto Recovery)**: 장애 시 사람 개입 없이 자동 복구
-- **로드 밸런싱(Load Balancing)**: 여러 컨테이너로 요청 분산
-- **롤링 업데이트(Rolling Update)**: 서비스 중단 없는 업데이트
-- **서비스 디스커버리(Service Discovery)**: 서비스 자동 발견
-
-### 🔤 실습 도구
-- **Docker Swarm**: Docker 내장 오케스트레이션
-- **minikube**: 로컬 Kubernetes 클러스터
-- **kubectl**: Kubernetes 명령줄 도구
-- **Apache Bench (ab)**: 웹 서버 성능 테스트 도구
-
-## 📝 실습 마무리
-
-### ✅ 오늘 실습 성과
-- [x] 단일 컨테이너 한계를 몸으로 체험
-- [x] Docker Swarm으로 오케스트레이션 효과 확인
-- [x] Kubernetes 환경 준비 완료
-- [x] Week 3 학습 동기와 계획 수립
-
-### 🎯 다음 세션 준비
-**Session 5 연결점**:
-- 실습에서 느낀 점과 어려웠던 부분 개별 상담
-- Kubernetes 학습에 대한 개인별 맞춤 조언
-- Week 3 성공적 학습을 위한 준비 상태 점검
-
-**정리할 내용**:
-- 실습 과정에서 발생한 오류와 해결 방법
-- 오케스트레이션의 실제 가치와 한계
-- Kubernetes 학습에 대한 기대와 우려사항
+**다음**: [Week 3 - Kubernetes 운영과 관리](../../week_03/README.md)

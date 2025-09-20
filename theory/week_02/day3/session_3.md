@@ -1,285 +1,217 @@
-# Week 2 Day 3 Session 3: 로그 분석과 문제 해결
+# Week 2 Day 3 Session 3: 모니터링 & 관측성
 
 <div align="center">
-**📝 로그 마스터** • **🔍 문제 해결사**
-*로그 분석을 통한 체계적인 문제 진단과 해결 방법*
+**📊 모니터링** • **🔍 관측성**
+*컨테이너 환경에서의 포괄적인 관측성 구축 방법 이해*
 </div>
 
 ---
 
 ## 🕘 세션 정보
 **시간**: 11:00-11:50 (50분)
-**목표**: 로그 분석을 통한 문제 해결 능력 개발
-**방식**: 개인별 로그 분석 + 문제 해결 실습
+**목표**: 컨테이너 환경에서의 포괄적인 관측성 구축 방법 이해
+**방식**: 이론 강의 + 페어 토론
 
 ## 🎯 세션 목표
 ### 📚 학습 목표
-- **로그 이해**: Docker 로그 시스템과 드라이버 이해
-- **분석 기법**: grep, awk, sed를 활용한 고급 로그 분석
-- **패턴 인식**: 일반적인 오류 패턴과 해결 방법
-- **문제 해결**: 로그를 통한 체계적인 문제 진단 프로세스
-
-### 🤔 왜 필요한가? (5분)
-**로그의 중요성**:
-```
-로그 = 시스템의 블랙박스
-- 무엇이 일어났는지 (What)
-- 언제 일어났는지 (When)  
-- 어디서 일어났는지 (Where)
-- 왜 일어났는지 (Why)
-```
-
-**실무에서의 로그 분석**:
-- **장애 대응**: 문제 발생 시 가장 먼저 확인하는 정보
-- **성능 최적화**: 병목 지점과 개선 포인트 발견
-- **보안 분석**: 비정상적인 접근이나 공격 탐지
-- **비즈니스 인사이트**: 사용자 행동 패턴 분석
-
----
+- **이해 목표**: 컨테이너 환경에서의 포괄적인 관측성 구축 방법 이해
+- **적용 목표**: 실무에서 사용할 수 있는 모니터링 시스템 구축 능력 습득
+- **협업 목표**: 팀원들과 관측성 전략 및 알림 체계 설계 토론
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: Docker 로그 시스템 이해 (12분)
+### 🔍 개념 1: 관측성의 3요소 (12분)
+> **정의**: 시스템의 내부 상태를 외부에서 관찰할 수 있게 하는 메트릭, 로그, 추적의 통합
 
-> **정의**: Docker가 컨테이너 로그를 수집, 저장, 관리하는 시스템
-
-**Docker 로그 드라이버**:
-```bash
-# 현재 로그 드라이버 확인
-docker info | grep "Logging Driver"
-
-# 컨테이너별 로그 드라이버 확인
-docker inspect container_name | grep LoggingDriver
+**관측성 아키텍처**:
+```mermaid
+graph TB
+    subgraph "관측성 3요소"
+        A[메트릭<br/>Metrics<br/>시계열 데이터] --> D[완전한 관측성]
+        B[로그<br/>Logs<br/>이벤트 기록] --> D
+        C[추적<br/>Traces<br/>요청 흐름] --> D
+    end
+    
+    subgraph "수집 도구"
+        E[Prometheus<br/>메트릭 수집] --> A
+        F[Fluentd<br/>로그 수집] --> B
+        G[Jaeger<br/>분산 추적] --> C
+    end
+    
+    subgraph "분석 도구"
+        H[Grafana<br/>시각화] --> D
+        I[Elasticsearch<br/>로그 분석] --> D
+        J[Kibana<br/>로그 시각화] --> D
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#4caf50
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#2196f3
+    style I fill:#2196f3
+    style J fill:#2196f3
 ```
 
-**주요 로그 드라이버 종류**:
-- **json-file** (기본): JSON 형태로 로컬 파일에 저장
-- **syslog**: 시스템 syslog로 전송
-- **journald**: systemd journal로 전송
-- **none**: 로그 수집 안함
+**각 요소의 역할**:
+- **메트릭**: 시스템 성능 지표 (CPU, 메모리, 응답시간)
+- **로그**: 애플리케이션 이벤트와 오류 정보
+- **추적**: 분산 시스템에서의 요청 흐름 추적
 
-**로그 파일 위치**:
-```bash
-# 기본 로그 파일 위치
-/var/lib/docker/containers/[container-id]/[container-id]-json.log
+### 🔍 개념 2: 컨테이너 모니터링 스택 (12분)
+> **정의**: 컨테이너 환경에 특화된 모니터링 도구들의 통합 스택
 
-# 실제 로그 파일 찾기
-docker inspect container_name | grep LogPath
-
-# 로그 파일 직접 확인
-sudo tail -f /var/lib/docker/containers/$(docker inspect --format='{{.Id}}' container_name)/$(docker inspect --format='{{.Id}}' container_name)-json.log
+**CNCF 모니터링 스택**:
+```mermaid
+graph TB
+    subgraph "데이터 수집 계층"
+        A[cAdvisor<br/>컨테이너 메트릭] --> D[Prometheus<br/>메트릭 저장소]
+        B[Node Exporter<br/>호스트 메트릭] --> D
+        C[Application<br/>애플리케이션 메트릭] --> D
+    end
+    
+    subgraph "저장 및 처리"
+        D --> E[AlertManager<br/>알림 관리]
+        D --> F[Grafana<br/>시각화]
+    end
+    
+    subgraph "로그 스택"
+        G[Fluent Bit<br/>로그 수집] --> H[Elasticsearch<br/>로그 저장]
+        H --> I[Kibana<br/>로그 분석]
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#4caf50
+    style F fill:#4caf50
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
 ```
 
-**로그 설정 옵션**:
-```bash
-# 로그 크기 제한
-docker run --log-opt max-size=10m --log-opt max-file=3 nginx
+**모니터링 설정 예시**:
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
 
-# 로그 드라이버 변경
-docker run --log-driver=syslog nginx
-
-# 로그 비활성화
-docker run --log-driver=none nginx
+scrape_configs:
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+  
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+  
+  - job_name: 'app'
+    static_configs:
+      - targets: ['app:3000']
+    metrics_path: '/metrics'
 ```
 
-### 🔍 개념 2: 고급 로그 분석 기법 (12분)
+### 🔍 개념 3: 알림과 SLI/SLO (11분)
+> **정의**: 서비스 수준 지표와 목표를 기반으로 한 효과적인 알림 체계
 
-> **정의**: grep, awk, sed 등을 활용한 효율적인 로그 분석 방법
-
-**grep을 활용한 로그 필터링**:
-```bash
-# 에러 로그만 추출
-docker logs container_name 2>&1 | grep -i error
-
-# 특정 시간대 로그 필터링
-docker logs -t container_name | grep "2024-01-01T14"
-
-# 여러 패턴 동시 검색
-docker logs container_name | grep -E "(error|warning|fail)"
-
-# 대소문자 구분 없이 검색
-docker logs container_name | grep -i "exception"
-
-# 특정 패턴 제외
-docker logs container_name | grep -v "INFO"
-
-# 패턴 앞뒤 라인 포함
-docker logs container_name | grep -A 5 -B 5 "ERROR"
+**SLI/SLO 프레임워크**:
+```mermaid
+graph TB
+    subgraph "서비스 수준 관리"
+        A[SLI<br/>Service Level Indicator<br/>측정 가능한 지표] --> D[서비스 품질 관리]
+        B[SLO<br/>Service Level Objective<br/>목표 수준] --> D
+        C[SLA<br/>Service Level Agreement<br/>계약 수준] --> D
+    end
+    
+    subgraph "알림 전략"
+        E[Error Budget<br/>오류 예산] --> F[알림 발생]
+        G[Burn Rate<br/>소진 속도] --> F
+    end
+    
+    D --> E
+    F --> H[대응 조치]
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#4caf50
+    style E fill:#fff3e0
+    style F fill:#ff9800
+    style G fill:#fff3e0
+    style H fill:#ff9800
 ```
 
-**awk를 활용한 로그 분석**:
-```bash
-# 특정 필드만 추출 (공백으로 구분)
-docker logs container_name | awk '{print $1, $4}'
+**SLI/SLO 예시**:
+```yaml
+# SLI 정의
+availability_sli: |
+  sum(rate(http_requests_total{status!~"5.."}[5m])) /
+  sum(rate(http_requests_total[5m]))
 
-# 조건부 필터링
-docker logs container_name | awk '/ERROR/ {print $0}'
+latency_sli: |
+  histogram_quantile(0.95, 
+    sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+  )
 
-# 통계 계산 (에러 개수)
-docker logs container_name | awk '/ERROR/ {count++} END {print "Errors:", count}'
-
-# 시간대별 로그 개수
-docker logs -t container_name | awk '{print substr($1,1,13)}' | sort | uniq -c
+# SLO 목표
+slo_targets:
+  availability: 99.9%  # 99.9% 가용성
+  latency_p95: 200ms   # 95% 요청이 200ms 이내
 ```
 
-**sed를 활용한 로그 가공**:
-```bash
-# 특정 문자열 치환
-docker logs container_name | sed 's/ERROR/[ERROR]/g'
-
-# 특정 라인 삭제
-docker logs container_name | sed '/DEBUG/d'
-
-# 특정 패턴 라인만 출력
-docker logs container_name | sed -n '/ERROR/p'
+**알림 규칙 예시**:
+```yaml
+# alerting.yml
+groups:
+- name: slo_alerts
+  rules:
+  - alert: HighErrorRate
+    expr: |
+      (
+        sum(rate(http_requests_total{status=~"5.."}[5m])) /
+        sum(rate(http_requests_total[5m]))
+      ) > 0.01
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value | humanizePercentage }}"
 ```
 
-**복합 명령어 조합**:
-```bash
-# 시간대별 에러 통계
-docker logs -t container_name | grep ERROR | awk '{print substr($1,1,13)}' | sort | uniq -c
+## 💭 함께 생각해보기 (15분)
 
-# 가장 많이 발생한 에러 TOP 10
-docker logs container_name | grep ERROR | sort | uniq -c | sort -nr | head -10
+### 🤝 페어 토론 (10분)
+**토론 주제**:
+1. **관측성 우선순위**: "메트릭, 로그, 추적 중 어떤 것부터 구축해야 할까요?"
+2. **알림 피로도**: "너무 많은 알림으로 인한 피로도를 어떻게 줄일까요?"
+3. **SLO 설정**: "우리 서비스에 적합한 SLO는 어떻게 설정해야 할까요?"
 
-# 특정 시간 범위의 에러만 추출
-docker logs -t container_name | awk '$1 >= "2024-01-01T10:00:00" && $1 <= "2024-01-01T11:00:00" && /ERROR/'
-```
-
-### 🔍 개념 3: 일반적인 오류 패턴과 해결 방법 (11분)
-
-> **정의**: 컨테이너 환경에서 자주 발생하는 오류 패턴과 대응 방법
-
-**메모리 관련 오류**:
-```bash
-# OOM (Out of Memory) 오류 패턴
-docker logs container_name | grep -i "out of memory\|oom\|killed"
-
-# 해결 방법
-docker run -m 512m your_image  # 메모리 제한 설정
-docker stats container_name    # 메모리 사용량 모니터링
-```
-
-**네트워크 관련 오류**:
-```bash
-# 연결 오류 패턴
-docker logs container_name | grep -i "connection refused\|timeout\|network"
-
-# 해결 방법
-docker port container_name     # 포트 매핑 확인
-docker network ls              # 네트워크 설정 확인
-netstat -tulpn | grep PORT     # 포트 사용 상태 확인
-```
-
-**파일 시스템 오류**:
-```bash
-# 디스크 공간 부족 패턴
-docker logs container_name | grep -i "no space left\|disk full\|permission denied"
-
-# 해결 방법
-df -h                          # 디스크 사용량 확인
-docker system df               # Docker 디스크 사용량
-docker system prune            # 불필요한 데이터 정리
-```
-
-**애플리케이션 오류**:
-```bash
-# 일반적인 애플리케이션 오류 패턴
-docker logs container_name | grep -E "(500|404|exception|stack trace|fatal)"
-
-# 로그 레벨별 분석
-docker logs container_name | grep -E "(DEBUG|INFO|WARN|ERROR|FATAL)" | sort | uniq -c
-```
-
-**성능 관련 패턴**:
-```bash
-# 응답 시간 분석 (웹 서버 로그)
-docker logs container_name | awk '{print $(NF-1)}' | sort -n | tail -10
-
-# 느린 쿼리 패턴 (데이터베이스)
-docker logs container_name | grep -i "slow query\|long query"
-```
-
----
-
-## 💭 함께 생각해보기 (10분)
-
-### 🎯 실전 로그 분석 시나리오
-**상황**: 웹 애플리케이션에서 간헐적으로 500 에러가 발생하고 있습니다.
-
-**단계별 분석 과정**:
-
-**1단계: 에러 발생 빈도 확인**
-```bash
-# 500 에러 발생 횟수
-docker logs web-container | grep "500" | wc -l
-
-# 시간대별 500 에러 분포
-docker logs -t web-container | grep "500" | awk '{print substr($1,1,13)}' | sort | uniq -c
-```
-
-**2단계: 에러 패턴 분석**
-```bash
-# 500 에러와 함께 나타나는 다른 로그
-docker logs web-container | grep -A 5 -B 5 "500"
-
-# 특정 URL이나 기능에서 집중 발생하는지 확인
-docker logs web-container | grep "500" | awk '{print $7}' | sort | uniq -c
-```
-
-**3단계: 근본 원인 추적**
-```bash
-# 메모리 부족 여부 확인
-docker logs web-container | grep -i "memory\|oom"
-
-# 데이터베이스 연결 문제 확인
-docker logs web-container | grep -i "database\|connection\|timeout"
-
-# 외부 API 호출 문제 확인
-docker logs web-container | grep -i "api\|http\|request"
-```
-
-### 🤝 개별 분석 활동
-**로그 분석 체크리스트**:
-- [ ] **에러 빈도**: 에러가 언제, 얼마나 자주 발생하는가?
-- [ ] **에러 패턴**: 특정 조건이나 시간에 집중되는가?
-- [ ] **연관 로그**: 에러 전후에 다른 이상 징후가 있는가?
-- [ ] **리소스 상태**: 메모리, CPU, 디스크 문제와 연관되는가?
-- [ ] **외부 의존성**: 네트워크, 데이터베이스, API 문제인가?
-
-### 💡 이해도 체크 질문
-- ✅ "로그에서 'Connection refused' 에러가 나타나면 어떤 문제인가요?"
-- ✅ "OOM Killer가 동작했다는 로그를 발견했을 때 어떻게 대응해야 하나요?"
-- ✅ "로그 파일이 너무 커서 분석이 어려울 때 어떤 방법을 사용하나요?"
-- ✅ "여러 컨테이너의 로그를 동시에 분석해야 할 때는 어떻게 하나요?"
-
----
+### 🎯 전체 공유 (5분)
+- **모니터링 경험**: 효과적인 모니터링 구축 경험
+- **도구 선택**: 조직 규모에 맞는 모니터링 도구 선택 기준
 
 ## 🔑 핵심 키워드
-- **Docker 로그 드라이버**: json-file, syslog, journald 등
-- **로그 분석 도구**: grep, awk, sed, tail, head
-- **로그 패턴**: 에러, 경고, 성능 관련 패턴
-- **정규표현식**: 복잡한 패턴 매칭을 위한 표현식
-- **로그 로테이션**: 로그 파일 크기 관리
-- **중앙화 로깅**: 여러 컨테이너 로그 통합 관리
-- **실시간 모니터링**: tail -f를 통한 실시간 로그 추적
+- **Observability**: 관측성
+- **SLI (Service Level Indicator)**: 서비스 수준 지표
+- **SLO (Service Level Objective)**: 서비스 수준 목표
+- **Error Budget**: 오류 예산
+- **Alerting**: 알림 시스템
+
+## 📝 세션 마무리
+### ✅ 오늘 세션 성과
+- 관측성 3요소 완전 이해
+- 컨테이너 모니터링 스택 구성 방법 학습
+- SLI/SLO 기반 알림 체계 설계 능력 습득
+
+### 🎯 다음 세션 준비
+- **실습 챌린지**: 보안 & 최적화 통합 실습
+- **연결**: 이론에서 실습으로의 자연스러운 전환
 
 ---
 
-## 📝 세션 마무리
-
-### ✅ 오늘 세션 성과
-- Docker 로그 시스템 완전 이해
-- 고급 로그 분석 기법 습득 (grep, awk, sed)
-- 일반적인 오류 패턴 인식 능력 개발
-- 체계적인 문제 해결 프로세스 구축
-
-### 🎯 다음 세션 준비
-- **Session 4**: CLI 모니터링 실습에서 지금까지 배운 모든 기법을 종합 활용
-- **복습**: 로그 분석 명령어들 실습
-- **예습**: 부하 테스트 도구와 성능 측정에 대해 생각해보기
-
-<div align="center">
-**📝 로그가 말하는 모든 것을 이해하는 전문가가 되었습니다! 📝**
-*이제 어떤 문제든 로그를 통해 해결할 수 있습니다!*
-</div>
+**다음**: [보안 & 최적화 통합 실습](../README.md#실습-챌린지)
