@@ -1,0 +1,20 @@
+# ✅ 보안이 강화된 Dockerfile
+FROM nginx:1.25.3-alpine
+
+# ✅ 최신 nginx 버전 사용 (보안 패치 적용)
+# ✅ Alpine 베이스로 공격 표면 최소화
+
+# 웹사이트 파일 복사
+COPY index.html /usr/share/nginx/html/
+COPY style.css /usr/share/nginx/html/
+
+# ✅ 보안 개선: 비root 사용자로 실행
+RUN addgroup -g 101 -S nginx && \
+    adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+
+# ✅ 보안 개선: 불필요한 권한 제거
+USER nginx
+EXPOSE 8080
+
+# ✅ 보안 개선: 비특권 포트 사용
+CMD ["nginx", "-g", "daemon off;"]

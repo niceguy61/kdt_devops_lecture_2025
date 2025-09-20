@@ -1,0 +1,12 @@
+# 🚨 취약한 Dockerfile - 의도적으로 구버전 사용
+FROM nginx:1.14.0
+
+# 🚨 Critical 취약점: 구버전 nginx (CVE-2019-20372, CVE-2021-23017 등)
+# 🚨 High 취약점: 구버전 debian 베이스 이미지
+
+# 간단한 웹사이트 복사
+COPY index.html /usr/share/nginx/html/
+COPY style.css /usr/share/nginx/html/
+
+# 🚨 보안 문제: root 사용자로 실행 (기본값)
+EXPOSE 80

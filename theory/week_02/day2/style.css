@@ -1,0 +1,77 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.2em;
+}
+
+h2 {
+    color: #444;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.info-box, .vulnerability-box, .steps-box, .success-box {
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 5px solid;
+}
+
+.info-box {
+    background: #e3f2fd;
+    border-left-color: #2196f3;
+}
+
+.vulnerability-box {
+    background: #ffebee;
+    border-left-color: #f44336;
+}
+
+.steps-box {
+    background: #f3e5f5;
+    border-left-color: #9c27b0;
+}
+
+.success-box {
+    background: #e8f5e8;
+    border-left-color: #4caf50;
+}
+
+code {
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    color: #d63384;
+}
+
+ul, ol {
+    padding-left: 20px;
+}
+
+li {
+    margin: 8px 0;
+}
+
+strong {
+    color: #333;
+}
