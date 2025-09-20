@@ -29,15 +29,32 @@
 
 ## 🚀 Phase 1: Docker 설치 & 환경 확인 (30분)
 
-### 🔧 설치 및 확인
-**Step 1: Docker Desktop 설치 확인**
+### 💾 Docker Desktop 설치
+
+#### 📥 운영체제별 다운로드
+
+**🪟 Windows**
+- **다운로드**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+- **요구사항**: Windows 10 64-bit 또는 Windows 11
+- **설치**: 다운로드 후 실행하여 기본 설정으로 설치
+
+**🍎 macOS**
+- **다운로드**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+- **Intel/Apple Silicon 자동 감지**
+- **설치**: DMG 파일 다운로드 후 Applications 폴더로 드래그
+
+**🐧 Linux**
+- **다운로드**: [Docker Desktop for Linux](https://www.docker.com/products/docker-desktop/)
+- **또는 패키지 매니저로 Docker Engine 설치**
+
+#### 🔧 설치 후 확인
+**Step 1: Docker 설치 확인**
 ```bash
 # Docker 버전 확인
 docker --version
-docker info
 
-# Docker 서비스 상태 확인
-docker system info
+# Docker 정보 확인
+docker info
 ```
 
 **Step 2: Hello World 실행**
@@ -52,18 +69,22 @@ docker images
 
 **Step 3: 기본 이미지 다운로드**
 ```bash
-# 자주 사용하는 이미지들 다운로드
+# 실습용 이미지들 다운로드
 docker pull nginx:alpine
 docker pull ubuntu:20.04
-docker pull node:18-alpine
 docker pull python:3.9-slim
 
 # 이미지 목록 확인
 docker images
-docker image ls --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
 ```
 
+**🔍 Docker 이미지 검색**
+- **Docker Hub**: [https://hub.docker.com](https://hub.docker.com) - 공식 이미지 저장소
+- **이미지 검색**: `docker search 이미지명` 또는 웹에서 직접 검색
+- **인기 이미지**: nginx, ubuntu, python, node, mysql, postgres, redis 등
+
 ### ✅ Phase 1 체크포인트
+- [ ] 운영체제에 맞는 Docker 설치 완료
 - [ ] Docker 정상 설치 및 실행 확인
 - [ ] hello-world 컨테이너 성공적 실행
 - [ ] 기본 이미지들 다운로드 완료
@@ -255,27 +276,39 @@ docker stats limited-container
 
 ---
 
-## 🔧 트러블슈팅 가이드
+## 🔧 기본 트러블슈팅
 
 ### 자주 발생하는 문제들
-1. **포트 충돌**: `docker ps`로 사용 중인 포트 확인
-2. **이미지 다운로드 실패**: 네트워크 연결 및 Docker Hub 접근 확인
-3. **컨테이너 시작 실패**: `docker logs <container-name>`으로 로그 확인
-4. **권한 문제**: Docker 그룹 추가 또는 sudo 사용
 
-### 유용한 명령어들
+1. **Docker Desktop 시작 안됨**
+   - Windows: 재시작 후 Docker Desktop 실행
+   - macOS: Applications에서 Docker 실행
+   - 시스템 트레이에서 Docker 아이콘 확인
+
+2. **포트 충돌 오류**
+   ```bash
+   # 사용 중인 포트 확인
+   docker ps
+   # 다른 포트 사용 (8080 대신 8081)
+   docker run -p 8081:80 nginx:alpine
+   ```
+
+3. **컨테이너 실행 안됨**
+   ```bash
+   # 컨테이너 로그 확인
+   docker logs 컨테이너명
+   # 컨테이너 삭제 후 재시도
+   docker rm -f 컨테이너명
+   ```
+
+### 유용한 정리 명령어
 ```bash
-# 모든 컨테이너 정지
+# 모든 컨테이너 정지 및 삭제
 docker stop $(docker ps -q)
-
-# 모든 컨테이너 삭제
 docker rm $(docker ps -aq)
 
 # 사용하지 않는 이미지 정리
-docker image prune
-
-# 전체 시스템 정리
-docker system prune -a
+docker system prune
 ```
 
 ---
@@ -290,8 +323,12 @@ docker system prune -a
 
 ### 🎯 내일 실습 준비
 - **주제**: Dockerfile 작성 및 이미지 빌드
-- **준비사항**: 오늘 배운 기본 명령어 복습
+- **준비사항**: 
+  - 오늘 배운 기본 명령어 복습
+  - 텍스트 에디터 (VS Code, Vim 등) 사용법 확인
+  - Git 기본 명령어 숙지 (선택사항)
 - **연결고리**: 기존 이미지 사용 → 커스텀 이미지 제작
+- **추가 도구**: 내일 실습을 위한 에디터 및 Git 설치 권장
 
 ---
 
@@ -301,6 +338,6 @@ docker system prune -a
 
 *이론에서 실습으로, Docker 실전 경험 완료*
 
-**다음**: [Day 3 - Docker 이미지 & 네트워킹 & 스토리지](../day3/README.md)
+**설치 가이드**: [Docker 공식 문서](https://docs.docker.com/get-docker/) | **다음**: [Day 3 - Docker 이미지 & 네트워킹 & 스토리지](../day3/README.md)
 
 </div>

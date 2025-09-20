@@ -29,6 +29,46 @@
 
 ## 🚀 Phase 1: 첫 번째 Dockerfile 작성 (40분)
 
+### 🛠️ 필수 도구 설치 확인
+
+#### 📝 텍스트 에디터 설치
+**VS Code (추천)**
+- **Windows**: [VS Code Windows](https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user)
+- **macOS**: [VS Code macOS](https://code.visualstudio.com/sha/download?build=stable&os=darwin-universal)
+- **Linux**: [VS Code Linux](https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64)
+
+**또는 기본 에디터 사용**
+```bash
+# Windows
+notepad Dockerfile
+
+# macOS
+nano Dockerfile
+# 또는
+open -a TextEdit Dockerfile
+
+# Linux
+vim Dockerfile
+# 또는
+nano Dockerfile
+```
+
+#### 🔧 Git 설치 (선택사항)
+**자동 설치 스크립트**
+```bash
+# Windows (PowerShell)
+winget install Git.Git
+
+# macOS
+brew install git
+
+# Linux (Ubuntu/Debian)
+sudo apt-get install -y git
+
+# 설치 확인
+git --version
+```
+
 ### 📝 간단한 웹 애플리케이션 만들기
 **Step 1: 프로젝트 구조 생성**
 ```bash
@@ -83,6 +123,7 @@ docker run -d -p 8080:80 --name webapp-v1 my-webapp:v1
 ```
 
 ### ✅ Phase 1 체크포인트
+- [ ] 필수 도구 (텍스트 에디터) 설치 확인
 - [ ] Dockerfile 기본 문법 이해 및 작성
 - [ ] docker build 명령어로 이미지 빌드 성공
 - [ ] 커스텀 이미지로 컨테이너 실행 확인
