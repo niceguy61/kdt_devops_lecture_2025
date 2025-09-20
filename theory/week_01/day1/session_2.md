@@ -146,6 +146,11 @@ graph LR
     D[Measurement<br/>측정<br/>데이터 기반 개선] --> F
     E[Sharing<br/>공유<br/>지식과 책임 공유] --> F
     
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#ffebee
+    style E fill:#e0f2f1
     style F fill:#f3e5f5
 ```
 

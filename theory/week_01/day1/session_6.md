@@ -313,7 +313,12 @@ graph LR
     D --> E[Session 5<br/>GitHub 협업 ✅]
     E --> F[Session 6<br/>개별 상담 ✅]
     
-    style A,B,C,D,E,F fill:#4caf50
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
+    style D fill:#4caf50
+    style E fill:#4caf50
+    style F fill:#4caf50
 ```
 
 ---

@@ -234,7 +234,11 @@ graph LR
     C --> D[Session 4<br/>환경 설정 ✅]
     D --> E[Session 5<br/>GitHub 협업 ✅]
     
-    style A,B,C,D,E fill:#4caf50
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
+    style D fill:#4caf50
+    style E fill:#4caf50
 ```
 
 ---
