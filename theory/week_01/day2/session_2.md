@@ -204,7 +204,7 @@ graph LR
         D[컨테이너 4<br/>API]
     end
     
-    E[바다 (Network)<br/>컨테이너 간 통신]
+    E[바다 Network<br/>컨테이너 간 통신]
     
     A --> E
     B --> E
