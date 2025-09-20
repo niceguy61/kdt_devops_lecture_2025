@@ -63,9 +63,15 @@ graph TB
         C[물리 서버 3] --> C1[OS] --> C2[App C]
     end
     
-    style A,B,C fill:#ffebee
-    style A1,B1,C1 fill:#fff3e0
-    style A2,B2,C2 fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style A1 fill:#fff3e0
+    style B1 fill:#fff3e0
+    style C1 fill:#fff3e0
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
 ```
 
 ### 🔍 개념 2: 가상머신(VM)의 등장 (12분)
@@ -94,7 +100,9 @@ graph TB
     style A fill:#e3f2fd
     style B fill:#fff3e0
     style C fill:#f3e5f5
-    style D,E,F fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
 ```
 
 ### 🔍 개념 3: 컨테이너의 혁신 (11분)
@@ -124,8 +132,10 @@ graph LR
         B3 --> B5[컨테이너2<br/>앱만]
     end
     
-    style A4,A5 fill:#ffebee
-    style B4,B5 fill:#e8f5e8
+    style A4 fill:#ffebee
+    style A5 fill:#ffebee
+    style B4 fill:#e8f5e8
+    style B5 fill:#e8f5e8
 ```
 
 **성능 비교표**:
