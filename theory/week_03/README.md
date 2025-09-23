@@ -2,13 +2,13 @@
 
 <div align="center">
 
-**🎓 Kubernetes 심화 & 클러스터 운영** • **실무 역량 개발**
+**☸️ Kubernetes 실무 운영** • **🔧 개인 역량 개발** • **☁️ 클라우드 네이티브**
 
-*기초에서 실무까지, Kubernetes 클러스터 운영 전문가 되기*
+*기초부터 AWS EKS까지, Kubernetes 운영 전문가 되기*
 
 ![Week 3](https://img.shields.io/badge/Week-3-blue?style=for-the-badge)
 ![K8s Operations](https://img.shields.io/badge/K8s-Operations-green?style=for-the-badge)
-![Service Mesh](https://img.shields.io/badge/Service-Mesh-orange?style=for-the-badge)
+![AWS EKS](https://img.shields.io/badge/AWS-EKS-orange?style=for-the-badge)
 
 </div>
 
@@ -17,292 +17,213 @@
 ## 🎯 주간 학습 목표
 
 ### 📚 전체 공통 목표
-> **Kubernetes 클러스터 운영 역량을 개발하고, 실무에서 필요한 고급 기능들을 습득한다**
+> **Kubernetes 클러스터 운영 역량을 개발하고, AWS EKS를 포함한 실무 환경에서 필요한 모든 기술을 습득한다**
 
-### 🎪 레벨별 목표
-- **🟢 초급자**: 클러스터 설치 및 기본 운영 능력 + 워크로드 관리 기초
-- **🟡 중급자**: 고급 배포 전략 + 서비스 메시 기초 + 모니터링 구성
-- **🔴 고급자**: HA 클러스터 설계 + 성능 최적화 + 복잡한 문제 해결
+### 🎪 개인별 학습 목표
+- **🟢 초급자**: 클러스터 설치 및 기본 운영 + AWS EKS 기초 + 워크스페이스 관리
+- **🟡 중급자**: 고급 배포 전략 + IRSA 보안 + 모니터링/알람 구성 + FinOps 기초
+- **🔴 고급자**: HA 클러스터 설계 + 고급 보안 + 성능 최적화 + FinOps 고도화
 
 ---
 
 ## 📅 일일 학습 계획
 
-### [Day 1: 클러스터 설치와 구성](./day_01_cluster_installation.md)
-**🎯 목표**: 다양한 방법으로 Kubernetes 클러스터 구축 + 클러스터 관리 기초
+### [Day 1: 클러스터 설치와 구성](./day1/README.md)
+**🎯 목표**: Kubernetes 기본 구성요소 이해 + 다양한 설치 방법 + AWS EKS 기초
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: Kubernetes 설치 방법 비교 (kubeadm, kops, kubespray)
-- **Session 2**: 클러스터 네트워킹 설정 (CNI 플러그인)
-- **Session 3**: 클러스터 보안 설정 및 인증서 관리
+- **Session 1**: Kubernetes 기본 구성요소 (Master/Worker Node, etcd, API Server) (50분)
+- **Session 2**: 설치 방법 비교 (kubeadm, kops, kubespray, Managed Services) (50분)
+- **Session 3**: AWS EKS 아키텍처 및 설정 방법 (50분)
 
 #### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: kubeadm으로 멀티 노드 클러스터 구축
-- **Phase 2**: CNI 플러그인 설치 및 네트워크 테스트
-- **Phase 3**: 클러스터 백업 및 복구 실습
+- **Phase 1**: kubeadm으로 로컬 클러스터 구축
+- **Phase 2**: AWS EKS 클러스터 생성 및 구성
+- **Phase 3**: kubectl 설정 및 클러스터 접근 권한 관리
 
 #### 🎯 레벨별 활동
-- **초급자**: 로컬 클러스터 설치 + 기본 설정
-- **중급자**: 멀티 노드 클러스터 + 네트워크 구성
-- **고급자**: HA 클러스터 + 백업/복구 전략
+- **초급자**: 로컬 클러스터 설치 + EKS 기본 설정
+- **중급자**: 멀티 노드 클러스터 + EKS 네트워킹 구성
+- **고급자**: HA 클러스터 + EKS 고급 보안 설정
 
 ---
 
-### [Day 2: 워크로드 관리](./day_02_workload_management.md)
-**🎯 목표**: 고급 워크로드 타입 이해 + 배포 전략 학습
+### [Day 2: 핵심 오브젝트와 워크로드 관리](./day2/README.md)
+**🎯 목표**: Kubernetes 핵심 오브젝트 + 설정 관리 + 워크로드 배포 전략
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: Deployment vs StatefulSet vs DaemonSet
-- **Session 2**: 롤링 업데이트와 배포 전략
-- **Session 3**: HPA/VPA를 통한 자동 스케일링
+- **Session 1**: ConfigMap & Secret 설정 관리 (50분)
+- **Session 2**: Service & Ingress 네트워킹 (50분)
+- **Session 3**: PV/PVC 스토리지 + Health Probes (50분)
 
 #### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: 다양한 워크로드 타입 배포 실습
-- **Phase 2**: 카나리 배포와 블루-그린 배포
-- **Phase 3**: 자동 스케일링 설정 및 테스트
+- **Phase 1**: ConfigMap/Secret + Service 타입별 네트워킹 구성
+- **Phase 2**: PV/PVC 영속성 + Probe 설정으로 안정성 확보
+- **Phase 3**: 통합 애플리케이션 배포 + 롤링 업데이트
 
 #### 🎯 레벨별 활동
-- **초급자**: 기본 워크로드 배포 + 스케일링
-- **중급자**: 롤링 업데이트 + 카나리 배포
-- **고급자**: 블루-그린 배포 + GitOps 패턴
+- **초급자**: 기본 설정 관리 + ClusterIP Service + 기본 Probe
+- **중급자**: 환경별 설정 분리 + Ingress 라우팅 + 고급 Health Check
+- **고급자**: 암호화된 설정 + 멀티 도메인 + 커스텀 배포 전략
 
 ---
 
-### [Day 3: 서비스 메시 개념](./day_03_service_mesh.md)
-**🎯 목표**: 서비스 메시 필요성 이해 + Istio 기초 학습
+### [Day 3: 리소스 관리와 스케줄링](./day3/README.md)
+**🎯 목표**: Resource Management + QoS + 스케줄링 정책 + 네임스페이스 관리
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: 마이크로서비스 통신의 복잡성
-- **Session 2**: 서비스 메시 아키텍처 (Istio, Linkerd, Consul Connect)
-- **Session 3**: 사이드카 패턴과 데이터 플레인/컨트롤 플레인
+- **Session 1**: Resource Requests/Limits + QoS Classes (50분)
+- **Session 2**: Node Affinity + Pod Anti-Affinity 스케줄링 (50분)
+- **Session 3**: Namespace 멀티 테넌시 + ResourceQuota (50분)
 
 #### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: Istio 설치 및 기본 구성
-- **Phase 2**: 트래픽 관리 및 라우팅 규칙
-- **Phase 3**: 보안 정책 및 mTLS 설정
+- **Phase 1**: Resource 설정으로 성능 최적화 + QoS 클래스 적용
+- **Phase 2**: Affinity 규칙으로 고가용성 배치 + 스케줄링 최적화
+- **Phase 3**: 네임스페이스 기반 환경 분리 + ResourceQuota 설정
 
 #### 🎯 레벨별 활동
-- **초급자**: 서비스 메시 개념 이해 + 기본 구성
-- **중급자**: 트래픽 관리 + 보안 정책
-- **고급자**: 멀티 클러스터 메시 + 성능 최적화
+- **초급자**: 기본 Resource 설정 + 기본 스케줄링 + 네임스페이스 관리
+- **중급자**: QoS 최적화 + Node Selector + 고급 리소스 정책
+- **고급자**: 복잡한 Affinity + 멀티 클러스터 스케줄링 + 고급 격리
 
 ---
 
-### [Day 4: 모니터링과 로깅](./day_04_monitoring_logging.md)
-**🎯 목표**: 종합적인 관측성 구축 + Prometheus/Grafana 활용
+### [Day 4: 보안과 RBAC + GitOps](./day4/README.md)
+**🎯 목표**: RBAC 보안 + AWS EKS IRSA + GitOps 배포 자동화
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: 관측성의 3요소 (메트릭, 로그, 추적)
-- **Session 2**: Prometheus 아키텍처와 메트릭 수집
-- **Session 3**: ELK/EFK 스택을 통한 로그 관리
+- **Session 1**: RBAC + ServiceAccount (50분)
+- **Session 2**: AWS EKS 보안 + IRSA (50분)
+- **Session 3**: GitOps (ArgoCD, Helm) + Pod Security Standards (50분)
 
 #### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: Prometheus + Grafana 모니터링 스택 구축
-- **Phase 2**: 커스텀 메트릭 수집 및 알림 설정
-- **Phase 3**: EFK 스택으로 중앙화된 로깅 구성
+- **Phase 1**: RBAC으로 세밀한 권한 제어 + ServiceAccount 관리
+- **Phase 2**: EKS IRSA 구성 + AWS 서비스 연동 보안
+- **Phase 3**: GitOps 파이프라인 + Helm Chart 배포 자동화
 
 #### 🎯 레벨별 활동
-- **초급자**: 기본 메트릭 수집 + 대시보드 구성
-- **중급자**: 커스텀 메트릭 + 알림 설정
-- **고급자**: 분산 추적 + 로그 분석 자동화
+- **초급자**: 기본 RBAC + IRSA 기초 + ArgoCD 기본
+- **중급자**: 세밀한 권한 제어 + Pod Security + GitOps 고급 패턴
+- **고급자**: 제로 트러스트 + 고급 감사 + 멀티 클러스터 GitOps
 
 ---
 
-### [Day 5: 트러블슈팅과 디버깅](./day_05_troubleshooting.md)
-**🎯 목표**: 체계적인 문제 해결 방법론 + 실전 디버깅 기술
+### [Day 5: 모니터링, FinOps & 통합 프로젝트](./day5/README.md)
+**🎯 목표**: 모니터링 스택 + FinOps + 주간 통합 개인 프로젝트 완성
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: Kubernetes 트러블슈팅 방법론
-- **Session 2**: 일반적인 문제 패턴과 해결책
-- **Session 3**: 성능 최적화 및 리소스 관리
+- **Session 1**: Prometheus + Grafana 모니터링 스택 (50분)
+- **Session 2**: AlertManager + SLI/SLO 알람 시스템 (50분)
+- **Session 3**: FinOps + HPA/VPA + 통합 프로젝트 아키텍처 (50분)
 
-#### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: 의도적 장애 시나리오 해결
-- **Phase 2**: 성능 병목 지점 분석 및 최적화
-- **Phase 3**: 클러스터 복구 및 재해 대응
+#### 🛠️ 통합 프로젝트 (3시간)
+- **Phase 1**: 개인 Kubernetes 플랫폼 최종 구성
+- **Phase 2**: 모니터링 스택 구축 + FinOps 비용 최적화 적용
+- **Phase 3**: 전체 시스템 통합 테스트 + 포트폴리오 정리
 
 #### 🎯 레벨별 활동
-- **초급자**: 기본 트러블슈팅 + 로그 분석
-- **중급자**: 성능 문제 진단 + 리소스 최적화
-- **고급자**: 복잡한 네트워크 문제 + 클러스터 복구
+- **초급자**: 기본 모니터링 + 비용 가시성 + 개인 프로젝트 완성
+- **중급자**: 커스텀 메트릭 + 자동 스케일링 + 고급 프로젝트 구성
+- **고급자**: 분산 추적 + 고급 FinOps + 엔터프라이즈급 프로젝트
+
+
 
 ---
 
-## 🛠️ 주간 통합 프로젝트
+## 🏗️ Week 3 전체 아키텍처
 
-### 🎯 프로젝트 목표
-**"프로덕션 레디 Kubernetes 플랫폼 구축"**
-- 실제 운영 환경에 준하는 클러스터 구성
-- 완전한 관측성 및 모니터링 구축
-- 자동화된 배포 파이프라인 구성
-
-### 🏗️ 프로젝트 아키텍처
 ```mermaid
 graph TB
-    subgraph "Kubernetes 클러스터"
-        subgraph "애플리케이션 계층"
-            A[Frontend Apps]
-            B[Backend APIs]
-            C[Database]
-        end
-        
-        subgraph "서비스 메시"
-            D[Istio Control Plane]
-            E[Envoy Sidecars]
-        end
-        
-        subgraph "모니터링 스택"
-            F[Prometheus]
-            G[Grafana]
-            H[AlertManager]
-        end
-        
-        subgraph "로깅 스택"
-            I[Elasticsearch]
-            J[Fluentd]
-            K[Kibana]
-        end
-        
-        subgraph "CI/CD"
-            L[ArgoCD]
-            M[Tekton]
-        end
+    subgraph "Day 1: 클러스터 기반"
+        A[EKS 클러스터<br/>Master/Worker Node]
+        B[kubectl<br/>클러스터 접근]
     end
     
-    N[External Traffic] --> D
-    D --> A
-    A --> B
-    B --> C
+    subgraph "Day 2: 핵심 오브젝트"
+        C[ConfigMap/Secret<br/>설정 관리]
+        D[Service/Ingress<br/>네트워킹]
+        E[PV/PVC<br/>스토리지]
+        F[Health Probes<br/>상태 관리]
+    end
     
-    F --> A
-    F --> B
-    F --> C
-    G --> F
-    H --> F
+    subgraph "Day 3: 리소스 & 스케줄링"
+        G[Resource Mgmt<br/>QoS Classes]
+        H[Node Affinity<br/>스케줄링]
+        I[Namespace<br/>멀티 테넌시]
+    end
     
-    J --> I
-    K --> I
+    subgraph "Day 4: 보안 & GitOps"
+        J[RBAC<br/>권한 관리]
+        K[IRSA<br/>AWS 연동]
+        L[GitOps<br/>자동 배포]
+    end
     
-    L --> A
-    L --> B
-    M --> L
+    subgraph "Day 5: 모니터링 & FinOps"
+        M[Prometheus/Grafana<br/>모니터링]
+        N[HPA/VPA<br/>자동 스케일링]
+        O[Cost Optimization<br/>비용 최적화]
+    end
     
-    style A,B,C fill:#e8f5e8
-    style D,E fill:#fff3e0
-    style F,G,H fill:#ffebee
-    style I,J,K fill:#f3e5f5
-    style L,M fill:#e0f2f1
+    A --> C
+    A --> D
+    B --> E
+    C --> G
+    D --> H
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+    I --> M
+    J --> N
+    K --> O
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
+    style J fill:#ffebee
+    style K fill:#ffebee
+    style L fill:#ffebee
+    style M fill:#f3e5f5
+    style N fill:#f3e5f5
+    style O fill:#f3e5f5
 ```
-
-### 👥 팀 구성 및 역할
-- **Platform 팀**: 클러스터 구축 및 기본 인프라
-- **Service Mesh 팀**: Istio 구성 및 트래픽 관리
-- **Monitoring 팀**: 관측성 스택 구축
-- **Security 팀**: 보안 정책 및 RBAC 설정
-
-### 📋 프로젝트 요구사항
-1. **고가용성 클러스터**: 멀티 마스터 노드 구성
-2. **서비스 메시**: Istio를 통한 트래픽 관리
-3. **완전한 모니터링**: 메트릭, 로그, 추적 통합
-4. **자동 스케일링**: HPA/VPA 설정
-5. **보안 강화**: RBAC, 네트워크 정책, Pod 보안 정책
-6. **재해 복구**: 백업 및 복구 절차
 
 ---
 
-## 📊 주간 평가 기준
+## 📊 개인 학습 평가 기준
 
 ### ✅ 실무 역량 평가
-- **클러스터 운영**: 설치, 구성, 관리 능력
-- **문제 해결**: 트러블슈팅 및 디버깅 역량
-- **모니터링**: 관측성 구축 및 활용 능력
-- **협업**: 팀 프로젝트에서의 기여도
+- **클러스터 운영**: EKS 설치, 구성, 관리 능력
+- **보안 관리**: IRSA 및 클러스터 보안 구성 능력
+- **모니터링**: 관측성 구축 및 알람 시스템 구성
+- **비용 최적화**: FinOps 원칙 적용 및 비용 관리
 
-### 🎯 성공 지표
+### 🎯 개인 성공 지표
 - **기술 이해도**: 85% 이상
 - **실습 완성률**: 90% 이상
 - **프로젝트 완성도**: 85% 이상
 - **문제 해결 능력**: 80% 이상
 
-### 📋 평가 체크리스트
-- [ ] 멀티 노드 클러스터 구축 완료
-- [ ] 다양한 워크로드 타입 배포 가능
-- [ ] 서비스 메시 기본 구성 완료
-- [ ] 모니터링 스택 구축 및 활용
-- [ ] 기본적인 트러블슈팅 수행 가능
-- [ ] 팀 프로젝트 역할 완수
-
----
-
-## 🔗 다음 주 연결
-
-### 🚀 Week 4 준비사항
-- Kubernetes 운영 경험 정리
-- 마이크로서비스 아키텍처 개념 예습
-- 클라우드 네이티브 패턴 학습
-
-### 📚 추천 학습 자료
-- [Kubernetes 운영 가이드](https://kubernetes.io/docs/setup/production-environment/)
-- [Istio 공식 문서](https://istio.io/latest/docs/)
-- [Prometheus 모니터링 가이드](https://prometheus.io/docs/guides/)
-
-### 🎯 심화 학습 주제
-- **초급자**: Kubernetes 네트워킹 심화
-- **중급자**: Kubernetes Operator 개발
-- **고급자**: 멀티 클러스터 관리 전략
-
----
-
-## 📝 주간 회고
-
-### 🤔 회고 질문
-1. 클러스터 운영의 복잡성을 어떻게 관리했나요?
-2. 서비스 메시의 필요성을 실제로 체감했나요?
-3. 모니터링을 통해 어떤 인사이트를 얻었나요?
-4. 가장 도전적이었던 트러블슈팅 경험은?
-
-### 📈 개선 포인트
-- 클러스터 설치 시 자주 발생한 문제
-- 서비스 메시 구성의 어려움
-- 모니터링 설정 시 놓친 부분
-- 팀 협업에서 개선할 점
-
-### 🎉 성취 사항
-- 프로덕션 레벨 클러스터 구축 완료
-- 복잡한 문제 상황 해결 경험
-- 팀워크를 통한 대규모 프로젝트 완성
-- 실무 운영 역량 획득
-
----
-
-## 🔧 운영 베스트 프랙티스
-
-### 클러스터 관리
-1. **정기적인 백업**: etcd 백업 자동화
-2. **모니터링 필수**: 클러스터 상태 지속 감시
-3. **보안 강화**: RBAC 및 네트워크 정책 적용
-4. **리소스 관리**: 적절한 리소스 할당 및 제한
-
-### 애플리케이션 배포
-1. **점진적 배포**: 카나리/블루-그린 배포 활용
-2. **헬스 체크**: Liveness/Readiness Probe 설정
-3. **설정 분리**: ConfigMap/Secret 활용
-4. **로그 중앙화**: 구조화된 로깅 구현
-
-### 문제 해결
-1. **체계적 접근**: 문제 범위 좁히기
-2. **로그 분석**: 다양한 레벨의 로그 확인
-3. **메트릭 활용**: 성능 지표를 통한 원인 분석
-4. **문서화**: 해결 과정 및 결과 기록
+### 📋 주간 평가 체크리스트
+- [ ] EKS 클러스터 구축 및 운영 완료
+- [ ] 핵심 오브젝트 (ConfigMap/Secret/Service/PV) 활용
+- [ ] 리소스 관리 및 스케줄링 정책 적용
+- [ ] RBAC 보안 및 IRSA 구성 완료
+- [ ] 모니터링 스택 구축 및 FinOps 적용
+- [ ] **Day 5 통합 프로젝트 완성**
 
 ---
 
 <div align="center">
 
-**🎓 클러스터 운영 전문가** • **☸️ Kubernetes 실무 역량** • **🔍 문제 해결 능력**
+**☸️ Kubernetes 운영 전문가** • **☁️ AWS EKS 마스터** • **💰 FinOps 실무자**
 
-*Week 3을 통해 Kubernetes 운영의 핵심 역량을 갖추었습니다*
-
-**이전 주**: [Week 2 - 컨테이너 오케스트레이션 기초](../week_02/README.md) | **다음 주**: [Week 4 - 클라우드 네이티브 아키텍처](../week_04/README.md)
+*Week 3을 통해 개인 Kubernetes 플랫폼을 완벽하게 구축하고 운영할 수 있게 되었습니다*
 
 </div>
