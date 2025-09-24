@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Day 2](https://img.shields.io/badge/Day-2-blue?style=for-the-badge)
-![Sessions](https://img.shields.io/badge/Sessions-3-green?style=for-the-badge)
+![Sessions](https://img.shields.io/badge/Sessions-5-green?style=for-the-badge)
 ![Duration](https://img.shields.io/badge/Duration-8h-orange?style=for-the-badge)
 
 **🐳 컨테이너 기술 핵심** • **🏗️ Docker 아키텍처**
@@ -18,9 +18,9 @@
 
 ### 📊 시간 배분
 ```
-📚 이론 강의: 2.5시간 (31.25%) - 50분×3세션
-🛠️ 실습 챌린지: 3시간 (37.5%) - 통합 실습
-👥 학생 케어: 2.5시간 (31.25%) - 개별 지원 강화
+📚 이론 강의: 4시간 (50%) - 50분×5세션
+🛠️ 실습 챌린지: 2.5시간 (31.25%) - 통합 실습
+👥 학생 케어: 1.5시간 (18.75%) - 효율적 지원
 ```
 
 ### 🗓️ 상세 스케줄
@@ -31,367 +31,132 @@
 | **10:00-10:50** | 📚 이론 2 | Docker 아키텍처 (50분) | Docker 전체 구조 |
 | **10:50-11:00** | ☕ 휴식 | 10분 휴식 | |
 | **11:00-11:50** | 📚 이론 3 | Docker Engine & 런타임 (50분) | 내부 동작 원리 |
-| **11:50-13:00** | 🍽️ 점심 | 점심시간 (70분) | |
-| **13:00-16:00** | 🛠️ 챌린지 | Docker 설치 & 기본 실습 (3시간) | 실무 적용 |
-| **16:00-16:15** | ☕ 휴식 | 15분 휴식 | |
-| **16:15-18:00** | 👥 케어 | 개별 멘토링 & 회고 (105분) | 맞춤 지원 |
+| **11:50-12:00** | ☕ 휴식 | 10분 휴식 | |
+| **12:00-12:50** | 📚 이론 4 | Docker 명령어 & 실습 준비 (50분) | 기본 사용법 |
+| **12:50-13:50** | 🍽️ 점심 | 점심시간 (60분) | |
+| **13:50-14:00** | ☕ 휴식 | 10분 휴식 | |
+| **14:00-14:50** | 📚 이론 5 | Docker 개발 워크플로우 & 디버깅 (50분) | 실습 중심 |
+| **14:50-15:00** | ☕ 휴식 | 10분 휴식 | |
+| **15:00-17:30** | 🛠️ 챌린지 | Docker 설치 & 기본 실습 (2.5시간) | 실무 적용 |
+| **17:30-18:00** | 👥 케어 | 개별 멘토링 & 회고 (30분) | 맞춤 지원 |
 
 ---
 
-## 📚 이론 강의 (2.5시간 - 50분×3세션)
+## 📚 이론 강의 (4시간 - 50분×5세션)
 
-### Session 1: 가상화 기술의 진화 (50분)
+### [Session 1: 가상화 기술의 진화](./session_1.md)
+- VM vs Container 비교 분석
+- 컨테이너 기술 등장 배경
+- 성능 및 효율성 비교
+
+### [Session 2: Docker 아키텍처](./session_2.md)
+- Docker 클라이언트-서버 구조
+- 이미지와 컨테이너 관계
+- 네트워킹과 스토리지 기초
+
+### [Session 3: Docker Engine & 런타임](./session_3.md)
+- Docker Engine 내부 구조
+- 컨테이너 생명주기 관리
+- Linux 커널 격리 기술
+
+### [Session 4: Docker 명령어 & 실습 준비](./session_4.md)
+- 기본 Docker 명령어
+- 컨테이너 조작 실습
+- 실습 환경 준비
+
+### [Session 5: Docker 개발 워크플로우 & 디버깅](./session_5.md)
+- 실습 중심 개발 워크플로우
+- 컨테이너 디버깅 기법
+- 문제 해결 실전 연습
+
+### Session 4: Docker 명령어 & 실습 준비 (50분)
 
 #### 🎯 학습 목표
-- **이해 목표**: 가상화 기술의 발전 과정과 컨테이너 등장 배경 이해
-- **적용 목표**: VM과 컨테이너의 차이점을 실제 사례로 설명 가능
-- **협업 목표**: 팀원들과 가상화 경험 공유 및 토론
-
-#### 🤔 왜 필요한가? (5분)
-**현실 문제 상황**:
-- 💼 **서버 비용 문제**: 물리 서버 1대에 애플리케이션 1개만 설치하는 비효율
-- 🏠 **일상 비유**: 아파트 한 동에 한 가족만 사는 것과 같은 자원 낭비
-- 📊 **시장 동향**: 클라우드 시대에 필수적인 가상화 기술의 진화
+- **이해 목표**: Docker 핵심 명령어와 사용법 완전 습득
+- **적용 목표**: 실습에서 사용할 명령어들을 자유자재로 활용
+- **협업 목표**: 팀원들과 명령어 실습 및 문제 해결 경험
 
 #### 📖 핵심 개념 (35분)
 
-**🔍 개념 1: 물리 서버의 한계 (12분)**
-> **정의**: 하나의 물리 서버에서 하나의 애플리케이션만 실행하는 전통적 방식
+**🔍 개념 1: 기본 명령어 그룹 (12분)**
+> **정의**: Docker 사용을 위한 필수 명령어들의 체계적 분류
 
-**문제점들**:
-- **자원 낭비**: CPU, 메모리 사용률 10-15%
-- **확장성 부족**: 트래픽 증가 시 전체 서버 교체 필요
-- **관리 복잡성**: 서버마다 다른 OS, 설정, 보안 패치
-
-**시각적 이해**:
+**명령어 분류**:
 ```mermaid
 graph TB
-    subgraph "전통적 방식"
-        A[물리 서버 1] --> A1[OS] --> A2[App A]
-        B[물리 서버 2] --> B1[OS] --> B2[App B]
-        C[물리 서버 3] --> C1[OS] --> C2[App C]
+    subgraph "Docker 명령어 체계"
+        A[이미지 관리<br/>Image Management] --> A1[pull, push, build]
+        A --> A2[images, rmi, tag]
+        
+        B[컨테이너 관리<br/>Container Management] --> B1[run, start, stop]
+        B --> B2[ps, logs, exec]
+        
+        C[시스템 관리<br/>System Management] --> C1[info, version]
+        C --> C2[system prune]
     end
     
-    style A fill:#ffebee
-    style B fill:#ffebee
-    style C fill:#ffebee
-    style A1 fill:#fff3e0
-    style B1 fill:#fff3e0
-    style C1 fill:#fff3e0
-    style A2 fill:#e8f5e8
-    style B2 fill:#e8f5e8
-    style C2 fill:#e8f5e8
-```
-
-**🔍 개념 2: 가상머신(VM)의 등장 (12분)**
-> **정의**: 하나의 물리 서버에서 여러 개의 가상 서버를 실행하는 기술
-
-**VM의 장점**:
-- **자원 효율성**: 물리 서버 활용률 70-80% 향상
-- **격리성**: 각 VM은 독립적인 OS와 환경
-- **유연성**: 필요에 따라 VM 생성/삭제 가능
-
-**VM의 한계**:
-- **무거운 구조**: 각 VM마다 완전한 OS 필요
-- **느린 시작**: VM 부팅에 수 분 소요
-- **리소스 오버헤드**: 하이퍼바이저와 게스트 OS의 추가 부담
-
-**VM 아키텍처**:
-```mermaid
-graph TB
-    A[물리 서버] --> B[호스트 OS]
-    B --> C[하이퍼바이저]
-    C --> D[VM 1<br/>게스트 OS + App A]
-    C --> E[VM 2<br/>게스트 OS + App B]
-    C --> F[VM 3<br/>게스트 OS + App C]
-    
-    style A fill:#e3f2fd
+    style A fill:#e8f5e8
     style B fill:#fff3e0
     style C fill:#f3e5f5
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#e8f5e8
 ```
 
-**🔍 개념 3: 컨테이너의 혁신 (11분)**
-> **정의**: OS 커널을 공유하면서 애플리케이션을 격리하여 실행하는 경량 가상화 기술
+**🔍 개념 2: 실무 필수 명령어 (12분)**
+> **정의**: 실제 개발과 운영에서 가장 자주 사용하는 명령어들
 
-**컨테이너의 혁신적 특징**:
-- **경량성**: VM 대비 10배 이상 가벼움
-- **빠른 시작**: 초 단위로 시작/종료
-- **높은 밀도**: 동일 서버에서 더 많은 애플리케이션 실행
-- **일관성**: 개발/테스트/운영 환경 동일성 보장
+**자주 사용하는 명령어**:
+```bash
+# 컨테이너 실행 (가장 중요)
+docker run -d -p 8080:80 --name web nginx
 
-**컨테이너 vs VM 비교**:
-```mermaid
-graph LR
-    subgraph "가상머신 방식"
-        A1[물리 서버] --> A2[호스트 OS]
-        A2 --> A3[하이퍼바이저]
-        A3 --> A4[VM1<br/>게스트OS+앱]
-        A3 --> A5[VM2<br/>게스트OS+앱]
-    end
-    
-    subgraph "컨테이너 방식"
-        B1[물리 서버] --> B2[호스트 OS]
-        B2 --> B3[컨테이너 런타임]
-        B3 --> B4[컨테이너1<br/>앱만]
-        B3 --> B5[컨테이너2<br/>앱만]
-    end
-    
-    style A4 fill:#ffebee
-    style A5 fill:#ffebee
-    style B4 fill:#e8f5e8
-    style B5 fill:#e8f5e8
+# 컨테이너 상태 확인
+docker ps -a
+
+# 로그 확인
+docker logs -f web
+
+# 컨테이너 접속
+docker exec -it web bash
+
+# 정리 작업
+docker system prune -a
 ```
 
-**성능 비교표**:
-| 구분 | 가상머신 | 컨테이너 |
-|------|----------|----------|
-| **시작 시간** | 수 분 | 수 초 |
-| **메모리 사용** | GB 단위 | MB 단위 |
-| **디스크 사용** | GB 단위 | MB 단위 |
-| **성능 오버헤드** | 5-10% | 1-2% |
-| **격리 수준** | 완전 격리 | 프로세스 격리 |
+**🔍 개념 3: 명령어 옵션과 플래그 (11분)**
+> **정의**: 명령어의 동작을 세밀하게 제어하는 옵션들
 
-#### 💭 함께 생각해보기 (10분)
-
-**🤝 페어 토론** (5분):
-**토론 주제**:
-1. **경험 공유**: "VM이나 컨테이너를 사용해본 경험이 있나요?"
-2. **문제 해결**: "개발 환경과 운영 환경이 달라서 겪은 문제가 있나요?"
-3. **적용 상황**: "어떤 상황에서 VM보다 컨테이너가 유리할까요?"
-
-**🎯 전체 공유** (5분):
-- **인사이트 공유**: 페어 토론에서 나온 실무 경험과 아이디어
-- **질문 수집**: 가상화 기술에 대한 궁금한 점들
-- **다음 연결**: Docker 아키텍처 학습 동기 부여
-
-### Session 2: Docker 아키텍처 (50분)
-
-#### 🎯 학습 목표
-- **이해 목표**: Docker의 전체 아키텍처와 구성 요소 이해
-- **적용 목표**: Docker 명령어와 내부 동작 원리 연결
-- **협업 목표**: 팀원들과 Docker 구조 설명 및 토론
-
-#### 📖 핵심 개념 (35분)
-
-**🔍 개념 1: Docker 전체 아키텍처 (12분)**
-> **정의**: 클라이언트-서버 구조로 동작하는 컨테이너 플랫폼
-
-**Docker 아키텍처 구성**:
-```mermaid
-graph TB
-    subgraph "Docker 아키텍처"
-        A[Docker Client<br/>docker 명령어] --> B[Docker Daemon<br/>dockerd]
-        B --> C[Images<br/>이미지 저장소]
-        B --> D[Containers<br/>실행 중인 컨테이너]
-        B --> E[Networks<br/>네트워크 관리]
-        B --> F[Volumes<br/>데이터 저장]
-        
-        G[Docker Registry<br/>Docker Hub] --> B
-    end
-    
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style C fill:#e8f5e8
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#e8f5e8
-    style G fill:#f3e5f5
-```
-
-**주요 구성 요소**:
-- **Docker Client**: 사용자가 명령어를 입력하는 인터페이스
-- **Docker Daemon**: 실제 컨테이너를 관리하는 백그라운드 서비스
-- **Docker Images**: 컨테이너 실행을 위한 템플릿
-- **Docker Containers**: 실행 중인 애플리케이션 인스턴스
-- **Docker Registry**: 이미지를 저장하고 공유하는 저장소
-
-**🔍 개념 2: Docker 이미지와 컨테이너 (12분)**
-> **정의**: 이미지는 실행 파일, 컨테이너는 실행 중인 프로세스
-
-**이미지 vs 컨테이너 관계**:
-```mermaid
-graph LR
-    A[Docker Image<br/>실행 파일] --> B[docker run]
-    B --> C[Container<br/>실행 중인 프로세스]
-    C --> D[docker commit]
-    D --> E[New Image<br/>새로운 이미지]
-    
-    style A fill:#e8f5e8
-    style E fill:#e8f5e8
-    style C fill:#fff3e0
-    style B fill:#f3e5f5
-    style D fill:#f3e5f5
-```
-
-**실생활 비유**:
-- **이미지**: 요리 레시피 (한 번 작성하면 여러 번 사용)
-- **컨테이너**: 실제 요리 (레시피로 만든 음식)
-- **Registry**: 레시피 책 (여러 레시피를 모아둔 곳)
-
-**🔍 개념 3: Docker 네트워킹과 스토리지 (11분)**
-> **정의**: 컨테이너 간 통신과 데이터 영속성을 위한 시스템
-
-**네트워킹 구조**:
-```mermaid
-graph TB
-    subgraph "Docker 네트워킹"
-        A[Host Network] --> D[Container 1]
-        B[Bridge Network] --> D
-        B --> E[Container 2]
-        C[Custom Network] --> E
-        C --> F[Container 3]
-    end
-    
-    style A fill:#e3f2fd
-    style B fill:#e3f2fd
-    style C fill:#e3f2fd
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#e8f5e8
-```
-
-**스토리지 옵션**:
-- **Volumes**: Docker가 관리하는 영속적 데이터 저장
-- **Bind Mounts**: 호스트 파일시스템과 직접 연결
-- **tmpfs**: 메모리에 임시 저장
+**중요한 옵션들**:
+- `-d`: 백그라운드 실행 (detached)
+- `-it`: 인터랙티브 터미널
+- `-p`: 포트 매핑
+- `--name`: 컨테이너 이름 지정
+- `-v`: 볼륨 마운트
+- `--rm`: 종료 시 자동 삭제
 
 #### 💭 함께 생각해보기 (15분)
 
-**🤝 페어 토론** (10분):
-**토론 주제**:
-1. **구조 이해**: "Docker의 클라이언트-서버 구조가 왜 필요할까요?"
-2. **실무 적용**: "이미지와 컨테이너의 차이를 어떻게 활용할 수 있을까요?"
-3. **문제 해결**: "컨테이너가 종료되면 데이터가 사라지는 문제를 어떻게 해결할까요?"
+**🤝 페어 실습** (10분):
+**실습 주제**:
+1. **명령어 연습**: 기본 명령어들을 실제로 실행해보기
+2. **옵션 조합**: 다양한 옵션을 조합해서 컨테이너 실행
+3. **문제 해결**: 명령어 실행 중 발생하는 오류 해결
 
 **🎯 전체 공유** (5분):
-- **아키텍처 이해도**: Docker 구조에 대한 이해 확인
-- **실습 준비**: 오후 실습에서 사용할 개념들 정리
+- **명령어 숙련도**: 기본 명령어 사용 능력 확인
+- **실습 준비**: 오후 실습에서 사용할 명령어 정리
 
-### Session 3: Docker Engine & 런타임 (50분)
+### Session 5: Docker 보안 & 베스트 프랙티스 (50분)
 
-#### 🎯 학습 목표
-- **이해 목표**: Docker Engine의 내부 동작 원리와 런타임 이해
-- **적용 목표**: 컨테이너 생명주기와 상태 관리 실습 준비
-- **협업 목표**: 팀원들과 Docker 내부 동작 원리 토론
-
-#### 📖 핵심 개념 (35분)
-
-**🔍 개념 1: Docker Engine 구조 (12분)**
-> **정의**: 컨테이너를 실행하고 관리하는 핵심 엔진
-
-**Docker Engine 내부 구조**:
-```mermaid
-graph TB
-    subgraph "Docker Engine"
-        A[Docker CLI] --> B[Docker API]
-        B --> C[containerd]
-        C --> D[runc]
-        D --> E[Linux Kernel<br/>namespaces, cgroups]
-    end
-    
-    F[사용자] --> A
-    E --> G[Container Process]
-    
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style G fill:#f3e5f5
-```
-
-**각 구성 요소 역할**:
-- **Docker CLI**: 사용자 명령어 인터페이스
-- **Docker API**: REST API를 통한 통신
-- **containerd**: 컨테이너 생명주기 관리
-- **runc**: 실제 컨테이너 실행
-- **Linux Kernel**: 격리 기술 제공
-
-**🔍 개념 2: 컨테이너 생명주기 (12분)**
-> **정의**: 컨테이너가 생성부터 삭제까지 거치는 단계들
-
-**생명주기 단계**:
-```mermaid
-graph LR
-    A[Created<br/>생성됨] --> B[Running<br/>실행 중]
-    B --> C[Paused<br/>일시정지]
-    C --> B
-    B --> D[Stopped<br/>정지됨]
-    D --> B
-    D --> E[Removed<br/>삭제됨]
-    
-    style A fill:#e8f5e8
-    style B fill:#4caf50
-    style C fill:#ff9800
-    style D fill:#f44336
-    style E fill:#9e9e9e
-```
-
-**상태별 특징**:
-- **Created**: 이미지에서 컨테이너 생성, 아직 실행 안됨
-- **Running**: 프로세스가 실행 중인 상태
-- **Paused**: 프로세스가 일시정지된 상태
-- **Stopped**: 프로세스가 종료된 상태
-- **Removed**: 컨테이너가 완전히 삭제된 상태
-
-**🔍 개념 3: 리소스 관리와 격리 (11분)**
-> **정의**: Linux 커널 기능을 활용한 컨테이너 격리 기술
-
-**격리 기술들**:
-```mermaid
-graph TB
-    subgraph "Linux 커널 격리 기술"
-        A[Namespaces<br/>네임스페이스] --> A1[PID - 프로세스 격리]
-        A --> A2[NET - 네트워크 격리]
-        A --> A3[MNT - 파일시스템 격리]
-        A --> A4[UTS - 호스트명 격리]
-        
-        B[Cgroups<br/>컨트롤 그룹] --> B1[CPU 제한]
-        B --> B2[메모리 제한]
-        B --> B3[디스크 I/O 제한]
-        B --> B4[네트워크 대역폭 제한]
-    end
-    
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style A1 fill:#e8f5e8
-    style A2 fill:#e8f5e8
-    style A3 fill:#e8f5e8
-    style A4 fill:#e8f5e8
-    style B1 fill:#f3e5f5
-    style B2 fill:#f3e5f5
-    style B3 fill:#f3e5f5
-    style B4 fill:#f3e5f5
-```
-
-**실무 활용**:
-- **개발 환경**: 각 개발자마다 독립적인 환경
-- **마이크로서비스**: 서비스별 리소스 격리
-- **멀티 테넌트**: 고객별 격리된 환경 제공
-
-#### 💭 함께 생각해보기 (15분)
-
-**🤝 페어 토론** (10분):
-**토론 주제**:
-1. **내부 동작**: "Docker 명령어를 실행했을 때 내부에서 어떤 일이 일어날까요?"
-2. **리소스 관리**: "컨테이너의 CPU나 메모리를 제한해야 하는 상황은?"
-3. **실무 적용**: "컨테이너 생명주기 관리에서 주의할 점은?"
-
-**🎯 전체 공유** (5분):
-- **이해도 확인**: Docker Engine 동작 원리 이해 점검
-- **실습 연결**: 오후 실습에서 확인할 내용들 정리
+*[Session 5 내용은 별도 파일 참조: session_5.md]*
 
 ---
 
-## 🛠️ 실습 챌린지 (3시간)
+## 🛠️ 실습 챌린지 (2.5시간)
 
 ### 🎯 챌린지 개요
 **통합 실습 목표**:
-- Docker 설치부터 기본 사용법까지 완전 습득
+- Docker 설치부터 보안 설정까지 완전 습득
 - 컨테이너 생명주기 직접 체험
+- 보안 베스트 프랙티스 적용 실습
 - 팀 협업을 통한 문제 해결 경험
 
 ### 📋 챌린지 준비 (15분)
@@ -400,7 +165,7 @@ graph TB
 - 팀 구성 (3-4명씩 자유 구성)
 - 실습 목표 및 규칙 공유
 
-### 🚀 Phase 1: Docker 설치 & 첫 컨테이너 (90분)
+### 🚀 Phase 1: Docker 설치 & 첫 컨테이너 (60분)
 
 #### 🔧 구현 단계
 **Step 1: Docker 설치 확인**
@@ -439,7 +204,7 @@ docker ps
 - [ ] 웹 서버 컨테이너 실행 성공
 - [ ] 브라우저에서 localhost:8080 접속 확인
 
-### 🌟 Phase 2: 컨테이너 생명주기 실습 (90분)
+### 🌟 Phase 2: 컨테이너 생명주기 & 보안 실습 (60분)
 
 #### 🔧 생명주기 체험
 **컨테이너 상태 변경 실습**:
@@ -463,19 +228,20 @@ docker stop lifecycle-test
 docker rm lifecycle-test
 ```
 
-**인터랙티브 컨테이너 실습**:
+#### 🔐 보안 설정 실습
+**보안 강화 컨테이너 실행**:
 ```bash
-# Ubuntu 컨테이너에 접속
-docker run -it ubuntu bash
+# 비root 사용자로 실행
+docker run --user 1000:1000 -it ubuntu bash
 
-# 컨테이너 내부에서 작업
-apt update
-apt install -y curl
-curl --version
-exit
+# 읽기 전용 파일시스템
+docker run --read-only --tmpfs /tmp nginx
 
-# 변경사항을 새 이미지로 저장
-docker commit <container-id> my-ubuntu:v1
+# 리소스 제한
+docker run --memory="256m" --cpus="0.5" nginx
+
+# 네트워크 보안 (localhost만)
+docker run -p 127.0.0.1:8080:80 nginx
 ```
 
 #### ✅ Phase 2 체크포인트
@@ -484,53 +250,40 @@ docker commit <container-id> my-ubuntu:v1
 - [ ] 컨테이너 변경사항을 이미지로 저장
 - [ ] 각 상태에서의 컨테이너 동작 이해
 
-### 🏆 Phase 3: 팀 협업 실습 (15분)
+### 🏆 Phase 3: 팀 협업 보안 실습 (30분)
 
-#### 🤝 팀별 미션
-**미션**: 각 팀이 다른 웹 애플리케이션 컨테이너 실행
+#### 🤝 팀별 보안 미션
+**미션**: 각 팀이 보안 설정을 적용한 웹 애플리케이션 컨테이너 실행
 
 **팀별 할당**:
-- **Team 1**: Apache 웹 서버 (httpd)
-- **Team 2**: Node.js 애플리케이션
-- **Team 3**: Python Flask 앱
-- **Team 4**: PHP 웹 애플리케이션
+- **Team 1**: Apache 웹 서버 (httpd) + 보안 설정
+- **Team 2**: Node.js 애플리케이션 + 비root 사용자
+- **Team 3**: Python Flask 앱 + 리소스 제한
+- **Team 4**: PHP 웹 애플리케이션 + 읽기 전용 FS
 
-**공통 요구사항**:
-- 포트 8081, 8082, 8083, 8084 사용
-- 간단한 HTML 페이지 표시
-- 팀명과 멤버 이름 포함
+**공통 보안 요구사항**:
+- localhost만 바인딩 (127.0.0.1)
+- 비root 사용자로 실행
+- 리소스 제한 적용
+- 보안 체크리스트 작성
 
-### 🎤 결과 발표 및 공유 (30분)
+### 🎤 결과 발표 및 공유 (20분)
 **팀별 발표** (5분×4팀):
-- 사용한 이미지와 설정 방법
-- 실습 중 어려웠던 점과 해결 방법
-- 팀 협업에서 배운 점
-- Docker에 대한 새로운 이해
+- 적용한 보안 설정과 이유
+- 보안 실습 중 어려웠던 점과 해결 방법
+- 팀별 보안 체크리스트 공유
+- Docker 보안에 대한 새로운 이해
 
 ---
 
-## 👥 학생 케어 (105분)
+## 👥 학생 케어 (30분)
 
-### 🟢 초급자 케어 (집중 지원) - 45분
-**개별 멘토링**:
-- Docker 기본 개념 완전 이해 확인
-- 명령어 사용법 반복 연습
-- 실습에서 어려웠던 부분 해결
-- 내일 학습을 위한 준비 상태 점검
-
-### 🟡 중급자 케어 (리더십 개발) - 45분
-**그룹 멘토링**:
-- Docker 아키텍처 심화 토론
-- 실무에서의 Docker 활용 방안
-- 초급자 도움 제공 경험 공유
-- 내일 이미지 빌드 실습 준비
-
-### 🔴 고급자 케어 (전문성 강화) - 15분
-**심화 토론**:
-- Docker 내부 구조 깊이 있는 분석
-- 컨테이너 보안 고려사항
-- 성능 최적화 방안
-- 오픈소스 기여 가능성 탐색
+### 🤝 통합 케어 (효율적 지원) - 30분
+**전체 회고 및 정리**:
+- Docker 전체 개념 정리 및 질의응답
+- 보안 실습 결과 공유 및 피드백
+- 내일 학습(이미지 빌드) 준비 상태 점검
+- 개별 질문 및 어려운 부분 해결
 
 ---
 
@@ -539,7 +292,9 @@ docker commit <container-id> my-ubuntu:v1
 ### ✅ 오늘의 성과
 - [ ] 가상화 기술 진화 과정 이해
 - [ ] Docker 전체 아키텍처 파악
-- [ ] 컨테이너 생명주기 실습 완료
+- [ ] Docker 명령어 완전 습득
+- [ ] 컨테이너 보안 베스트 프랙티스 적용
+- [ ] 보안 설정을 포함한 실습 완료
 - [ ] 팀 협업을 통한 문제 해결 경험
 
 ### 🎯 내일 준비사항
