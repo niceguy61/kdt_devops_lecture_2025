@@ -1,4 +1,4 @@
-# Week 1 Day 3 Session 4: Dockerfile & 이미지 빌드 실습
+# Week 1 Day 3 Lab 1: Dockerfile & 이미지 빌드 실습
 
 <div align="center">
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 🕘 세션 정보
+## 🕘 실습 정보
 
 **시간**: 13:00-15:00 (120분)  
 **목표**: Dockerfile 작성부터 이미지 최적화까지 완전 습득  
