@@ -39,154 +39,176 @@ graph LR
 ### 🚀 실습 1: 개발 워크플로우 체험 (12분)
 > **목표**: 실제 개발 환경처럼 컨테이너를 사용해보기
 
-#### 📋 실습 준비 (2분)
-**페어 구성**: 2명씩 짝을 이뤄서 진행
-**역할 분담**: Driver(타이핑) / Navigator(가이드)
+#### 📋 실습 준비 (1분)
+**개인 실습**: 각자 자신의 환경에서 진행
+**목표**: 여러 개의 다른 웹서버 컨테이너 동시 실행
 
-#### 🔧 Step 1: 개발용 컨테이너 실행 (3분)
+#### 🔧 Step 1: 첫 번째 개발 서버 (4분)
 ```bash
-# 1. 작업 디렉토리 생성
-mkdir docker-dev-test
-cd docker-dev-test
+# 1. 첫 번째 프로젝트 디렉토리
+mkdir project-1
+cd project-1
+echo '<h1>Project 1 - Main Site</h1><p>포트 8080</p>' > index.html
 
-# 2. 간단한 HTML 파일 생성
-echo '<h1>Hello Docker Dev!</h1>' > index.html
+# 2. 첫 번째 웹서버 실행
+docker run -d -p 8080:80 -v $(pwd):/usr/share/nginx/html --name project-1 nginx
 
-# 3. 개발용 웹서버 컨테이너 실행 (볼륨 마운트)
-docker run -d -p 8080:80 -v $(pwd):/usr/share/nginx/html --name dev-server nginx
-
-# 4. 브라우저에서 localhost:8080 확인
+# 3. 브라우저에서 localhost:8080 확인
 ```
 
-#### ⚡ Step 2: 실시간 변경 체험 (4분)
+#### ⚡ Step 2: 두 번째 개발 서버 (4분)
 ```bash
-# 1. 파일 수정해보기
-echo '<h1>Updated Content!</h1><p>Real-time update test</p>' > index.html
+# 1. 두 번째 프로젝트 (다른 디렉토리)
+cd ..
+mkdir project-2
+cd project-2
+echo '<h1>Project 2 - Admin Panel</h1><p>포트 8081</p>' > index.html
 
-# 2. 브라우저 새로고침으로 즉시 반영 확인
-# 3. 여러 번 수정해보며 실시간 반영 체험
+# 2. 두 번째 웹서버 실행 (다른 포트)
+docker run -d -p 8081:80 -v $(pwd):/usr/share/nginx/html --name project-2 nginx
+
+# 3. 브라우저에서 localhost:8081 확인
 ```
 
-#### 🎯 Step 3: 페어 역할 교대 (3분)
-- **역할 바꾸기**: Driver ↔ Navigator
-- **새로운 파일 추가**: CSS나 JavaScript 파일 추가해보기
-- **결과 공유**: 각 페어가 만든 결과물 간단히 공유
+#### 🎯 Step 3: 실시간 변경 테스트 (3분)
+```bash
+# 1. 두 프로젝트 동시에 수정해보기
+echo '<h1>Updated Project 1</h1><p>실시간 반영 테스트</p>' > ../project-1/index.html
+echo '<h1>Updated Project 2</h1><p>동시 개발 환경</p>' > index.html
+
+# 2. 두 브라우저 탭에서 각각 새로고침하여 즉시 반영 확인
+# 3. 여러 번 수정하며 독립적인 개발 환경 체험
+```
 
 **💡 실습 포인트**:
-- 볼륨 마운트로 실시간 반영되는 것 체험
-- 컨테이너 재시작 없이 개발하는 패턴 이해
-- 페어 프로그래밍으로 협업 경험
+- 여러 프로젝트를 동시에 개발하는 환경 구축
+- 각 컨테이너가 독립적으로 동작하는 것 확인
+- 볼륨 마운트로 실시간 반영되는 개발 패턴 이해
 
 ### 🐛 실습 2: 디버깅 도구 마스터하기 (12분)
 > **목표**: 컨테이너 문제 해결을 위한 필수 명령어 체험
 
 #### 🔍 Step 1: 로그 확인 실습 (4분)
 ```bash
-# 1. 현재 실행 중인 컨테이너 로그 확인
-docker logs dev-server
+# 1. 두 컨테이너의 로그 비교해보기
+docker logs project-1
+docker logs project-2
 
 # 2. 실시간 로그 모니터링 (새 터미널에서)
-docker logs -f dev-server
+docker logs -f project-1
 
-# 3. 브라우저에서 페이지 새로고침하며 로그 변화 관찰
+# 3. 다른 터미널에서 브라우저 접속하며 로그 변화 관찰
 # 4. Ctrl+C로 실시간 로그 종료
 ```
 
 #### 🔧 Step 2: 컨테이너 내부 탐험 (4분)
 ```bash
-# 1. 컨테이너 내부 접속
-docker exec -it dev-server bash
-
-# 2. 컨테이너 내부에서 명령어 실행해보기
+# 1. 첫 번째 컨테이너 내부 접속
+docker exec -it project-1 bash
 ls -la /usr/share/nginx/html/  # 마운트된 파일 확인
 ps aux                         # 실행 중인 프로세스
+exit
+
+# 2. 두 번째 컨테이너도 확인
+docker exec -it project-2 bash
 cat /etc/nginx/nginx.conf      # nginx 설정 파일
-exit                          # 컨테이너에서 나가기
+whoami                         # 현재 사용자 확인
+exit
 ```
 
 #### 📊 Step 3: 상태 모니터링 (4분)
 ```bash
-# 1. 컨테이너 상세 정보 확인
-docker inspect dev-server | grep -i "ipaddress\|port"
+# 1. 두 컨테이너 상세 정보 비교
+docker inspect project-1 | grep -i "ipaddress\|port"
+docker inspect project-2 | grep -i "ipaddress\|port"
 
 # 2. 리소스 사용량 실시간 모니터링
-docker stats dev-server
+docker stats project-1 project-2
 # (몇 초 관찰 후 Ctrl+C로 종료)
 
 # 3. 모든 컨테이너 상태 한눈에 보기
 docker ps -a
 ```
 
-**🎯 페어 미션**: 각 페어가 다른 명령어를 시도해보고 결과 공유
+**💡 개인 미션**: 각자 다른 명령어 조합을 시도해보고 차이점 발견하기
 
 ### 🚨 실습 3: 문제 해결 챌린지 (11분)
 > **목표**: 의도적으로 문제를 만들고 해결해보는 실전 연습
 
-#### 🎯 챌린지 1: 포트 충돌 해결 (4분)
+#### 🎯 챌린지 1: 포트 충돌 해결 (3분)
 ```bash
-# 1. 같은 포트로 두 번째 컨테이너 실행 (의도적 에러)
-docker run -d -p 8080:80 --name dev-server2 nginx
+# 1. 같은 포트로 세 번째 컨테이너 실행 (의도적 에러)
+docker run -d -p 8080:80 --name project-3 nginx
 # → 에러 발생!
 
 # 2. 문제 진단하기
 docker ps -a  # 컨테이너 상태 확인
-docker logs dev-server2  # 에러 로그 확인
+docker logs project-3  # 에러 로그 확인
 
 # 3. 해결하기
-docker rm dev-server2  # 실패한 컨테이너 삭제
-docker run -d -p 8081:80 --name dev-server2 nginx  # 다른 포트로 실행
+docker rm project-3  # 실패한 컨테이너 삭제
+docker run -d -p 8082:80 --name project-3 nginx  # 다른 포트로 실행
 ```
 
-#### 🎯 챌린지 2: 컨테이너 내부 파일 수정 (4분)
+#### 🎯 챌린지 2: 컨테이너 내부 파일 수정 (3분)
 ```bash
-# 1. 컨테이너 내부에서 파일 직접 수정
-docker exec -it dev-server2 bash
+# 1. 볼륨 마운트 없는 컨테이너에서 파일 수정
+docker exec -it project-3 bash
 echo '<h1>Modified inside container</h1>' > /usr/share/nginx/html/index.html
 exit
 
-# 2. 브라우저에서 localhost:8081 확인
+# 2. 브라우저에서 localhost:8082 확인
 # 3. 컨테이너 재시작 후 변경사항 확인
-docker restart dev-server2
+docker restart project-3
 # → 변경사항이 사라짐을 확인 (볼륨 마운트 없음)
 ```
 
-#### 🎯 챌린지 3: 팀별 트러블슈팅 (3분)
-**각 팀에 다른 미션 부여**:
-- **Team 1**: 메모리 사용량이 높은 컨테이너 찾기
-- **Team 2**: 특정 컨테이너의 IP 주소 찾기
-- **Team 3**: 컨테이너 내부 프로세스 개수 세기
-- **Team 4**: 가장 오래된 컨테이너 찾기
+#### 🎯 챌린지 3: 개인 트러블슈팅 미션 (5분)
+**각자 다른 미션을 순서대로 해결해보기**:
 
 ```bash
-# 힌트 명령어들
+# 미션 1: 메모리 사용량이 가장 높은 컨테이너 찾기
 docker stats --no-stream
-docker inspect <container> | grep IPAddress
-docker exec <container> ps aux | wc -l
-docker ps --format "table {{.Names}}\t{{.CreatedAt}}"
+
+# 미션 2: 모든 컨테이너의 IP 주소 찾기
+docker inspect project-1 project-2 project-3 | grep IPAddress
+
+# 미션 3: 각 컨테이너 내부 프로세스 개수 세기
+docker exec project-1 ps aux | wc -l
+docker exec project-2 ps aux | wc -l
+docker exec project-3 ps aux | wc -l
+
+# 미션 4: 컨테이너 생성 시간 순서로 정렬
+docker ps --format "table {{.Names}}\t{{.CreatedAt}}" | sort
+
+# 미션 5: 모든 컨테이너의 포트 매핑 확인
+docker port project-1
+docker port project-2
+docker port project-3
 ```
 
-**🏆 결과 발표**: 각 팀이 해결 과정과 결과 공유 (1분씩)
+**🏆 개인 성과**: 5개 미션 중 몇 개를 성공했는지 스스로 체크
 
 ## 🤝 실습 결과 공유 및 정리 (10분)
 
-### 🎤 팀별 발표 (7분)
-**발표 내용** (각 팀 1-2분):
-1. **가장 인상적이었던 실습**: "어떤 실습이 가장 유용했나요?"
-2. **발견한 팁**: "실습하면서 발견한 유용한 명령어나 방법은?"
-3. **어려웠던 점**: "어떤 부분이 가장 어려웠고, 어떻게 해결했나요?"
-4. **실무 적용**: "오늘 배운 것 중 실제 개발에 바로 써볼 만한 것은?"
+### 🎤 개인 성과 발표 (7분)
+**자유 발표** (원하는 사람만 1-2분씩):
+1. **가장 인상적이었던 발견**: "실습하면서 가장 놀랐던 점은?"
+2. **유용한 명령어**: "가장 유용하다고 생각하는 명령어는?"
+3. **해결한 문제**: "챌린지에서 어떤 문제를 어떻게 해결했나요?"
+4. **실무 적용 아이디어**: "실제 개발에 어떻게 활용할 수 있을까요?"
 
 **발표 가이드**:
 - 👥 **경험 중심**: 실제 해본 것 위주로 공유
 - 🔄 **명령어 시연**: 유용했던 명령어 직접 보여주기
-- 📝 **팁 공유**: 다른 팀이 놓쳤을 수 있는 노하우
+- 📝 **개인 노하우**: 혼자 발견한 팁이나 트릭 공유
 
 ### 🧹 정리 및 다음 준비 (3분)
 ```bash
 # 실습 환경 정리
-docker stop dev-server dev-server2
-docker rm dev-server dev-server2
-cd .. && rm -rf docker-dev-test
+docker stop project-1 project-2 project-3
+docker rm project-1 project-2 project-3
+cd .. && rm -rf project-1 project-2
 
 # 다음 실습을 위한 확인
 docker ps  # 깨끗한 상태 확인
@@ -196,9 +218,9 @@ docker images  # 사용 가능한 이미지 확인
 **🎯 다음 실습 예고**: 오후에는 더 복잡한 애플리케이션으로 실습 예정
 
 ### 💡 실습 체크 질문
-- ✅ "볼륨 마운트로 실시간 개발하는 방법을 직접 해보셨나요?"
+- ✅ "여러 개의 독립적인 개발 환경을 동시에 구축해보셨나요?"
 - ✅ "컨테이너에 문제가 생겼을 때 어떤 명령어부터 사용하시겠어요?"
-- ✅ "오늘 실습한 명령어 중 가장 유용하다고 생각하는 것은?"
+- ✅ "5개 챌린지 미션 중 몇 개를 성공적으로 완료하셨나요?"
 
 ## 🔑 핵심 키워드
 
@@ -238,20 +260,26 @@ docker images  # 사용 가능한 이미지 확인
 
 ### 📋 개발 워크플로우 체크리스트 (실습용)
 ```bash
-# 1. 개발용 컨테이너 실행 (볼륨 마운트)
-docker run -d -p 3000:3000 -v $(pwd):/app --name dev-container node:18-alpine
+# 1. 여러 프로젝트 동시 개발 환경
+docker run -d -p 3000:3000 -v $(pwd)/project-a:/app --name dev-a node:18-alpine
+docker run -d -p 3001:3000 -v $(pwd)/project-b:/app --name dev-b node:18-alpine
+docker run -d -p 3002:3000 -v $(pwd)/project-c:/app --name dev-c node:18-alpine
 
-# 2. 실시간 로그 모니터링
-docker logs -f dev-container
+# 2. 모든 프로젝트 로그 모니터링
+docker logs -f dev-a &
+docker logs -f dev-b &
+docker logs -f dev-c &
 
-# 3. 컨테이너 내부 접속하여 디버깅
-docker exec -it dev-container sh
+# 3. 각 컨테이너 개별 접속
+docker exec -it dev-a sh
+docker exec -it dev-b sh
+docker exec -it dev-c sh
 
-# 4. 리소스 사용량 모니터링
-docker stats dev-container
+# 4. 전체 리소스 사용량 모니터링
+docker stats dev-a dev-b dev-c
 
-# 5. 컨테이너 상태 및 설정 확인
-docker inspect dev-container
+# 5. 모든 컨테이너 상태 한번에 확인
+docker ps -a
 ```
 
 ### 🔍 디버깅 명령어 모음
