@@ -47,7 +47,10 @@
 | **10:50-11:00** | ☕ 휴식 | 10분 휴식 | |
 | **11:00-11:50** | 📚 이론 3 | [환경별 설정 관리](./session_3.md) | 운영 환경 대응 |
 | **11:50-13:00** | 🍽️ 점심 | 점심시간 (70분) | |
-| **13:00-15:00** | 🛠️ 실습 | [Docker Compose 실전 프로젝트](./session_4.md) | 멀티 컨테이너 구축 |
+| **12:00-12:50** | 🛠️ 실습 1 | [Docker Compose 실전 프로젝트](./lab_1.md) | 멀티 컨테이너 구축 |
+| **12:50-13:00** | ☕ 휴식 | 10분 휴식 | |
+| **13:00-14:00** | 🍽️ 점심 | 점심시간 (60분) | |
+| **14:00-14:50** | 🛠️ 실습 2 | [Docker Compose 모니터링](./lab_2.md) | Prometheus + Grafana |
 | **15:00-15:15** | ☕ 휴식 | 15분 휴식 | |
 | **15:15-18:00** | 👥 케어 | Week 1 총정리 & 회고 | 성과 점검 & 포트폴리오 |
 
@@ -94,43 +97,68 @@
 - Environment Variables, .env, Docker Secrets
 - Override, extends, 환경별 배포
 
-### [Session 4: Docker Compose 실전 프로젝트](./session_4.md)
-**시간**: 13:00-15:00 (120분)
+### [Lab 1: Docker Compose 실전 프로젝트](./lab_1.md)
+**시간**: 12:00-12:50 (50분)
 
 #### 🎯 핵심 내용
 - **풀스택 애플리케이션**: React + Node.js + PostgreSQL + Redis
 - **멀티 컨테이너 오케스트레이션**: 서비스 간 통신 및 의존성 관리
 - **환경별 배포**: 개발/프로덕션 환경 설정 분리
-- **모니터링 통합**: Prometheus + Grafana (고급)
+- **실무 수준 구현**: 리버스 프록시, 데이터 영속성
 
 #### 🔑 핵심 키워드
 - Multi-container Application, Service Communication
 - Environment Override, Production Deployment
 
+### [Lab 2: Docker Compose 모니터링 시스템](./lab_2.md)
+**시간**: 14:00-14:50 (50분)
+
+#### 🎯 핵심 내용
+- **모니터링 스택**: Prometheus + Grafana + Exporters
+- **메트릭 수집**: 시스템, 컨테이너, 애플리케이션 메트릭
+- **시각화 대시보드**: Grafana 대시보드 생성 및 커스터마이징
+- **알림 시스템**: 임계치 기반 알림 및 자동화
+
+#### 🔑 핵심 키워드
+- Prometheus, Grafana, Monitoring Stack
+- Metrics Collection, Alerting, Observability
+
 ---
 
-## 🛠️ Docker Compose 실전 프로젝트 (2시간)
+## 🛠️ 실습 세션 개요
 
-### 🎯 프로젝트 개요
-**최종 목표**: 실무와 유사한 풀스택 웹 애플리케이션 구축
+### 🎯 Lab 1: Docker Compose 실전 프로젝트 (50분)
+**목표**: 실무와 유사한 풀스택 웹 애플리케이션 구축
 
-### 📋 아키텍처 요구사항
-- **Frontend**: React/Vue.js 기반 SPA
-- **Backend**: Node.js/Python API 서버
+#### 📋 아키텍처 요구사항
+- **Frontend**: React 기반 SPA
+- **Backend**: Node.js API 서버
 - **Database**: PostgreSQL + Redis 조합
-- **Monitoring**: Prometheus + Grafana 대시보드
 - **Load Balancer**: Nginx 리버스 프록시
 
-### 🚀 프로젝트 단계
-1. **Phase 1 (30분)**: 팀 구성 및 계획 수립
-2. **Phase 2 (90분)**: 개발 및 구현
-3. **Phase 3 (60분)**: 통합 및 테스트
-4. **Phase 4 (30분)**: 최종 발표 및 데모
+#### 🚀 구현 단계
+1. **프로젝트 구조 설계** (10분)
+2. **서비스 구현** (30분)
+3. **통합 테스트** (10분)
+
+### 📊 Lab 2: Docker Compose 모니터링 (50분)
+**목표**: Prometheus + Grafana 모니터링 시스템 구축
+
+#### 📋 모니터링 스택
+- **메트릭 수집**: Prometheus + Exporters
+- **시각화**: Grafana 대시보드
+- **알림**: 임계치 기반 알림 시스템
+
+#### 🚀 구현 단계
+1. **모니터링 스택 구성** (15분)
+2. **Grafana 대시보드 설정** (20분)
+3. **알림 및 자동화** (10분)
+4. **고급 모니터링 기능** (5분)
 
 ### 🏆 기대 성과
 - 실무 수준의 멀티 컨테이너 시스템 구축
-- 팀 협업을 통한 복합 시스템 개발 경험
 - Docker Compose를 활용한 효율적 개발 환경 구성
+- Prometheus + Grafana 모니터링 시스템 마스터
 - 환경별 설정 관리 실무 경험
 
 ---
@@ -187,6 +215,7 @@ graph LR
 
 *Week 1을 통해 DevOps와 컨테이너 기술의 탄탄한 기초를 완성했습니다*
 
-**시작**: [Session 1 - Docker Compose 개념](./session_1.md)
+**시작**: [Session 1 - Docker Compose 개념](./session_1.md)  
+**실습**: [Lab 1 - 실전 프로젝트](./lab_1.md) | [Lab 2 - 모니터링](./lab_2.md)
 
 </div>
