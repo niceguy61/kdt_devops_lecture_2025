@@ -112,36 +112,81 @@ graph TB
 ```
 *동일한 레이어를 여러 이미지가 공유*
 
-**레이어 공유의 효율성**:
-- **저장 공간 절약**: 동일한 베이스 이미지 공유
-- **네트워크 효율성**: 변경된 레이어만 다운로드
-- **빌드 속도 향상**: 캐시된 레이어 재사용
+**📊 레이어별 역할 분담**:
 
-### 🔍 개념 2: 이미지 식별과 태깅 (12분)
-
-> **정의**: 이미지를 구분하고 관리하기 위한 식별 체계
-
-**이미지 식별 방법**:
-```mermaid
-graph LR
-    A[Image ID<br/>sha256:abc123...] --> B[Repository<br/>nginx]
-    B --> C[Tag<br/>latest, 1.21, alpine]
-    C --> D[Full Name<br/>nginx:1.21-alpine]
-    
-    style A fill:#ffebee
-    style B fill:#e8f5e8
-    style C fill:#fff3e0
-    style D fill:#e3f2fd
+### 🔒 **이미지 레이어 (Read-Only)**
+```
+Layer 4: [App Dependencies]     ← 읽기 전용
+Layer 3: [Application Code]     ← 읽기 전용  
+Layer 2: [Runtime Environment]  ← 읽기 전용
+Layer 1: [Base OS]             ← 읽기 전용
 ```
 
-**태깅 전략**:
-- **버전 태그**: `app:1.0.0`, `app:1.0.1`
-- **환경 태그**: `app:dev`, `app:staging`, `app:prod`
-- **특징 태그**: `app:alpine`, `app:slim`
+### ✏️ **컨테이너 레이어 (Read/Write)**
+```
+Container Layer: [모든 변경사항]  ← 읽기/쓰기 가능
+├── 새로 생성된 파일들
+├── 수정된 파일들의 복사본
+└── 삭제 마킹된 파일들
+```
 
-### 🔍 개념 3: 이미지 최적화 기법 (11분)
+**📝 실제 동작 예시**:
+```bash
+# 1. 컨테이너 실행
+docker run -it --name demo ubuntu:20.04 bash
 
-> **정의**: 이미지 크기를 줄이고 성능을 향상시키는 방법들
+# 2. 이미지 레이어의 파일 확인
+cat /etc/hostname  # 원본 파일 (이미지 레이어)
+
+# 3. 파일 수정 (Copy-on-Write 발생)
+echo "modified-hostname" > /etc/hostname
+
+# 4. 수정된 파일 확인
+cat /etc/hostname  # 이제 Container Layer의 복사본을 읽음
+```
+
+### 🔍 개념 2: 실습으로 확인하기 (12분)
+
+> **목표**: 레이어 구조와 Copy-on-Write를 실제로 확인해보기
+
+**📝 레이어 구조 확인**
+```bash
+# 1. 이미지 레이어 확인
+docker inspect nginx:alpine | grep -A 10 "RootFS"
+
+# 2. 컨테이너 실행 후 변경사항 확인
+docker run -d --name web nginx:alpine
+docker exec web sh -c "echo 'test' > /tmp/newfile.txt"
+
+# 3. 컨테이너의 변경사항 확인
+docker diff web
+# A /tmp/newfile.txt  (A = Added)
+# C /var/log          (C = Changed)
+```
+
+**🔍 파일 시스템 레이어 확인**
+```bash
+# 컨테이너의 실제 파일 시스템 위치 확인
+docker inspect web | grep MergedDir
+
+# 결과: /var/lib/docker/overlay2/[hash]/merged
+# 이 디렉토리가 모든 레이어가 합쳐진 최종 파일 시스템
+```
+
+### 🔍 개념 3: 핵심 포인트 정리 (11분)
+
+> **목표**: Docker 레이어 시스템의 핵심 이해사항 정리
+
+**✅ 이해해야 할 점**
+1. **이미지 = 읽기 전용 레이어들의 스택**
+2. **컨테이너 = 이미지 + 읽기/쓰기 레이어**
+3. **파일 수정 시 Copy-on-Write로 컨테이너 레이어에 복사**
+4. **여러 컨테이너가 동일한 이미지 레이어 공유**
+
+**🎯 실무 의미**
+- **효율성**: 동일한 이미지로 100개 컨테이너 실행해도 이미지는 1개만 저장
+- **격리성**: 각 컨테이너의 변경사항은 서로 영향 없음
+- **임시성**: 컨테이너 삭제 시 변경사항 모두 사라짐 (데이터 영속성 필요 시 볼륨 사용)
 
 **🏗️ 멀티스테이지 빌드 개념**
 ```mermaid
