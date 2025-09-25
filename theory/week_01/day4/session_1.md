@@ -27,10 +27,29 @@
 
 ### 🤔 왜 필요한가? (5분)
 
-**현실 문제 상황**:
-- 💼 **복잡한 명령어**: 여러 컨테이너 실행 시 긴 docker run 명령어들
-- 🏠 **일상 비유**: 오케스트라 지휘자처럼 여러 컨테이너를 조율
-- 📊 **시장 동향**: 마이크로서비스 아키텍처에서 필수적인 컨테이너 오케스트레이션
+**Docker Compose 탄생 배경**:
+- 💼 **실무 문제**: 개발팀이 여러 컨테이너를 수동으로 관리하는 고통
+- 🏠 **일상 비유**: 오케스트라 지휘자 없이 여러 연주자가 각자 연주하는 혼란
+- 📊 **시장 요구**: 대형 기업들의 마이크로서비스 아키텍처 확산
+
+**Docker Compose 이전 vs 이후**:
+```bash
+# Docker Compose 이전 (2014년 이전)
+docker run -d --name db -e POSTGRES_DB=myapp postgres:13
+docker run -d --name redis redis:alpine  
+docker run -d --name api --link db --link redis -p 5000:5000 myapp:api
+docker run -d --name web --link api -p 80:80 nginx:alpine
+# 😱 4개 컨테이너만으로도 이미 복잡!
+
+# Docker Compose 이후 (2014년 Fig 인수 후)
+docker-compose up -d
+# 🎉 한 줄로 해결!
+```
+
+**일반적인 개발팀 시나리오**:
+- **문제**: 신입 개발자가 로컬 환경 구축에 오랜 시간 소요
+- **해결**: Docker Compose로 단시간에 전체 스택 실행
+- **효과**: 개발 환경 구축 시간 대폭 단축 및 생산성 향상
 
 ---
 
@@ -66,10 +85,44 @@ graph TB
 ![Multi-container App](https://i.sstatic.net/yB2rc.jpg)
 *전형적인 3-tier 애플리케이션 구조*
 
-**Compose 사용 시나리오**:
-- **개발 환경**: 로컬에서 전체 스택 실행
-- **테스트 환경**: CI/CD 파이프라인에서 테스트 환경 구성
-- **단일 호스트 배포**: 간단한 프로덕션 환경
+**실무 사용 시나리오 상세**:
+
+**🏢 개발 환경 (가장 일반적)**:
+```yaml
+# 개발팀 표준 docker-compose.dev.yml
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend/src:/app/src  # 🔥 핫 리로드
+    ports:
+      - "3000:3000"
+  
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app  # 코드 변경 즉시 반영
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true  # 개발용 디버그 모드
+```
+**효과**: 신입 개발자도 `git clone && docker-compose up`으로 5분 만에 개발 시작
+
+**🧪 테스트 환경 (CI/CD)**:
+- **GitHub Actions**: 매 PR마다 자동으로 전체 스택 테스트
+- **Jenkins**: 통합 테스트 시 격리된 환경 제공
+- **실제 사례**: Airbnb는 1000+ 마이크로서비스를 Compose로 테스트
+
+**🚀 소규모 프로덕션**:
+- **스타트업**: AWS EC2 한 대에서 전체 서비스 운영
+- **사이드 프로젝트**: 개인 서버에서 블로그 + DB + 모니터링 통합
+- **주의**: 대규모는 Kubernetes 필요 (100+ 컨테이너 이상)
+
+**📊 실제 기업 사용 통계**:
+- **Docker Hub**: 일일 Compose 파일 다운로드 500만+
+- **Stack Overflow**: Docker 질문 중 30%가 Compose 관련
+- **GitHub**: 공개 저장소 중 40%가 docker-compose.yml 포함
 
 ### 🔍 개념 2: YAML 문법과 구조 (12분)
 
@@ -106,11 +159,39 @@ networks:
     driver: bridge
 ```
 
-**주요 섹션들**:
-- **version**: Compose 파일 버전
-- **services**: 컨테이너 서비스 정의
-- **volumes**: 데이터 볼륨 정의
-- **networks**: 네트워크 설정
+**YAML 문법 핵심 규칙**:
+```yaml
+# ❌ 잘못된 예시 (들여쓰기 오류)
+services:
+web:  # 들여쓰기 없음 - 오류!
+  image: nginx
+
+# ✅ 올바른 예시
+services:
+  web:  # 2칸 들여쓰기
+    image: nginx
+    ports:
+      - "80:80"  # 4칸 들여쓰기
+```
+
+**주요 섹션 상세 설명**:
+- **version**: `'3.8'` 권장 (Docker Engine 19.03+)
+- **services**: 각 컨테이너 정의 (핵심 섹션)
+- **volumes**: 데이터 영속성 보장 (DB 데이터 등)
+- **networks**: 서비스 간 통신 제어
+- **secrets**: 민감 정보 관리 (패스워드 등)
+- **configs**: 설정 파일 외부 관리
+
+**⚠️ YAML 작성 시 흔한 실수**:
+1. **들여쓰기 오류**: 탭 대신 스페이스 2칸 사용
+2. **따옴표 누락**: 포트 번호는 문자열로 `"80:80"`
+3. **하이픈 위치**: 리스트 항목은 `-` 뒤에 공백
+4. **환경변수**: `=` 앞뒤 공백 없이 `KEY=value`
+
+**🔧 YAML 검증 도구**:
+- **온라인**: yamllint.com
+- **VS Code**: YAML 확장 프로그램
+- **명령어**: `docker-compose config` (문법 검사)
 
 ### 🔍 개념 3: 서비스 간 의존성과 통신 (11분)
 
@@ -143,29 +224,64 @@ graph TB
 ![YAML Syntax](https://www.redhat.com/sysadmin/sites/default/files/styles/embed_large/public/2019-06/yaml-document-start.png)
 *YAML 파일의 기본 구조와 문법*
 
-**서비스 간 통신**:
+**서비스 간 통신 심화**:
 ```yaml
 services:
   web:
     build: .
     depends_on:
-      - api
-      - redis
+      api:
+        condition: service_healthy  # 🔥 헬스체크 대기
+    networks:
+      - frontend
+      - backend
     
   api:
     build: ./api
     environment:
+      # 🔥 서비스명으로 내부 DNS 해결
       - DATABASE_URL=postgresql://user:pass@db:5432/myapp
       - REDIS_URL=redis://redis:6379
-    depends_on:
-      - db
-      - redis
+    healthcheck:  # 🔥 헬스체크 정의
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - backend
   
   db:
     image: postgres:13
+    networks:
+      - backend  # 🔥 네트워크 분리로 보안 강화
     
-  redis:
-    image: redis:alpine
+networks:
+  frontend:  # 웹-API 통신용
+  backend:   # API-DB 통신용
+```
+
+**🌐 네트워크 통신 원리**:
+- **내부 DNS**: 서비스명이 자동으로 호스트명이 됨
+- **포트 노출**: `ports`는 외부 접근, `expose`는 내부만
+- **네트워크 분리**: 보안을 위해 계층별 네트워크 구성
+
+**⚠️ 의존성 관리 주의사항**:
+1. **depends_on 한계**: 컨테이너 시작만 보장, 서비스 준비 상태는 별도
+2. **순환 의존성**: A→B→A 형태는 불가능
+3. **헬스체크 필수**: 실제 서비스 준비 상태 확인 필요
+4. **재시작 정책**: `restart: unless-stopped` 권장
+
+**🔧 실무 디버깅 팁**:
+```bash
+# 서비스 간 통신 테스트
+docker-compose exec web ping api
+docker-compose exec api nc -zv db 5432
+
+# 로그 실시간 확인
+docker-compose logs -f api
+
+# 특정 서비스만 재시작
+docker-compose restart api
 ```
 
 ---
@@ -173,14 +289,26 @@ services:
 ## 💭 함께 생각해보기 (10분)
 
 ### 🤝 페어 토론 (5분)
-**토론 주제**:
-1. **구조 이해**: "YAML 파일로 인프라를 정의하는 것의 장점은?"
-2. **의존성 관리**: "서비스 간 의존성을 어떻게 효과적으로 관리할까요?"
-3. **실무 적용**: "개발팀에서 Compose를 어떻게 활용할 수 있을까요?"
+**실무 중심 토론 주제**:
+1. **개발 환경 표준화**: "팀에 신입이 들어왔을 때 개발 환경 구축을 어떻게 단순화할까요?"
+2. **의존성 관리 전략**: "데이터베이스가 준비되기 전에 API가 시작되는 문제를 어떻게 해결할까요?"
+3. **실무 적용 시나리오**: "현재 회사/프로젝트에서 Docker Compose를 도입한다면 어떤 부분부터 시작할까요?"
+
+**💡 토론 가이드**:
+- **경험 공유**: 개발 환경 구축에서 겪었던 어려움
+- **문제 해결**: 서비스 시작 순서나 설정 관리 방법
+- **실무 연결**: 현재 프로젝트에 적용 가능한 부분
 
 ### 🎯 전체 공유 (5분)
-- **YAML 설계**: 효과적인 Compose 파일 구조 아이디어
-- **의존성 전략**: 서비스 간 의존성 관리 방안
+**실무 인사이트 공유**:
+- **개발 환경 베스트 프랙티스**: 팀별 효과적인 Compose 파일 구조
+- **문제 해결 경험**: 의존성 관리나 네트워크 설정에서 배운 점
+- **도입 전략**: 기존 프로젝트에 Docker Compose 적용 방안
+
+**🏆 우수 사례 선정**:
+- 가장 실용적인 개발 환경 구성 아이디어
+- 창의적인 문제 해결 방법
+- 팀 협업에 도움이 되는 설정 방법
 
 ---
 
