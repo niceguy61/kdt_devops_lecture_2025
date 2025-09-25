@@ -190,12 +190,141 @@ graph TB
 
 ---
 
+## 🛠️ 아키텍처 설계 실습 (10분)
+
+### 🎨 3-Tier 아키텍처 설계
+
+**실습 목표**: 간단한 3계층 애플리케이션 구성
+
+```bash
+# 아키텍처 실습 디렉토리
+mkdir ~/architecture-practice && cd ~/architecture-practice
+
+# 3-Tier 아키텍처 Compose 파일
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  # Presentation Tier
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - frontend-network
+      - backend-network
+
+  frontend:
+    image: httpd:alpine
+    volumes:
+      - ./html:/usr/local/apache2/htdocs
+    networks:
+      - frontend-network
+
+  # Application Tier
+  backend:
+    image: node:alpine
+    working_dir: /app
+    command: sh -c "echo 'console.log(\"Backend running on port 3000\");' > app.js && node -e 'require(\"http\").createServer((req,res)=>{res.writeHead(200,{\"Content-Type\":\"application/json\"});res.end(JSON.stringify({status:\"healthy\",tier:\"application\"}))}).listen(3000)'"
+    networks:
+      - backend-network
+      - database-network
+
+  # Data Tier
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - database-network
+
+  redis:
+    image: redis:alpine
+    networks:
+      - database-network
+
+volumes:
+  postgres_data:
+
+networks:
+  frontend-network:
+  backend-network:
+  database-network:
+EOF
+
+# Nginx 설정
+cat > nginx.conf << 'EOF'
+events { worker_connections 1024; }
+http {
+    upstream frontend {
+        server frontend:80;
+    }
+    upstream backend {
+        server backend:3000;
+    }
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://frontend;
+        }
+        location /api/ {
+            proxy_pass http://backend/;
+        }
+    }
+}
+EOF
+
+# 간단한 HTML
+mkdir html
+cat > html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>3-Tier Architecture</title></head>
+<body>
+    <h1>🏢 3-Tier Architecture Demo</h1>
+    <p><strong>Presentation Tier:</strong> Nginx + Frontend</p>
+    <p><strong>Application Tier:</strong> Node.js Backend</p>
+    <p><strong>Data Tier:</strong> PostgreSQL + Redis</p>
+    <button onclick="fetch('/api/').then(r=>r.json()).then(d=>alert(JSON.stringify(d)))">Test Backend</button>
+</body>
+</html>
+EOF
+
+# 실행 및 테스트
+docker-compose up -d
+docker-compose ps
+
+# 네트워크 구조 확인
+docker network ls | grep architecture
+
+# 정리
+docker-compose down
+```
+
+### ✅ 실습 체크포인트
+- [ ] 3계층 아키텍처 Compose 파일 작성
+- [ ] 계층별 네트워크 분리 설정
+- [ ] 로드 밸런서(Nginx) 설정
+- [ ] 전체 시스템 동작 확인
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
 - [ ] 3-Tier 아키텍처 패턴 완전 이해
 - [ ] 마이크로서비스 아키텍처 개념 습득
 - [ ] 모니터링과 로깅 통합 방안 파악
+- [ ] 3계층 아키텍처 실습 완료
 - [ ] 실무 아키텍처 설계 기반 완성
 
 ### 🎯 다음 세션 준비

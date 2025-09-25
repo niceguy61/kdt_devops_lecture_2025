@@ -41,7 +41,7 @@
 > **정의**: 여러 컨테이너로 구성된 애플리케이션을 정의하고 실행하는 도구
 
 **🖼️ Docker Compose 아키텍처**
-![Docker Compose Architecture](https://docs.docker.com/compose/images/compose-application.png)
+![Docker Compose Architecture](https://assets.community.aws/a/2rZiFKvUe94JUmTTO2we7sJa4Pi/1_Iz.webp?imgSize=1400x635)
 *출처: Docker 공식 문서*
 
 **Compose의 장점**:
@@ -63,7 +63,7 @@ graph TB
 ```
 
 **🖼️ 멀티 컨테이너 애플리케이션**
-![Multi-container App](https://docs.docker.com/get-started/images/multi-container.png)
+![Multi-container App](https://i.sstatic.net/yB2rc.jpg)
 *전형적인 3-tier 애플리케이션 구조*
 
 **Compose 사용 시나리오**:
@@ -201,13 +201,84 @@ services:
 
 ---
 
+## 🛠️ 간단 실습 (10분)
+
+### 🚀 첫 번째 Docker Compose 파일 작성
+
+**실습 목표**: 간단한 웹 + 데이터베이스 구성
+
+```bash
+# 실습 디렉토리 생성
+mkdir ~/compose-practice && cd ~/compose-practice
+
+# docker-compose.yml 작성
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./html:/usr/share/nginx/html
+  
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+EOF
+
+# 간단한 HTML 파일 생성
+mkdir html
+cat > html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Compose 첫 실습</title>
+</head>
+<body>
+    <h1>🎉 Docker Compose 성공!</h1>
+    <p>웹 서버와 데이터베이스가 함께 실행 중입니다.</p>
+</body>
+</html>
+EOF
+
+# 실행 및 테스트
+docker-compose up -d
+docker-compose ps
+
+# 브라우저에서 http://localhost:8080 접속 확인
+
+# 정리
+docker-compose down
+```
+
+### ✅ 실습 체크포인트
+- [ ] docker-compose.yml 파일 작성 완료
+- [ ] 서비스 간 의존성 설정 확인
+- [ ] 웹 서버 접속 성공
+- [ ] 컨테이너 상태 확인 및 정리
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
 - [ ] Docker Compose 필요성과 장점 완전 이해
 - [ ] YAML 기본 문법과 구조 습득
 - [ ] 서비스 간 의존성 관리 방법 파악
-- [ ] 실습을 위한 기본 지식 완성
+- [ ] 간단한 Docker Compose 실습 완료
+- [ ] 다음 세션 실습을 위한 기본 지식 완성
 
 ### 🎯 다음 세션 준비
 - **주제**: 멀티 컨테이너 아키텍처 설계

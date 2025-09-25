@@ -199,13 +199,181 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ---
 
+## 🛠️ 환경별 설정 실습 (10분)
+
+### ⚙️ 개발/프로덕션 환경 분리
+
+**실습 목표**: 환경별 Docker Compose 오버라이드 실습
+
+```bash
+# 환경 설정 실습 디렉토리
+mkdir ~/environment-practice && cd ~/environment-practice
+
+# 기본 docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    environment:
+      - ENV_NAME=${ENV_NAME:-development}
+    volumes:
+      - ./html:/usr/share/nginx/html
+    depends_on:
+      - app
+
+  app:
+    image: node:alpine
+    working_dir: /app
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - API_KEY=${API_KEY}
+    command: sh -c "echo 'Environment: ${NODE_ENV}' && sleep infinity"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+EOF
+
+# 개발 환경 오버라이드
+cat > docker-compose.dev.yml << 'EOF'
+version: '3.8'
+
+services:
+  web:
+    volumes:
+      - ./html:/usr/share/nginx/html:ro  # 읽기 전용
+    
+  app:
+    volumes:
+      - ./app:/app  # 코드 변경 시 자동 반영
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=debug
+    
+  db:
+    ports:
+      - "5432:5432"  # 개발 시 직접 접근 가능
+EOF
+
+# 프로덕션 환경 오버라이드
+cat > docker-compose.prod.yml << 'EOF'
+version: '3.8'
+
+services:
+  web:
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    
+  app:
+    restart: always
+    environment:
+      - LOG_LEVEL=info
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    
+  db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+EOF
+
+# 개발 환경 변수
+cat > .env.dev << 'EOF'
+ENV_NAME=development
+NODE_ENV=development
+WEB_PORT=8080
+DB_NAME=myapp_dev
+DB_USER=dev_user
+DB_PASSWORD=dev_password
+DATABASE_URL=postgresql://dev_user:dev_password@db:5432/myapp_dev
+API_KEY=dev_api_key_12345
+EOF
+
+# 프로덕션 환경 변수
+cat > .env.prod << 'EOF'
+ENV_NAME=production
+NODE_ENV=production
+WEB_PORT=80
+DB_NAME=myapp_prod
+DB_USER=prod_user
+DB_PASSWORD=super_secure_prod_password_2024
+DATABASE_URL=postgresql://prod_user:super_secure_prod_password_2024@db:5432/myapp_prod
+API_KEY=prod_api_key_abcdef123456
+EOF
+
+# HTML 파일
+mkdir html
+cat > html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Environment Demo</title></head>
+<body>
+    <h1>🌍 Environment Configuration Demo</h1>
+    <p>Check the container logs to see environment-specific settings!</p>
+</body>
+</html>
+EOF
+
+# 개발 환경 테스트
+echo "💻 개발 환경 실행..."
+cp .env.dev .env
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose logs app | head -5
+docker-compose down
+
+# 프로덕션 환경 테스트
+echo "🚀 프로덕션 환경 실행..."
+cp .env.prod .env
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker-compose logs app | head -5
+docker-compose down
+
+# 정리
+rm .env
+```
+
+### ✅ 실습 체크포인트
+- [ ] 기본 docker-compose.yml 파일 작성
+- [ ] 개발/프로덕션 환경 오버라이드 파일 작성
+- [ ] 환경별 .env 파일 설정
+- [ ] 각 환경에서 다른 설정 적용 확인
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
 - [ ] 환경별 설정 분리 방법 완전 이해
 - [ ] 환경 변수와 시크릿 관리 방법 습득
 - [ ] Compose 파일 오버라이드 기법 파악
-- [ ] Week 1 통합 프로젝트 준비 완료
+- [ ] 환경별 설정 실습 완료
+- [ ] Session 4 실전 프로젝트 준비 완료
 
 ### 🎯 통합 프로젝트 준비
 - **연결고리**: 모든 이론 학습 → 실무 프로젝트 구현
