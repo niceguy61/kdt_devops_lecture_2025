@@ -74,21 +74,21 @@ services:
     networks:
       - monitoring
 
-  # cAdvisor - 컨테이너 메트릭
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: fullstack-cadvisor
-    ports:
-      - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/snap/docker/common/var-lib-docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    privileged: true
-    networks:
-      - monitoring
+  # # cAdvisor - 컨테이너 메트릭 (WSL에서 문제 발생)
+  # cadvisor:
+  #   image: gcr.io/cadvisor/cadvisor:latest
+  #   container_name: fullstack-cadvisor
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /var/snap/docker/common/var-lib-docker/:/var/lib/docker:ro
+  #     - /dev/disk/:/dev/disk:ro
+  #   privileged: true
+  #   networks:
+  #     - monitoring
 
   # PostgreSQL Exporter - 데이터베이스 메트릭
   postgres-exporter:
