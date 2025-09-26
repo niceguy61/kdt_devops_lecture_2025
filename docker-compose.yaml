@@ -1,0 +1,32 @@
+services:
+  web:
+    build: .
+    depends_on:
+      api:
+        condition: service_healthy  # 🔥 헬스체크 대기
+    networks:
+      - frontend
+      - backend
+    
+  api:
+    build: ./api
+    environment:
+      # 🔥 서비스명으로 내부 DNS 해결
+      - DATABASE_URL=postgresql://user:pass@db:5432/myapp
+      - REDIS_URL=redis://redis:6379
+    healthcheck:  # 🔥 헬스체크 정의
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - backend
+  
+  db:
+    image: postgres:13
+    networks:
+      - backend  # 🔥 네트워크 분리로 보안 강화
+    
+networks:
+  frontend:  # 웹-API 통신용
+  backend:   # API-DB 통신용
