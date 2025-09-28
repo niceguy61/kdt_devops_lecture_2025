@@ -92,7 +92,8 @@ graph TB
     style LB fill:#fff3e0
     style A fill:#e8f5e8
     style C fill:#e8f5e8
-    style DB,BK fill:#e3f2fd
+    style DB fill:#e3f2fd
+    style BK fill:#e3f2fd
 ```
 
 **실생활 비유**: 
