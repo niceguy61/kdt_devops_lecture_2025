@@ -76,12 +76,20 @@ graph TB
     R2 --> DR
     DR --> T
     
-    style W,M fill:#fff3e0
-    style V1,V2 fill:#f3e5f5
-    style S,C,V fill:#e8f5e8
-    style L1,L2 fill:#e3f2fd
-    style R1,R2,R3 fill:#ffebee
-    style DR,T fill:#ff9800
+    style W fill:#fff3e0
+    style M fill:#fff3e0
+    style V1 fill:#f3e5f5
+    style V2 fill:#f3e5f5
+    style S fill:#e8f5e8
+    style C fill:#e8f5e8
+    style V fill:#e8f5e8
+    style L1 fill:#e3f2fd
+    style L2 fill:#e3f2fd
+    style R1 fill:#ffebee
+    style R2 fill:#ffebee
+    style R3 fill:#ffebee
+    style DR fill:#ff9800
+    style T fill:#ff9800
 ```
 
 ---

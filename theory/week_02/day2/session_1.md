@@ -108,10 +108,16 @@ graph TB
         J[원격 스토리지 연결]
     end
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#fff3e0
-    style E,F fill:#e8f5e8
-    style G,H,I,J fill:#e3f2fd
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#e3f2fd
+    style J fill:#e3f2fd
 ```
 
 **Volume 명령어와 활용**:
@@ -176,8 +182,12 @@ graph LR
     B -.직접 연결.-> E
     C -.읽기 전용.-> F
     
-    style A,B,C fill:#fff3e0
-    style D,E,F fill:#e8f5e8
+    style A fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
 ```
 
 **tmpfs 메모리 스토리지**:
@@ -196,9 +206,14 @@ graph TB
         H[메모리 제한]
     end
     
-    style A,B fill:#f3e5f5
-    style C,D fill:#fff3e0
-    style E,F,G,H fill:#e3f2fd
+    style A fill:#f3e5f5
+    style B fill:#f3e5f5
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
 ```
 
 **스토리지 유형별 비교**:

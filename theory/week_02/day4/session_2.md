@@ -94,9 +94,13 @@ graph TB
     
     style API fill:#ff9800
     style ETCD fill:#e8f5e8
-    style SCHED,CM,CCM fill:#fff3e0
-    style KUBELET1,KUBELET2 fill:#f3e5f5
-    style POD1,POD2 fill:#ffebee
+    style SCHED fill:#fff3e0
+    style CM fill:#fff3e0
+    style CCM fill:#fff3e0
+    style KUBELET1 fill:#f3e5f5
+    style KUBELET2 fill:#f3e5f5
+    style POD1 fill:#ffebee
+    style POD2 fill:#ffebee
 ```
 
 **Control Plane 구성요소 상세**:
@@ -187,7 +191,8 @@ graph TB
     style POD fill:#ffebee
     style DEPLOY fill:#e8f5e8
     style SVC fill:#fff3e0
-    style PV,PVC fill:#f3e5f5
+    style PV fill:#f3e5f5
+    style PVC fill:#f3e5f5
     style NS fill:#e3f2fd
 ```
 
@@ -320,8 +325,12 @@ graph TB
     SVC2 --> POD3
     SVC2 --> POD4
     
-    style POD1,POD2,POD3,POD4 fill:#e8f5e8
-    style SVC1,SVC2 fill:#fff3e0
+    style POD1 fill:#e8f5e8
+    style POD2 fill:#e8f5e8
+    style POD3 fill:#e8f5e8
+    style POD4 fill:#e8f5e8
+    style SVC1 fill:#fff3e0
+    style SVC2 fill:#fff3e0
     style ING fill:#f3e5f5
     style LB fill:#ffebee
 ```
@@ -361,7 +370,10 @@ graph TB
     style PVC fill:#fff3e0
     style PV fill:#f3e5f5
     style SC fill:#ffebee
-    style NFS,EBS,GCE,LOCAL fill:#e3f2fd
+    style NFS fill:#e3f2fd
+    style EBS fill:#e3f2fd
+    style GCE fill:#e3f2fd
+    style LOCAL fill:#e3f2fd
 ```
 
 **스토리지 핵심 개념**:

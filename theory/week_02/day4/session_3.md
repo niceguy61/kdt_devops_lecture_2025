@@ -77,9 +77,18 @@ graph TB
     A4 --> B1 --> B2 --> B3 --> B4
     B4 --> C1 --> C2 --> C3 --> C4
     
-    style A1,A2,A3,A4 fill:#e8f5e8
-    style B1,B2,B3,B4 fill:#fff3e0
-    style C1,C2,C3,C4 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style B4 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
+    style C4 fill:#f3e5f5
 ```
 
 **현재 상태 분석 체크리스트**:
@@ -351,10 +360,15 @@ graph TB
     C2 --> C3
     R1 --> R2 --> R3
     
-    style BG1,BG2 fill:#e8f5e8
-    style C1,C2 fill:#fff3e0
-    style R1,R2,R3 fill:#f3e5f5
-    style BG3,C3 fill:#ffebee
+    style BG1 fill:#e8f5e8
+    style BG2 fill:#e8f5e8
+    style C1 fill:#fff3e0
+    style C2 fill:#fff3e0
+    style R1 fill:#f3e5f5
+    style R2 fill:#f3e5f5
+    style R3 fill:#f3e5f5
+    style BG3 fill:#ffebee
+    style C3 fill:#ffebee
 ```
 
 **단계별 마이그레이션 실행 계획**:

@@ -84,10 +84,19 @@ graph TB
     N4 --> W1
     
     style M1 fill:#ff9800
-    style M2,M3 fill:#fff3e0
-    style W1,W2,W3 fill:#e8f5e8
-    style N1,N2,N3,N4 fill:#f3e5f5
-    style S1,S2,S3,S4 fill:#ffebee
+    style M2 fill:#fff3e0
+    style M3 fill:#fff3e0
+    style W1 fill:#e8f5e8
+    style W2 fill:#e8f5e8
+    style W3 fill:#e8f5e8
+    style N1 fill:#f3e5f5
+    style N2 fill:#f3e5f5
+    style N3 fill:#f3e5f5
+    style N4 fill:#f3e5f5
+    style S1 fill:#ffebee
+    style S2 fill:#ffebee
+    style S3 fill:#ffebee
+    style S4 fill:#ffebee
     style LB fill:#e3f2fd
 ```
 

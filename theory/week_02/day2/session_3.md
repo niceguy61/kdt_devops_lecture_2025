@@ -60,8 +60,12 @@ graph TB
     E --> H
     F --> H
     
-    style A,B,C fill:#e8f5e8
-    style D,E,F fill:#fff3e0
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
     style G fill:#4caf50
     style H fill:#ff9800
 ```

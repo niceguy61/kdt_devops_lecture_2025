@@ -93,10 +93,17 @@ graph TB
     T3 --> W3
     
     style M1 fill:#ff9800
-    style M2,M3 fill:#fff3e0
-    style W1,W2,W3,W4 fill:#e8f5e8
-    style S1,S2 fill:#f3e5f5
-    style T1,T2,T3 fill:#ffebee
+    style M2 fill:#fff3e0
+    style M3 fill:#fff3e0
+    style W1 fill:#e8f5e8
+    style W2 fill:#e8f5e8
+    style W3 fill:#e8f5e8
+    style W4 fill:#e8f5e8
+    style S1 fill:#f3e5f5
+    style S2 fill:#f3e5f5
+    style T1 fill:#ffebee
+    style T2 fill:#ffebee
+    style T3 fill:#ffebee
 ```
 
 **핵심 구성 요소**:
@@ -153,9 +160,17 @@ graph TB
     B3 --> C3
     B1 --> C4
     
-    style A1,A2,A3,A4 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3,C4 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
+    style C4 fill:#f3e5f5
 ```
 
 **서비스 배포 명령어 예시**:
@@ -267,10 +282,21 @@ graph TB
     F2 --> S2
     F3 --> S3
     
-    style ZA1,ZB1,ZC1 fill:#ff9800
-    style ZA2,ZA3,ZB2,ZB3,ZC2,ZC3 fill:#e8f5e8
-    style S1,S2,S3 fill:#fff3e0
-    style F1,F2,F3 fill:#ffebee
+    style ZA1 fill:#ff9800
+    style ZB1 fill:#ff9800
+    style ZC1 fill:#ff9800
+    style ZA2 fill:#e8f5e8
+    style ZA3 fill:#e8f5e8
+    style ZB2 fill:#e8f5e8
+    style ZB3 fill:#e8f5e8
+    style ZC2 fill:#e8f5e8
+    style ZC3 fill:#e8f5e8
+    style S1 fill:#fff3e0
+    style S2 fill:#fff3e0
+    style S3 fill:#fff3e0
+    style F1 fill:#ffebee
+    style F2 fill:#ffebee
+    style F3 fill:#ffebee
 ```
 
 **장애 복구 시나리오와 대응**:

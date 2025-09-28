@@ -72,11 +72,19 @@ graph TB
     K7 --> K2
     K8 --> K4
     
-    style DC1,DC2,DC3 fill:#ffebee
-    style K1,K2,K3 fill:#e8f5e8
-    style K4,K5,K6 fill:#fff3e0
-    style K7,K8 fill:#f3e5f5
-    style K9,K10 fill:#e3f2fd
+    style DC1 fill:#ffebee
+    style DC2 fill:#ffebee
+    style DC3 fill:#ffebee
+    style K1 fill:#e8f5e8
+    style K2 fill:#e8f5e8
+    style K3 fill:#e8f5e8
+    style K4 fill:#fff3e0
+    style K5 fill:#fff3e0
+    style K6 fill:#fff3e0
+    style K7 fill:#f3e5f5
+    style K8 fill:#f3e5f5
+    style K9 fill:#e3f2fd
+    style K10 fill:#e3f2fd
 ```
 
 ---

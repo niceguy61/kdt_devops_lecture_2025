@@ -63,10 +63,19 @@ graph TB
     DEPLOY --> POD
     CM_APP --> POD
     
-    style API,ETCD,SCHED,CM fill:#ff9800
-    style KUBELET,PROXY,RUNTIME fill:#e8f5e8
-    style DNS,CNI fill:#fff3e0
-    style POD,SVC,DEPLOY,CM_APP fill:#f3e5f5
+    style API fill:#ff9800
+    style ETCD fill:#ff9800
+    style SCHED fill:#ff9800
+    style CM fill:#ff9800
+    style KUBELET fill:#e8f5e8
+    style PROXY fill:#e8f5e8
+    style RUNTIME fill:#e8f5e8
+    style DNS fill:#fff3e0
+    style CNI fill:#fff3e0
+    style POD fill:#f3e5f5
+    style SVC fill:#f3e5f5
+    style DEPLOY fill:#f3e5f5
+    style CM_APP fill:#f3e5f5
 ```
 
 ---

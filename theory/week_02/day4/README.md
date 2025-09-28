@@ -87,10 +87,17 @@ graph TB
     C2 --> E[실습 2: 마이그레이션 실습]
     C3 --> F[Week 3 K8s 심화]
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
-    style D,E fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
+    style D fill:#ffebee
+    style E fill:#ffebee
     style F fill:#e3f2fd
 ```
 

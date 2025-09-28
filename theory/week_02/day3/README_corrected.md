@@ -149,9 +149,13 @@ graph TB
     
     D --> F
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#4caf50
-    style E,G,H fill:#fff3e0
+    style E fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
     style F fill:#2196f3
 ```
 
@@ -279,9 +283,13 @@ graph TB
     
     D --> E
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#4caf50
-    style E,G,H fill:#fff3e0
+    style E fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
     style F fill:#2196f3
 ```
 
@@ -344,8 +352,15 @@ graph TB
     E --> J
     H --> J
     
-    style A,B,C,F,G,I fill:#e8f5e8
-    style D,E,H fill:#fff3e0
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style I fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style H fill:#fff3e0
     style J fill:#4caf50
 ```
 
@@ -410,10 +425,16 @@ graph TB
         J[Kibana<br/>로그 시각화] --> D
     end
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#4caf50
-    style E,F,G fill:#fff3e0
-    style H,I,J fill:#2196f3
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#2196f3
+    style I fill:#2196f3
+    style J fill:#2196f3
 ```
 
 **각 요소의 역할**:
@@ -443,10 +464,15 @@ graph TB
         H --> I[Kibana<br/>로그 분석]
     end
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#fff3e0
-    style E,F fill:#4caf50
-    style G,H,I fill:#f3e5f5
+    style E fill:#4caf50
+    style F fill:#4caf50
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
 ```
 
 **모니터링 설정 예시**:
@@ -490,10 +516,14 @@ graph TB
     D --> E
     F --> H[대응 조치]
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#4caf50
-    style E,G fill:#fff3e0
-    style F,H fill:#ff9800
+    style E fill:#fff3e0
+    style G fill:#fff3e0
+    style F fill:#ff9800
+    style H fill:#ff9800
 ```
 
 **SLI/SLO 예시**:

@@ -45,8 +45,12 @@ graph TB
     C --> G[신뢰도 손실<br/>측정 불가]
     
     style A fill:#f44336
-    style B,C fill:#ff9800
-    style D,E,F,G fill:#ffebee
+    style B fill:#ff9800
+    style C fill:#ff9800
+    style D fill:#ffebee
+    style E fill:#ffebee
+    style F fill:#ffebee
+    style G fill:#ffebee
 ```
 
 ---
@@ -135,9 +139,12 @@ graph LR
     D --> G
     
     style A fill:#2196f3
-    style B,C fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
     style D fill:#ff9800
-    style E,F,G fill:#e3f2fd
+    style E fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
 ```
 
 **백업 자동화 스크립트**:

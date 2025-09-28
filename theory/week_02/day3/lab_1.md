@@ -73,11 +73,20 @@ graph TB
     J --> L
     M --> N
     
-    style A,B,C fill:#e8f5e8
-    style D,E,F,G,H fill:#fff3e0
-    style I,J fill:#f3e5f5
-    style K,L fill:#ffebee
-    style M,N fill:#e3f2fd
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#f3e5f5
+    style J fill:#f3e5f5
+    style K fill:#ffebee
+    style L fill:#ffebee
+    style M fill:#e3f2fd
+    style N fill:#e3f2fd
 ```
 
 ---

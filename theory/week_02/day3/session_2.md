@@ -145,9 +145,15 @@ graph TB
     C2 --> D
     C3 --> D
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
     style D fill:#ffebee
 ```
 
@@ -250,10 +256,18 @@ graph TB
     C2 --> D2
     C3 --> D3
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
-    style D1,D2,D3 fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
+    style D1 fill:#ffebee
+    style D2 fill:#ffebee
+    style D3 fill:#ffebee
 ```
 
 **Kibana 검색 쿼리 실무 예시**:

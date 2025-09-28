@@ -113,9 +113,15 @@ graph TB
     F --> G
     I --> A
     
-    style A,B,C fill:#e8f5e8
-    style D,E,F fill:#fff3e0
-    style G,H,I fill:#f3e5f5
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
 ```
 
 **워크플로우 단계별 통합**:
@@ -173,8 +179,10 @@ graph LR
     D --> E[완전한<br/>클라우드 네이티브]
     
     style A fill:#ffebee
-    style B,C fill:#fff3e0
-    style D,E fill:#4caf50
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#4caf50
+    style E fill:#4caf50
 ```
 
 #### 💭 함께 생각해보기 (10분)
@@ -224,9 +232,15 @@ graph TB
     I --> J[피드백<br/>지속적 개선]
     J --> A
     
-    style A,B,C fill:#e8f5e8
-    style D,E,F fill:#fff3e0
-    style G,H,I fill:#f3e5f5
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
     style J fill:#4caf50
 ```
 
@@ -276,10 +290,17 @@ graph LR
     F --> G
     I --> J
     
-    style A,B,C fill:#e8f5e8
-    style D,E,F fill:#fff3e0
-    style G,H,I fill:#f3e5f5
-    style J,K fill:#ffebee
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
+    style J fill:#ffebee
+    style K fill:#ffebee
 ```
 
 **라이프사이클 관리 도구**:
@@ -310,10 +331,16 @@ graph TB
     D --> I[성능 최적화]
     D --> J[용량 계획]
     
-    style A,B,C fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
     style D fill:#fff3e0
-    style E,F,G fill:#f3e5f5
-    style H,I,J fill:#4caf50
+    style E fill:#f3e5f5
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#4caf50
+    style I fill:#4caf50
+    style J fill:#4caf50
 ```
 
 **모니터링 베스트 프랙티스**:
@@ -365,9 +392,13 @@ graph TB
     D --> G
     D --> H
     
-    style A,B,C fill:#ffebee
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
     style D fill:#fff3e0
-    style E,G,H fill:#e8f5e8
+    style E fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#e8f5e8
     style F fill:#4caf50
 ```
 
@@ -417,7 +448,9 @@ graph TB
     style G fill:#fff3e0
     style H fill:#fff3e0
     style I fill:#fff3e0
-    style J,K,L fill:#f3e5f5
+    style J fill:#f3e5f5
+    style K fill:#f3e5f5
+    style L fill:#f3e5f5
 ```
 
 **Docker 지식의 Kubernetes 연결**:
@@ -450,9 +483,14 @@ graph TB
         K[OpenShift<br/>엔터프라이즈] --> J
     end
     
-    style A,B,C fill:#e8f5e8
-    style E,G,H fill:#fff3e0
-    style I,K fill:#f3e5f5
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style E fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#f3e5f5
+    style K fill:#f3e5f5
 ```
 
 **필수 도구 체크리스트**:
@@ -535,9 +573,13 @@ graph TB
     G --> H
     
     style A fill:#e3f2fd
-    style B,C fill:#fff3e0
-    style D,E fill:#e8f5e8
-    style F,G,H fill:#f3e5f5
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
 ```
 
 #### 📝 기능 요구사항
@@ -790,9 +832,12 @@ graph TB
     D --> E
     D --> G
     
-    style A,B,C fill:#4caf50
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
     style D fill:#2196f3
-    style E,G fill:#ff9800
+    style E fill:#ff9800
+    style G fill:#ff9800
     style F fill:#9c27b0
 ```
 
@@ -831,8 +876,12 @@ graph LR
     D --> E[Week 5]
     E --> F[Week 6]
     
-    style A,B fill:#4caf50
-    style C,D,E,F fill:#e0e0e0
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#e0e0e0
+    style D fill:#e0e0e0
+    style E fill:#e0e0e0
+    style F fill:#e0e0e0
 ```
 
 ---

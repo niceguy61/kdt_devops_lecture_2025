@@ -79,9 +79,17 @@ graph TB
     K2 --> C2
     K3 --> C3
     
-    style DS1,DS2,DS3,DS4 fill:#e8f5e8
-    style K1,K2,K3,K4 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
+    style DS1 fill:#e8f5e8
+    style DS2 fill:#e8f5e8
+    style DS3 fill:#e8f5e8
+    style DS4 fill:#e8f5e8
+    style K1 fill:#fff3e0
+    style K2 fill:#fff3e0
+    style K3 fill:#fff3e0
+    style K4 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
 ```
 
 **상세 비교표**:
@@ -125,9 +133,15 @@ graph TB
         E3[커뮤니티<br/>Swarm: ⭐⭐<br/>K8s: ⭐⭐⭐⭐⭐]
     end
     
-    style F1,F2,F3 fill:#e8f5e8
-    style A1,A2,A3 fill:#fff3e0
-    style E1,E2,E3 fill:#f3e5f5
+    style F1 fill:#e8f5e8
+    style F2 fill:#e8f5e8
+    style F3 fill:#e8f5e8
+    style A1 fill:#fff3e0
+    style A2 fill:#fff3e0
+    style A3 fill:#fff3e0
+    style E1 fill:#f3e5f5
+    style E2 fill:#f3e5f5
+    style E3 fill:#f3e5f5
 ```
 
 **세부 기능 비교**:

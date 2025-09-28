@@ -64,10 +64,15 @@ graph TB
     B --> S
     
     style U fill:#e3f2fd
-    style W,N fill:#fff3e0
-    style P,R fill:#e8f5e8
-    style M,V1,V2 fill:#f3e5f5
-    style B,S fill:#ffebee
+    style W fill:#fff3e0
+    style N fill:#fff3e0
+    style P fill:#e8f5e8
+    style R fill:#e8f5e8
+    style M fill:#f3e5f5
+    style V1 fill:#f3e5f5
+    style V2 fill:#f3e5f5
+    style B fill:#ffebee
+    style S fill:#ffebee
 ```
 
 ---

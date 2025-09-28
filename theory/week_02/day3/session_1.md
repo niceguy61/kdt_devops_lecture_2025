@@ -82,10 +82,15 @@ graph TB
     E --> I
     F --> G
     
-    style A,B,C fill:#e8f5e8
-    style D,E fill:#fff3e0
-    style F,G fill:#f3e5f5
-    style H,I fill:#ffebee
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#ffebee
+    style I fill:#ffebee
 ```
 
 **핵심 구성 요소**:
@@ -189,9 +194,15 @@ graph TB
     A2 --> B2 --> C2
     A3 --> B3 --> C3
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
 ```
 
 **Docker 컨테이너 최적화 실무**:
