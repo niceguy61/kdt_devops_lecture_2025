@@ -233,9 +233,15 @@ graph TB
     AR --> SM
     AR --> DH
     
-    style NM,AL,FW fill:#e8f5e8
-    style LA,AD,AR fill:#fff3e0
-    style EM,SM,DH fill:#ffebee
+    style NM fill:#e8f5e8
+    style AL fill:#e8f5e8
+    style FW fill:#e8f5e8
+    style LA fill:#fff3e0
+    style AD fill:#fff3e0
+    style AR fill:#fff3e0
+    style EM fill:#ffebee
+    style SM fill:#ffebee
+    style DH fill:#ffebee
 ```
 
 **보안 모니터링 도구**:
@@ -335,10 +341,17 @@ graph TB
     C2 --> D
     C3 --> E[실습 Lab 2<br/>보안 강화 환경]
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style C1,C2,C3 fill:#f3e5f5
-    style D,E fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style C1 fill:#f3e5f5
+    style C2 fill:#f3e5f5
+    style C3 fill:#f3e5f5
+    style D fill:#ffebee
+    style E fill:#ffebee
 ```
 
 ### 🎯 실습 챌린지 준비
