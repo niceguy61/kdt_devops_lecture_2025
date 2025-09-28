@@ -58,8 +58,11 @@ graph TB
     A2 --> DB
     
     style U fill:#e3f2fd
-    style W,LB fill:#fff3e0
-    style A1,A2,R fill:#e8f5e8
+    style W fill:#fff3e0
+    style LB fill:#fff3e0
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style R fill:#e8f5e8
     style DB fill:#f3e5f5
 ```
 
