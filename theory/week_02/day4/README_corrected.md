@@ -71,8 +71,14 @@ graph TB
     D --> E
     H --> I[Docker 전문가<br/>실무 준비 완료]
     
-    style A,B,C,D fill:#e8f5e8
-    style E,F,G,H fill:#fff3e0
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
     style I fill:#4caf50
 ```
 
@@ -134,7 +140,10 @@ graph LR
     E --> F[성공적 런칭]
     
     style A fill:#e3f2fd
-    style B,C,D,E fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
     style F fill:#4caf50
 ```
 
@@ -148,7 +157,10 @@ graph LR
     E --> F[디지털 전환 완료]
     
     style A fill:#ffebee
-    style B,C,D,E fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
     style F fill:#4caf50
 ```
 
@@ -396,8 +408,15 @@ graph TB
     E --> F
     I --> J
     
-    style A,B,C,D,E fill:#e8f5e8
-    style F,G,H,I fill:#fff3e0
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
     style J,K,L fill:#f3e5f5
 ```
 

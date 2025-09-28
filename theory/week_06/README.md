@@ -299,8 +299,13 @@ graph TB
     D --> F
     D --> G
     
-    style A,B,C,D fill:#4caf50
-    style E,F,G fill:#2196f3
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#4caf50
+    style D fill:#4caf50
+    style E fill:#2196f3
+    style F fill:#2196f3
+    style G fill:#2196f3
     style H fill:#ff9800
 ```
 

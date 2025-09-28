@@ -71,8 +71,16 @@ graph TB
         J[네트워크 공격<br/>Network Attacks] --> E
     end
     
-    style A,B,C,D,E fill:#ffebee
-    style F,G,H,I,J fill:#f44336
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#ffebee
+    style F fill:#f44336
+    style G fill:#f44336
+    style H fill:#f44336
+    style I fill:#f44336
+    style J fill:#f44336
 ```
 
 **주요 보안 위협**:
@@ -208,7 +216,10 @@ graph TB
     
     E --> G
     
-    style A,B,C,D fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
     style E fill:#4caf50
     style F fill:#ffebee
     style G fill:#c8e6c9

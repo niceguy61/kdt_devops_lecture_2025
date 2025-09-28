@@ -39,7 +39,12 @@ graph TB
     C[테스트 데이터가<br/>프로덕션에 유입] --> D[사용자 데이터 오염]
     E[API 키가 코드에<br/>하드코딩] --> F[보안 사고]
     
-    style A,B,C,D,E,F fill:#ffebee
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#ffebee
+    style F fill:#ffebee
 ```
 
 **실무에서 자주 발생하는 문제 패턴**:

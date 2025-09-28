@@ -160,9 +160,17 @@ graph TB
     J --> K
     
     style A fill:#e3f2fd
-    style B,C,D,E,F fill:#e8f5e8
-    style G,H,I fill:#fff3e0
-    style J,K,L fill:#f3e5f5
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
+    style J fill:#f3e5f5
+    style K fill:#f3e5f5
+    style L fill:#f3e5f5
 ```
 
 ---

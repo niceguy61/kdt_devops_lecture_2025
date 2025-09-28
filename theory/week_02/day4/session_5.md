@@ -61,7 +61,11 @@ graph TB
     
     A --> B --> C --> D --> E
     
-    style A,B,C,D,E fill:#e8f5e8
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
 ```
 
 **3. 지원 방안 논의 (5분)**
@@ -103,7 +107,11 @@ graph TB
     
     A --> B --> C --> D --> E
     
-    style A,B,C,D,E fill:#fff3e0
+    style A fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
 ```
 
 **3. 멘토링 방법 논의 (5분)**
@@ -144,7 +152,11 @@ graph TB
         E[프로젝트 리드<br/>기술적 의사결정]
     end
     
-    style A,B,C,D,E fill:#ffebee
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#ffebee
 ```
 
 ---

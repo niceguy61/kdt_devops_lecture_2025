@@ -241,9 +241,18 @@ graph TB
     C --> G --> K
     D --> H --> L
     
-    style A,B,C,D fill:#e3f2fd
-    style E,F,G,H fill:#fff3e0
-    style I,J,K,L fill:#e8f5e8
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#e8f5e8
+    style J fill:#e8f5e8
+    style K fill:#e8f5e8
+    style L fill:#e8f5e8
 ```
 
 **모니터링 스택 구성**:

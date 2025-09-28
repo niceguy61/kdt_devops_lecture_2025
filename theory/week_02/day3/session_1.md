@@ -132,9 +132,16 @@ graph TB
     E --> I
     F --> J
     
-    style A,B,C,D fill:#e8f5e8
-    style E,F,G,H fill:#fff3e0
-    style I,J fill:#f3e5f5
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#f3e5f5
+    style J fill:#f3e5f5
 ```
 
 **메트릭 분류와 임계값**:

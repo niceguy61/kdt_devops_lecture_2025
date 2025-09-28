@@ -280,8 +280,12 @@ graph TB
     D --> G[확장성 및 유지보수성]
     
     style A fill:#e3f2fd
-    style B,C,D fill:#fff3e0
-    style E,F,G fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
 ```
 
 ### 💼 직무별 활용도

@@ -86,10 +86,17 @@ graph TB
     H --> J
     J --> K
     
-    style A,B,C,D fill:#e8f5e8
-    style E,F,G fill:#fff3e0
-    style H,I fill:#f3e5f5
-    style J,K fill:#ffebee
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
+    style J fill:#ffebee
+    style K fill:#ffebee
 ```
 
 **각 구성 요소의 역할**:

@@ -67,9 +67,16 @@ graph TB
     G --> I
     I --> J
     
-    style A,B,C,D fill:#e8f5e8
-    style E,F,G fill:#fff3e0
-    style H,I,J fill:#ffebee
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#ffebee
+    style I fill:#ffebee
+    style J fill:#ffebee
 ```
 
 **Prometheus 설치 (Helm 사용)**:
@@ -228,9 +235,17 @@ graph TB
     C --> G --> K
     D --> H --> I
     
-    style A,B,C,D fill:#e8f5e8
-    style E,F,G,H fill:#fff3e0
-    style I,J,K fill:#ffebee
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#ffebee
+    style J fill:#ffebee
+    style K fill:#ffebee
 ```
 
 **SLO 기반 알림 규칙 예시**:

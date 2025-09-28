@@ -286,9 +286,17 @@ graph TB
     
     F --> G --> H --> I --> J --> K
     
-    style A,B,C,D,E fill:#f44336
-    style F,G,H fill:#ff9800
-    style I,J,K fill:#4caf50
+    style A fill:#f44336
+    style B fill:#f44336
+    style C fill:#f44336
+    style D fill:#f44336
+    style E fill:#f44336
+    style F fill:#ff9800
+    style G fill:#ff9800
+    style H fill:#ff9800
+    style I fill:#4caf50
+    style J fill:#4caf50
+    style K fill:#4caf50
 ```
 
 **복구 절차서**:
