@@ -88,8 +88,10 @@ graph TB
     DB --> BK
     
     style I fill:#ffebee
-    style W,LB fill:#fff3e0
-    style A,C fill:#e8f5e8
+    style W fill:#fff3e0
+    style LB fill:#fff3e0
+    style A fill:#e8f5e8
+    style C fill:#e8f5e8
     style DB,BK fill:#e3f2fd
 ```
 
