@@ -83,11 +83,18 @@ graph TB
     
     style I fill:#ffebee
     style A fill:#f44336
-    style FW,IDS,WAF fill:#ff9800
-    style LB,W fill:#fff3e0
-    style A1,A2,R fill:#e8f5e8
-    style DB,BK fill:#e3f2fd
-    style M,L fill:#f3e5f5
+    style FW fill:#ff9800
+    style IDS fill:#ff9800
+    style WAF fill:#ff9800
+    style LB fill:#fff3e0
+    style W fill:#fff3e0
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style R fill:#e8f5e8
+    style DB fill:#e3f2fd
+    style BK fill:#e3f2fd
+    style M fill:#f3e5f5
+    style L fill:#f3e5f5
 ```
 
 ---
