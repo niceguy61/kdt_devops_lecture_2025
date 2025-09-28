@@ -75,6 +75,7 @@ cat > index.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Multi-Container Network Demo</title>
     <style>
         body { 

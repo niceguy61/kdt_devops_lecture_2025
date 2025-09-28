@@ -71,14 +71,32 @@ graph TB
 ## 📋 실습 준비 (5분)
 
 ### 환경 설정
+
+**🚀 자동화 스크립트 사용**
+```bash
+# 전체 환경 초기화
+./lab_scripts/lab1/cleanup.sh
+```
+
+**📋 스크립트 내용**: [cleanup.sh](./lab_scripts/lab1/cleanup.sh)
+
+**수동 실행 (학습용)**
 ```bash
 # 작업 디렉토리 생성
 mkdir -p ~/docker-network-lab
 cd ~/docker-network-lab
 
-# 기존 컨테이너 정리 (필요시)
+# 완전한 환경 초기화
+docker stop $(docker ps -aq) 2>/dev/null || true
+docker rm -f mysql-db redis-cache api-server-1 api-server-2 load-balancer web-server 2>/dev/null || true
+docker network rm frontend-net backend-net database-net 2>/dev/null || true
 docker container prune -f
 docker network prune -f
+docker image prune -f
+
+echo "=== 초기화 완료 ==="
+docker ps
+docker network ls
 ```
 
 ### 페어 구성 (필요시)
@@ -261,18 +279,37 @@ EOF
 # API 서버 이미지 빌드
 docker build -t api-server:latest .
 
-# API 서버 인스턴스 2개 실행
+# API 서버 인스턴스 2개 실행 (충돌 방지)
+echo "=== API 서버 실행 ==="
+
+# 기존 API 서버 컨테이너 제거 (충돌 방지)
+docker rm -f api-server-1 api-server-2 2>/dev/null || true
+
 docker run -d \
   --name api-server-1 \
   --network backend-net \
   --ip 172.20.2.20 \
   api-server:latest
 
+if [ $? -eq 0 ]; then
+    echo "✓ api-server-1 실행 성공"
+else
+    echo "✗ api-server-1 실행 실패"
+    exit 1
+fi
+
 docker run -d \
   --name api-server-2 \
   --network backend-net \
   --ip 172.20.2.21 \
   api-server:latest
+
+if [ $? -eq 0 ]; then
+    echo "✓ api-server-2 실행 성공"
+else
+    echo "✗ api-server-2 실행 실패"
+    exit 1
+fi
 
 # API 서버들을 데이터베이스 네트워크에도 연결
 docker network connect database-net api-server-1
@@ -339,16 +376,33 @@ cat > nginx.conf << 'EOF'
 server {
     listen 80;
     server_name localhost;
+    
+    # 로그 설정 추가
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
 
     location / {
         root /usr/share/nginx/html;
         index index.html;
+        try_files $uri $uri/ =404;
     }
 
     location /api/ {
-        proxy_pass http://load-balancer:8080/;
+        # 로드 밸런서 IP 직접 사용 (WSL 환경에서 더 안정적)
+        proxy_pass http://172.20.1.10:8080/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 5s;
+        proxy_read_timeout 5s;
+    }
+    
+    # 헬스 체크 엔드포인트
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 }
 EOF
@@ -358,6 +412,7 @@ cat > index.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Multi-Container Network Demo</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
@@ -418,6 +473,28 @@ docker run -d \
 
 # 웹 서버를 백엔드 네트워크에도 연결
 docker network connect backend-net web-server
+
+# 연결 확인 및 테스트
+echo "=== 컨테이너 상태 확인 ==="
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+echo "=== 네트워크 연결 확인 ==="
+docker inspect web-server | grep -A 10 "Networks"
+
+echo "=== 기본 연결 테스트 ==="
+sleep 10  # 컨테이너 시작 대기 시간 증가
+
+# 단계별 테스트
+echo "1. Nginx 헬스 체크..."
+curl -f http://localhost/health && echo "✓ Nginx 정상" || echo "✗ Nginx 연결 실패"
+
+echo "2. 웹 페이지 로드..."
+curl -f http://localhost/ > /dev/null && echo "✓ 웹 페이지 정상" || echo "✗ 웹 페이지 로드 실패"
+
+echo "3. API 테스트..."
+curl -f http://localhost/api/health && echo "✓ API 정상" || echo "✗ API 연결 실패"
+
+echo "=== 전체 시스템 준비 완료 ==="
 ```
 
 ---
@@ -448,12 +525,34 @@ docker network connect backend-net web-server
 
 **수동 테스트 (핵심만)**
 ```bash
-# 컨테이너 상태 확인
+# 1. 컨테이너 상태 확인
 docker ps
 
-# 웹 애플리케이션 테스트
+# 2. 네트워크 연결 확인
+docker network ls
+docker network inspect frontend-net
+docker network inspect backend-net
+
+# 3. 컨테이너 로그 확인
+docker logs api-server-1
+docker logs load-balancer
+docker logs web-server
+
+# 4. 컨테이너 간 통신 테스트
+docker exec web-server ping -c 2 load-balancer
+docker exec load-balancer ping -c 2 api-server-1
+
+# 5. API 직접 테스트
+docker exec api-server-1 curl -s http://localhost:3000/health
+docker exec load-balancer curl -s http://api-server-1:3000/health
+
+# 6. 웹 애플리케이션 테스트 (WSL에서)
+curl -s http://localhost/
 curl -s http://localhost/api/health
-curl -s http://localhost/api/users
+
+# 7. Windows에서 접근 (WSL IP 확인)
+echo "WSL IP: $(hostname -I | awk '{print $1}')"
+echo "Windows에서 접근: http://$(hostname -I | awk '{print $1}'):80"
 ```
 
 ---
