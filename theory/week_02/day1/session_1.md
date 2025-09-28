@@ -1,10 +1,10 @@
-# Week 2 Day 1 Session 1: 컨테이너 보안 기초와 취약점 분석
+# Week 2 Day 1 Session 1: Docker 네트워킹 심화 (Bridge, Host, Custom)
 
 <div align="center">
 
-**🔒 컨테이너 보안** • **🛡️ 취약점 분석**
+**🌐 네트워킹 기초** • **🔗 연결의 이해** • **🏗️ 맞춤형 구성**
 
-*컨테이너 환경의 보안 위협과 대응 방안 완전 이해*
+*컨테이너 네트워킹의 모든 유형과 활용법 완전 마스터*
 
 </div>
 
@@ -13,278 +13,253 @@
 ## 🕘 세션 정보
 
 **시간**: 09:00-09:50 (50분)  
-**목표**: 컨테이너 보안 위협과 취약점 유형 완전 이해  
-**방식**: 보안 개념 + 실제 사례 + 도구 활용
+**목표**: Docker 네트워킹의 모든 유형과 활용법 완전 마스터  
+**방식**: 기초 개념 + 실생활 비유 + 단계적 실습
 
 ---
 
-## 🎯 세션 목표
+## 🎯 학습 목표
 
-### 📚 학습 목표
-- **이해 목표**: 컨테이너 보안 위협과 취약점 유형 완전 이해
-- **적용 목표**: 보안 스캔 도구를 활용한 취약점 발견 및 해결 능력
-- **협업 목표**: 개별 학습 후 경험 공유 및 질의응답
+### 📚 학습 목표 (명확하고 측정 가능한 목표)
+- **이해 목표**: Bridge, Host, Custom 네트워크의 차이점과 동작 원리를 완전히 이해
+- **적용 목표**: 상황에 맞는 네트워크 유형을 선택하고 구성할 수 있는 능력
+- **협업 목표**: 네트워크 설정을 동료와 함께 토론하고 최적화할 수 있는 역량
 
-### 🤔 왜 필요한가? (5분)
+### 🤔 왜 필요한가? (5분 - 동기부여 및 맥락 제공)
 
 **현실 문제 상황**:
-- 💼 **보안 사고 급증**: 2024년 컨테이너 관련 보안 사고 300% 증가
-- 🏠 **일상 비유**: 집에 문을 열어두고 사는 것과 같은 위험
-- 📊 **시장 동향**: DevSecOps 도입이 필수가 된 현대 개발 환경
+- 💼 **실무 시나리오**: "컨테이너들이 서로 통신하지 못해 애플리케이션이 작동하지 않아요!"
+- 🏠 **일상 비유**: 아파트 단지에서 각 동과 호수가 서로 연결되어야 하는 것처럼, 컨테이너들도 네트워크로 연결되어야 합니다
+- 📊 **시장 동향**: 마이크로서비스 아키텍처에서 컨테이너 간 네트워킹은 필수 기술
 
----
-
-## 📖 핵심 개념 (35분)
-
-### 🔍 개념 1: 컨테이너 보안 위협 모델 (12분)
-
-> **정의**: 컨테이너 환경에서 발생할 수 있는 다양한 보안 위협과 공격 벡터
-
-**주요 위협 유형**:
-```mermaid
-graph TB
-    subgraph "컨테이너 보안 위협"
-        A[이미지 취약점<br/>Vulnerable Images] --> E[보안 사고]
-        B[런타임 공격<br/>Runtime Attacks] --> E
-        C[권한 상승<br/>Privilege Escalation] --> E
-        D[네트워크 침입<br/>Network Intrusion] --> E
-    end
-    
-    style A fill:#ffebee
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#e3f2fd
-    style E fill:#f44336
-```
-
-**OWASP Container Top 10**:
-1. **Insecure Container Images**: 취약한 베이스 이미지 사용
-2. **Inadequate Identity and Access Management**: 부적절한 접근 권한 관리
-3. **Insecure Networking**: 안전하지 않은 네트워크 구성
-4. **Insecure Data Storage**: 민감한 데이터의 부적절한 저장
-5. **Inadequate Monitoring & Logging**: 불충분한 모니터링과 로깅
-6. **Insecure Secrets Management**: 시크릿 관리 부실
-7. **Insecure Defaults**: 안전하지 않은 기본 설정
-8. **Hardcoded Secrets**: 하드코딩된 인증 정보
-9. **Outdated Components**: 오래된 구성 요소 사용
-10. **Poisoned Pipeline Execution**: 파이프라인 공격
-
-**실제 보안 사고 사례**:
-- **Tesla 2018**: 쿠버네티스 대시보드 노출로 암호화폐 채굴
-- **Capital One 2019**: 잘못된 IAM 설정으로 1억 명 개인정보 유출
-- **SolarWinds 2020**: 공급망 공격으로 18,000개 조직 피해
-
-**보안 위협 시나리오**:
-```bash
-# 취약한 컨테이너 예시
-docker run -d --privileged \
-  -v /:/host \
-  -e MYSQL_ROOT_PASSWORD=123456 \
-  mysql:5.6
-
-# 위험 요소:
-# 1. --privileged: 호스트 권한 획득 가능
-# 2. -v /:/host: 호스트 파일시스템 마운트
-# 3. 약한 패스워드: 쉽게 추측 가능
-# 4. 오래된 이미지: 알려진 취약점 존재
-```
-
-### 🔍 개념 2: 이미지 보안 스캔 (12분)
-
-> **정의**: 컨테이너 이미지의 알려진 취약점을 자동으로 검사하는 도구와 방법
-
-**보안 스캔 도구들**:
+**학습 전후 비교**:
 ```mermaid
 graph LR
-    A[Docker Scout<br/>Docker 내장] --> D[취약점 리포트]
-    B[Trivy<br/>오픈소스] --> D
-    C[Snyk<br/>상용 도구] --> D
+    A[학습 전<br/>컨테이너 통신 불가<br/>네트워크 오류 빈발] --> B[학습 후<br/>자유자재로 네트워크 구성<br/>안정적인 서비스 운영]
     
-    D --> E[Critical: 즉시 수정]
-    D --> F[High: 우선 수정]
-    D --> G[Medium: 계획적 수정]
-    D --> H[Low: 모니터링]
-    
-    style A fill:#e8f5e8
+    style A fill:#ffebee
     style B fill:#e8f5e8
-    style C fill:#e8f5e8
-    style E fill:#f44336
-    style F fill:#ff9800
-    style G fill:#ffeb3b
-    style H fill:#4caf50
-```
-
-**도구별 비교 분석**:
-| 도구 | 장점 | 단점 | 사용 사례 |
-|------|------|------|----------|
-| **Trivy** | 무료, 빠른 스캔 | 제한적 정책 설정 | CI/CD 파이프라인 |
-| **Docker Scout** | Docker 통합, 쉽운 사용 | Docker Hub 의존성 | 개발 단계 검사 |
-| **Snyk** | 고급 기능, 상세 리포트 | 비용 발생 | 엔터프라이즈 환경 |
-| **Anchore** | 정책 기반 검사 | 복잡한 설정 | 대규모 조직 |
-
-**실습 예시 - Trivy 사용법**:
-```bash
-# 기본 이미지 스캔
-trivy image nginx:latest
-
-# 심각도별 필터링
-trivy image --severity HIGH,CRITICAL nginx:latest
-
-# JSON 형태로 결과 출력
-trivy image --format json nginx:latest > scan-result.json
-
-# 특정 CVE 검색
-trivy image --vuln-type os nginx:latest
-
-# 오프라인 DB 사용
-trivy image --cache-dir ./cache nginx:latest
-
-# 스캔 결과 해석
-# CRITICAL: 즉시 수정 필요 (CVSS 9.0-10.0)
-# HIGH: 24시간 내 수정 (CVSS 7.0-8.9)
-# MEDIUM: 1주일 내 수정 (CVSS 4.0-6.9)
-# LOW: 모니터링 (CVSS 0.1-3.9)
-```
-
-### 🔍 개념 3: 런타임 보안 (11분)
-
-> **정의**: 컨테이너 실행 중 발생하는 보안 위협을 탐지하고 대응하는 방법
-
-**런타임 보안 요소**:
-- **최소 권한 원칙**: 필요한 최소한의 권한만 부여
-- **읽기 전용 파일시스템**: 가능한 경우 읽기 전용으로 설정
-- **비root 사용자**: 컨테이너 내부에서 root 사용 금지
-- **시크릿 관리**: 환경 변수 대신 전용 시크릿 관리 도구 사용
-- **네트워크 분리**: 불필요한 네트워크 노출 방지
-- **리소스 제한**: CPU, 메모리 사용량 제한
-
-**런타임 보안 베스트 프랙티스**:
-```dockerfile
-# 보안 강화된 Dockerfile 예시
-FROM node:18-alpine AS builder
-
-# 보안 업데이트 적용
-RUN apk update && apk upgrade && apk add --no-cache dumb-init
-
-# 비특권 사용자 생성
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 -G nodejs
-
-# 애플리케이션 파일 복사 (소유권 설정)
-WORKDIR /app
-COPY --chown=nextjs:nodejs package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-
-COPY --chown=nextjs:nodejs . .
-RUN npm run build
-
-# 프로덕션 스테이지
-FROM node:18-alpine
-RUN apk add --no-cache dumb-init
-
-# 비특권 사용자로 전환
-USER nextjs
-WORKDIR /app
-
-# 필요한 파일만 복사
-COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
-
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js
-
-EXPOSE 3000
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/server.js"]
-```
-
-**실시간 보안 모니터링 도구**:
-- **Falco**: 컨테이너 런타임 보안 모니터링
-- **Sysdig**: 시스템 콜 모니터링
-- **Aqua Security**: 종합 컨테이너 보안 플랫폼
-- **Twistlock**: 컨테이너 보안 전문 솔루션
-
-**보안 정책 예시**:
-```yaml
-# 보안 정책 (AppArmor/SELinux)
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-pod
-  annotations:
-    container.apparmor.security.beta.kubernetes.io/app: runtime/default
-spec:
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1001
-    fsGroup: 1001
-    seccompProfile:
-      type: RuntimeDefault
-  containers:
-  - name: app
-    image: myapp:secure
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      capabilities:
-        drop:
-        - ALL
-    resources:
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
 ```
 
 ---
 
-## 💭 함께 생각해보기 (10분)
+## 📖 핵심 개념 (35분 - 체계적 지식 구축)
+
+### 🔍 개념 1: Bridge 네트워크 - 기본 연결의 이해 (12분)
+
+> **정의**: Docker의 기본 네트워크 방식으로, 컨테이너들을 가상의 다리(Bridge)로 연결하는 방법
+
+**상세 설명**:
+- **핵심 원리**: 호스트에 가상 브리지를 만들어 컨테이너들을 연결
+- **주요 특징**: 
+  - Docker 설치 시 자동으로 생성되는 기본 네트워크
+  - 컨테이너마다 고유한 IP 주소 할당 (172.17.0.0/16 대역)
+  - 외부와의 통신은 NAT를 통해 이루어짐
+- **사용 목적**: 일반적인 컨테이너 간 통신과 외부 접근
+
+**시각적 이해**:
+```mermaid
+graph TB
+    subgraph "호스트 시스템"
+        H[Host OS<br/>192.168.1.100]
+        B[Docker Bridge<br/>docker0<br/>172.17.0.1]
+    end
+    
+    subgraph "Bridge 네트워크"
+        C1[Container 1<br/>172.17.0.2]
+        C2[Container 2<br/>172.17.0.3]
+        C3[Container 3<br/>172.17.0.4]
+    end
+    
+    H --> B
+    B --> C1
+    B --> C2
+    B --> C3
+    
+    style H fill:#e3f2fd
+    style B fill:#fff3e0
+    style C1 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style C3 fill:#e8f5e8
+```
+
+**실생활 비유**: 
+아파트 단지의 중앙 관리소가 Bridge 역할을 합니다. 각 세대(컨테이너)는 관리소를 통해 서로 연락하고, 외부 방문자도 관리소를 거쳐 각 세대에 도달합니다.
+
+**기본 명령어**:
+```bash
+# 기본 브리지 네트워크 확인
+docker network ls
+
+# 브리지 네트워크 상세 정보
+docker network inspect bridge
+
+# 컨테이너를 브리지 네트워크에 연결
+docker run -d --name web-server nginx
+docker inspect web-server | grep IPAddress
+```
+
+### 🔍 개념 2: Host 네트워크 - 직접 연결의 힘 (12분)
+
+> **정의**: 컨테이너가 호스트의 네트워크를 직접 사용하는 방식으로, 네트워크 격리 없이 최고 성능을 제공
+
+**단계별 이해**:
+1. **1단계 (기본)**: 컨테이너가 호스트와 동일한 네트워크 인터페이스 사용
+2. **2단계 (중급)**: 포트 매핑 없이 직접 호스트 포트 사용
+3. **3단계 (고급)**: 네트워크 오버헤드 최소화로 최고 성능 달성
+
+**실무 연결**:
+- **사용 사례**: 
+  - 고성능이 필요한 데이터베이스 서버
+  - 네트워크 모니터링 도구
+  - 로드 밸런서나 프록시 서버
+- **장단점**: 
+  - ✅ 장점: 최고 성능, 포트 충돌 없음, 네트워크 오버헤드 최소
+  - ❌ 단점: 보안성 낮음, 포트 관리 복잡, 컨테이너 격리 효과 감소
+- **대안 기술**: Bridge 네트워크, Macvlan 네트워크
+
+**Host 네트워크 구조**:
+```mermaid
+graph TB
+    subgraph "Host 네트워크 모드"
+        H[Host OS<br/>192.168.1.100:80]
+        C[Container<br/>Host 네트워크 공유<br/>192.168.1.100:80]
+    end
+    
+    E[External Client<br/>192.168.1.50] --> H
+    H -.직접 공유.- C
+    
+    style H fill:#fff3e0
+    style C fill:#e8f5e8
+    style E fill:#e3f2fd
+```
+
+**실제 사용 예시**:
+```bash
+# Host 네트워크로 컨테이너 실행
+docker run -d --network host --name nginx-host nginx
+
+# 호스트의 네트워크 인터페이스 확인
+ip addr show
+
+# 컨테이너 내부에서 네트워크 확인 (호스트와 동일)
+docker exec nginx-host ip addr show
+```
+
+### 🔍 개념 3: Custom 네트워크 - 맞춤형 네트워크 설계 (11분)
+
+> **정의**: 사용자가 직접 생성하고 관리하는 네트워크로, 특정 요구사항에 맞춘 맞춤형 네트워크 환경 제공
+
+**개념 간 관계**:
+```mermaid
+graph LR
+    A[Bridge 네트워크<br/>기본 연결] --> C[Custom 네트워크<br/>맞춤형 설계]
+    B[Host 네트워크<br/>직접 연결] --> C
+    C --> D[실무 적용<br/>복합 아키텍처]
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#ffebee
+```
+
+**Custom 네트워크의 고급 기능**:
+- **DNS 해상도**: 컨테이너 이름으로 직접 통신 가능
+- **네트워크 분리**: 서로 다른 네트워크 간 격리
+- **IP 대역 설정**: 원하는 IP 대역 사용 가능
+- **드라이버 선택**: bridge, overlay, macvlan 등 다양한 드라이버
+
+**종합 비교표**:
+| 구분 | Bridge | Host | Custom |
+|------|--------|------|--------|
+| **목적** | 기본 컨테이너 통신 | 최고 성능 네트워킹 | 맞춤형 네트워크 설계 |
+| **특징** | 자동 IP 할당, NAT | 호스트 네트워크 공유 | 사용자 정의 설정 |
+| **사용 시기** | 일반적인 애플리케이션 | 고성능 요구 서비스 | 복잡한 네트워크 구조 |
+| **장점** | 간단함, 격리성 | 최고 성능, 직접 접근 | 유연성, 고급 기능 |
+| **주의사항** | 성능 오버헤드 | 보안 위험, 포트 충돌 | 설정 복잡성 |
+
+**Custom 네트워크 실습**:
+```bash
+# Custom 브리지 네트워크 생성
+docker network create --driver bridge \
+  --subnet=192.168.100.0/24 \
+  --gateway=192.168.100.1 \
+  my-custom-network
+
+# 네트워크에 컨테이너 연결
+docker run -d --name web1 --network my-custom-network nginx
+docker run -d --name web2 --network my-custom-network nginx
+
+# 컨테이너 간 이름으로 통신 테스트
+docker exec web1 ping web2
+
+# 네트워크 상세 정보 확인
+docker network inspect my-custom-network
+```
+
+**🔑 핵심 키워드 정리**:
+- **Bridge Network (브리지 네트워크)**: docker0 - Docker의 기본 네트워크 방식
+- **Host Network (호스트 네트워크)**: --network host - 호스트와 네트워크 공유
+- **Custom Network (커스텀 네트워크)**: 사용자 정의 - 맞춤형 네트워크 설계
+- **NAT (Network Address Translation)**: 네트워크 주소 변환 - 내부 IP를 외부 IP로 변환
+- **DNS Resolution (DNS 해상도)**: 도메인 이름 해석 - 컨테이너 이름으로 통신
+
+---
+
+## 💭 함께 생각해보기 (10분 - 상호작용 및 이해도 확인)
 
 ### 🤝 페어 토론 (5분)
 
 **토론 주제**:
-1. **보안 경험**: "컨테이너나 애플리케이션에서 보안 문제를 겪어본 적이 있나요?"
-2. **위험 평가**: "우리 프로젝트에서 가장 큰 보안 위험은 무엇일까요?"
-3. **대응 방안**: "보안 취약점을 발견했을 때 어떻게 대응해야 할까요?"
+1. **개념 적용**: "우리가 만들 웹 애플리케이션에서는 어떤 네트워크 방식이 가장 적합할까요?"
+2. **문제 해결**: "컨테이너 간 통신이 안 될 때 어떤 순서로 문제를 해결하시겠어요?"
+3. **경험 공유**: "네트워크 관련해서 겪어본 문제나 궁금한 점이 있다면 공유해주세요"
+
+**페어 활동 가이드**:
+- 👥 **자유 페어링**: 관심사나 이해도가 비슷한 사람끼리
+- 🔄 **역할 교대**: 5분씩 설명자/질문자 역할 바꾸기
+- 📝 **핵심 정리**: 대화 내용 중 중요한 점 메모하기
 
 ### 🎯 전체 공유 (5분)
 
-- **보안 인식**: 컨테이너 보안의 중요성에 대한 이해 확인
-- **실습 준비**: 오후 보안 스캔 실습에서 확인할 내용들
+- **인사이트 공유**: 페어 토론에서 나온 좋은 아이디어
+- **질문 수집**: 아직 이해가 어려운 부분
+- **다음 연결**: 다음 세션 "컨테이너 간 통신"과의 연결고리 확인
+
+**💡 이해도 체크 질문**:
+- ✅ "Bridge, Host, Custom 네트워크의 차이점을 한 문장으로 설명할 수 있나요?"
+- ✅ "실무에서 언제 어떤 네트워크를 사용할지 예상할 수 있나요?"
+- ✅ "다른 사람에게 Docker 네트워킹을 설명할 수 있을 정도로 이해했나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-- **CVE (Common Vulnerabilities and Exposures)**: 공통 취약점 식별자
-- **SAST (Static Application Security Testing)**: 정적 애플리케이션 보안 테스트
-- **DAST (Dynamic Application Security Testing)**: 동적 애플리케이션 보안 테스트
-- **Container Escape**: 컨테이너 탈출 공격
-- **Supply Chain Attack**: 공급망 공격
+- **Bridge Network (브리지 네트워크)**: Docker의 기본 네트워크 방식
+- **Host Network (호스트 네트워크)**: 호스트와 네트워크를 공유하는 방식
+- **Custom Network (커스텀 네트워크)**: 사용자가 정의하는 맞춤형 네트워크
+- **docker0**: Docker의 기본 브리지 인터페이스
+- **NAT (Network Address Translation)**: 네트워크 주소 변환
 
 ---
 
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
-- [ ] 컨테이너 보안 위협 모델 이해
-- [ ] 보안 스캔 도구 활용법 학습
-- [ ] 런타임 보안 베스트 프랙티스 습득
+- [ ] Bridge, Host, Custom 네트워크의 차이점과 특징 완전 이해
+- [ ] 각 네트워크 유형의 적합한 사용 시나리오 파악
+- [ ] 기본적인 네트워크 명령어 사용법 습득
 
 ### 🎯 다음 세션 준비
-- **주제**: 이미지 최적화와 성능 튜닝
-- **연결**: 보안과 성능의 균형점 찾기
+- **주제**: 컨테이너 간 통신 & 서비스 디스커버리
+- **연결**: 오늘 배운 네트워크 기초 위에 실제 통신 방법 학습
 
 ---
 
 <div align="center">
 
-**🔒 컨테이너 보안의 기초를 완전히 이해했습니다!**
+**🌐 Docker 네트워킹의 기초를 완전히 마스터했습니다!**
 
-**다음**: [Session 2 - 이미지 최적화와 성능 튜닝](./session_2.md)
+**다음**: [Session 2 - 컨테이너 간 통신 & 서비스 디스커버리](./session_2.md)
 
 </div>

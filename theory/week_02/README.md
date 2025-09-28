@@ -1,15 +1,15 @@
-# Week 2: Docker 심화와 컨테이너 생태계
+# Week 2: Docker 심화 + Kubernetes 준비
 
 <div align="center">
 
-**🐳 Docker 심화** • **🔒 컨테이너 보안** • **📊 모니터링**
+**🌐 네트워킹 심화** • **💾 스토리지 관리** • **📊 운영 모니터링** • **☸️ K8s 준비**
 
-*컨테이너 기술의 실무 활용과 운영을 위한 핵심 기술*
+*Docker 실무 운영 완성과 Kubernetes 학습을 위한 체계적 준비*
 
 ![Week 2](https://img.shields.io/badge/Week-2-blue?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Advanced-green?style=for-the-badge)
-![Security](https://img.shields.io/badge/Container-Security-red?style=for-the-badge)
-![Monitoring](https://img.shields.io/badge/Monitoring-CLI-orange?style=for-the-badge)
+![Networking](https://img.shields.io/badge/Networking-Deep-purple?style=for-the-badge)
+![Kubernetes](https://img.shields.io/badge/K8s-Ready-orange?style=for-the-badge)
 
 </div>
 
@@ -18,114 +18,111 @@
 ## 🎯 주간 학습 목표
 
 ### 📚 전체 공통 목표
-> **Docker 심화 기술과 컨테이너 보안, 모니터링을 통해 실무 컨테이너 운영 역량을 완성한다**
+> **Docker 네트워킹, 스토리지, 운영 심화 학습을 통해 실무 역량을 완성하고, Kubernetes 학습을 위한 체계적 기반을 구축한다**
 
 ### 🎪 레벨별 목표
-- **🟢 초급자**: Docker 기본 운영 + 보안 기초 + CLI 모니터링
-- **🟡 중급자**: 컨테이너 최적화 + 보안 자동화 + 성능 분석
-- **🔴 고급자**: 엔터프라이즈 보안 + 고급 모니터링 + 운영 전략
+- **🟢 초급자**: Docker 네트워킹/스토리지 기초 + 기본 모니터링 + K8s 개념 이해
+- **🟡 중급자**: 멀티 호스트 네트워킹 + 데이터 관리 전략 + 운영 자동화 + K8s 실습
+- **🔴 고급자**: 엔터프라이즈 아키텍처 + 성능 최적화 + 고급 모니터링 + K8s 마이그레이션 전략
 
 ---
 
 ## 📅 일일 학습 계획 (4일 구성)
 
-### [Day 1: 컨테이너 보안 & 최적화 & 모니터링](./day1/README.md)
-**🎯 목표**: Docker 심화 기술 통합 학습 - 보안, 최적화, 모니터링
+### [Day 1: Docker 네트워킹 & 보안 기초](./day1/README.md)
+**🎯 목표**: 컨테이너 네트워킹 완전 이해 + 기본 보안 적용
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: 컨테이너 보안 기초와 취약점 분석
-- **Session 2**: 이미지 최적화와 성능 튜닝
-- **Session 3**: CLI 기반 모니터링과 로깅
+- **Session 1**: [Docker 네트워킹 심화 (Bridge, Host, Custom)](./day1/session_1.md)
+- **Session 2**: [컨테이너 간 통신 & 서비스 디스커버리](./day1/session_2.md)
+- **Session 3**: [네트워크 보안 & 방화벽 설정](./day1/session_3.md)
 
-#### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: 보안 취약점 스캔 및 수정
-- **Phase 2**: 이미지 최적화 실습
-- **Phase 3**: 모니터링 대시보드 구축
+#### 🛠️ 실습 챌린지 (2.5시간)
+- **Lab 1**: [멀티 컨테이너 네트워크 구성](./day1/lab_1.md)
+- **Lab 2**: [보안 강화된 네트워크 환경 구축](./day1/lab_2.md)
 
 ---
 
-### [Day 2: 컨테이너 오케스트레이션 개념 & 필요성](./day2/README.md)
-**🎯 목표**: 단일 컨테이너 한계 이해 및 오케스트레이션 필요성 학습
+### [Day 2: Docker 스토리지 & 데이터 관리](./day2/README.md)
+**🎯 목표**: 데이터 영속성과 관리 전략 완전 습득
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: 단일 컨테이너 운영의 한계점과 문제 상황
-- **Session 2**: 오케스트레이션 개념과 핵심 기능
-- **Session 3**: Docker Swarm vs Kubernetes 비교 분석
+- **Session 1**: [Volume, Bind Mount, tmpfs 완전 이해](./day2/session_1.md)
+- **Session 2**: [데이터 영속성 & 백업 전략](./day2/session_2.md)
+- **Session 3**: [데이터베이스 컨테이너 운영 실무](./day2/session_3.md)
 
-#### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: 단일 컨테이너 장애 시나리오 체험
-- **Phase 2**: Docker Swarm 기초 실습
-- **Phase 3**: 오케스트레이션 필요성 실감
+#### 🛠️ 실습 챌린지 (2.5시간)
+- **Lab 1**: [Stateful 애플리케이션 구축](./day2/lab_1.md)
+- **Lab 2**: [데이터 백업 및 복구 시스템](./day2/lab_2.md)
 
 ---
 
-### [Day 3: Kubernetes 아키텍처 & 핵심 개념](./day3/README.md)
-**🎯 목표**: Kubernetes 전체 구조와 핵심 구성 요소 이해
+### [Day 3: Docker 운영 & 모니터링](./day3/README.md)
+**🎯 목표**: 프로덕션 운영을 위한 모니터링과 오케스트레이션 기초
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: Kubernetes 아키텍처와 클러스터 구조
-- **Session 2**: 마스터 노드와 워커 노드의 역할
-- **Session 3**: 핵심 오브젝트 (Pod, Service, Deployment)
+- **Session 1**: [컨테이너 모니터링 & 성능 최적화](./day3/session_1.md)
+- **Session 2**: [로깅 전략 & 중앙화된 로그 관리](./day3/session_2.md)
+- **Session 3**: [Docker Swarm 기초 & 오케스트레이션 체험](./day3/session_3.md)
 
-#### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: 로컬 Kubernetes 환경 구축
-- **Phase 2**: 기본 오브젝트 생성 및 관리
-- **Phase 3**: 간단한 애플리케이션 배포
+#### 🛠️ 실습 챌린지 (2.5시간)
+- **Lab 1**: [운영급 모니터링 시스템 구축](./day3/lab_1.md)
+- **Lab 2**: [Docker Swarm 클러스터 구성](./day3/lab_2.md)
 
 ---
 
-### [Day 4: Week 1-2 종합 실습 & Kubernetes 준비](./day4/README.md)
-**🎯 목표**: Docker 전체 기술 스택 통합 활용 및 Week 3 Kubernetes 준비 완료
+### [Day 4: Kubernetes 준비 & 마이그레이션](./day4/README.md)
+**🎯 목표**: Week 3 Kubernetes 학습을 위한 완벽한 준비
 
 #### 📚 이론 강의 (2.5시간)
-- **Session 1**: Week 1-2 핵심 개념 통합 정리
-- **Session 2**: 실무 Docker 워크플로우와 베스트 프랙티스
-- **Session 3**: Week 3 Kubernetes 학습 로드맵과 준비
+- **Session 1**: [Docker vs Kubernetes 비교 분석](./day4/session_1.md)
+- **Session 2**: [Kubernetes 아키텍처 & 핵심 개념](./day4/session_2.md)
+- **Session 3**: [Docker 애플리케이션의 K8s 마이그레이션 전략](./day4/session_3.md)
 
-#### 🛠️ 실습 챌린지 (3시간)
-- **Phase 1**: Docker 기반 완전한 애플리케이션 구축
-- **Phase 2**: 보안, 모니터링, 최적화 통합 적용
-- **Phase 3**: Week 3 Kubernetes 환경 준비 및 마이그레이션 계획
+#### 🛠️ 실습 챌린지 (2.5시간)
+- **Lab 1**: [K8s 환경 구축 & 기본 배포](./day4/lab_1.md)
+- **Lab 2**: [Docker 앱의 K8s 마이그레이션 실습](./day4/lab_2.md)
 
 ---
 
 ## 🛠️ 주간 통합 프로젝트
 
 ### 🎯 프로젝트 목표
-**"Docker 기반 실무 애플리케이션 구축"**
-- 보안이 강화된 멀티 컨테이너 애플리케이션
-- 모니터링과 로깅이 통합된 운영 환경
-- 실무에서 바로 적용 가능한 구성
+**"Docker 심화 → Kubernetes 준비 완성"**
+- 네트워킹과 스토리지가 최적화된 멀티 컨테이너 시스템
+- 운영급 모니터링과 로깅 환경 구축
+- Kubernetes 마이그레이션 준비가 완료된 애플리케이션
 
 ### 📋 프로젝트 요구사항
-1. **멀티 컨테이너**: Docker Compose 기반 3-tier 아키텍처
-2. **보안 강화**: 취약점 스캔과 보안 설정 적용
-3. **모니터링**: CLI 기반 실시간 모니터링 구성
-4. **로그 관리**: 중앙화된 로그 수집과 분석
-5. **자동화**: 배포와 모니터링 자동화 스크립트
+1. **고급 네트워킹**: 커스텀 네트워크와 서비스 디스커버리
+2. **데이터 관리**: 영속성 보장과 백업 전략 구현
+3. **운영 모니터링**: 실시간 성능 모니터링과 알림 시스템
+4. **K8s 준비**: Kubernetes 배포 가능한 매니페스트 작성
+5. **마이그레이션**: Docker → K8s 전환 계획 수립
 
 ---
 
 ## 📊 주간 평가 기준
 
 ### ✅ 이해도 평가
-- **Docker 심화**: 멀티 컨테이너 구성과 최적화
-- **보안 역량**: 취약점 발견과 해결 능력
-- **모니터링**: CLI 도구 활용과 문제 진단
+- **네트워킹 심화**: 멀티 호스트 네트워크 구성과 보안
+- **스토리지 관리**: 데이터 영속성과 백업 전략
+- **운영 역량**: 모니터링, 로깅, 성능 최적화
+- **K8s 준비도**: 아키텍처 이해와 마이그레이션 계획
 
 ### 🎯 성공 지표
-- **개념 이해도**: 85% 이상
-- **실습 완성률**: 90% 이상
-- **보안 실습**: Critical 취약점 0개 달성
-- **모니터링**: 실시간 문제 진단 능력
+- **네트워킹 이해도**: 90% 이상
+- **데이터 관리 역량**: 85% 이상
+- **운영 시스템 구축**: 80% 이상
+- **K8s 준비도**: 75% 이상
 
 ---
 
 <div align="center">
 
-**🐳 Docker 마스터** • **🔒 보안 전문가** • **📊 모니터링 전문가**
+**🌐 네트워킹 마스터** • **💾 데이터 관리 전문가** • **📊 운영 전문가** • **☸️ K8s 준비 완료**
 
-*Week 2를 통해 실무 컨테이너 운영의 핵심을 완성했습니다*
+*Week 2를 통해 Docker 심화 역량을 완성하고 Kubernetes 학습 준비를 마쳤습니다*
 
 **이전 주**: [Week 1 - DevOps 기초와 문화 이해](../week_01/README.md) | **다음 주**: [Week 3 - Kubernetes 운영과 관리](../week_03/README.md)
 

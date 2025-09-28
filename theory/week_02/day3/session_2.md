@@ -1,10 +1,10 @@
-# Week 2 Day 3 Session 2: Docker 고급 네트워킹
+# Week 2 Day 3 Session 2: 로깅 전략 & 중앙화된 로그 관리
 
 <div align="center">
 
-**🌐 고급 네트워킹** • **🔗 컨테이너 통신**
+**📝 로그 수집** • **🔍 중앙화 관리** • **🔎 분석 및 검색**
 
-*Docker 네트워킹 심화와 컨테이너 간 통신 완전 정복*
+*분산 환경에서의 효과적인 로그 관리와 문제 해결*
 
 </div>
 
@@ -13,324 +13,298 @@
 ## 🕘 세션 정보
 
 **시간**: 10:00-10:50 (50분)  
-**목표**: Docker 고급 네트워킹과 컨테이너 간 통신 방법 완전 이해  
-**방식**: 네트워킹 이론 + 실습 + 문제 해결
+**목표**: 중앙화된 로그 관리 시스템 구축과 효과적인 로그 분석 방법 학습  
+**방식**: 이론 + 실시간 로그 분석 + 문제 해결 시나리오
 
 ---
 
 ## 🎯 세션 목표
 
 ### 📚 학습 목표
-- **이해 목표**: Docker 네트워킹 모델과 드라이버별 특징 완전 이해
-- **적용 목표**: 복잡한 네트워크 구성과 컨테이너 간 통신 설정 능력
-- **협업 목표**: 네트워킹 문제 해결을 위한 팀 협업과 지식 공유
+- **이해 목표**: ELK Stack 기반 로그 파이프라인 아키텍처 완전 이해
+- **적용 목표**: 로그 수집, 파싱, 검색을 통한 문제 해결 능력 습득
+- **협업 목표**: 팀별 로그 분석을 통한 장애 원인 파악 경험
 
 ### 🤔 왜 필요한가? (5분)
 
 **현실 문제 상황**:
-- 💼 **마이크로서비스**: 여러 컨테이너가 서로 통신해야 하는 복잡한 아키텍처
-- 🏠 **일상 비유**: 아파트 단지에서 각 세대가 서로 연결되는 네트워크 구조
-- 📊 **실무 필요성**: 프로덕션 환경에서 안전하고 효율적인 컨테이너 통신
+- 💼 **실무 시나리오**: "마이크로서비스 10개 중 어디서 에러가 발생했는지 모르겠어요"
+- 🏠 **일상 비유**: 범죄 수사에서 증거를 수집하고 분석하는 과정과 유사
+- 📊 **시장 동향**: 분산 시스템 증가로 로그 관리의 복잡성 급증
+
+**학습 전후 비교**:
+```mermaid
+graph LR
+    A[학습 전<br/>🔴 개별 서버 로그인<br/>수동 로그 검색<br/>사후 분석만 가능] --> B[학습 후<br/>🟢 통합 로그 검색<br/>실시간 분석<br/>예방적 모니터링]
+    
+    style A fill:#ffebee
+    style B fill:#e8f5e8
+```
 
 ---
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: Docker 네트워크 드라이버 (12분)
+### 🔍 개념 1: 로그 관리 아키텍처와 ELK Stack (12분)
 
-> **정의**: Docker에서 제공하는 다양한 네트워크 드라이버와 각각의 특징 및 사용 사례
+> **정의**: 분산된 시스템의 로그를 중앙에서 수집, 저장, 분석할 수 있는 통합 플랫폼
 
-**네트워크 드라이버 종류**:
+**ELK Stack 구성 요소**:
 ```mermaid
 graph TB
-    subgraph "Docker 네트워크 드라이버"
-        A[bridge<br/>기본 네트워크] --> F[컨테이너 통신]
-        B[host<br/>호스트 네트워크] --> F
-        C[overlay<br/>멀티 호스트] --> F
-        D[macvlan<br/>물리적 네트워크] --> F
-        E[none<br/>네트워크 없음] --> F
+    subgraph "로그 생성 계층"
+        A[Application Logs<br/>애플리케이션]
+        B[System Logs<br/>운영체제]
+        C[Container Logs<br/>Docker/K8s]
+        D[Network Logs<br/>방화벽/라우터]
     end
     
-    subgraph "사용 사례"
-        G[단일 호스트<br/>개발 환경]
-        H[고성능<br/>네트워킹]
-        I[Docker Swarm<br/>클러스터]
-        J[레거시 시스템<br/>통합]
-        K[보안 격리<br/>환경]
+    subgraph "로그 수집 계층"
+        E[Filebeat<br/>경량 수집기]
+        F[Fluentd<br/>통합 수집기]
+        G[Logstash<br/>데이터 처리]
     end
     
-    A --> G
-    B --> H
-    C --> I
-    D --> J
-    E --> K
+    subgraph "로그 저장 계층"
+        H[Elasticsearch<br/>검색 엔진]
+        I[Index Management<br/>인덱스 관리]
+    end
     
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#ffebee
-    style D fill:#f3e5f5
-    style E fill:#e0f2f1
+    subgraph "로그 분석 계층"
+        J[Kibana<br/>시각화 도구]
+        K[Grafana<br/>메트릭 연계]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> E
+    E --> H
+    F --> H
+    G --> H
+    H --> I
+    H --> J
+    J --> K
+    
+    style A,B,C,D fill:#e8f5e8
+    style E,F,G fill:#fff3e0
+    style H,I fill:#f3e5f5
+    style J,K fill:#ffebee
 ```
 
-**네트워크 드라이버 상세 비교**:
+**각 구성 요소의 역할**:
+- **Elasticsearch**: 분산 검색 및 분석 엔진 (JSON 기반 문서 저장)
+- **Logstash**: 로그 데이터 수집, 파싱, 변환 및 전송
+- **Kibana**: 로그 데이터 시각화 및 대시보드 제공
+- **Beats**: 경량 데이터 수집기 (Filebeat, Metricbeat 등)
 
-| 드라이버 | 특징 | 사용 사례 | 장점 | 단점 |
-|----------|------|-----------|------|------|
-| **bridge** | 기본 네트워크, NAT 사용 | 단일 호스트 개발 | 간단한 설정, 격리성 | 성능 오버헤드 |
-| **host** | 호스트 네트워크 직접 사용 | 고성능 요구 애플리케이션 | 최고 성능 | 포트 충돌 위험 |
-| **overlay** | 멀티 호스트 네트워킹 | Docker Swarm, 분산 환경 | 확장성, 암호화 | 복잡한 설정 |
-| **macvlan** | 물리적 MAC 주소 할당 | 레거시 시스템 통합 | 네이티브 성능 | 네트워크 제약 |
-| **none** | 네트워크 비활성화 | 최대 보안 격리 | 완전 격리 | 통신 불가 |
+**실무 적용 사례**:
+- **Netflix**: 수백만 건의 로그를 실시간으로 처리하여 사용자 경험 분석
+- **Uber**: 글로벌 서비스의 지역별 로그 분석으로 서비스 품질 관리
+- **Airbnb**: 예약 시스템의 트랜잭션 로그 분석으로 비즈니스 인사이트 도출
 
-**기본 네트워크 명령어**:
-```bash
-# 네트워크 목록 확인
-docker network ls
+### 🔍 개념 2: 로그 수집 전략과 파싱 기법 (12분)
 
-# 네트워크 상세 정보
-docker network inspect bridge
+> **정의**: 다양한 소스의 로그를 효율적으로 수집하고 구조화된 데이터로 변환하는 방법론
 
-# 커스텀 네트워크 생성
-docker network create --driver bridge my-network
-
-# 컨테이너를 특정 네트워크에 연결
-docker run --network my-network nginx
-
-# 실행 중인 컨테이너를 네트워크에 연결
-docker network connect my-network container-name
-
-# 네트워크에서 컨테이너 분리
-docker network disconnect my-network container-name
-```
-
-### 🔍 개념 2: 고급 네트워크 구성 (12분)
-
-> **정의**: 복잡한 네트워크 토폴로지와 고급 네트워킹 기능 구현
-
-**멀티 네트워크 아키텍처**:
+**로그 수집 패턴**:
 ```mermaid
 graph TB
-    subgraph "프론트엔드 네트워크"
-        A[Web Server<br/>nginx] --> B[Load Balancer<br/>haproxy]
+    subgraph "Push 방식"
+        A1[Application<br/>직접 전송]
+        A2[Syslog<br/>표준 프로토콜]
+        A3[HTTP API<br/>REST 전송]
     end
     
-    subgraph "백엔드 네트워크"
-        C[API Server<br/>node.js] --> D[Database<br/>postgresql]
-        E[Cache<br/>redis] --> C
+    subgraph "Pull 방식"
+        B1[File Monitoring<br/>파일 감시]
+        B2[Database Polling<br/>DB 조회]
+        B3[API Polling<br/>주기적 수집]
     end
     
-    subgraph "관리 네트워크"
-        F[Monitoring<br/>prometheus] --> G[Logging<br/>elasticsearch]
+    subgraph "Stream 방식"
+        C1[Kafka<br/>메시지 큐]
+        C2[Redis Streams<br/>실시간 스트림]
+        C3[RabbitMQ<br/>메시지 브로커]
     end
     
-    B --> C
-    F -.-> A
-    F -.-> C
-    F -.-> D
+    A1 --> D[Logstash<br/>중앙 처리]
+    A2 --> D
+    A3 --> D
+    B1 --> D
+    B2 --> D
+    B3 --> D
+    C1 --> D
+    C2 --> D
+    C3 --> D
     
-    style A fill:#e3f2fd
-    style B fill:#e3f2fd
-    style C fill:#e8f5e8
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#fff3e0
-    style G fill:#fff3e0
+    style A1,A2,A3 fill:#e8f5e8
+    style B1,B2,B3 fill:#fff3e0
+    style C1,C2,C3 fill:#f3e5f5
+    style D fill:#ffebee
 ```
 
-**고급 네트워크 설정 예시**:
+**로그 파싱 및 구조화**:
 
-**1. 서브넷과 IP 범위 지정**:
+**1. 일반적인 로그 형식들**:
 ```bash
-# 커스텀 서브넷으로 네트워크 생성
-docker network create \
-  --driver bridge \
-  --subnet=172.20.0.0/16 \
-  --ip-range=172.20.240.0/20 \
-  --gateway=172.20.0.1 \
-  custom-network
+# Apache/Nginx 액세스 로그
+127.0.0.1 - - [25/Dec/2024:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234
 
-# 고정 IP로 컨테이너 실행
-docker run --network custom-network --ip 172.20.0.10 nginx
+# 애플리케이션 로그 (JSON)
+{"timestamp":"2024-12-25T10:00:00Z","level":"ERROR","message":"Database connection failed","service":"user-api"}
+
+# 시스템 로그 (Syslog)
+Dec 25 10:00:00 server01 kernel: [12345.678] Out of memory: Kill process 1234
 ```
 
-**2. 네트워크 별칭과 DNS**:
-```bash
-# 네트워크 별칭 설정
-docker run --network my-network --network-alias web nginx
-docker run --network my-network --network-alias api node:alpine
+**2. Logstash 파싱 설정 예시**:
+```ruby
+# logstash.conf
+input {
+  beats {
+    port => 5044
+  }
+}
 
-# DNS 해석 테스트
-docker run --network my-network alpine nslookup web
+filter {
+  if [fields][service] == "nginx" {
+    grok {
+      match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+    date {
+      match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+    }
+  }
+  
+  if [fields][service] == "app" {
+    json {
+      source => "message"
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["elasticsearch:9200"]
+    index => "logs-%{+YYYY.MM.dd}"
+  }
+}
 ```
 
-**3. 포트 매핑과 노출**:
-```bash
-# 특정 인터페이스에 포트 바인딩
-docker run -p 127.0.0.1:8080:80 nginx
+**로그 레벨과 분류**:
+| 로그 레벨 | 용도 | 보관 기간 | 알림 필요성 |
+|-----------|------|-----------|-------------|
+| **TRACE** | 상세 디버깅 | 1-3일 | 없음 |
+| **DEBUG** | 개발 디버깅 | 1주일 | 없음 |
+| **INFO** | 일반 정보 | 1개월 | 없음 |
+| **WARN** | 주의 상황 | 3개월 | 선택적 |
+| **ERROR** | 오류 발생 | 1년 | 필수 |
+| **FATAL** | 치명적 오류 | 영구 | 즉시 |
 
-# 포트 범위 매핑
-docker run -p 8000-8010:8000-8010 myapp
+### 🔍 개념 3: 로그 분석과 문제 해결 방법론 (11분)
 
-# UDP 포트 매핑
-docker run -p 53:53/udp dns-server
-```
+> **정의**: 수집된 로그 데이터를 활용하여 시스템 문제를 진단하고 해결하는 체계적 접근법
 
-### 🔍 개념 3: 네트워크 보안과 격리 (11분)
-
-> **정의**: 컨테이너 네트워크의 보안 강화와 트래픽 격리 방법
-
-**네트워크 보안 계층**:
+**로그 분석 워크플로우**:
 ```mermaid
 graph TB
-    subgraph "네트워크 보안 계층"
-        A[방화벽 규칙<br/>iptables] --> D[보안 통신]
-        B[네트워크 격리<br/>Namespace] --> D
-        C[암호화 통신<br/>TLS/SSL] --> D
+    subgraph "1단계: 문제 인식"
+        A1[알림 수신<br/>모니터링 감지]
+        A2[사용자 신고<br/>장애 접수]
+        A3[정기 점검<br/>예방적 분석]
     end
     
-    subgraph "보안 정책"
-        E[접근 제어<br/>ACL] --> F[트래픽 제어]
-        G[포트 제한<br/>Port Security] --> F
-        H[프로토콜 필터링<br/>Protocol Filter] --> F
+    subgraph "2단계: 로그 검색"
+        B1[시간 범위 설정<br/>장애 발생 시점]
+        B2[서비스 필터링<br/>관련 컴포넌트]
+        B3[키워드 검색<br/>오류 메시지]
     end
     
-    D --> F
+    subgraph "3단계: 패턴 분석"
+        C1[빈도 분석<br/>오류 발생 횟수]
+        C2[상관관계 분석<br/>연관 이벤트]
+        C3[트렌드 분석<br/>시간별 패턴]
+    end
     
-    style A fill:#ffebee
-    style B fill:#ffebee
-    style C fill:#ffebee
-    style D fill:#f44336
-    style E fill:#fff3e0
-    style G fill:#fff3e0
-    style H fill:#fff3e0
-    style F fill:#ff9800
+    subgraph "4단계: 근본 원인"
+        D1[스택 트레이스<br/>코드 레벨 분석]
+        D2[의존성 추적<br/>서비스 간 호출]
+        D3[리소스 분석<br/>인프라 상태]
+    end
+    
+    A1 --> B1
+    A2 --> B2
+    A3 --> B3
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    C1 --> D1
+    C2 --> D2
+    C3 --> D3
+    
+    style A1,A2,A3 fill:#e8f5e8
+    style B1,B2,B3 fill:#fff3e0
+    style C1,C2,C3 fill:#f3e5f5
+    style D1,D2,D3 fill:#ffebee
 ```
 
-**네트워크 보안 실습**:
+**Kibana 검색 쿼리 실무 예시**:
 
-**1. 네트워크 격리 구현**:
+**1. 기본 검색 쿼리**:
 ```bash
-# 격리된 네트워크 생성
-docker network create --internal secure-network
+# 특정 시간 범위의 에러 로그
+level:ERROR AND @timestamp:[2024-12-25T09:00:00 TO 2024-12-25T10:00:00]
 
-# 외부 접근 차단된 컨테이너 실행
-docker run --network secure-network --name secure-app alpine
+# 특정 서비스의 응답 시간이 느린 요청
+service:user-api AND response_time:>1000
 
-# 내부 통신만 허용하는 구조
-docker run --network secure-network --name secure-db postgres
+# 특정 사용자의 활동 로그
+user_id:12345 AND (action:login OR action:logout)
 ```
 
-**2. 방화벽 규칙 설정**:
+**2. 집계 및 시각화**:
 ```bash
-# Docker 방화벽 규칙 확인
-sudo iptables -L DOCKER
-
-# 특정 포트만 허용
-sudo iptables -I DOCKER-USER -p tcp --dport 80 -j ACCEPT
-sudo iptables -I DOCKER-USER -p tcp --dport 443 -j ACCEPT
-sudo iptables -I DOCKER-USER -j DROP
+# 시간별 에러 발생 건수
+GET /logs-*/_search
+{
+  "aggs": {
+    "errors_over_time": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "interval": "1h"
+      },
+      "aggs": {
+        "error_count": {
+          "filter": {
+            "term": { "level": "ERROR" }
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
-**3. TLS 암호화 통신**:
-```yaml
-# docker-compose.yml with TLS
-version: '3.8'
-services:
-  web:
-    image: nginx
-    volumes:
-      - ./ssl:/etc/nginx/ssl
-    ports:
-      - "443:443"
-    environment:
-      - SSL_CERT=/etc/nginx/ssl/cert.pem
-      - SSL_KEY=/etc/nginx/ssl/key.pem
-    networks:
-      - secure-net
+**문제 해결 시나리오별 접근법**:
 
-  app:
-    image: myapp
-    networks:
-      - secure-net
-    environment:
-      - TLS_ENABLED=true
+**시나리오 1: 응답 시간 급증**
+1. **증상 확인**: 응답 시간 메트릭 급증 알림
+2. **로그 검색**: `response_time:>1000 AND @timestamp:[now-1h TO now]`
+3. **패턴 분석**: 특정 API 엔드포인트에 집중된 느린 응답
+4. **근본 원인**: 데이터베이스 쿼리 성능 저하 발견
 
-networks:
-  secure-net:
-    driver: bridge
-    driver_opts:
-      encrypted: "true"
-```
+**시나리오 2: 간헐적 500 에러**
+1. **증상 확인**: 에러율 증가 감지
+2. **로그 검색**: `status:500 AND service:payment-api`
+3. **패턴 분석**: 특정 시간대에 집중된 에러 발생
+4. **근본 원인**: 외부 API 타임아웃 설정 문제
 
-**네트워크 문제 해결 도구**:
-
-**1. 네트워크 진단 명령어**:
-```bash
-# 컨테이너 네트워크 정보 확인
-docker exec container-name ip addr show
-docker exec container-name ip route show
-
-# 네트워크 연결 테스트
-docker exec container-name ping target-container
-docker exec container-name telnet target-host 80
-
-# DNS 해석 테스트
-docker exec container-name nslookup hostname
-docker exec container-name dig hostname
-```
-
-**2. 네트워크 모니터링**:
-```bash
-# 네트워크 트래픽 모니터링
-docker exec container-name netstat -tuln
-docker exec container-name ss -tuln
-
-# 패킷 캡처
-docker exec container-name tcpdump -i eth0
-
-# 네트워크 성능 테스트
-docker exec container-name iperf3 -c target-host
-```
-
-**3. 문제 해결 시나리오**:
-```bash
-#!/bin/bash
-# network-troubleshoot.sh
-
-echo "=== Docker Network Troubleshooting ==="
-
-# 1. 네트워크 목록 확인
-echo "1. Available Networks:"
-docker network ls
-
-# 2. 컨테이너 네트워크 상태
-echo -e "\n2. Container Network Status:"
-docker ps --format "table {{.Names}}\t{{.Networks}}\t{{.Ports}}"
-
-# 3. 네트워크 상세 정보
-echo -e "\n3. Network Details:"
-for network in $(docker network ls --format "{{.Name}}" | grep -v "bridge\|host\|none"); do
-    echo "Network: $network"
-    docker network inspect $network --format "{{.IPAM.Config}}"
-done
-
-# 4. 컨테이너 간 연결 테스트
-echo -e "\n4. Container Connectivity Test:"
-containers=$(docker ps --format "{{.Names}}")
-for container in $containers; do
-    echo "Testing connectivity from $container:"
-    docker exec $container ping -c 1 google.com > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo "  ✓ Internet connectivity: OK"
-    else
-        echo "  ✗ Internet connectivity: FAILED"
-    fi
-done
-
-# 5. 포트 바인딩 확인
-echo -e "\n5. Port Bindings:"
-docker ps --format "table {{.Names}}\t{{.Ports}}"
-```
+**로그 기반 성능 최적화**:
+- **슬로우 쿼리 분석**: 데이터베이스 성능 병목 지점 파악
+- **API 응답 시간**: 엔드포인트별 성능 분석
+- **사용자 행동 패턴**: 비즈니스 로직 최적화 포인트 발견
+- **리소스 사용 패턴**: 스케일링 시점 예측
 
 ---
 
@@ -339,54 +313,74 @@ docker ps --format "table {{.Names}}\t{{.Ports}}"
 ### 🤝 페어 토론 (5분)
 
 **토론 주제**:
-1. **네트워크 설계**: "마이크로서비스 아키텍처에서 어떻게 네트워크를 설계하시겠어요?"
-2. **보안 고려사항**: "컨테이너 네트워크에서 가장 중요한 보안 요소는 무엇일까요?"
-3. **성능 최적화**: "네트워크 성능을 향상시키기 위한 방법은?"
+1. **로그 전략**: "우리 서비스에서 가장 중요한 로그는 무엇이고, 어떻게 수집할까요?"
+2. **장애 대응**: "새벽에 장애 알림을 받았을 때, 로그를 어떤 순서로 확인하시겠어요?"
+3. **보안 고려**: "로그에 민감한 정보가 포함되지 않도록 하는 방법은?"
+
+**페어 활동 가이드**:
+- 👥 **실무 시나리오**: 구체적인 상황을 가정하여 토론
+- 🔄 **경험 공유**: 실제 경험했던 로그 분석 사례 공유
+- 📝 **베스트 프랙티스**: 효과적인 로그 관리 방법 정리
 
 ### 🎯 전체 공유 (5분)
 
-- **네트워크 아키텍처**: 효과적인 컨테이너 네트워크 설계 방안
-- **문제 해결**: 네트워킹 문제 진단과 해결 경험 공유
+**인사이트 공유**:
+- **창의적 로그 활용**: 로그를 활용한 독특한 문제 해결 사례
+- **효율적 검색**: 빠르고 정확한 로그 검색 팁
+- **자동화 아이디어**: 로그 분석 자동화 방안
+
+**💡 이해도 체크 질문**:
+- ✅ "ELK Stack에서 각 구성 요소의 역할을 설명할 수 있나요?"
+- ✅ "로그 레벨별 적절한 사용 시기와 보관 정책을 수립할 수 있나요?"
+- ✅ "Kibana에서 복잡한 검색 쿼리를 작성할 수 있나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-- **Bridge Network**: 기본 브리지 네트워크
-- **Overlay Network**: 멀티 호스트 오버레이 네트워크
-- **Network Namespace**: 네트워크 네임스페이스
-- **Port Mapping**: 포트 매핑
-- **Network Isolation**: 네트워크 격리
-- **DNS Resolution**: DNS 해석
+### 🆕 새로운 용어
+- **ELK Stack**: Elasticsearch, Logstash, Kibana의 조합
+- **Beats**: 경량 데이터 수집기 (Filebeat, Metricbeat 등)
+- **Grok**: Logstash의 텍스트 파싱 플러그인
+- **Index**: Elasticsearch의 데이터 저장 단위
+
+### 🔤 로그 관리 용어
+- **Log Aggregation**: 로그 집계 및 중앙화
+- **Log Rotation**: 로그 파일 순환 관리
+- **Log Retention**: 로그 보관 정책
+- **Log Parsing**: 로그 데이터 구조화
+
+### 🔤 검색 및 분석
+- **Query DSL**: Elasticsearch 쿼리 언어
+- **Aggregation**: 데이터 집계 및 통계
+- **Visualization**: 데이터 시각화
+- **Dashboard**: 종합 모니터링 대시보드
 
 ---
 
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
-- [ ] Docker 네트워크 드라이버별 특징 완전 이해
-- [ ] 고급 네트워크 구성과 관리 방법 습득
-- [ ] 네트워크 보안과 격리 기법 학습
-- [ ] 네트워크 문제 진단과 해결 능력 개발
+- **로그 아키텍처**: ELK Stack 기반 중앙화된 로그 관리 시스템 이해
+- **수집 전략**: 다양한 로그 소스의 효율적 수집과 파싱 방법
+- **분석 방법론**: 체계적인 로그 분석을 통한 문제 해결 프로세스
 
 ### 🎯 다음 세션 준비
-- **주제**: 모니터링 & 관측성
-- **연결**: 네트워크 모니터링과 성능 분석
+- **Session 3 연결**: 로그 분석 → Docker Swarm 클러스터 로그 관리
+- **실습 준비**: 오후 실습에서 ELK Stack 직접 구축 및 로그 분석
+- **심화 학습**: 분산 환경에서의 오케스트레이션과 서비스 관리
 
-### 🚀 실무 적용 포인트
-- **마이크로서비스**: 서비스 간 안전한 통신 구현
-- **보안 강화**: 네트워크 레벨에서의 보안 정책 적용
-- **성능 최적화**: 네트워크 병목 지점 식별과 개선
-- **문제 해결**: 네트워킹 이슈의 체계적 진단과 해결
+### 🔮 실무 적용 계획
+- **로그 정책**: 현재 프로젝트의 로그 수집 및 보관 정책 수립
+- **검색 최적화**: 효율적인 로그 검색과 분석 워크플로우 구축
+- **자동화**: 로그 기반 알림과 자동 대응 시스템 설계
 
 ---
 
 <div align="center">
 
-**🌐 Docker 고급 네트워킹을 완전히 마스터했습니다!**
+**📊 다음 세션**: [Session 3 - Docker Swarm 기초 & 오케스트레이션 체험](./session_3.md)
 
-*이제 복잡한 컨테이너 네트워크도 자유자재로 구성할 수 있습니다*
-
-**다음**: [Session 3 - 모니터링 & 관측성](./session_3.md)
+**🛠️ 오후 실습**: [Lab 1 - 운영급 모니터링 시스템 구축](./lab_1.md)
 
 </div>
