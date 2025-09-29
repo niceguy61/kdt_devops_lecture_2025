@@ -239,9 +239,12 @@ graph TB
     style A fill:#e8f5e8
     style B fill:#fff3e0
     style C fill:#f3e5f5
-    style B1,C1 fill:#ffebee
-    style B2,C2 fill:#ffcdd2
-    style B3,C3 fill:#f44336
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style B2 fill:#ffcdd2
+    style C2 fill:#ffcdd2
+    style B3 fill:#f44336
+    style C3 fill:#f44336
 ```
 
 **⚙️ 기본 프로젝트 예산 설정 (11월)**:
@@ -366,8 +369,12 @@ graph TB
     D --> D2[불필요한 스냅샷 삭제]
     
     style A fill:#e8f5e8
-    style B1,C1,D1 fill:#c8e6c9
-    style B2,C2,D2 fill:#fff3e0
+    style B1 fill:#c8e6c9
+    style C1 fill:#c8e6c9
+    style D1 fill:#c8e6c9
+    style B2 fill:#fff3e0
+    style C2 fill:#fff3e0
+    style D2 fill:#fff3e0
 ```
 
 **⚠️ 피해야 할 것들**:
