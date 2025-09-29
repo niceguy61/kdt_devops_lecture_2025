@@ -105,6 +105,9 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 # 백업 시스템을 위한 추가 디렉토리 생성
 mkdir -p backup/{daily,weekly,monthly,scripts,logs,restore}
 mkdir -p remote/{s3,gdrive,ftp}
+
+# 데이터베이스 상태 확인 및 준비
+./lab_scripts/lab2/check_and_prepare_data.sh
 ```
 
 ### 백업 요구사항 정의
@@ -121,7 +124,10 @@ mkdir -p remote/{s3,gdrive,ftp}
 
 **🚀 자동화 스크립트 사용**
 ```bash
-# 백업 시스템 자동 구축
+# 1. 데이터 준비 확인 (필수)
+./lab_scripts/lab2/check_and_prepare_data.sh
+
+# 2. 백업 시스템 자동 구축
 ./lab_scripts/lab2/setup_backup_system.sh
 ```
 

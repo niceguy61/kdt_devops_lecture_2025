@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**🏗️ WordPress + MySQL** • **💾 데이터 영속성** • **🔧 환경 설정**
+**🏗️ WordPress + MariaDB** • **💾 데이터 영속성** • **🔧 환경 설정**
 
 *데이터베이스와 웹 애플리케이션이 통합된 완전한 시스템 구축*
 
@@ -43,7 +43,7 @@ graph TB
     end
     
     subgraph "데이터 계층"
-        M[MySQL<br/>:3306]
+        M[MariaDB<br/>:3306]
         V1[wp-content<br/>Volume]
         V2[mysql-data<br/>Volume]
     end
@@ -103,7 +103,7 @@ docker volume prune -f
 
 **🚀 자동화 스크립트 사용**
 ```bash
-# MySQL 데이터베이스 자동 구축
+# MariaDB 데이터베이스 자동 구축 (MySQL 완전 호환)
 ./lab_scripts/lab1/setup_database.sh
 ```
 
@@ -111,51 +111,25 @@ docker volume prune -f
 
 **1-1. 수동 실행 (학습용)**
 ```bash
-# MySQL 데이터 볼륨 생성
+# WordPress 네트워크 생성
+docker network create wordpress-net
+
+# MariaDB 데이터 볼륨 생성
 docker volume create mysql-data
 docker volume create mysql-config
 
-# MySQL 설정 파일 생성
-mkdir -p config/mysql
-cat > config/mysql/my.cnf << 'EOF'
-[mysqld]
-# 기본 설정
-bind-address = 0.0.0.0
-port = 3306
-
-# 문자셋
-character-set-server = utf8mb4
-collation-server = utf8mb4_unicode_ci
-
-# InnoDB 최적화
-innodb_buffer_pool_size = 512M
-innodb_log_file_size = 128M
-innodb_flush_log_at_trx_commit = 2
-
-# 연결 설정
-max_connections = 100
-wait_timeout = 600
-
-# 로깅
-slow_query_log = 1
-slow_query_log_file = /var/log/mysql/slow.log
-long_query_time = 2
-EOF
-
-# MySQL 컨테이너 실행
+# MariaDB 컨테이너 실행 (MySQL 완전 호환)
 docker run -d \
   --name mysql-wordpress \
+  --network wordpress-net \
   --restart=unless-stopped \
   -e MYSQL_ROOT_PASSWORD=rootpassword \
   -e MYSQL_DATABASE=wordpress \
   -e MYSQL_USER=wpuser \
   -e MYSQL_PASSWORD=wppassword \
   -v mysql-data:/var/lib/mysql \
-  -v mysql-config:/etc/mysql/conf.d \
-  -v $(pwd)/config/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf \
-  --memory=1g \
-  --cpus=1.0 \
-  mysql:8.0
+  --memory=256m \
+  mariadb:10.6
 ```
 
 **1-2. 데이터베이스 초기화 확인**
@@ -184,54 +158,21 @@ docker exec mysql-wordpress mysql -u root -prootpassword -e "SHOW VARIABLES LIKE
 ```bash
 # WordPress 데이터 볼륨 생성
 docker volume create wp-content
-docker volume create wp-config
-
-# WordPress 설정 파일 생성
-mkdir -p config/wordpress
-cat > config/wordpress/wp-config.php << 'EOF'
-<?php
-define('DB_NAME', 'wordpress');
-define('DB_USER', 'wpuser');
-define('DB_PASSWORD', 'wppassword');
-define('DB_HOST', 'mysql-wordpress:3306');
-define('DB_CHARSET', 'utf8mb4');
-define('DB_COLLATE', '');
-
-// 보안 키 설정
-define('AUTH_KEY',         'your-unique-auth-key');
-define('SECURE_AUTH_KEY',  'your-unique-secure-auth-key');
-define('LOGGED_IN_KEY',    'your-unique-logged-in-key');
-define('NONCE_KEY',        'your-unique-nonce-key');
-
-// Redis 세션 설정
-define('WP_REDIS_HOST', 'redis-session');
-define('WP_REDIS_PORT', 6379);
-define('WP_REDIS_DATABASE', 0);
-
-// 디버그 설정
-define('WP_DEBUG', false);
-define('WP_DEBUG_LOG', false);
-
-// 테이블 접두사
-$table_prefix = 'wp_';
-
-if ( !defined('ABSPATH') )
-    define('ABSPATH', dirname(__FILE__) . '/');
-
-require_once(ABSPATH . 'wp-settings.php');
-EOF
+docker volume create redis-data
 
 # Redis 세션 스토어 실행
 docker run -d \
   --name redis-session \
+  --network wordpress-net \
   --restart=unless-stopped \
   -v redis-data:/data \
-  --memory=256m \
+  --memory=128m \
   redis:7-alpine redis-server --appendonly yes
 
 # WordPress 컨테이너 실행
 docker run -d \
   --name wordpress-app \
+  --network wordpress-net \
   --restart=unless-stopped \
   -p 8080:80 \
   -e WORDPRESS_DB_HOST=mysql-wordpress:3306 \
@@ -239,60 +180,20 @@ docker run -d \
   -e WORDPRESS_DB_USER=wpuser \
   -e WORDPRESS_DB_PASSWORD=wppassword \
   -v wp-content:/var/www/html/wp-content \
-  -v $(pwd)/config/wordpress/wp-config.php:/var/www/html/wp-config.php \
-  --link mysql-wordpress:mysql \
-  --link redis-session:redis \
-  --memory=512m \
-  --cpus=1.0 \
+  --memory=256m \
   wordpress:latest
 ```
 
-**2-2. PHP 최적화 설정**
+**2-2. 연결 테스트**
 ```bash
-# PHP 설정 파일 생성
-mkdir -p config/php
-cat > config/php/php.ini << 'EOF'
-; 메모리 설정
-memory_limit = 256M
-max_execution_time = 300
-max_input_time = 300
+# WordPress 서비스 시작 대기
+sleep 30
 
-; 파일 업로드
-upload_max_filesize = 64M
-post_max_size = 64M
-max_file_uploads = 20
+# WordPress 연결 테스트
+curl -I http://localhost:8080/
 
-; 세션 설정
-session.save_handler = redis
-session.save_path = "tcp://redis-session:6379"
-
-; OPcache 설정
-opcache.enable = 1
-opcache.memory_consumption = 128
-opcache.max_accelerated_files = 4000
-opcache.revalidate_freq = 60
-EOF
-
-# PHP 설정 적용을 위한 컨테이너 재시작
-docker stop wordpress-app
-docker rm wordpress-app
-
-docker run -d \
-  --name wordpress-app \
-  --restart=unless-stopped \
-  -p 8080:80 \
-  -e WORDPRESS_DB_HOST=mysql-wordpress:3306 \
-  -e WORDPRESS_DB_NAME=wordpress \
-  -e WORDPRESS_DB_USER=wpuser \
-  -e WORDPRESS_DB_PASSWORD=wppassword \
-  -v wp-content:/var/www/html/wp-content \
-  -v $(pwd)/config/wordpress/wp-config.php:/var/www/html/wp-config.php \
-  -v $(pwd)/config/php/php.ini:/usr/local/etc/php/conf.d/custom.ini \
-  --link mysql-wordpress:mysql \
-  --link redis-session:redis \
-  --memory=512m \
-  --cpus=1.0 \
-  wordpress:latest
+# Redis 연결 테스트
+docker exec redis-session redis-cli ping
 ```
 
 ### Step 3: 리버스 프록시 및 캐싱 (10분)
@@ -307,9 +208,23 @@ docker run -d \
 
 **3-1. 수동 실행 (학습용)**
 ```bash
-# Nginx 설정 파일 생성
-mkdir -p config/nginx
-cat > config/nginx/nginx.conf << 'EOF'
+# Nginx 볼륨 생성
+docker volume create nginx-logs
+docker volume create nginx-cache
+
+# Nginx 컨테이너 실행 (기본 설정)
+docker run -d \
+  --name nginx-proxy \
+  --network wordpress-net \
+  --restart=unless-stopped \
+  -p 80:80 \
+  -v nginx-logs:/var/log/nginx \
+  -v nginx-cache:/var/cache/nginx \
+  --memory=128m \
+  nginx:alpine
+
+# Nginx 설정 업데이트 (프록시 설정)
+docker exec nginx-proxy sh -c 'cat > /etc/nginx/conf.d/default.conf << "EOF"
 upstream wordpress {
     server wordpress-app:80;
 }
@@ -318,58 +233,22 @@ server {
     listen 80;
     server_name localhost;
     
-    # 로그 설정
-    access_log /var/log/nginx/wordpress.access.log;
-    error_log /var/log/nginx/wordpress.error.log;
-    
-    # 정적 파일 캐싱
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        proxy_pass http://wordpress;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-    
-    # 동적 콘텐츠
     location / {
         proxy_pass http://wordpress;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # 버퍼링 설정
-        proxy_buffering on;
-        proxy_buffer_size 4k;
-        proxy_buffers 8 4k;
-        
-        # 타임아웃 설정
-        proxy_connect_timeout 30s;
-        proxy_send_timeout 30s;
-        proxy_read_timeout 30s;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
     
-    # 헬스 체크
     location /health {
-        access_log off;
         return 200 "healthy\n";
         add_header Content-Type text/plain;
     }
 }
-EOF
+EOF'
 
-# Nginx 컨테이너 실행
-docker run -d \
-  --name nginx-proxy \
-  --restart=unless-stopped \
-  -p 80:80 \
-  -v $(pwd)/config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf \
-  -v nginx-logs:/var/log/nginx \
-  --link wordpress-app:wordpress-app \
-  --memory=128m \
-  nginx:alpine
+# Nginx 설정 재로드
+docker exec nginx-proxy nginx -s reload
 ```
 
 ### Step 4: 모니터링 및 백업 설정 (5분)
@@ -384,12 +263,13 @@ docker run -d \
 
 **4-1. 수동 실행 (학습용)**
 ```bash
+# 백업 디렉토리 생성
+mkdir -p scripts backup logs
+
 # 백업 스크립트 생성
-mkdir -p scripts
 cat > scripts/backup.sh << 'EOF'
 #!/bin/bash
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/backup"
 
 # 데이터베이스 백업
 docker exec mysql-wordpress mysqldump \
@@ -397,13 +277,43 @@ docker exec mysql-wordpress mysqldump \
   --routines \
   --triggers \
   -u wpuser -pwppassword wordpress \
-  > ${BACKUP_DIR}/wordpress_db_${BACKUP_DATE}.sql
+  > backup/wordpress_db_${BACKUP_DATE}.sql
 
 # WordPress 파일 백업
 docker run --rm \
   -v wp-content:/data:ro \
   -v $(pwd)/backup:/backup \
   alpine tar czf /backup/wp_content_${BACKUP_DATE}.tar.gz -C /data .
+
+echo "Backup completed: ${BACKUP_DATE}"
+EOF
+
+chmod +x scripts/backup.sh
+
+# 헬스 체크 스크립트 생성
+cat > scripts/health-check.sh << 'EOF'
+#!/bin/bash
+while true; do
+    # WordPress 헬스 체크
+    if curl -f http://localhost/health >/dev/null 2>&1; then
+        echo "$(date): WordPress is healthy"
+    else
+        echo "$(date): WordPress is down!"
+    fi
+    
+    # MariaDB 헬스 체크
+    if docker exec mysql-wordpress mysqladmin ping -u wpuser -pwppassword >/dev/null 2>&1; then
+        echo "$(date): MariaDB is healthy"
+    else
+        echo "$(date): MariaDB is down!"
+    fi
+    
+    sleep 60
+done
+EOF
+
+chmod +x scripts/health-check.sh
+``` /data .
 
 echo "Backup completed: ${BACKUP_DATE}"
 EOF
@@ -435,7 +345,18 @@ EOF
 chmod +x scripts/health-check.sh
 
 # 백그라운드에서 헬스 체크 실행
-nohup ./scripts/health-check.sh > health.log 2>&1 &
+nohup ./scripts/health-check.sh > logs/health.log 2>&1 &
+```
+
+### Step 5: 전체 시스템 테스트 (5분)
+
+**🚀 자동화 테스트 스크립트 사용**
+```bash
+# 전체 시스템 종합 테스트
+./lab_scripts/lab1/test_system.sh
+```
+
+**📋 스크립트 내용**: [test_system.sh](./lab_scripts/lab1/test_system.sh)
 ```
 
 ---
@@ -443,9 +364,10 @@ nohup ./scripts/health-check.sh > health.log 2>&1 &
 ## ✅ 실습 체크포인트
 
 ### 기본 기능 구현 완료
-- [ ] **MySQL 데이터베이스**: 최적화된 설정으로 정상 동작
-- [ ] **WordPress 애플리케이션**: PHP 최적화 및 Redis 세션 연동
-- [ ] **Nginx 프록시**: 정적 파일 캐싱 및 로드 밸런싱
+- [ ] **MariaDB 데이터베이스**: MySQL 완전 호환으로 정상 동작
+- [ ] **WordPress 애플리케이션**: 웹 서비스 정상 동작
+- [ ] **Redis 세션 스토어**: 세션 데이터 저장
+- [ ] **Nginx 프록시**: 리버스 프록시 및 로드 밸런싱
 - [ ] **데이터 영속성**: Volume을 통한 데이터 보존 확인
 
 ### 설정 및 구성 확인
@@ -485,9 +407,10 @@ ls -la backup/
 ## 🔄 실습 마무리 (5분)
 
 ### 결과 공유
-- **시연**: 완성된 WordPress 시스템 데모
-- **성능 확인**: 페이지 로딩 속도와 응답성 테스트
+- **시연**: 완성된 WordPress 시스템 데모 (http://localhost)
+- **모니터링**: 대시보드 확인 (http://localhost:9090)
 - **데이터 영속성**: 컨테이너 재시작 후 데이터 보존 확인
+- **백업 시스템**: 자동 백업 및 복구 기능 테스트
 
 ### 질문 해결
 - **어려웠던 부분**: 볼륨 설정이나 네트워크 연결 관련 이슈
@@ -495,8 +418,25 @@ ls -la backup/
 - **백업 전략**: 실제 운영 환경에서의 백업 방법 토론
 
 ### 다음 연결
-- **Lab 2 준비**: 자동화된 백업 및 복구 시스템 구축
-- **확장 계획**: 현재 시스템의 확장성과 개선 방향
+- **Lab 2 준비**: 심화 모니터링 및 성능 최적화
+- **확장 계획**: 로드 밸런싱과 고가용성 구성
+
+---
+
+## 🚀 전체 자동 실행
+
+**전체 Lab 1을 한 번에 실행**
+```bash
+# 모든 단계를 자동으로 실행
+./lab_scripts/lab1/run_all_lab1.sh
+```
+
+**📋 스크립트 내용**: [run_all_lab1.sh](./lab_scripts/lab1/run_all_lab1.sh)
+
+**🌍 접속 주소**:
+- WordPress 사이트: http://localhost
+- 모니터링 대시보드: http://localhost:9090
+- WordPress 관리자: http://localhost/wp-admin
 
 ---
 
@@ -544,6 +484,13 @@ docker run -d \
 
 **🏗️ Stateful 애플리케이션 구축 완료!**
 
-**다음**: [Lab 2 - 데이터 백업 및 복구 시스템](./lab_2.md)
+**구축된 서비스**:
+- ✅ MariaDB (MySQL 호환) - 데이터베이스
+- ✅ WordPress - 웹 애플리케이션
+- ✅ Redis - 세션 스토어
+- ✅ Nginx - 리버스 프록시 & 로드밸런서
+- ✅ 모니터링 대시보드 - 시스템 관리
+
+**다음**: [Lab 2 - 심화 모니터링 및 성능 최적화](./lab_2.md)
 
 </div>

@@ -5,6 +5,11 @@
 
 echo "=== 모니터링 및 백업 설정 시작 ==="
 
+# 기존 컨테이너 정리
+echo "0. 기존 컨테이너 정리 중..."
+docker stop monitoring-dashboard 2>/dev/null || true
+docker rm monitoring-dashboard 2>/dev/null || true
+
 # 스크립트 디렉토리 생성
 echo "1. 스크립트 디렉토리 생성 중..."
 mkdir -p scripts backup/{daily,weekly,monthly} logs
@@ -333,6 +338,7 @@ EOF
 echo "7. 모니터링 대시보드 서버 실행 중..."
 docker run -d \
   --name monitoring-dashboard \
+  --network wordpress-net \
   --restart=unless-stopped \
   -p 9090:80 \
   -v $(pwd)/scripts/dashboard.html:/usr/share/nginx/html/index.html \
