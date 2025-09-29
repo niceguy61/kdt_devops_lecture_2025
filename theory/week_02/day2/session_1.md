@@ -88,7 +88,7 @@ graph TB
 
 ### 🔍 개념 2: Volume - Docker 관리 스토리지 (12분)
 
-> **정의**: Docker가 완전히 관리하는 영속적 데이터 저장소
+> **정의**: Docker가 완전히 관리하는 영속적 데이터 저장소 (AWS EBS와 유사한 블록 스토리지)
 
 **Volume의 특징과 장점**:
 ```mermaid
@@ -138,30 +138,30 @@ docker volume ls
 docker volume prune
 ```
 
-**Volume 고급 활용**:
+**Volume 고급 활용 (EBS 스타일)**:
 ```bash
-# 라벨을 사용한 Volume 관리
+# 라벨을 사용한 Volume 관리 (EBS 태그와 유사)
 docker volume create --label environment=production db-volume
 
-# 드라이버 옵션 지정
+# 드라이버 옵션 지정 (EFS 마운트와 유사)
 docker volume create --driver local \
   --opt type=nfs \
   --opt o=addr=192.168.1.100,rw \
   --opt device=:/path/to/dir \
   nfs-volume
 
-# Volume 백업
+# Volume 백업 (EBS 스냅샷과 유사)
 docker run --rm -v my-volume:/data -v $(pwd):/backup \
   alpine tar czf /backup/backup.tar.gz -C /data .
 
-# Volume 복원
+# Volume 복원 (EBS 복원과 유사)
 docker run --rm -v my-volume:/data -v $(pwd):/backup \
   alpine tar xzf /backup/backup.tar.gz -C /data
 ```
 
 ### 🔍 개념 3: Bind Mount와 tmpfs (11분)
 
-> **정의**: 호스트 파일시스템을 직접 마운트하는 방식과 메모리 기반 임시 스토리지
+> **정의**: 호스트 파일시스템을 직접 마운트하는 방식(AWS EFS와 유사)과 메모리 기반 임시 스토리지(AWS Instance Store와 유사)
 
 **Bind Mount 특징**:
 ```mermaid
@@ -216,26 +216,29 @@ graph TB
     style H fill:#e3f2fd
 ```
 
-**스토리지 유형별 비교**:
+**스토리지 유형별 비교 (AWS 서비스 매핑)**:
 | 특성 | Volume | Bind Mount | tmpfs |
 |------|--------|------------|-------|
+| **AWS 유사 서비스** | **EBS** | **EFS** | **Instance Store** |
 | **관리 주체** | Docker | 사용자 | Docker |
 | **성능** | 높음 | 높음 | 최고 |
 | **영속성** | 영구 | 영구 | 임시 |
 | **보안** | 높음 | 중간 | 높음 |
 | **백업** | 쉬움 | 복잡 | 불가 |
-| **사용 사례** | DB 데이터 | 개발 환경 | 임시 파일 |
+| **사용 사례** | DB 데이터 | 공유 파일 | 캐시/임시 파일 |
+| **확장성** | 제한적 | 높음 | 메모리 크기 |
+| **비용** | 중간 | 높음 | 낮음 |
 
 **실제 사용 예제**:
 ```bash
-# 1. Volume 사용 (프로덕션 데이터베이스)
+# 1. Volume 사용 (프로덕션 데이터베이스 - EBS 스타일)
 docker run -d \
   --name mysql-prod \
   -v mysql-data:/var/lib/mysql \
   -e MYSQL_ROOT_PASSWORD=secret \
   mysql:8.0
 
-# 2. Bind Mount 사용 (개발 환경)
+# 2. Bind Mount 사용 (개발 환경 - EFS 스타일)
 docker run -d \
   --name web-dev \
   -v $(pwd)/src:/var/www/html \
@@ -243,7 +246,7 @@ docker run -d \
   -p 8080:80 \
   apache:latest
 
-# 3. tmpfs 사용 (임시 데이터)
+# 3. tmpfs 사용 (임시 데이터 - Instance Store 스타일)
 docker run -d \
   --name app-secure \
   --tmpfs /tmp:rw,noexec,nosuid,size=100m \
@@ -320,9 +323,9 @@ rm -rf /tmp/bind-test
 
 ## 🔑 핵심 키워드
 
-- **Volume**: Docker 관리 영속 스토리지
-- **Bind Mount**: 호스트 경로 직접 마운트
-- **tmpfs**: 메모리 기반 임시 스토리지
+- **Volume**: Docker 관리 영속 스토리지 (AWS EBS 유사)
+- **Bind Mount**: 호스트 경로 직접 마운트 (AWS EFS 유사)
+- **tmpfs**: 메모리 기반 임시 스토리지 (AWS Instance Store 유사)
 - **Storage Driver**: 스토리지 계층 관리 드라이버
 - **Data Persistence**: 데이터 영속성
 

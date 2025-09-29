@@ -59,7 +59,7 @@ graph TB
 
 ### 🔍 개념 1: 데이터 영속성 전략 (12분)
 
-> **정의**: 컨테이너 생명주기와 독립적으로 데이터를 안전하게 보존하는 전략
+> **정의**: 컨테이너 생명주기와 독립적으로 데이터를 안전하게 보존하는 전략 (AWS 데이터 생명주기 정책과 유사)
 
 **데이터 분류와 전략**:
 ```mermaid
@@ -88,17 +88,17 @@ graph TB
     style F fill:#f3e5f5
 ```
 
-**RTO/RPO 목표 설정**:
-| 데이터 유형 | RTO (복구 시간) | RPO (데이터 손실) | 백업 주기 |
-|-------------|-----------------|-------------------|-----------|
-| **핵심 DB** | < 1시간 | < 15분 | 실시간 + 매시간 |
-| **애플리케이션** | < 4시간 | < 1시간 | 매일 |
-| **로그 데이터** | < 24시간 | < 24시간 | 주간 |
-| **임시 파일** | 복구 불필요 | 손실 허용 | 백업 없음 |
+**RTO/RPO 목표 설정 (AWS 백업 전략과 매핑)**:
+| 데이터 유형 | RTO (복구 시간) | RPO (데이터 손실) | 백업 주기 | AWS 서비스 |
+|-------------|-----------------|-------------------|-----------|-------------|
+| **핵심 DB** | < 1시간 | < 15분 | 실시간 + 매시간 | **RDS Multi-AZ** |
+| **애플리케이션** | < 4시간 | < 1시간 | 매일 | **EBS 스냅샷** |
+| **로그 데이터** | < 24시간 | < 24시간 | 주간 | **S3 Glacier** |
+| **임시 파일** | 복구 불필요 | 손실 허용 | 백업 없음 | **Instance Store** |
 
-**데이터 생명주기 관리**:
+**데이터 생명주기 관리 (AWS S3 Lifecycle과 유사)**:
 ```bash
-# 데이터 분류 라벨링
+# 데이터 분류 라벨링 (S3 태그와 유사)
 docker volume create --label tier=critical \
   --label backup=realtime \
   --label retention=7years \
@@ -117,7 +117,7 @@ docker volume create --label tier=temporary \
 
 ### 🔍 개념 2: 자동화된 백업 시스템 (12분)
 
-> **정의**: 사람의 개입 없이 정기적으로 데이터를 안전한 위치에 복사하는 시스템
+> **정의**: 사람의 개입 없이 정기적으로 데이터를 안전한 위치에 복사하는 시스템 (AWS Backup 서비스와 유사한 자동화)
 
 **3-2-1 백업 규칙**:
 ```mermaid
@@ -128,10 +128,10 @@ graph LR
         A --> D[원격 백업 1]
     end
     
-    subgraph "저장 위치"
-        E[온프레미스<br/>NAS/SAN]
-        F[클라우드<br/>AWS S3/Azure]
-        G[오프사이트<br/>다른 지역]
+    subgraph "저장 위치 (AWS 매핑)"
+        E[온프레미스<br/>EBS/EFS]
+        F[클라우드<br/>S3 Standard]
+        G[오프사이트<br/>S3 Cross-Region]
     end
     
     B --> E
@@ -200,7 +200,8 @@ upload_to_s3() {
     
     aws s3 sync ${BACKUP_DIR} s3://${S3_BUCKET}/$(date +%Y/%m/%d)/ \
         --exclude "*" \
-        --include "*${BACKUP_DATE}*"
+        --include "*${BACKUP_DATE}*" \
+        --storage-class STANDARD_IA  # 비용 최적화
     
     echo "S3 upload completed"
 }
@@ -227,7 +228,8 @@ cleanup_old_backups() {
     find ${BACKUP_DIR} -name "*.gz" -mtime +7 -delete
     find ${BACKUP_DIR} -name "*.tar.gz" -mtime +7 -delete
     
-    # S3 생명주기 정책으로 자동 관리
+    # S3 생명주기 정책으로 자동 관리 (AWS Lifecycle Policy)
+    # 30일 후 Glacier, 90일 후 Deep Archive로 자동 이동
     echo "Local cleanup completed"
 }
 
@@ -263,17 +265,17 @@ main 2>&1 | tee ${BACKUP_DIR}/backup_${BACKUP_DATE}.log
 
 ### 🔍 개념 3: 재해 복구 계획 (11분)
 
-> **정의**: 시스템 장애나 재해 상황에서 서비스를 신속하게 복구하는 계획과 절차
+> **정의**: 시스템 장애나 재해 상황에서 서비스를 신속하게 복구하는 계획과 절차 (AWS Disaster Recovery 전략과 동일한 접근법)
 
 **재해 복구 시나리오**:
 ```mermaid
 graph TB
-    subgraph "재해 유형"
-        A[하드웨어 장애]
-        B[소프트웨어 오류]
-        C[인적 오류]
-        D[자연재해]
-        E[사이버 공격]
+    subgraph "재해 유형 (AWS 장애 시나리오)"
+        A[하드웨어 장애<br/>AZ 장애]
+        B[소프트웨어 오류<br/>서비스 장애]
+        C[인적 오류<br/>설정 실수]
+        D[자연재해<br/>리전 장애]
+        E[사이버 공격<br/>보안 침해]
     end
     
     subgraph "복구 절차"
@@ -438,7 +440,7 @@ verify_service() {
 notify_completion() {
     log "=== DISASTER RECOVERY COMPLETED ==="
     
-    # 팀에 알림 (Slack, 이메일 등)
+    # 팀에 알림 (AWS SNS와 유사한 알림 시스템)
     curl -X POST -H 'Content-type: application/json' \
         --data '{"text":"🚨 Disaster Recovery Completed\nSystem restored at '$(date)'"}' \
         $SLACK_WEBHOOK_URL
@@ -535,11 +537,11 @@ echo "=== 복구 테스트 완료 ==="
 
 ## 🔑 핵심 키워드
 
-- **RTO (Recovery Time Objective)**: 복구 목표 시간
-- **RPO (Recovery Point Objective)**: 복구 목표 시점
-- **3-2-1 Rule**: 3개 복사본, 2개 매체, 1개 오프사이트
-- **Disaster Recovery**: 재해 복구
-- **Data Lifecycle**: 데이터 생명주기
+- **RTO (Recovery Time Objective)**: 복구 목표 시간 (AWS RTO 전략과 동일)
+- **RPO (Recovery Point Objective)**: 복구 목표 시점 (AWS RPO 전략과 동일)
+- **3-2-1 Rule**: 3개 복사본, 2개 매체, 1개 오프사이트 (AWS 멀티 리전 전략)
+- **Disaster Recovery**: 재해 복구 (AWS DR 전략)
+- **Data Lifecycle**: 데이터 생명주기 (AWS S3 Lifecycle)
 
 ---
 

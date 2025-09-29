@@ -76,11 +76,11 @@ graph TB
 
 ### 🔍 개념 1: 데이터베이스별 컨테이너 최적화 (12분)
 
-> **정의**: MySQL, PostgreSQL, MongoDB 등 각 데이터베이스의 특성에 맞는 컨테이너 설정
+> **정의**: MySQL, PostgreSQL, MongoDB 등 각 데이터베이스의 특성에 맞는 컨테이너 설정 (AWS RDS 인스턴스 최적화와 유사한 접근법)
 
-**MySQL 컨테이너 최적화**:
+**MySQL 컨테이너 최적화 (AWS RDS MySQL 설정과 매핑)**:
 ```bash
-# 프로덕션급 MySQL 설정
+# 프로덕션급 MySQL 설정 (RDS db.r5.large 유사)
 docker run -d \
   --name mysql-prod \
   --restart=unless-stopped \
@@ -158,9 +158,9 @@ binlog_format = ROW
 expire_logs_days = 7
 ```
 
-**PostgreSQL 컨테이너 최적화**:
+**PostgreSQL 컨테이너 최적화 (AWS RDS PostgreSQL 설정과 매핑)**:
 ```bash
-# 프로덕션급 PostgreSQL 설정
+# 프로덕션급 PostgreSQL 설정 (RDS db.r5.large 유사)
 docker run -d \
   --name postgres-prod \
   --restart=unless-stopped \
@@ -190,9 +190,9 @@ docker run -d \
   -c max_wal_size=4GB
 ```
 
-**MongoDB 컨테이너 최적화**:
+**MongoDB 컨테이너 최적화 (AWS DocumentDB 설정과 매핑)**:
 ```bash
-# 프로덕션급 MongoDB 설정
+# 프로덕션급 MongoDB 설정 (DocumentDB r5.large 유사)
 docker run -d \
   --name mongo-prod \
   --restart=unless-stopped \
@@ -214,7 +214,7 @@ docker run -d \
 
 ### 🔍 개념 2: 성능 모니터링과 튜닝 (12분)
 
-> **정의**: 데이터베이스 컨테이너의 성능을 실시간으로 모니터링하고 최적화하는 방법
+> **정의**: 데이터베이스 컨테이너의 성능을 실시간으로 모니터링하고 최적화하는 방법 (AWS CloudWatch와 Performance Insights와 유사한 접근법)
 
 **성능 메트릭 모니터링**:
 ```mermaid
@@ -265,7 +265,7 @@ graph TB
 version: '3.8'
 
 services:
-  # Prometheus - 메트릭 수집
+  # Prometheus - 메트릭 수집 (AWS CloudWatch 역할)
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -279,7 +279,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
 
-  # Grafana - 시각화
+  # Grafana - 시각화 (AWS CloudWatch Dashboard 역할)
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -289,7 +289,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
 
-  # MySQL Exporter
+  # MySQL Exporter (AWS RDS Enhanced Monitoring 역할)
   mysql-exporter:
     image: prom/mysqld-exporter:latest
     ports:
@@ -299,7 +299,7 @@ services:
     depends_on:
       - mysql-prod
 
-  # PostgreSQL Exporter
+  # PostgreSQL Exporter (AWS RDS Performance Insights 역할)
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     ports:
@@ -434,15 +434,15 @@ tune_mongo() {
 
 ### 🔍 개념 3: 고가용성과 클러스터링 (11분)
 
-> **정의**: 데이터베이스의 가용성을 높이기 위한 복제, 클러스터링, 페일오버 구성
+> **정의**: 데이터베이스의 가용성을 높이기 위한 복제, 클러스터링, 페일오버 구성 (AWS RDS Multi-AZ와 Read Replica 전략과 동일)
 
-**MySQL 마스터-슬레이브 복제**:
+**MySQL 마스터-슬레이브 복제 (AWS RDS Multi-AZ 전략)**:
 ```yaml
 # docker-compose.mysql-cluster.yml
 version: '3.8'
 
 services:
-  mysql-master:
+  mysql-master:  # AWS RDS Primary Instance 역할
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -456,7 +456,7 @@ services:
       - "3306:3306"
     command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW
 
-  mysql-slave1:
+  mysql-slave1:  # AWS RDS Read Replica 역할
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -488,7 +488,7 @@ services:
     depends_on:
       - mysql-master
 
-  # ProxySQL for Load Balancing
+  # ProxySQL for Load Balancing (AWS RDS Proxy 역할)
   proxysql:
     image: proxysql/proxysql:latest
     ports:
@@ -507,13 +507,13 @@ volumes:
   mysql-slave2-data:
 ```
 
-**PostgreSQL 스트리밍 복제**:
+**PostgreSQL 스트리밍 복제 (AWS RDS PostgreSQL Multi-AZ)**:
 ```yaml
 # docker-compose.postgres-cluster.yml
 version: '3.8'
 
 services:
-  postgres-primary:
+  postgres-primary:  # AWS RDS Primary Instance 역할
     image: postgres:15
     environment:
       POSTGRES_DB: production
@@ -553,7 +553,7 @@ services:
       postgres -c config_file=/etc/postgresql/postgresql.conf
       "
 
-  # PgBouncer for Connection Pooling
+  # PgBouncer for Connection Pooling (AWS RDS Proxy 역할)
   pgbouncer:
     image: pgbouncer/pgbouncer:latest
     ports:
@@ -593,11 +593,11 @@ promote_slave_to_master() {
     # 슬레이브를 마스터로 승격
     docker exec mysql-slave1 mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "RESET MASTER;"
     
-    # VIP 이동
+    # VIP 이동 (AWS RDS Automatic Failover 유사)
     ip addr del ${VIP}/24 dev eth0 2>/dev/null
     docker exec mysql-slave1 ip addr add ${VIP}/24 dev eth0
     
-    # 애플리케이션에 알림
+    # 애플리케이션에 알림 (AWS SNS 유사)
     curl -X POST -H 'Content-type: application/json' \
         --data '{"text":"🚨 Database Failover: Slave promoted to Master"}' \
         $SLACK_WEBHOOK_URL
@@ -709,11 +709,11 @@ esac
 
 ## 🔑 핵심 키워드
 
-- **Stateful Application**: 상태 유지 애플리케이션
-- **Database Tuning**: 데이터베이스 성능 튜닝
-- **Replication**: 데이터베이스 복제
-- **High Availability**: 고가용성
-- **Failover**: 장애 조치
+- **Stateful Application**: 상태 유지 애플리케이션 (AWS RDS 유사)
+- **Database Tuning**: 데이터베이스 성능 튜닝 (AWS Performance Insights 유사)
+- **Replication**: 데이터베이스 복제 (AWS Multi-AZ/Read Replica)
+- **High Availability**: 고가용성 (AWS RDS Multi-AZ)
+- **Failover**: 장애 조치 (AWS RDS Automatic Failover)
 
 ---
 
