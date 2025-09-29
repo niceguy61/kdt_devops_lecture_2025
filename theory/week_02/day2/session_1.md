@@ -167,15 +167,15 @@ docker run --rm -v my-volume:/data -v $(pwd):/backup \
 ```mermaid
 graph LR
     subgraph "Host System"
-        A[/home/user/app]
-        B[/var/log/myapp]
-        C[/etc/config]
+        A[`/home/user/app`]
+        B[`/var/log/myapp`]
+        C[`/etc/config`]
     end
     
     subgraph "Container"
-        D[/app]
-        E[/logs]
-        F[/config]
+        D[`/app`]
+        E[`/logs`]
+        F[`/config`]
     end
     
     A -.직접 연결.-> D
