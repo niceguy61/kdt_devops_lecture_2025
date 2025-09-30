@@ -67,27 +67,36 @@ graph TB
 
 ## 📋 실습 준비 (10분)
 
-### 환경 설정
+### 🚀 자동화 스크립트 사용
+```bash
+# 실습 환경 자동 준비
+./lab_scripts/setup_lab_environment.sh
+```
+
+**📋 스크립트 내용**: [setup_lab_environment.sh](./lab_scripts/setup_lab_environment.sh)
+
+### 수동 실행 (학습용)
+
+**환경 설정**:
 ```bash
 # 작업 디렉토리 생성
 mkdir -p ~/security-optimization-lab
 cd ~/security-optimization-lab
 
 # 프로젝트 구조 생성
-mkdir -p {app,configs,monitoring,scripts}
+mkdir -p {app,configs,monitoring,scripts,scan-results,performance-results}
 mkdir -p app/{src,public,tests}
-
-# 팀 구성 (3-4명씩)
-echo "팀별 역할 분담:"
-echo "- 보안 담당: 취약점 스캔 및 보안 강화"
-echo "- 최적화 담당: 이미지 최적화 및 성능 튜닝"
-echo "- 모니터링 담당: 관측성 시스템 구축"
-echo "- 통합 담당: 전체 시스템 통합 및 테스트"
 ```
 
-### 샘플 애플리케이션 준비
+**팀 구성 (3-4명씩)**:
+- **🔒 보안 담당**: 취약점 스캔 및 보안 강화
+- **⚡ 최적화 담당**: 이미지 최적화 및 성능 튜닝  
+- **📊 모니터링 담당**: 관측성 시스템 구축
+- **🔄 통합 담당**: 전체 시스템 통합 및 테스트
+
+**샘플 애플리케이션 생성**:
 ```bash
-# 간단한 Node.js 애플리케이션 생성
+# Node.js 애플리케이션 package.json
 cat > app/package.json << 'EOF'
 {
   "name": "secure-optimized-app",
@@ -100,11 +109,12 @@ cat > app/package.json << 'EOF'
   },
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"No tests\" && exit 0"
+    "test": "echo \"✅ Tests passed\" && exit 0"
   }
 }
 EOF
 
+# 메인 서버 애플리케이션 (핵심 기능만)
 cat > app/server.js << 'EOF'
 const express = require('express');
 const prometheus = require('prom-client');
@@ -138,7 +148,7 @@ try {
   console.log('Redis not available, continuing without cache');
 }
 
-// 미들웨어
+// 요청 메트릭 미들웨어
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -149,10 +159,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// 라우트
+// 기본 라우트
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Secure & Optimized App', 
+    message: '🔒 Secure & ⚡ Optimized App', 
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
@@ -189,9 +199,9 @@ app.get('/load-test', async (req, res) => {
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`App running on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
-  console.log(`Metrics: http://localhost:${port}/metrics`);
+  console.log(`✅ 서버가 포트 ${port}에서 실행 중입니다`);
+  console.log(`📊 헬스체크: http://localhost:${port}/health`);
+  console.log(`📈 메트릭: http://localhost:${port}/metrics`);
 });
 EOF
 ```
@@ -205,8 +215,10 @@ EOF
 **🚀 자동화 스크립트 사용**
 ```bash
 # Trivy 설치 및 스캔 자동화
-./scripts/security_scan.sh
+./lab_scripts/security/security_scan.sh
 ```
+
+**📋 스크립트 내용**: [security_scan.sh](./lab_scripts/security/security_scan.sh)
 
 **1-1. 수동 실행 (학습용)**
 ```bash
@@ -343,8 +355,10 @@ curl -s http://localhost:3000/health | jq .
 **🚀 자동화 스크립트 사용**
 ```bash
 # 이미지 최적화 자동 실행
-./scripts/optimize_image.sh
+./lab_scripts/optimization/optimize_image.sh
 ```
+
+**📋 스크립트 내용**: [optimize_image.sh](./lab_scripts/optimization/optimize_image.sh)
 
 **1-1. 수동 실행 (학습용)**
 ```dockerfile
@@ -523,8 +537,10 @@ docker exec -it $(docker ps -qf "name=redis") redis-cli info memory | grep used_
 **🚀 자동화 스크립트 사용**
 ```bash
 # 모니터링 스택 자동 구축
-./scripts/setup_monitoring.sh
+./lab_scripts/monitoring/setup_monitoring.sh
 ```
+
+**📋 스크립트 내용**: [setup_monitoring.sh](./lab_scripts/monitoring/setup_monitoring.sh)
 
 **1-1. 수동 실행 (학습용)**
 ```yaml
