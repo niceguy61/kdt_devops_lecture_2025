@@ -81,24 +81,24 @@ fi
 echo ""
 echo "5. 애플리케이션 메트릭 수집 테스트..."
 
-# 애플리케이션 메트릭 확인
-if curl -s http://localhost:3000/metrics > /dev/null; then
-    echo "✅ 애플리케이션 메트릭 엔드포인트 정상"
+# Error Test App 메트릭 확인
+if curl -s http://localhost:4000/metrics > /dev/null; then
+    echo "✅ Error Test App 메트릭 엔드포인트 정상"
     
     # 메트릭 개수 확인
-    METRICS_COUNT=$(curl -s http://localhost:3000/metrics | wc -l)
+    METRICS_COUNT=$(curl -s http://localhost:4000/metrics | wc -l)
     echo "   - 수집된 메트릭 라인: ${METRICS_COUNT}개"
     
     # 주요 메트릭 확인
     echo "   - HTTP 요청 메트릭:"
-    HTTP_METRICS=$(curl -s http://localhost:3000/metrics | grep -c "http_requests_total")
+    HTTP_METRICS=$(curl -s http://localhost:4000/metrics | grep -c "http_requests_total" || echo "0")
     echo "     http_requests_total: ${HTTP_METRICS}개 라벨"
     
     echo "   - 응답 시간 메트릭:"
-    DURATION_METRICS=$(curl -s http://localhost:3000/metrics | grep -c "http_request_duration_seconds")
+    DURATION_METRICS=$(curl -s http://localhost:4000/metrics | grep -c "http_request_duration_seconds" || echo "0")
     echo "     http_request_duration_seconds: ${DURATION_METRICS}개 라벨"
 else
-    echo "❌ 애플리케이션 메트릭 수집 실패"
+    echo "❌ Error Test App 메트릭 수집 실패"
 fi
 
 echo ""
@@ -106,11 +106,11 @@ echo "6. 부하 생성 및 메트릭 변화 테스트..."
 
 # 부하 생성 전 메트릭 수집
 echo "   - 부하 생성 전 메트릭 수집..."
-BEFORE_REQUESTS=$(curl -s http://localhost:3000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1)
+BEFORE_REQUESTS=$(curl -s http://localhost:4000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1 2>/dev/null || echo "0")
 
 # 부하 생성
-echo "   - 부하 생성 중 (1000 요청)..."
-ab -n 1000 -c 10 -q http://localhost:3000/ > /dev/null 2>&1 &
+echo "   - 부하 생성 중 (500 요청)..."
+ab -n 500 -c 10 -q http://localhost:4000/ > /dev/null 2>&1 &
 AB_PID=$!
 
 # 부하 생성 중 리소스 모니터링
@@ -124,14 +124,14 @@ wait $AB_PID
 # 부하 생성 후 메트릭 수집
 sleep 3
 echo "   - 부하 생성 후 메트릭 수집..."
-AFTER_REQUESTS=$(curl -s http://localhost:3000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1)
+AFTER_REQUESTS=$(curl -s http://localhost:4000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1 2>/dev/null || echo "0")
 
 # 메트릭 변화 확인
-if [ -n "$BEFORE_REQUESTS" ] && [ -n "$AFTER_REQUESTS" ]; then
+if [ "$BEFORE_REQUESTS" != "" ] && [ "$AFTER_REQUESTS" != "" ] && [ "$BEFORE_REQUESTS" != "0" ] && [ "$AFTER_REQUESTS" != "0" ]; then
     REQUEST_INCREASE=$((AFTER_REQUESTS - BEFORE_REQUESTS))
     echo "   ✅ HTTP 요청 메트릭 증가: ${REQUEST_INCREASE}개"
 else
-    echo "   ⚠️  메트릭 변화 측정 실패"
+    echo "   ⚠️  메트릭 변화 측정 실패 (Before: $BEFORE_REQUESTS, After: $AFTER_REQUESTS)"
 fi
 
 echo ""
@@ -139,33 +139,33 @@ echo "7. Prometheus 쿼리 테스트..."
 
 # Prometheus 쿼리 테스트
 echo "   - HTTP 요청률 쿼리 테스트:"
-QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(http_requests_total[5m])" | jq '.data.result | length' 2>/dev/null)
-if [ "$QUERY_RESULT" -gt 0 ]; then
+QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(http_requests_total[5m])" | jq '.data.result | length' 2>/dev/null || echo "0")
+if [ "$QUERY_RESULT" -gt 0 ] 2>/dev/null; then
     echo "   ✅ HTTP 요청률 쿼리 성공 (${QUERY_RESULT}개 시계열)"
 else
-    echo "   ⚠️  HTTP 요청률 쿼리 결과 없음"
+    echo "   ⚠️  HTTP 요청률 쿼리 결과 없음 (Result: $QUERY_RESULT)"
 fi
 
 echo "   - 컨테이너 CPU 사용률 쿼리 테스트:"
-CPU_QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total[5m])" | jq '.data.result | length' 2>/dev/null)
-if [ "$CPU_QUERY_RESULT" -gt 0 ]; then
+CPU_QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total[5m])" | jq '.data.result | length' 2>/dev/null || echo "0")
+if [ "$CPU_QUERY_RESULT" -gt 0 ] 2>/dev/null; then
     echo "   ✅ CPU 사용률 쿼리 성공 (${CPU_QUERY_RESULT}개 시계열)"
 else
-    echo "   ⚠️  CPU 사용률 쿼리 결과 없음"
+    echo "   ⚠️  CPU 사용률 쿼리 결과 없음 (Result: $CPU_QUERY_RESULT)"
 fi
 
 echo ""
 echo "8. 알림 규칙 테스트..."
 
 # 알림 규칙 상태 확인
-ALERT_RULES=$(curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].rules | length' 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+ALERT_RULES=$(curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].rules | length' 2>/dev/null | awk '{sum+=$1} END {print sum+0}' || echo "0")
 echo "   - 설정된 알림 규칙: ${ALERT_RULES}개"
 
 # 활성 알림 확인
-ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null)
+ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null || echo "0")
 echo "   - 현재 활성 알림: ${ACTIVE_ALERTS}개"
 
-if [ "$ACTIVE_ALERTS" -gt 0 ]; then
+if [ "$ACTIVE_ALERTS" -gt 0 ] 2>/dev/null; then
     echo "   - 활성 알림 목록:"
     curl -s http://localhost:9090/api/v1/alerts | jq -r '.data.alerts[] | "     \(.labels.alertname): \(.state)"' 2>/dev/null
 fi
@@ -175,17 +175,17 @@ echo "9. 고부하 알림 테스트..."
 
 echo "   - 고부하 생성으로 알림 트리거 테스트..."
 # 높은 부하 생성 (알림 트리거 목적)
-ab -n 5000 -c 100 -q http://localhost:3000/load-test > /dev/null 2>&1 &
+ab -n 1000 -c 30 -q http://localhost:4000/ > /dev/null 2>&1 &
 HIGH_LOAD_PID=$!
 
 echo "   - 30초 대기 (알림 규칙 평가 시간)..."
 sleep 30
 
 # 알림 상태 재확인
-NEW_ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null)
+NEW_ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null || echo "0")
 echo "   - 고부하 후 활성 알림: ${NEW_ACTIVE_ALERTS}개"
 
-if [ "$NEW_ACTIVE_ALERTS" -gt "$ACTIVE_ALERTS" ]; then
+if [ "$NEW_ACTIVE_ALERTS" -gt "$ACTIVE_ALERTS" ] 2>/dev/null; then
     echo "   ✅ 알림 시스템 정상 동작 (새로운 알림 발생)"
     echo "   - 새로 발생한 알림:"
     curl -s http://localhost:9090/api/v1/alerts | jq -r '.data.alerts[] | select(.state=="firing") | "     \(.labels.alertname): \(.annotations.summary)"' 2>/dev/null
@@ -270,11 +270,11 @@ echo ""
 echo "=== 모니터링 시스템 테스트 완료 ==="
 echo ""
 echo "테스트 결과 요약:"
-echo "- Prometheus: $([ "$TARGETS_UP" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
-echo "- Grafana: $([ "$DATASOURCES" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
-echo "- cAdvisor: $([ "$CONTAINERS" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
-echo "- 메트릭 수집: $([ "$METRICS_COUNT" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
-echo "- 알림 시스템: $([ "$ALERT_RULES" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo "- Prometheus: $([ "${TARGETS_UP:-0}" -gt 0 ] 2>/dev/null && echo "✅ 정상" || echo "❌ 문제")"
+echo "- Grafana: $([ "${DATASOURCES:-0}" -gt 0 ] 2>/dev/null && echo "✅ 정상" || echo "❌ 문제")"
+echo "- cAdvisor: $([ "${CONTAINERS:-0}" -gt 0 ] 2>/dev/null && echo "✅ 정상" || echo "❌ 문제")"
+echo "- 메트릭 수집: $([ "${METRICS_COUNT:-0}" -gt 0 ] 2>/dev/null && echo "✅ 정상" || echo "❌ 문제")"
+echo "- 알림 시스템: $([ "${ALERT_RULES:-0}" -gt 0 ] 2>/dev/null && echo "✅ 정상" || echo "❌ 문제")""
 echo ""
 echo "생성된 파일:"
 echo "- monitoring/monitoring-test-report.txt: 종합 테스트 리포트"

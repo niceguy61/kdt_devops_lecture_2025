@@ -47,9 +47,9 @@ echo "   결과: ${BASIC_RPS} req/sec, 평균 응답시간: ${BASIC_TIME}ms"
 echo ""
 echo "4. 부하 테스트 실행..."
 
-# 부하 테스트 (더 많은 요청과 동시 연결)
-echo "   - 부하 테스트 (5000 요청, 동시 연결 50개)"
-ab -n 5000 -c 50 -g performance-results/load-test.dat http://localhost:3000/load-test > performance-results/load-test.txt 2>&1
+# 부하 테스트 (적당한 요청과 동시 연결)
+echo "   - 부하 테스트 (1000 요청, 동시 연결 20개)"
+ab -n 1000 -c 20 -g performance-results/load-test.dat http://localhost:3000/load-test > performance-results/load-test.txt 2>&1
 
 # 결과 추출
 LOAD_RPS=$(grep "Requests per second" performance-results/load-test.txt | awk '{print $4}')
@@ -61,8 +61,8 @@ echo ""
 echo "5. 스트레스 테스트 실행..."
 
 # 스트레스 테스트 (높은 동시 연결)
-echo "   - 스트레스 테스트 (2000 요청, 동시 연결 100개)"
-ab -n 2000 -c 100 -g performance-results/stress-test.dat http://localhost:3000/ > performance-results/stress-test.txt 2>&1
+echo "   - 스트레스 테스트 (500 요청, 동시 연결 50개)"
+ab -n 500 -c 50 -g performance-results/stress-test.dat http://localhost:3000/ > performance-results/stress-test.txt 2>&1
 
 # 결과 추출
 STRESS_RPS=$(grep "Requests per second" performance-results/stress-test.txt | awk '{print $4}')
@@ -109,11 +109,11 @@ cat > performance-results/performance-report.txt << EOF
    - 처리량: ${BASIC_RPS} req/sec
    - 평균 응답시간: ${BASIC_TIME}ms
 
-2. 부하 테스트 (5000 req, 50 concurrent):
+2. 부하 테스트 (1000 req, 20 concurrent):
    - 처리량: ${LOAD_RPS} req/sec
    - 평균 응답시간: ${LOAD_TIME}ms
 
-3. 스트레스 테스트 (2000 req, 100 concurrent):
+3. 스트레스 테스트 (500 req, 50 concurrent):
    - 처리량: ${STRESS_RPS} req/sec
    - 평균 응답시간: ${STRESS_TIME}ms
 

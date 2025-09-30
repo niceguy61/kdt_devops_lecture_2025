@@ -39,6 +39,18 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:6379']
     scrape_interval: 15s
+
+  - job_name: 'error-app'
+    static_configs:
+      - targets: ['error-test-app:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    
+  - job_name: 'error-app-external'
+    static_configs:
+      - targets: ['host.docker.internal:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
 EOF
 
 echo "✅ Prometheus 설정 완료"
@@ -95,6 +107,33 @@ groups:
     annotations:
       summary: "Application container is down"
       description: "The application container has been down for more than 1 minute"
+
+  - alert: HighApplicationErrors
+    expr: rate(application_errors_total[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High application error rate"
+      description: "Application error rate is above 0.1 errors/sec"
+
+  - alert: DatabaseConnectionsHigh
+    expr: database_connections_active > 40
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High database connections"
+      description: "Database connections are above 40"
+
+  - alert: MessageQueueBacklog
+    expr: message_queue_size > 50
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Message queue backlog"
+      description: "Message queue size is above 50 messages"
 EOF
 
 echo "✅ 알림 규칙 설정 완료"
@@ -134,6 +173,182 @@ providers:
     allowUiUpdates: true
     options:
       path: /etc/grafana/provisioning/dashboards
+EOF
+
+# Error Test App 전용 대시보드 생성
+cat > monitoring/grafana/provisioning/dashboards/error-app-dashboard.json << 'EOF'
+{
+  "dashboard": {
+    "id": null,
+    "title": "Error Test App Monitoring",
+    "tags": ["error-app", "monitoring"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Application Errors by Type",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum by (error_type) (rate(application_errors_total[5m]))",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "HTTP Status Codes",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (status) (rate(http_requests_total{job=\"error-app\"}[5m]))",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "database_connections_active",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 6}
+      },
+      {
+        "id": 4,
+        "title": "Message Queue Size",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "message_queue_size",
+            "legendFormat": "Queue Size"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 6}
+      },
+      {
+        "id": 5,
+        "title": "Response Time Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m])",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+      },
+      {
+        "id": 6,
+        "title": "Error Rate by Type",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(application_errors_total{job=\"error-app\"}[5m])",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      },
+      {
+        "id": 7,
+        "title": "Memory Usage (Process)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"error-app\"}",
+            "legendFormat": "Resident Memory"
+          },
+          {
+            "expr": "process_virtual_memory_bytes{job=\"error-app\"}",
+            "legendFormat": "Virtual Memory"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}
+      },
+      {
+        "id": 8,
+        "title": "CPU Usage (Process)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"error-app\"}[5m]) * 100",
+            "legendFormat": "CPU %"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 20}
+      },
+      {
+        "id": 9,
+        "title": "Request Volume",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"error-app\"}[5m]))",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 26}
+      },
+      {
+        "id": 10,
+        "title": "Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(sum(rate(http_requests_total{job=\"error-app\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"error-app\"}[5m]))) * 100",
+            "legendFormat": "Success %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 26}
+      },
+      {
+        "id": 11,
+        "title": "Average Response Time",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 26}
+      },
+      {
+        "id": 12,
+        "title": "95th Percentile Response Time",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 26}
+      }
+    ],
+    "time": {"from": "now-30m", "to": "now"},
+    "refresh": "5s",
+    "annotations": {
+      "list": [
+        {
+          "name": "Load Tests",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "changes(http_requests_total{job=\"error-app\"}[1m]) > 100",
+          "iconColor": "red",
+          "titleFormat": "High Load Detected"
+        }
+      ]
+    }
+  }
+}
 EOF
 
 # 컨테이너 모니터링 대시보드 JSON
@@ -207,8 +422,6 @@ echo "5. Docker Compose 모니터링 스택 설정..."
 
 # 모니터링 스택 Docker Compose 파일
 cat > monitoring/docker-compose.monitoring.yml << 'EOF'
-version: '3.8'
-
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -260,19 +473,33 @@ services:
       - "8080:8080"
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
+      - /proc:/rootfs/proc:ro
     privileged: true
-    devices:
-      - /dev/kmsg
+    command:
+      - '--housekeeping_interval=10s'
+      - '--docker_only=true'
     deploy:
       resources:
         limits:
           memory: 128M
           cpus: '0.25'
     restart: unless-stopped
+
+  error-test-app:
+    build:
+      context: ../test-apps
+      dockerfile: Dockerfile
+    container_name: error-test-app
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
 
 volumes:
   prometheus-data:
@@ -328,6 +555,13 @@ else
     echo "❌ cAdvisor 연결 실패"
 fi
 
+# Error Test App 연결 테스트
+if curl -s http://localhost:4000/health > /dev/null; then
+    echo "✅ Error Test App 정상 동작 (http://localhost:4000)"
+else
+    echo "❌ Error Test App 연결 실패"
+fi
+
 echo ""
 echo "9. 메트릭 수집 확인..."
 
@@ -345,10 +579,20 @@ echo "접속 정보:"
 echo "- Prometheus: http://localhost:9090"
 echo "- Grafana: http://localhost:3001 (admin/admin)"
 echo "- cAdvisor: http://localhost:8080"
+echo "- Error Test App: http://localhost:4000"
 echo ""
 echo "Grafana 설정:"
 echo "1. http://localhost:3001 접속 후 admin/admin으로 로그인"
 echo "2. 데이터소스는 자동으로 설정됨 (Prometheus)"
 echo "3. 대시보드는 자동으로 프로비저닝됨"
 echo ""
-echo "다음 단계: 애플리케이션 메트릭 수집 및 알림 테스트"
+echo "즉시 테스트 가능한 엔드포인트:"
+echo "- 정상 응답: curl http://localhost:4000/"
+echo "- 500 에러: curl http://localhost:4000/error/500"
+echo "- 느린 응답: curl http://localhost:4000/slow"
+echo "- 메트릭 확인: curl http://localhost:4000/metrics"
+echo ""
+echo "알림 테스트 방법:"
+echo "1. 에러 발생: for i in {1..10}; do curl http://localhost:4000/error/500; done"
+echo "2. Grafana에서 Error Test App 대시보드 확인"
+echo "3. Prometheus에서 알림 규칙 동작 확인"

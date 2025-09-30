@@ -145,13 +145,13 @@ docker exec redis-cache redis-cli FLUSHALL > /dev/null 2>&1
 
 # 캐시 미스 상태에서 테스트
 echo "   - 캐시 미스 상태 테스트 (첫 번째 실행)"
-ab -n 1000 -c 20 -q http://localhost:3000/load-test > cache-test-miss.txt 2>&1
+ab -n 500 -c 10 -q http://localhost:3000/load-test > cache-test-miss.txt 2>&1
 CACHE_MISS_RPS=$(grep "Requests per second" cache-test-miss.txt | awk '{print $4}')
 CACHE_MISS_TIME=$(grep "Time per request.*mean" cache-test-miss.txt | head -1 | awk '{print $4}')
 
 # 캐시 히트 상태에서 테스트
 echo "   - 캐시 히트 상태 테스트 (두 번째 실행)"
-ab -n 1000 -c 20 -q http://localhost:3000/load-test > cache-test-hit.txt 2>&1
+ab -n 500 -c 10 -q http://localhost:3000/load-test > cache-test-hit.txt 2>&1
 CACHE_HIT_RPS=$(grep "Requests per second" cache-test-hit.txt | awk '{print $4}')
 CACHE_HIT_TIME=$(grep "Time per request.*mean" cache-test-hit.txt | head -1 | awk '{print $4}')
 

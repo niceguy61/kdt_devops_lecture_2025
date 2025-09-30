@@ -1,18 +1,13 @@
 #!/bin/bash
 
-# Week 2 Day 3 Lab 1: 실습 환경 준비 스크립트
-# 사용법: ./setup_lab_environment.sh
-
 echo "=== 실습 환경 준비 시작 ==="
 
-# 작업 디렉토리 생성
-mkdir -p ~/security-optimization-lab
-cd ~/security-optimization-lab
+mkdir -p security-optimization-lab
+cd security-optimization-lab
 mkdir -p {app,configs,monitoring,scripts,scan-results,performance-results}
 
 echo "1. 샘플 애플리케이션 생성..."
 
-# package.json 생성
 cat > app/package.json << 'EOF'
 {
   "name": "secure-optimized-app",
@@ -25,12 +20,11 @@ cat > app/package.json << 'EOF'
   },
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"✅ Tests passed\" && exit 0"
+    "test": "echo \"Tests passed\" && exit 0"
   }
 }
 EOF
 
-# 메인 서버 애플리케이션 생성
 cat > app/server.js << 'EOF'
 const express = require('express');
 const prometheus = require('prom-client');
@@ -39,7 +33,6 @@ const redis = require('redis');
 const app = express();
 const port = 3000;
 
-// Prometheus 메트릭 설정
 const collectDefaultMetrics = prometheus.collectDefaultMetrics;
 collectDefaultMetrics({ timeout: 5000 });
 
@@ -56,7 +49,6 @@ const httpRequestTotal = new prometheus.Counter({
   labelNames: ['method', 'route', 'status']
 });
 
-// Redis 클라이언트 설정 (선택적)
 let redisClient;
 let redisConnected = false;
 
@@ -83,7 +75,6 @@ async function initRedis() {
 
 initRedis();
 
-// 요청 메트릭 미들웨어
 app.use((req, res, next) => {
   const start = Date.now();
   
@@ -100,10 +91,9 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// 기본 라우트
 app.get('/', (req, res) => {
   res.json({ 
-    message: '🔒 Secure & ⚡ Optimized App', 
+    message: 'Secure & Optimized App', 
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: Math.floor(process.uptime()),
@@ -111,7 +101,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// 헬스체크 엔드포인트
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
@@ -125,7 +114,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 메트릭 엔드포인트
 app.get('/metrics', async (req, res) => {
   try {
     res.set('Content-Type', prometheus.register.contentType);
@@ -136,18 +124,15 @@ app.get('/metrics', async (req, res) => {
   }
 });
 
-// 부하 테스트 엔드포인트
 app.get('/load-test', async (req, res) => {
   const startTime = Date.now();
   
-  // CPU 부하 시뮬레이션 (100ms)
   while (Date.now() - startTime < 100) {
     Math.random() * Math.random();
   }
   
   let cacheResult = null;
   
-  // Redis 캐시 테스트
   if (redisConnected && redisClient) {
     try {
       const testKey = `load-test-${Date.now()}`;
@@ -173,7 +158,7 @@ app.get('/load-test', async (req, res) => {
   }
   
   res.json({
-    message: '부하 테스트 완료',
+    message: 'Load test completed',
     duration: Date.now() - startTime,
     timestamp: new Date().toISOString(),
     cache: cacheResult || { status: 'disabled' },
@@ -184,14 +169,12 @@ app.get('/load-test', async (req, res) => {
   });
 });
 
-// 서버 시작
 const server = app.listen(port, '0.0.0.0', () => {
-  console.log(`✅ 서버가 포트 ${port}에서 실행 중입니다`);
-  console.log(`📊 헬스체크: http://localhost:${port}/health`);
-  console.log(`📈 메트릭: http://localhost:${port}/metrics`);
+  console.log(`Server running on port ${port}`);
+  console.log(`Health check: http://localhost:${port}/health`);
+  console.log(`Metrics: http://localhost:${port}/metrics`);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', async () => {
   server.close(async () => {
     if (redisClient && redisConnected) {
@@ -219,7 +202,6 @@ process.on('SIGINT', async () => {
 });
 EOF
 
-# 기본 Dockerfile 생성 (비교용)
 cat > app/Dockerfile << 'EOF'
 FROM node:16
 
@@ -237,25 +219,23 @@ EOF
 
 echo "2. 환경 검증..."
 
-# 환경 검증
 if command -v docker &> /dev/null; then
-    echo "✅ Docker 사용 가능"
+    echo "Docker available"
 else
-    echo "❌ Docker가 설치되지 않았습니다"
+    echo "Docker not found"
 fi
 
-# npm 의존성 설치
 cd app
 if command -v npm &> /dev/null; then
     npm install --silent > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-        echo "✅ npm 의존성 설치 완료"
+        echo "npm dependencies installed"
     fi
 fi
 cd ..
 
 echo ""
-echo "=== 실습 환경 준비 완료 ==="
-echo "생성된 파일: package.json, server.js, Dockerfile"
-echo "다음 단계: Phase 1 보안 강화 실습 시작"
-echo "현재 위치: $(pwd)"
+echo "=== Setup complete ==="
+echo "Files created: package.json, server.js, Dockerfile"
+echo "Next: ../security/security_scan.sh"
+echo "Working directory: $(pwd)"
