@@ -1,25 +1,25 @@
-# Week 3 Day 2: 핵심 오브젝트와 워크로드 관리
+# Week 3 Day 2: 서비스와 네트워킹
 
 <div align="center">
 
-**📦 핵심 오브젝트** • **⚙️ 설정 관리** • **🌐 네트워킹**
+**🌐 Service 타입** • **📍 Ingress 라우팅** • **⚙️ 설정 관리**
 
-*ConfigMap부터 Health Probes까지, Kubernetes 핵심 구성요소 마스터*
+*CNCF 기초 과정 - Service부터 Ingress까지, Kubernetes 네트워킹 마스터*
 
 </div>
 
 ---
 
 ## 🕘 세션 정보
-**시간**: 09:00-11:50 (이론 2.5시간) + 13:00-16:00 (실습 3시간)
-**목표**: Kubernetes 핵심 오브젝트 + 설정 관리 + 워크로드 배포 전략
+**시간**: 09:00-11:50 (이론 2.5시간) + 13:00-14:30 (실습 1.5시간)
+**목표**: Service 타입별 이해 + Ingress 구성 + ConfigMap/Secret 활용
 **방식**: 협업 중심 학습 + 레벨별 차별화
 
 ## 🎯 세션 목표
 ### 📚 학습 목표
-- **이해 목표**: ConfigMap, Secret, Service, PV/PVC, Health Probes 완전 이해
-- **적용 목표**: 실무 수준의 애플리케이션 배포 및 설정 관리
-- **협업 목표**: 페어 프로그래밍으로 복잡한 워크로드 구성 경험
+- **이해 목표**: Service 타입, Ingress 라우팅, ConfigMap/Secret 완전 이해
+- **적용 목표**: 다양한 Service로 애플리케이션 노출 및 Ingress 구성
+- **협업 목표**: 페어 프로그래밍으로 네트워킹 구성 경험
 
 ---
 
