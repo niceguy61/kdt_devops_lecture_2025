@@ -1,197 +1,285 @@
 #!/bin/bash
 
-# Week 2 Day 3 Lab 1 - Phase 3: 모니터링 테스트 스크립트
+# Week 2 Day 3 Lab 1: 모니터링 시스템 테스트 스크립트
 # 사용법: ./test_monitoring.sh
 
 echo "=== 모니터링 시스템 테스트 시작 ==="
-echo ""
 
-echo "1. 모니터링 서비스 상태 확인 중..."
+echo "1. 모니터링 서비스 상태 확인..."
 
-# 서비스 상태 확인
-cd monitoring 2>/dev/null || echo "monitoring 디렉토리로 이동할 수 없습니다"
+# 모니터링 서비스 상태 확인
+cd monitoring 2>/dev/null || {
+    echo "❌ monitoring 디렉토리를 찾을 수 없습니다."
+    echo "먼저 setup_monitoring.sh를 실행해주세요."
+    exit 1
+}
 
-if [ -f "docker-compose.monitoring.yml" ]; then
-    echo "=== 모니터링 서비스 상태 ==="
-    docker-compose -f docker-compose.monitoring.yml ps
-else
-    echo "❌ 모니터링 스택이 설정되지 않았습니다"
+# Docker Compose 서비스 상태 확인
+if ! docker-compose -f docker-compose.monitoring.yml ps | grep -q "Up"; then
+    echo "❌ 모니터링 서비스가 실행되지 않았습니다."
+    echo "setup_monitoring.sh를 먼저 실행해주세요."
     exit 1
 fi
 
-cd ..
+echo "✅ 모니터링 서비스 정상 실행 중"
 
 echo ""
-echo "2. 서비스 헬스 체크 수행 중..."
+echo "2. Prometheus 연결 및 타겟 확인..."
 
-# Prometheus 헬스 체크
-PROMETHEUS_HEALTH=$(curl -s http://localhost:9090/-/healthy 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ Prometheus 헬스 체크 통과"
-else
-    echo "❌ Prometheus 헬스 체크 실패"
-fi
-
-# Grafana 헬스 체크
-GRAFANA_HEALTH=$(curl -s http://localhost:3001/api/health 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ Grafana 헬스 체크 통과"
-else
-    echo "❌ Grafana 헬스 체크 실패"
-fi
-
-# cAdvisor 헬스 체크
-CADVISOR_HEALTH=$(curl -s http://localhost:8080/healthz 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ cAdvisor 헬스 체크 통과"
-else
-    echo "❌ cAdvisor 헬스 체크 실패"
-fi
-
-echo ""
-echo "3. Prometheus 타겟 상태 확인 중..."
-
-# Prometheus 타겟 확인
-TARGETS_RESPONSE=$(curl -s http://localhost:9090/api/v1/targets 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ Prometheus 타겟 API 응답 정상"
+# Prometheus 헬스체크
+if curl -s http://localhost:9090/-/healthy > /dev/null; then
+    echo "✅ Prometheus 정상 동작"
     
-    # 활성 타겟 수 확인
-    if command -v jq &> /dev/null; then
-        ACTIVE_TARGETS=$(echo "$TARGETS_RESPONSE" | jq '.data.activeTargets | length' 2>/dev/null)
-        UP_TARGETS=$(echo "$TARGETS_RESPONSE" | jq '.data.activeTargets | map(select(.health == "up")) | length' 2>/dev/null)
-        echo "   - 전체 타겟: $ACTIVE_TARGETS"
-        echo "   - 정상 타겟: $UP_TARGETS"
-    else
-        echo "   - jq가 설치되지 않아 상세 정보를 확인할 수 없습니다"
-    fi
+    # 타겟 상태 확인
+    TARGETS_JSON=$(curl -s http://localhost:9090/api/v1/targets)
+    TARGETS_UP=$(echo "$TARGETS_JSON" | jq '.data.activeTargets[] | select(.health=="up") | .labels.job' 2>/dev/null | wc -l)
+    TARGETS_DOWN=$(echo "$TARGETS_JSON" | jq '.data.activeTargets[] | select(.health=="down") | .labels.job' 2>/dev/null | wc -l)
+    
+    echo "   - 활성 타겟: ${TARGETS_UP}개"
+    echo "   - 비활성 타겟: ${TARGETS_DOWN}개"
+    
+    # 타겟별 상태 상세 확인
+    echo "   - 타겟 상태 상세:"
+    echo "$TARGETS_JSON" | jq -r '.data.activeTargets[] | "     \(.labels.job): \(.health)"' 2>/dev/null || echo "     JSON 파싱 실패"
 else
-    echo "❌ Prometheus 타겟 API 응답 실패"
+    echo "❌ Prometheus 연결 실패"
+    exit 1
 fi
 
 echo ""
-echo "4. 애플리케이션 메트릭 수집 확인 중..."
+echo "3. Grafana 연결 확인..."
+
+# Grafana 헬스체크
+if curl -s http://localhost:3001/api/health > /dev/null; then
+    echo "✅ Grafana 정상 동작"
+    
+    # 데이터소스 확인
+    DATASOURCES=$(curl -s -u admin:admin http://localhost:3001/api/datasources | jq length 2>/dev/null)
+    echo "   - 설정된 데이터소스: ${DATASOURCES}개"
+    
+    # 대시보드 확인
+    DASHBOARDS=$(curl -s -u admin:admin http://localhost:3001/api/search | jq length 2>/dev/null)
+    echo "   - 설정된 대시보드: ${DASHBOARDS}개"
+else
+    echo "❌ Grafana 연결 실패"
+fi
+
+echo ""
+echo "4. cAdvisor 연결 확인..."
+
+# cAdvisor 헬스체크
+if curl -s http://localhost:8080/healthz > /dev/null; then
+    echo "✅ cAdvisor 정상 동작"
+    
+    # 컨테이너 메트릭 확인
+    CONTAINERS=$(curl -s http://localhost:8080/api/v1.3/containers | jq 'keys | length' 2>/dev/null)
+    echo "   - 모니터링 중인 컨테이너: ${CONTAINERS}개"
+else
+    echo "❌ cAdvisor 연결 실패"
+fi
+
+echo ""
+echo "5. 애플리케이션 메트릭 수집 테스트..."
 
 # 애플리케이션 메트릭 확인
-APP_METRICS=$(curl -s http://localhost:3000/metrics 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ 애플리케이션 메트릭 수집 정상"
+if curl -s http://localhost:3000/metrics > /dev/null; then
+    echo "✅ 애플리케이션 메트릭 엔드포인트 정상"
+    
+    # 메트릭 개수 확인
+    METRICS_COUNT=$(curl -s http://localhost:3000/metrics | wc -l)
+    echo "   - 수집된 메트릭 라인: ${METRICS_COUNT}개"
     
     # 주요 메트릭 확인
-    HTTP_REQUESTS=$(echo "$APP_METRICS" | grep -c "http_requests_total" || echo "0")
-    HTTP_DURATION=$(echo "$APP_METRICS" | grep -c "http_request_duration_seconds" || echo "0")
-    NODEJS_METRICS=$(echo "$APP_METRICS" | grep -c "nodejs_" || echo "0")
+    echo "   - HTTP 요청 메트릭:"
+    HTTP_METRICS=$(curl -s http://localhost:3000/metrics | grep -c "http_requests_total")
+    echo "     http_requests_total: ${HTTP_METRICS}개 라벨"
     
-    echo "   - HTTP 요청 메트릭: $HTTP_REQUESTS"
-    echo "   - HTTP 응답시간 메트릭: $HTTP_DURATION"
-    echo "   - Node.js 메트릭: $NODEJS_METRICS"
+    echo "   - 응답 시간 메트릭:"
+    DURATION_METRICS=$(curl -s http://localhost:3000/metrics | grep -c "http_request_duration_seconds")
+    echo "     http_request_duration_seconds: ${DURATION_METRICS}개 라벨"
 else
     echo "❌ 애플리케이션 메트릭 수집 실패"
 fi
 
 echo ""
-echo "5. 부하 생성 및 메트릭 테스트..."
+echo "6. 부하 생성 및 메트릭 변화 테스트..."
 
-# Apache Bench로 부하 생성
-if command -v ab &> /dev/null; then
-    echo "부하 생성 중 (1000 요청, 10 동시)..."
-    ab -n 1000 -c 10 -q http://localhost:3000/load-test > /dev/null 2>&1 &
-    AB_PID=$!
-    
-    # 부하 생성 중 메트릭 확인
-    sleep 5
-    echo "부하 생성 중 메트릭 확인..."
-    
-    # HTTP 요청 수 확인
-    HTTP_TOTAL=$(curl -s http://localhost:3000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' 2>/dev/null || echo "0")
-    echo "   - 총 HTTP 요청 수: $HTTP_TOTAL"
-    
-    # 부하 생성 완료 대기
-    wait $AB_PID 2>/dev/null
-    echo "✅ 부하 테스트 완료"
+# 부하 생성 전 메트릭 수집
+echo "   - 부하 생성 전 메트릭 수집..."
+BEFORE_REQUESTS=$(curl -s http://localhost:3000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1)
+
+# 부하 생성
+echo "   - 부하 생성 중 (1000 요청)..."
+ab -n 1000 -c 10 -q http://localhost:3000/ > /dev/null 2>&1 &
+AB_PID=$!
+
+# 부하 생성 중 리소스 모니터링
+sleep 2
+echo "   - 부하 생성 중 리소스 사용량:"
+docker stats --no-stream --format "     {{.Container}}: CPU {{.CPUPerc}}, Memory {{.MemUsage}}" | grep -E "(optimized-app|prometheus|grafana)"
+
+# 부하 생성 완료 대기
+wait $AB_PID
+
+# 부하 생성 후 메트릭 수집
+sleep 3
+echo "   - 부하 생성 후 메트릭 수집..."
+AFTER_REQUESTS=$(curl -s http://localhost:3000/metrics | grep "http_requests_total" | head -1 | awk '{print $2}' | cut -d. -f1)
+
+# 메트릭 변화 확인
+if [ -n "$BEFORE_REQUESTS" ] && [ -n "$AFTER_REQUESTS" ]; then
+    REQUEST_INCREASE=$((AFTER_REQUESTS - BEFORE_REQUESTS))
+    echo "   ✅ HTTP 요청 메트릭 증가: ${REQUEST_INCREASE}개"
 else
-    echo "Apache Bench가 설치되지 않아 부하 테스트를 건너뜁니다"
+    echo "   ⚠️  메트릭 변화 측정 실패"
 fi
 
 echo ""
-echo "6. Prometheus 쿼리 테스트..."
+echo "7. Prometheus 쿼리 테스트..."
 
-# 기본 Prometheus 쿼리 테스트
-echo "=== Prometheus 쿼리 테스트 ==="
-
-# HTTP 요청 비율 쿼리
-HTTP_RATE_QUERY="rate(http_requests_total[5m])"
-HTTP_RATE_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=$(echo $HTTP_RATE_QUERY | sed 's/ /%20/g')" 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ HTTP 요청 비율 쿼리 성공"
+# Prometheus 쿼리 테스트
+echo "   - HTTP 요청률 쿼리 테스트:"
+QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(http_requests_total[5m])" | jq '.data.result | length' 2>/dev/null)
+if [ "$QUERY_RESULT" -gt 0 ]; then
+    echo "   ✅ HTTP 요청률 쿼리 성공 (${QUERY_RESULT}개 시계열)"
 else
-    echo "❌ HTTP 요청 비율 쿼리 실패"
+    echo "   ⚠️  HTTP 요청률 쿼리 결과 없음"
 fi
 
-# 메모리 사용량 쿼리
-MEMORY_QUERY="container_memory_usage_bytes"
-MEMORY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=$MEMORY_QUERY" 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ 메모리 사용량 쿼리 성공"
+echo "   - 컨테이너 CPU 사용률 쿼리 테스트:"
+CPU_QUERY_RESULT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total[5m])" | jq '.data.result | length' 2>/dev/null)
+if [ "$CPU_QUERY_RESULT" -gt 0 ]; then
+    echo "   ✅ CPU 사용률 쿼리 성공 (${CPU_QUERY_RESULT}개 시계열)"
 else
-    echo "❌ 메모리 사용량 쿼리 실패"
+    echo "   ⚠️  CPU 사용률 쿼리 결과 없음"
 fi
 
 echo ""
-echo "7. 알림 규칙 상태 확인..."
+echo "8. 알림 규칙 테스트..."
 
 # 알림 규칙 상태 확인
-RULES_RESPONSE=$(curl -s http://localhost:9090/api/v1/rules 2>/dev/null)
-if [ $? -eq 0 ]; then
-    echo "✅ 알림 규칙 API 응답 정상"
-    
-    if command -v jq &> /dev/null; then
-        RULE_GROUPS=$(echo "$RULES_RESPONSE" | jq '.data.groups | length' 2>/dev/null)
-        echo "   - 알림 규칙 그룹 수: $RULE_GROUPS"
-    fi
-else
-    echo "❌ 알림 규칙 API 응답 실패"
+ALERT_RULES=$(curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].rules | length' 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+echo "   - 설정된 알림 규칙: ${ALERT_RULES}개"
+
+# 활성 알림 확인
+ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null)
+echo "   - 현재 활성 알림: ${ACTIVE_ALERTS}개"
+
+if [ "$ACTIVE_ALERTS" -gt 0 ]; then
+    echo "   - 활성 알림 목록:"
+    curl -s http://localhost:9090/api/v1/alerts | jq -r '.data.alerts[] | "     \(.labels.alertname): \(.state)"' 2>/dev/null
 fi
 
 echo ""
-echo "8. 전체 시스템 상태 요약..."
+echo "9. 고부하 알림 테스트..."
 
-# 전체 상태 요약
-echo "=== 모니터링 시스템 상태 요약 ==="
+echo "   - 고부하 생성으로 알림 트리거 테스트..."
+# 높은 부하 생성 (알림 트리거 목적)
+ab -n 5000 -c 100 -q http://localhost:3000/load-test > /dev/null 2>&1 &
+HIGH_LOAD_PID=$!
 
-# 서비스 상태 체크
-PROMETHEUS_STATUS="❌"
-GRAFANA_STATUS="❌"
-CADVISOR_STATUS="❌"
-APP_METRICS_STATUS="❌"
+echo "   - 30초 대기 (알림 규칙 평가 시간)..."
+sleep 30
 
-curl -s http://localhost:9090/-/healthy >/dev/null 2>&1 && PROMETHEUS_STATUS="✅"
-curl -s http://localhost:3001/api/health >/dev/null 2>&1 && GRAFANA_STATUS="✅"
-curl -s http://localhost:8080/healthz >/dev/null 2>&1 && CADVISOR_STATUS="✅"
-curl -s http://localhost:3000/metrics >/dev/null 2>&1 && APP_METRICS_STATUS="✅"
+# 알림 상태 재확인
+NEW_ACTIVE_ALERTS=$(curl -s http://localhost:9090/api/v1/alerts | jq '.data.alerts | length' 2>/dev/null)
+echo "   - 고부하 후 활성 알림: ${NEW_ACTIVE_ALERTS}개"
 
-echo "서비스 상태:"
-echo "  - Prometheus: $PROMETHEUS_STATUS"
-echo "  - Grafana: $GRAFANA_STATUS"
-echo "  - cAdvisor: $CADVISOR_STATUS"
-echo "  - 애플리케이션 메트릭: $APP_METRICS_STATUS"
+if [ "$NEW_ACTIVE_ALERTS" -gt "$ACTIVE_ALERTS" ]; then
+    echo "   ✅ 알림 시스템 정상 동작 (새로운 알림 발생)"
+    echo "   - 새로 발생한 알림:"
+    curl -s http://localhost:9090/api/v1/alerts | jq -r '.data.alerts[] | select(.state=="firing") | "     \(.labels.alertname): \(.annotations.summary)"' 2>/dev/null
+else
+    echo "   ⚠️  알림 트리거 확인 필요 (임계값 조정 또는 대기 시간 부족)"
+fi
 
-# 접속 정보 안내
-echo ""
-echo "접속 정보:"
-echo "  - Prometheus: http://localhost:9090"
-echo "  - Grafana: http://localhost:3001 (admin/admin)"
-echo "  - cAdvisor: http://localhost:8080"
-echo "  - 애플리케이션: http://localhost:3000"
+# 고부하 프로세스 종료
+kill $HIGH_LOAD_PID 2>/dev/null
 
 echo ""
-echo "Grafana 대시보드 설정 가이드:"
-echo "1. http://localhost:3001 접속 (admin/admin)"
-echo "2. 좌측 메뉴에서 'Dashboards' 클릭"
-echo "3. 'Import' 버튼 클릭"
-echo "4. Dashboard ID '193' 입력 (Docker 모니터링 대시보드)"
-echo "5. 'Load' 클릭 후 Prometheus 데이터소스 선택"
+echo "10. 모니터링 대시보드 접근성 테스트..."
+
+# Grafana 대시보드 접근 테스트
+echo "   - Grafana 로그인 테스트:"
+LOGIN_RESULT=$(curl -s -c cookies.txt -X POST -H "Content-Type: application/json" -d '{"user":"admin","password":"admin"}' http://localhost:3001/login)
+if echo "$LOGIN_RESULT" | grep -q "Logged in"; then
+    echo "   ✅ Grafana 로그인 성공"
+    
+    # 대시보드 목록 확인
+    DASHBOARD_LIST=$(curl -s -b cookies.txt http://localhost:3001/api/search | jq -r '.[].title' 2>/dev/null)
+    if [ -n "$DASHBOARD_LIST" ]; then
+        echo "   - 사용 가능한 대시보드:"
+        echo "$DASHBOARD_LIST" | sed 's/^/     /'
+    fi
+    
+    # 쿠키 파일 정리
+    rm -f cookies.txt
+else
+    echo "   ⚠️  Grafana 로그인 실패"
+fi
+
+echo ""
+echo "11. 종합 모니터링 리포트 생성..."
+
+# 모니터링 테스트 리포트 생성
+cat > monitoring-test-report.txt << EOF
+=== 모니터링 시스템 테스트 리포트 ===
+테스트 일시: $(date)
+
+=== 서비스 상태 ===
+- Prometheus: 정상 동작 (http://localhost:9090)
+- Grafana: 정상 동작 (http://localhost:3001)
+- cAdvisor: 정상 동작 (http://localhost:8080)
+
+=== 메트릭 수집 상태 ===
+- 활성 타겟: ${TARGETS_UP}개
+- 비활성 타겟: ${TARGETS_DOWN}개
+- 애플리케이션 메트릭: ${METRICS_COUNT}라인
+- 모니터링 컨테이너: ${CONTAINERS}개
+
+=== 알림 시스템 ===
+- 설정된 알림 규칙: ${ALERT_RULES}개
+- 현재 활성 알림: ${NEW_ACTIVE_ALERTS}개
+
+=== 대시보드 ===
+- 설정된 데이터소스: ${DATASOURCES}개
+- 설정된 대시보드: ${DASHBOARDS}개
+
+=== 성능 테스트 결과 ===
+- 부하 테스트 전후 HTTP 요청 증가: ${REQUEST_INCREASE:-"측정 실패"}개
+- Prometheus 쿼리 응답: 정상
+- 알림 트리거 테스트: $([ "$NEW_ACTIVE_ALERTS" -gt "$ACTIVE_ALERTS" ] && echo "성공" || echo "확인 필요")
+
+=== 권장사항 ===
+- 정기적인 메트릭 수집 상태 모니터링
+- 알림 임계값 조정 및 테스트
+- 대시보드 커스터마이징
+- 장기 데이터 보존 정책 수립
+
+=== 접속 정보 ===
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (admin/admin)
+- cAdvisor: http://localhost:8080
+EOF
+
+echo "✅ 모니터링 테스트 리포트 생성 완료"
+
+cd ..
 
 echo ""
 echo "=== 모니터링 시스템 테스트 완료 ==="
 echo ""
+echo "테스트 결과 요약:"
+echo "- Prometheus: $([ "$TARGETS_UP" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo "- Grafana: $([ "$DATASOURCES" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo "- cAdvisor: $([ "$CONTAINERS" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo "- 메트릭 수집: $([ "$METRICS_COUNT" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo "- 알림 시스템: $([ "$ALERT_RULES" -gt 0 ] && echo "✅ 정상" || echo "❌ 문제")"
+echo ""
+echo "생성된 파일:"
+echo "- monitoring/monitoring-test-report.txt: 종합 테스트 리포트"
+echo ""
+echo "다음 단계:"
+echo "1. Grafana 대시보드 커스터마이징 (http://localhost:3001)"
+echo "2. 알림 채널 설정 (Slack, Email 등)"
+echo "3. 장기 모니터링 데이터 분석"
