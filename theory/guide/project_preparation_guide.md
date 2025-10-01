@@ -12,18 +12,25 @@
 
 ## 🎯 가이드 목적
 
-### 📚 학습 목표
+<details>
+<summary><strong>📚 학습 목표</strong></summary>
+
 - **AI 협업**: ChatGPT, Claude, GitHub Copilot 등 AI 도구의 효과적 활용
 - **프롬프트 엔지니어링**: 정확하고 유용한 결과를 얻는 프롬프트 작성법
 - **바이브코딩**: AI와 함께하는 빠르고 효율적인 코딩 방법론
 - **프로젝트 전략**: Week 3 이후 프로젝트에서의 실무 적용 방안
 
-### 🤔 왜 필요한가?
+</details>
+
+<details>
+<summary><strong>🤔 왜 필요한가?</strong></summary>
 
 **현실 상황**:
 - 💼 **실무 트렌드**: AI 도구 활용이 개발자의 필수 역량이 된 시대
 - 🏠 **일상 비유**: AI는 강력한 어시스턴트, 올바른 소통법이 중요
 - 📊 **생산성**: AI 활용으로 개발 속도 3-5배 향상 가능
+
+</details>
 
 ---
 
@@ -196,56 +203,7 @@ resource "aws_eks_cluster" "main" {
 - 보안 베스트 프랙티스 적용
 ```
 
-#### 3. AWS 서비스 통합
-```
-/explain EKS 클러스터에서 다음 AWS 서비스들을 통합하는 방법을 설명해주세요:
-
-통합 대상:
-- AWS Load Balancer Controller
-- EBS CSI Driver
-- AWS for Fluent Bit
-- AWS Distro for OpenTelemetry
-- Karpenter (노드 오토스케일링)
-
-각 서비스별 설치 방법, 설정 파일, 그리고 실무 고려사항을 포함해주세요.
-```
-
-#### 4. 보안 및 컴플라이언스
-```
-/review 현재 EKS 클러스터 설정을 AWS 보안 베스트 프랙티스 관점에서 검토해주세요:
-
-[현재 클러스터 설정 파일들]
-
-검토 항목:
-- IAM 역할 및 정책
-- 네트워크 보안
-- Pod 보안 표준
-- 시크릿 관리
-- 로깅 및 모니터링
-- 컴플라이언스 (SOC2, PCI-DSS)
-```
-
-#### 5. 비용 최적화
-```
-/optimize 현재 AWS 인프라의 비용을 최적화하는 방안을 제안해주세요:
-
-현재 구성:
-[리소스 목록 및 사용량]
-
-최적화 목표:
-- 월 비용 30% 절감
-- 성능 저하 없음
-- 가용성 유지
-
-다음 관점에서 분석해주세요:
-- 인스턴스 타입 최적화
-- 예약 인스턴스 활용
-- Spot 인스턴스 적용
-- 스토리지 최적화
-- 네트워크 비용 절감
-```
-
-#### 6. 실시간 문제 해결
+#### 3. 실시간 문제 해결
 ```
 /troubleshoot EKS 클러스터에서 다음 문제가 발생했습니다:
 
@@ -315,13 +273,6 @@ coding_standards:
     - "변수는 variables.tf에 정의"
     - "출력값은 outputs.tf에 정의"
     - "모듈화 구조 권장"
-  
-  dockerfile:
-    - "멀티스테이지 빌드 사용"
-    - "Alpine Linux 베이스 이미지 우선 사용"
-    - "non-root 사용자로 실행"
-    - "불필요한 패키지 설치 금지"
-    - "헬스체크 명령어 포함"
 
 security_requirements:
   - "모든 시크릿은 Kubernetes Secret 오브젝트 사용"
@@ -330,75 +281,12 @@ security_requirements:
   - "이미지 스캔 결과 포함"
   - "RBAC 권한 최소화 원칙 적용"
 
-monitoring_standards:
-  - "모든 서비스에 Prometheus 메트릭 엔드포인트 제공"
-  - "구조화된 로깅 (JSON 형태) 사용"
-  - "분산 트레이싱 헤더 전파"
-  - "SLI/SLO 메트릭 정의"
-
 response_format:
   - "코드 생성 시 상세한 주석 포함"
   - "베스트 프랙티스 설명 추가"
   - "보안 고려사항 명시"
   - "테스트 방법 제공"
   - "트러블슈팅 가이드 포함"
-
-example_patterns:
-  # 간단한 패턴 예시 (Few-shot prompt 활용)
-  kubernetes_deployment: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: {{ service-name }}
-      labels:
-        app: {{ service-name }}
-    spec:
-      replicas: 3
-      template:
-        spec:
-          containers:
-          - name: {{ service-name }}
-            image: {{ image }}
-            resources:
-              requests:
-                memory: "128Mi"
-                cpu: "100m"
-            livenessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-  
-  terraform_module: |
-    resource "aws_eks_cluster" "{{ cluster-name }}" {
-      name     = var.cluster_name
-      role_arn = aws_iam_role.cluster.arn
-      vpc_config {
-        subnet_ids = var.subnet_ids
-      }
-    }
-
-few_shot_examples:
-  # Few-shot prompt로 더 효과적인 학습
-  - "다음과 같은 패턴으로 Kubernetes Service를 생성해주세요:"
-  - "이전 예시를 참고하여 StatefulSet을 만들어주세요:"
-  - "위 Deployment 패턴을 따라 새로운 서비스를 구성해주세요:"
-
-visualization_capabilities:
-  # 코드 전용 AI 모델도 시각화 자료 생성 가능
-  mermaid_diagrams:
-    - "아키텍처 다이어그램을 Mermaid 형식으로 생성"
-    - "워크플로우를 flowchart로 표현"
-    - "시퀀스 다이어그램으로 프로세스 설명"
-  
-  svg_graphics:
-    - "인프라 구성도를 SVG로 생성"
-    - "네트워크 토폴로지 시각화"
-    - "모니터링 대시보드 레이아웃"
-  
-  gantt_charts:
-    - "프로젝트 일정을 Gantt 차트로 표현"
-    - "배포 계획 타임라인 생성"
-    - "마이그레이션 로드맵 시각화"
 ```
 
 </details>
@@ -420,36 +308,6 @@ visualization_capabilities:
     "maxFileSize": "1MB"
   }
 }
-```
-
-#### 프로젝트별 컨텍스트 설정
-```yaml
-# .amazonq/project-context.yml
-project:
-  name: "DevOps Microservices Platform"
-  type: "cloud-native"
-  cloud_provider: "aws"
-  
-tech_stack:
-  - kubernetes
-  - terraform
-  - docker
-  - prometheus
-  - grafana
-  
-aws_services:
-  - eks
-  - rds
-  - elasticache
-  - alb
-  - route53
-  - cloudfront
-  
-patterns:
-  - microservices
-  - gitops
-  - infrastructure-as-code
-  - observability
 ```
 
 #### Amazon Q 전용 프롬프트 패턴
@@ -497,10 +355,6 @@ Help me troubleshoot and fix this issue.
     "temperature": 0.1,
     "top_p": 1,
     "inlineSuggestCount": 3
-  },
-  "yaml.schemas": {
-    "https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.0-standalone-strict/all.json": "*.k8s.yaml",
-    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
   }
 }
 ```
@@ -536,242 +390,12 @@ Help me troubleshoot and fix this issue.
 
 </details>
 
-<details>
-<summary><strong>🎨 시각화 자료 생성 활용법</strong></summary>
-
-#### 1. Mermaid 다이어그램 생성
-```
-다음 AWS 아키텍처를 Mermaid 다이어그램으로 표현해주세요:
-- EKS 클러스터
-- RDS 데이터베이스
-- ElastiCache
-- ALB
-- CloudFront
-
-각 구성요소 간의 연결 관계와 데이터 흐름을 포함해주세요.
-```
-
-#### 2. SVG 인프라 다이어그램
-```
-마이크로서비스 아키텍처를 SVG 형식으로 시각화해주세요:
-- 서비스 간 통신
-- 데이터베이스 연결
-- 외부 API 통합
-- 로드밸런서 구성
-
-색상 코딩과 아이콘을 사용하여 직관적으로 표현해주세요.
-```
-
-#### 3. Gantt 차트 프로젝트 계획
-```
-DevOps 프로젝트 일정을 Gantt 차트로 생성해주세요:
-
-Phase 1: 인프라 구축 (2주)
-- EKS 클러스터 설정
-- 네트워킹 구성
-- 보안 설정
-
-Phase 2: 애플리케이션 배포 (3주)
-- CI/CD 파이프라인
-- 모니터링 시스템
-- 테스트 자동화
-
-Phase 3: 운영 최적화 (2주)
-- 성능 튜닝
-- 비용 최적화
-- 문서화
-```
-
-#### 4. Few-Shot Prompt 활용 예시
-```
-다음 예시를 참고하여 새로운 서비스를 생성해주세요:
-
-예시 1:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: frontend
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-
-예시 2:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-      - name: backend
-        image: node:18-alpine
-        ports:
-        - containerPort: 3000
-
-이제 "database" 서비스를 위한 StatefulSet을 같은 패턴으로 생성해주세요.
-```
-
-### 🎯 시각화 자료 활용 팁
-
-#### 코드 전용 AI 모델의 시각화 능력
-- **Mermaid**: 복잡한 아키텍처도 코드로 표현 가능
-- **SVG**: 벡터 그래픽으로 확장 가능한 다이어그램
-- **ASCII Art**: 간단한 구조도나 플로우차트
-- **Gantt**: 프로젝트 관리와 일정 계획
-- **PlantUML**: UML 다이어그램을 텍스트로 생성
-
-#### 활용 시나리오
-- **문서화**: README 파일에 포함할 시각적 설명
-- **프레젠테이션**: 기술 발표용 다이어그램
-- **계획 수립**: 프로젝트 로드맵과 일정 관리
-- **교육 자료**: 복잡한 개념의 시각적 설명
-- **트러블슈팅**: 문제 상황의 시각적 분석
-
-</details>
-      "    app: ${1:service-name}",
-      "spec:",
-      "  replicas: ${2:3}",
-      "  selector:",
-      "    matchLabels:",
-      "      app: ${1:service-name}",
-      "  template:",
-      "    metadata:",
-      "      labels:",
-      "        app: ${1:service-name}",
-      "    spec:",
-      "      securityContext:",
-      "        runAsNonRoot: true",
-      "        runAsUser: 1000",
-      "      containers:",
-      "      - name: ${1:service-name}",
-      "        image: ${3:image:tag}",
-      "        ports:",
-      "        - containerPort: ${4:8080}",
-      "        resources:",
-      "          requests:",
-      "            memory: \"${5:128Mi}\"",
-      "            cpu: \"${6:100m}\"",
-      "          limits:",
-      "            memory: \"${7:256Mi}\"",
-      "            cpu: \"${8:200m}\"",
-      "        livenessProbe:",
-      "          httpGet:",
-      "            path: ${9:/health}",
-      "            port: ${4:8080}",
-      "          initialDelaySeconds: 30",
-      "          periodSeconds: 10",
-      "        readinessProbe:",
-      "          httpGet:",
-      "            path: ${10:/ready}",
-      "            port: ${4:8080}",
-      "          initialDelaySeconds: 5",
-      "          periodSeconds: 5"
-    ],
-    "description": "Production-ready Kubernetes Deployment with best practices"
-  }
-}
-```
-
-<details>
-<summary><strong>🎨 기타 IDE 설정</strong></summary>
-
-#### Windsurf IDE 설정 (간소화)
-```yaml
-# Windsurf AI 규칙 설정
-project_type: "DevOps & Cloud Native"
-
-ai_behavior:
-  expertise_level: "senior"
-  response_style: "detailed_with_explanations"
-  code_quality: "production_ready"
-  security_focus: "high"
-
-devops_patterns:
-  infrastructure_as_code:
-    - "Terraform 모듈화 구조 사용"
-    - "상태 파일 원격 저장 (S3 + DynamoDB)"
-  
-  kubernetes_manifests:
-    - "Kustomize 오버레이 패턴 적용"
-    - "헬름 차트 템플릿 활용"
-  
-  visualization:
-    - "Mermaid 다이어그램으로 아키텍처 표현"
-    - "SVG로 인프라 구성도 생성"
-    - "Gantt 차트로 프로젝트 일정 관리"
-
-few_shot_learning:
-  - "이전 예시를 참고하여 패턴 학습"
-  - "유사한 구조의 코드 생성"
-  - "점진적 복잡도 증가"
-
-context_awareness:
-  - "이전 대화 내용 참조"
-  - "프로젝트 파일 구조 이해"
-  - "기존 코드 패턴 일관성 유지"
-```
-
-#### JetBrains IDEs + Amazon Q 설정 (간소화)
-```xml
-<!-- .idea/amazonq.xml -->
-<component name="AmazonQSettings">
-  <option name="enableCodeWhisperer" value="true" />
-  <option name="enableChatAssistant" value="true" />
-  <option name="projectContext">
-    <ProjectContext>
-      <option name="cloudProvider" value="AWS" />
-      <option name="projectType" value="DevOps" />
-      <option name="visualizationSupport" value="true" />
-      <option name="fewShotLearning" value="enabled" />
-    </ProjectContext>
-  </option>
-</component>
-```
-
-</details>
-
-<details>
-<summary><strong>💡 Few-Shot Prompt 전략</strong></summary>
-
-#### 효과적인 Few-Shot 패턴
-```
-다음 3가지 예시를 보고 패턴을 학습한 후, 새로운 서비스를 생성해주세요:
-
-예시 1 (웹 서버):
-[간단한 nginx 배포 YAML]
-
-예시 2 (API 서버):
-[Node.js API 배포 YAML]
-
-예시 3 (데이터베이스):
-[MySQL StatefulSet YAML]
-
-이제 Redis 캐시 서버를 위한 배포를 같은 패턴으로 생성해주세요.
-```
-
-#### Few-Shot의 장점
-- **학습 효율성**: 긴 설명보다 예시가 더 효과적
-- **일관성**: 기존 패턴을 따라 일관된 코드 생성
-- **점진적 학습**: 단순한 예시에서 복잡한 구조로 확장
-- **컨텍스트 유지**: 프로젝트 스타일과 규칙 자동 적용
-
-</details>
-
----
-
 ---
 
 ## 📚 컨텍스트 관리 전략
 
-### 🔄 주기적 컨텍스트 업데이트
+<details>
+<summary><strong>🔄 주기적 컨텍스트 업데이트</strong></summary>
 
 #### 1. 프로젝트 초기 설정 (Week 3 시작)
 ```markdown
@@ -819,45 +443,16 @@ context_awareness:
   - **상태**: 해결 완료
   - **Amazon Q 활용**: `/troubleshoot DNS resolution issues in EKS`
 
-- **이슈 2**: 이미지 풀 속도 저하
-  - **해결책**: 이미지 캐싱 전략 도입
-  - **상태**: 진행 중
-  - **Amazon Q 활용**: `/optimize Container image pull performance in EKS`
-
 ## 다음 주 계획
 - 모니터링 시스템 구축 (Amazon Q: `/dev Prometheus + Grafana setup for EKS`)
 - 로깅 파이프라인 설정 (Amazon Q: `/generate Fluent Bit configuration for EKS`)
 - 보안 정책 강화 (Amazon Q: `/review Security posture of current EKS setup`)
-- 성능 테스트 및 최적화 (Amazon Q: `/optimize EKS cluster performance`)
 ```
 
-#### 3. 일일 컨텍스트 스냅샷
-```markdown
-# 2024-11-15 작업 컨텍스트
+</details>
 
-## 오늘의 목표
-- [ ] 백엔드 API Deployment 완성
-- [ ] PostgreSQL StatefulSet 배포
-- [ ] API-DB 연결 테스트
-- [ ] 헬스체크 엔드포인트 구현
-
-## 현재 작업 중인 파일
-- `k8s/backend/deployment.yaml`
-- `k8s/database/statefulset.yaml`
-- `terraform/rds.tf`
-
-## 최근 변경사항
-- 백엔드 이미지 태그: v1.2.3 → v1.2.4
-- 데이터베이스 리소스 제한 증가
-- 네트워크 정책 추가
-
-## 참고할 이전 작업
-- 프론트엔드 배포 패턴 (성공 사례)
-- Redis 캐시 설정 방법
-- 로드밸런서 구성
-```
-
-### 🎯 컨텍스트 활용 프롬프트 패턴
+<details>
+<summary><strong>🎯 컨텍스트 활용 프롬프트 패턴</strong></summary>
 
 #### 1. 프로젝트 연속성 유지
 ```
@@ -888,59 +483,14 @@ context_awareness:
 이 컨텍스트를 바탕으로 체계적인 해결 방안을 제시해주세요.
 ```
 
-#### 3. 코드 리뷰 시 컨텍스트 적용
-```
-다음 코드를 프로젝트 표준과 비교하여 리뷰해주세요:
-
-[코드 내용]
-
-프로젝트 표준:
-[코딩 스타일, 보안 요구사항, 성능 기준]
-
-기존 유사 코드 패턴:
-[참고할 기존 구현 사례]
-
-일관성, 보안, 성능 관점에서 개선점을 제안해주세요.
-```
-
-### 📊 컨텍스트 품질 관리
-
-#### 1. 컨텍스트 검증 체크리스트
-- [ ] **완전성**: 필요한 모든 정보가 포함되어 있는가?
-- [ ] **정확성**: 현재 상태를 정확히 반영하고 있는가?
-- [ ] **일관성**: 이전 컨텍스트와 일관된 형식인가?
-- [ ] **관련성**: 현재 작업과 직접적으로 관련된 정보인가?
-- [ ] **시의성**: 최신 정보로 업데이트되어 있는가?
-
-#### 2. 컨텍스트 최적화 전략
-```mermaid
-graph TB
-    A[컨텍스트 수집<br/>프로젝트 정보 수집] --> B[구조화<br/>체계적 정리]
-    B --> C[우선순위 설정<br/>중요도별 분류]
-    C --> D[압축<br/>핵심 정보 추출]
-    D --> E[검증<br/>정확성 확인]
-    E --> F[업데이트<br/>주기적 갱신]
-    F --> A
-    
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#ffebee
-    style E fill:#e3f2fd
-    style F fill:#e0f2f1
-```
-
-#### 3. 팀 컨텍스트 공유 방법
-- **공유 문서**: 팀 위키나 Confluence에 컨텍스트 문서 관리
-- **버전 관리**: Git을 통한 컨텍스트 파일 버전 관리
-- **자동화**: CI/CD 파이프라인에서 컨텍스트 자동 업데이트
-- **알림**: 중요한 컨텍스트 변경 시 팀 알림
+</details>
 
 ---
 
 ## ⚡ 바이브코딩 방법론
 
-### 🎯 바이브코딩이란?
+<details>
+<summary><strong>🎯 바이브코딩이란?</strong></summary>
 
 **정의**: AI와의 자연스러운 대화를 통해 빠르게 코드를 작성하고 개선하는 방법론
 
@@ -950,7 +500,10 @@ graph TB
 3. **실시간 검증**: 생성된 코드의 즉시 테스트와 수정
 4. **학습 통합**: AI 제안을 이해하고 자신의 지식과 결합
 
-### 🔄 바이브코딩 워크플로우
+</details>
+
+<details>
+<summary><strong>🔄 바이브코딩 워크플로우</strong></summary>
 
 ```mermaid
 graph TB
@@ -975,7 +528,10 @@ graph TB
     style J fill:#e0f2f1
 ```
 
-### 📝 실전 바이브코딩 예시
+</details>
+
+<details>
+<summary><strong>📝 실전 바이브코딩 예시</strong></summary>
 
 **시나리오**: Kubernetes에서 WordPress + MySQL 배포
 
@@ -1020,19 +576,20 @@ WordPress와 MySQL을 Kubernetes에 배포하는 완전한 매니페스트를 �
 ```
 매니페스트를 적용했는데 다음 오류가 발생합니다:
 
-```
 Error: pods "mysql-0" is forbidden: unable to validate against any security policy
-```
 
 이 오류를 해결하고, 전체 배포가 성공적으로 완료되도록 도와주세요.
 또한 배포 상태를 확인하는 스크립트도 제공해주세요.
 ```
 
+</details>
+
 ---
 
 ## 🎯 프로젝트별 AI 활용 전략
 
-### 🏗️ Week 3-4: Kubernetes 심화 프로젝트
+<details>
+<summary><strong>🏗️ Week 3-4: Kubernetes 심화 프로젝트</strong></summary>
 
 **AI 활용 포인트**:
 1. **클러스터 설계**: 아키텍처 다이어그램 생성
@@ -1058,7 +615,10 @@ Error: pods "mysql-0" is forbidden: unable to validate against any security poli
 - 백업 전략 포함
 ```
 
-### 🚀 Week 5-6: CI/CD 파이프라인 프로젝트
+</details>
+
+<details>
+<summary><strong>🚀 Week 5-6: CI/CD 파이프라인 프로젝트</strong></summary>
 
 **AI 활용 포인트**:
 1. **파이프라인 설계**: GitLab CI/GitHub Actions 워크플로우
@@ -1081,7 +641,10 @@ Error: pods "mysql-0" is forbidden: unable to validate against any security poli
 각 단계별 상세 설명과 에러 처리도 포함해주세요.
 ```
 
-### 🌐 최종 프로젝트: 클라우드 네이티브 플랫폼
+</details>
+
+<details>
+<summary><strong>🌐 최종 프로젝트: 클라우드 네이티브 플랫폼</strong></summary>
 
 **AI 활용 포인트**:
 1. **인프라 코드**: Terraform으로 AWS/Azure 리소스 관리
@@ -1110,11 +673,14 @@ AWS에서 완전한 클라우드 네이티브 플랫폼을 구축하는 Terrafor
 모듈화된 구조로 재사용 가능하게 작성해주세요.
 ```
 
+</details>
+
 ---
 
 ## 💡 프롬프트 엔지니어링 베스트 프랙티스
 
-### 🎯 효과적인 프롬프트 구조
+<details>
+<summary><strong>🎯 효과적인 프롬프트 구조</strong></summary>
 
 #### 1. CLEAR 프레임워크
 - **C**ontext: 상황과 배경 정보
@@ -1147,7 +713,10 @@ AWS에서 완전한 클라우드 네이티브 플랫폼을 구축하는 Terrafor
 - [보안, 성능, 비용 등]
 ```
 
-### 🔧 DevOps 특화 프롬프트 패턴
+</details>
+
+<details>
+<summary><strong>🔧 DevOps 특화 프롬프트 패턴</strong></summary>
 
 #### 1. 인프라 설계 패턴
 ```
@@ -1177,9 +746,7 @@ DevOps 전문가로서 다음 문제를 해결해주세요:
 - [환경 정보]
 
 디버깅 정보:
-```
 [로그, 설정 파일 등]
-```
 
 요청:
 1. 문제 원인 분석 (가능성 높은 순서)
@@ -1214,11 +781,14 @@ DevOps 전문가로서 다음 문제를 해결해주세요:
 베스트 프랙티스를 적용하여 프로덕션 레디 수준으로 작성해주세요.
 ```
 
+</details>
+
 ---
 
 ## 🚀 실전 적용 가이드
 
-### 📅 프로젝트 단계별 AI 활용 계획
+<details>
+<summary><strong>📅 프로젝트 단계별 AI 활용 계획</strong></summary>
 
 #### Week 3-4: Kubernetes 마스터리
 ```mermaid
@@ -1250,7 +820,10 @@ graph TB
     style E fill:#e3f2fd
 ```
 
-### 🎯 성공을 위한 핵심 팁
+</details>
+
+<details>
+<summary><strong>🎯 성공을 위한 핵심 팁</strong></summary>
 
 #### 1. AI와의 효과적인 협업
 - **명확한 소통**: 모호한 요청보다는 구체적이고 명확한 지시
@@ -1270,9 +843,14 @@ graph TB
 - **품질 관리**: AI 생성 코드의 리뷰와 품질 관리 프로세스 구축
 - **역할 분담**: AI가 잘하는 것과 사람이 잘하는 것의 적절한 분담
 
+</details>
+
 ---
 
 ## 🎯 AI 도구별 특화 활용
+
+<details>
+<summary><strong>📊 도구별 강점과 활용 시나리오</strong></summary>
 
 ### ChatGPT/Claude
 - **강점**: 복잡한 아키텍처 설계, 문제 해결 논리
@@ -1295,7 +873,10 @@ graph TB
 - **강점**: 프로젝트 전체 컨텍스트 이해
 - **활용**: 대규모 리팩토링, 일관성 유지
 
-### 🎯 도구별 최적 활용 시나리오
+</details>
+
+<details>
+<summary><strong>🎯 도구별 최적 활용 시나리오</strong></summary>
 
 #### 프로젝트 초기 단계
 - **ChatGPT/Claude**: 아키텍처 설계, 기술 스택 선정
@@ -1317,23 +898,26 @@ graph TB
 - **ChatGPT/Claude**: 복잡한 문제 분석, 해결 전략 수립
 - **모든 도구**: 지속적인 개선과 최적화
 
-#### 보안 및 컴플라이언스
-- **Amazon Q**: AWS 보안 베스트 프랙티스 검토, 컴플라이언스 체크
-- **ChatGPT/Claude**: 보안 정책 문서화, 위험 분석
-- **Cursor/Windsurf**: 보안 코드 패턴 적용
+</details>
 
 ---
 
 ## 📈 지속적 개선 방안
 
-### 🔄 주간 회고
+<details>
+<summary><strong>🔄 주간 회고</strong></summary>
+
 - AI 활용 경험 공유 (도구별 효과성 비교)
 - 효과적인 프롬프트 패턴 발견
 - Amazon Q Developer 신기능 테스트 결과
 - 문제점과 개선 방안 논의
 - 새로운 활용 아이디어 제안
 
-### 📚 지속적 학습
+</details>
+
+<details>
+<summary><strong>📚 지속적 학습</strong></summary>
+
 - 새로운 AI 도구 탐색 (Amazon Q 업데이트, Claude 신기능 등)
 - 프롬프트 엔지니어링 기법 학습
 - AWS 서비스 업데이트와 AI 통합 기능 학습
@@ -1341,25 +925,7 @@ graph TB
 - 커뮤니티 참여와 지식 공유
 - Amazon Q Developer 커뮤니티 참여
 
-### 🎯 성공을 위한 핵심 팁
-
-#### 1. AI와의 효과적인 협업
-- **명확한 소통**: 모호한 요청보다는 구체적이고 명확한 지시
-- **반복적 개선**: 한 번에 완벽한 결과를 기대하지 말고 점진적 개선
-- **컨텍스트 유지**: 대화의 맥락을 유지하여 일관된 결과 도출
-- **검증과 이해**: AI 결과를 맹신하지 말고 항상 검증하고 이해
-
-#### 2. 학습과 성장
-- **AI 의존도 조절**: AI는 도구일 뿐, 기본 지식과 이해가 중요
-- **새로운 기술 탐색**: AI를 통해 최신 기술과 베스트 프랙티스 학습
-- **창의적 활용**: 정해진 패턴을 벗어나 창의적인 활용 방법 모색
-- **지속적 개선**: 프롬프트 기법과 활용 방법의 지속적 개선
-
-#### 3. 팀 협업에서의 AI 활용
-- **지식 공유**: 효과적인 프롬프트와 활용법을 팀원과 공유
-- **표준화**: 팀 내 AI 활용 가이드라인과 베스트 프랙티스 수립
-- **품질 관리**: AI 생성 코드의 리뷰와 품질 관리 프로세스 구축
-- **역할 분담**: AI가 잘하는 것과 사람이 잘하는 것의 적절한 분담
+</details>
 
 ---
 
