@@ -43,13 +43,13 @@ data:
         
         location /health {
             access_log off;
-            return 200 "healthy\n";
+            return 200 "healthy";
             add_header Content-Type text/plain;
         }
         
         location /info {
             access_log off;
-            return 200 "Pod: $hostname\nTime: $(date)\n";
+            return 200 "Pod Info Available";
             add_header Content-Type text/plain;
         }
     }
@@ -113,7 +113,6 @@ data:
             updateInfo();
             setInterval(updateInfo, 1000);
             
-            // Health check endpoint test
             fetch('/health')
                 .then(response => response.text())
                 .then(data => {
@@ -271,6 +270,8 @@ kubectl apply -f /tmp/service-nodeport.yaml
 echo "✅ NodePort Service 생성 완료"
 echo ""
 
+
+
 # 7. 배포 상태 확인
 echo "7. 배포 상태 확인 중..."
 echo ""
@@ -323,16 +324,114 @@ echo "- Service: nginx-nodeport (NodePort:30080)"
 echo ""
 echo "접속 정보:"
 echo "- 클러스터 내부: http://nginx-service.lab-demo.svc.cluster.local"
-echo "- NodePort 접근: http://localhost:30080 (Kind 환경)"
-echo "- 포트 포워딩: kubectl port-forward svc/nginx-service 8080:80 -n lab-demo"
+echo "- 주 접근: http://localhost:8080 (Ingress Controller)"
+echo "- 대체 접근: http://localhost:30080 (NodePort)"
+echo "- 포트 포워딩: kubectl port-forward svc/nginx-service 8081:80 -n lab-demo (선택사항)"
 echo ""
 echo "확인 명령어:"
 echo "- kubectl get all -n lab-demo"
 echo "- kubectl logs -l app=nginx -n lab-demo"
 echo "- kubectl describe pod -l app=nginx -n lab-demo"
 echo ""
+# 10. NGINX Ingress Controller 설정
+echo "10. NGINX Ingress Controller 설정..."
+echo "프로덕션 환경과 유사한 Ingress Controller를 설정합니다..."
+echo ""
+
+# NGINX Ingress Controller 설치
+echo "=== NGINX Ingress Controller 설치 ==="
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+echo "✅ NGINX Ingress Controller 설치 완료"
+echo ""
+
+# Ingress Controller 준비 대기
+echo "=== Ingress Controller 준비 대기 ==="
+echo "Ingress Controller Pod가 준비될 때까지 대기합니다 (최대 120초)..."
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+if [ $? -eq 0 ]; then
+    echo "✅ Ingress Controller 준비 완료"
+else
+    echo "⚠️ Ingress Controller 준비 시간 초과, 계속 진행합니다"
+fi
+echo ""
+
+# Ingress 리소스 생성
+echo "=== Ingress 리소스 생성 ==="
+cat > /tmp/ingress.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: lab-demo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+EOF
+
+kubectl apply -f /tmp/ingress.yaml
+echo "✅ Ingress 리소스 생성 완료"
+echo ""
+
+# 11. Ingress 연결 테스트
+echo "11. Ingress 연결 테스트..."
+echo "Ingress Controller를 통한 접근을 테스트합니다..."
+echo ""
+
+# 연결 테스트 (최대 60초 대기)
+echo "=== HTTP 연결 테스트 (localhost:8080) ==="
+echo "Kind 포트 매핑: 컸테이너 80 -> 호스트 8080"
+for i in {1..60}; do
+    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+        echo "✅ Ingress 접근 성공! ($i초 소요)"
+        echo "🌍 브라우저에서 http://localhost:8080 접근 가능"
+        HEALTH_RESPONSE=$(curl -s http://localhost:8080/health)
+        echo "헬스체크 응답: $HEALTH_RESPONSE"
+        break
+    else
+        echo "⏳ 연결 대기 중... ($i/60초)"
+        sleep 1
+    fi
+done
+
+# 최종 연결 확인
+if ! curl -s http://localhost:8080/health > /dev/null 2>&1; then
+    echo "⚠️ Ingress 연결 대기 중... Ingress Controller가 준비되면 자동으로 접근 가능합니다."
+    echo "수동 확인: curl http://localhost:8080/health"
+    echo "대체 접근: kubectl port-forward svc/nginx-service 8081:80 -n lab-demo &"
+fi
+echo ""
+
 echo "다음 단계:"
+echo "- 브라우저에서 http://localhost:8080 접근 테스트"
+echo "- deploy_korean_update.sh 실행으로 한글 지원 업데이트"
 echo "- k8s_management_demo.sh 실행으로 관리 명령어 실습"
 echo "- test_k8s_environment.sh 실행으로 종합 테스트"
+echo ""
+echo "🌍 외부 접근 방법:"
+echo "- 주 접근: http://localhost:8080 (Ingress Controller)"
+echo "- 대체 접근: http://localhost:30080 (NodePort)"
+echo "- 포트 포워딩: kubectl port-forward svc/nginx-service 8081:80 -n lab-demo"
+echo ""
+echo "📝 특징:"
+echo "- 프로덕션 환경 유사: Ingress Controller 사용"
+echo "- HTTP 라우팅: 경로 기반 라우팅 지원"
+echo "- 무중단 서비스: 롤링 업데이트 중에도 연결 유지"
+echo "- 포트 포워딩 불필요: Ingress로 직접 접근"
 echo ""
 echo "🎉 기본 오브젝트 배포가 성공적으로 완료되었습니다!"

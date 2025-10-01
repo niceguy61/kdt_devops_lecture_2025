@@ -351,59 +351,224 @@ kubectl get all -n lab-demo
 kubectl get pods -n lab-demo -o wide
 ```
 
-### Step 3: K8s 기본 명령어와 관리 (10분)
+### Step 3: 외부 접근 설정 (5분)
 
 **🚀 자동화 스크립트 사용**
 ```bash
-# K8s 관리 명령어 실습
+# 외부 접근 설정 (포트 포워딩 + NodePort)
+./lab_scripts/lab1/setup_external_access.sh
+```
+
+**📋 스크립트 내용**: [setup_external_access.sh](./lab_scripts/lab1/setup_external_access.sh)
+
+**3-1. 수동 실행 (학습용)**
+```bash
+# 포트 포워딩 설정
+kubectl port-forward svc/nginx-service 8080:80 -n lab-demo &
+echo "포트 포워딩 시작: http://localhost:8080"
+
+# 연결 테스트
+curl http://localhost:8080/health
+curl http://localhost:8080
+
+# NodePort 서비스 확인
+kubectl get svc nginx-nodeport -n lab-demo
+echo "NodePort 접근: http://localhost:30080"
+```
+
+### Step 4: 한글 지원 롤링 업데이트 (10분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+# 한글 지원 페이지로 롤링 업데이트 + 모니터링
+./lab_scripts/lab1/deploy_korean_update.sh
+```
+
+**📋 스크립트 내용**: [deploy_korean_update.sh](./lab_scripts/lab1/deploy_korean_update.sh)
+
+**🚀 롤링 업데이트 모니터링**
+```bash
+# 롤링 업데이트 모니터링 (별도 터미널에서 실행 권장)
+./lab_scripts/lab1/monitor_rolling_update.sh
+```
+
+**📋 스크립트 내용**: [monitor_rolling_update.sh](./lab_scripts/lab1/monitor_rolling_update.sh)
+
+**4-1. 수동 실행 (학습용)**
+```bash
+# 한글 지원 ConfigMap 생성
+cat > configmap-korean.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: lab-demo
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        charset utf-8;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+        
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        location /info {
+            access_log off;
+            return 200 "서버 정보: Nginx on Kubernetes\n";
+            add_header Content-Type "text/plain; charset=utf-8";
+        }
+    }
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>🚀 Kubernetes 실습 환경</title>
+        <style>
+            body { font-family: 'Malgun Gothic', sans-serif; margin: 40px; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .info { background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .status { display: flex; gap: 20px; }
+            .metric { flex: 1; text-align: center; background: #fff; padding: 15px; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+EOF
+
+# ConfigMap 업데이트 적용
+kubectl apply -f configmap-korean.yaml
+
+# 롤링 업데이트 실행
+kubectl rollout restart deployment/nginx-deployment -n lab-demo
+
+# 롤링 업데이트 상태 모니터링
+kubectl rollout status deployment/nginx-deployment -n lab-demo
+```
+
+**4-2. 롤링 업데이트 모니터링 (학습용)**
+```bash
+# 실시간 Pod 상태 모니터링 (별도 터미널에서)
+watch kubectl get pods -n lab-demo
+
+# 롤아웃 상태 확인
+kubectl rollout status deployment/nginx-deployment -n lab-demo
+
+# 서비스 가용성 테스트 (30초간)
+for i in {1..30}; do
+  if curl -s http://localhost:8080/health > /dev/null; then
+    echo "✅ [$i/30] 서비스 정상 - $(date +%H:%M:%S)"
+  else
+    echo "❌ [$i/30] 서비스 오류 - $(date +%H:%M:%S)"
+  fi
+  sleep 1
+done
+
+# 업데이트 후 상태 확인
+kubectl get pods -n lab-demo -o wide
+kubectl rollout history deployment/nginx-deployment -n lab-demo
+```
+
+### Step 5: K8s 관리 명령어 실습 (15분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+# K8s 관리 명령어 종합 실습
 ./lab_scripts/lab1/k8s_management_demo.sh
 ```
 
 **📋 스크립트 내용**: [k8s_management_demo.sh](./lab_scripts/lab1/k8s_management_demo.sh)
 
-**⏱️ 예상 소요 시간**: 5-10분 (상호작용 포함)
-
-**3-1. 수동 실행 (학습용)**
+**5-1. 클러스터 상태 확인 (학습용)**
 ```bash
-# Pod 관리 명령어
-echo "=== Pod 관리 ==="
-# Pod 목록 확인
-kubectl get pods -n lab-demo
+# 클러스터 기본 정보 확인
+kubectl cluster-info
+kubectl get nodes -o wide
+kubectl get namespaces
+```
 
-# Pod 상세 정보
+**5-2. Pod 관리 명령어 실습 (학습용)**
+```bash
+# Pod 목록 및 상세 정보
+kubectl get pods -n lab-demo -o wide
 kubectl describe pod -l app=nginx -n lab-demo
 
 # Pod 로그 확인
 kubectl logs -l app=nginx -n lab-demo --tail=10
 
-# Pod 내부 접근
+# Pod 내부 명령어 실행
 POD_NAME=$(kubectl get pods -n lab-demo -l app=nginx -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $POD_NAME -n lab-demo -- /bin/sh -c "nginx -v && cat /etc/nginx/conf.d/default.conf"
+kubectl exec $POD_NAME -n lab-demo -- nginx -v
+kubectl exec $POD_NAME -n lab-demo -- cat /etc/nginx/conf.d/default.conf
+```
 
-# Service 관리 명령어
-echo "=== Service 관리 ==="
-# Service 확인
+**5-3. Service 및 네트워킹 관리 (학습용)**
+```bash
+# Service 정보 확인
 kubectl get svc -n lab-demo
-
-# Endpoints 확인
+kubectl describe svc nginx-service -n lab-demo
 kubectl get endpoints -n lab-demo
 
-# Service 상세 정보
-kubectl describe svc nginx-service -n lab-demo
+# 서비스 연결 테스트
+curl -s http://localhost:8080/health
+```
 
-# Deployment 관리 명령어
-echo "=== Deployment 관리 ==="
-# 스케일링
+**5-4. Deployment 관리 및 스케일링 (학습용)**
+```bash
+# Deployment 상태 확인
+kubectl get deployment nginx-deployment -n lab-demo -o wide
+kubectl describe deployment nginx-deployment -n lab-demo
+
+# 스케일링 실습
+echo "현재 Pod 수: $(kubectl get pods -n lab-demo -l app=nginx --no-headers | wc -l)"
 kubectl scale deployment nginx-deployment --replicas=5 -n lab-demo
-kubectl get pods -n lab-demo
+sleep 10
+kubectl get pods -n lab-demo -l app=nginx
 
-# 롤링 업데이트
-kubectl set image deployment/nginx-deployment nginx=nginx:1.22-alpine -n lab-demo
-kubectl rollout status deployment/nginx-deployment -n lab-demo
+# 원래 크기로 복원
+kubectl scale deployment nginx-deployment --replicas=3 -n lab-demo
+sleep 10
+kubectl get pods -n lab-demo -l app=nginx
+```
 
-# 롤백
-kubectl rollout undo deployment/nginx-deployment -n lab-demo
+**5-5. 롤아웃 관리 (학습용)**
+```bash
+# 배포 히스토리 및 상태 확인
+kubectl rollout history deployment/nginx-deployment -n lab-demo
 kubectl rollout status deployment/nginx-deployment -n lab-demo
+```
+
+**5-6. ConfigMap 및 리소스 관리 (학습용)**
+```bash
+# ConfigMap 확인
+kubectl get configmap -n lab-demo
+kubectl get configmap nginx-config -n lab-demo -o yaml
+
+# 리소스 사용량 확인 (Metrics Server 설치된 경우)
+kubectl top nodes 2>/dev/null || echo "Metrics Server 미설치"
+kubectl top pods -n lab-demo 2>/dev/null || echo "Pod 메트릭 수집 불가"
+```
+
+**5-7. 이벤트 및 디버깅 (학습용)**
+```bash
+# 클러스터 이벤트 확인
+kubectl get events -n lab-demo --sort-by='.lastTimestamp'
+
+# 네트워크 연결 테스트 (임시 Pod 사용)
+kubectl run test-pod --image=busybox:1.35 --rm -it --restart=Never -n lab-demo -- sh -c "
+echo '=== DNS 해상도 테스트 ==='
+nslookup nginx-service
+echo '=== HTTP 연결 테스트 ==='
+wget -qO- nginx-service/health
+"
 ```
 
 ---
@@ -441,8 +606,8 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 
 # 2. 애플리케이션 접근 테스트
-kubectl port-forward svc/nginx-service 8080:80 -n lab-demo &
 curl http://localhost:8080/health
+curl http://localhost:8080/info
 
 # 3. 스케일링 테스트
 kubectl scale deployment nginx-deployment --replicas=2 -n lab-demo
