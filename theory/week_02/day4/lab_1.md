@@ -114,9 +114,85 @@ fi
 
 ---
 
+## 📊 Step별 리소스 생성 현황
+
+## 실습 코드 요약
+```
+cd lab_scripts/lab1
+docker ps
+docker stop grafana cadvisor error-test-app prometheus optimized-app-cached
+docker rm grafana cadvisor error-test-app prometheus optimized-app-cached
+./setup_k8s_cluster.sh
+./deploy_basic_objects.sh
+./start_port_forward.sh
+./deploy_korean_update.sh
+./k8s_management_demo.sh
+./cleanup.sh
+```
+---
+
 ## 🔧 실습 단계 (40분)
 
 ### Step 1: Kubernetes 클러스터 구축 (15분)
+
+#### 📊 Step 1 완료 후 리소스 현황
+```mermaid
+graph TB
+    subgraph "Kind 클러스터 (k8s-lab-cluster)"
+        subgraph "Control Plane Node"
+            API[API Server<br/>:6443]
+            ETCD[etcd<br/>상태 저장]
+            SCHED[Scheduler<br/>Pod 배치]
+            CM[Controller Manager<br/>상태 관리]
+        end
+        
+        subgraph "Worker Node 1"
+            KUBELET1[kubelet<br/>노드 에이전트]
+            PROXY1[kube-proxy<br/>네트워크 프록시]
+            RUNTIME1[containerd<br/>컨테이너 런타임]
+        end
+        
+        subgraph "Worker Node 2"
+            KUBELET2[kubelet<br/>노드 에이전트]
+            PROXY2[kube-proxy<br/>네트워크 프록시]
+            RUNTIME2[containerd<br/>컨테이너 런타임]
+        end
+        
+        subgraph "System Pods"
+            DNS[CoreDNS<br/>서비스 디스커버리]
+            CNI[CNI Plugin<br/>네트워킹]
+        end
+    end
+    
+    subgraph "Port Mapping"
+        PORT80[Container Port 80<br/>→ Host Port 8080]
+        PORT443[Container Port 443<br/>→ Host Port 8443]
+    end
+    
+    API --> KUBELET1
+    API --> KUBELET2
+    SCHED --> KUBELET1
+    SCHED --> KUBELET2
+    KUBELET1 --> RUNTIME1
+    KUBELET2 --> RUNTIME2
+    
+    style API fill:#ff9800
+    style ETCD fill:#ff9800
+    style SCHED fill:#ff9800
+    style CM fill:#ff9800
+    style KUBELET1 fill:#e8f5e8
+    style KUBELET2 fill:#e8f5e8
+    style PROXY1 fill:#e8f5e8
+    style PROXY2 fill:#e8f5e8
+    style RUNTIME1 fill:#e8f5e8
+    style RUNTIME2 fill:#e8f5e8
+    style DNS fill:#fff3e0
+    style CNI fill:#fff3e0
+    style PORT80 fill:#f3e5f5
+    style PORT443 fill:#f3e5f5
+```
+
+**✅ Step 1 완료 상태**: Kind 클러스터 구축 완료, 포트 매핑 설정
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -185,6 +261,60 @@ kubectl config view --minify
 ```
 
 ### Step 2: 기본 K8s 오브젝트 배포 (15분)
+
+#### 📊 Step 2 완료 후 리소스 현황
+```mermaid
+graph TB
+    subgraph "lab-demo Namespace"
+        subgraph "Configuration"
+            CM[ConfigMap<br/>nginx-config<br/>설정 파일]
+        end
+        
+        subgraph "Workload"
+            DEPLOY[Deployment<br/>nginx-deployment<br/>replicas: 3]
+            POD1[Pod 1<br/>nginx-xxx-1<br/>Running]
+            POD2[Pod 2<br/>nginx-xxx-2<br/>Running]
+            POD3[Pod 3<br/>nginx-xxx-3<br/>Running]
+        end
+        
+        subgraph "Services"
+            SVC[ClusterIP Service<br/>nginx-service<br/>Port: 80]
+            NODEPORT[NodePort Service<br/>nginx-nodeport<br/>Port: 30080]
+        end
+        
+        subgraph "Ingress"
+            INGRESS_CTRL[NGINX Ingress Controller<br/>ingress-nginx namespace]
+            INGRESS[Ingress<br/>nginx-ingress<br/>HTTP routing]
+        end
+    end
+    
+    CM --> POD1
+    CM --> POD2
+    CM --> POD3
+    DEPLOY --> POD1
+    DEPLOY --> POD2
+    DEPLOY --> POD3
+    SVC --> POD1
+    SVC --> POD2
+    SVC --> POD3
+    NODEPORT --> POD1
+    NODEPORT --> POD2
+    NODEPORT --> POD3
+    INGRESS --> SVC
+    INGRESS_CTRL --> INGRESS
+    
+    style CM fill:#fff3e0
+    style DEPLOY fill:#e8f5e8
+    style POD1 fill:#e8f5e8
+    style POD2 fill:#e8f5e8
+    style POD3 fill:#e8f5e8
+    style SVC fill:#f3e5f5
+    style NODEPORT fill:#f3e5f5
+    style INGRESS_CTRL fill:#ffebee
+    style INGRESS fill:#ffebee
+```
+
+**✅ Step 2 완료 상태**: 기본 웹 서비스 배포 완료, Ingress Controller 설치 완료
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -353,6 +483,64 @@ kubectl get pods -n lab-demo -o wide
 
 ### Step 3: 외부 접근 설정 (5분)
 
+#### 📊 Step 3 완료 후 리소스 현황
+```mermaid
+graph LR
+    subgraph "External Access"
+        BROWSER[🌍 Browser<br/>localhost:8080]
+        BROWSER2[🌍 Browser<br/>localhost:30080]
+    end
+    
+    subgraph "Kind Cluster"
+        subgraph "Port Mapping"
+            PORT_MAP[Host Port 8080<br/>→ Container Port 80]
+        end
+        
+        subgraph "Ingress Layer"
+            INGRESS_CTRL[NGINX Ingress Controller<br/>Port 80]
+            INGRESS[Ingress Resource<br/>nginx-ingress]
+        end
+        
+        subgraph "Service Layer"
+            SVC[ClusterIP Service<br/>nginx-service:80]
+            NODEPORT[NodePort Service<br/>nginx-nodeport:30080]
+        end
+        
+        subgraph "Pod Layer"
+            POD1[Pod 1<br/>nginx:80]
+            POD2[Pod 2<br/>nginx:80]
+            POD3[Pod 3<br/>nginx:80]
+        end
+    end
+    
+    BROWSER --> PORT_MAP
+    PORT_MAP --> INGRESS_CTRL
+    INGRESS_CTRL --> INGRESS
+    INGRESS --> SVC
+    
+    BROWSER2 --> NODEPORT
+    
+    SVC --> POD1
+    SVC --> POD2
+    SVC --> POD3
+    NODEPORT --> POD1
+    NODEPORT --> POD2
+    NODEPORT --> POD3
+    
+    style BROWSER fill:#e3f2fd
+    style BROWSER2 fill:#e3f2fd
+    style PORT_MAP fill:#f3e5f5
+    style INGRESS_CTRL fill:#ffebee
+    style INGRESS fill:#ffebee
+    style SVC fill:#f3e5f5
+    style NODEPORT fill:#f3e5f5
+    style POD1 fill:#e8f5e8
+    style POD2 fill:#e8f5e8
+    style POD3 fill:#e8f5e8
+```
+
+**✅ Step 3 완료 상태**: 외부 접근 경로 활성화, 브라우저 접근 가능
+
 **🚀 자동화 스크립트 사용**
 ```bash
 # 외부 접근 설정 (포트 포워딩 + NodePort)
@@ -377,6 +565,63 @@ echo "NodePort 접근: http://localhost:30080"
 ```
 
 ### Step 4: 한글 지원 롤링 업데이트 (10분)
+
+#### 📊 Step 4 완료 후 리소스 현황
+```mermaid
+graph TB
+    subgraph "Rolling Update Process"
+        subgraph "Updated Configuration"
+            CM_NEW[ConfigMap<br/>nginx-config<br/>한글 지원 페이지]
+        end
+        
+        subgraph "Deployment Strategy"
+            DEPLOY[Deployment<br/>nginx-deployment<br/>Rolling Update]
+            RS_OLD[Old ReplicaSet<br/>nginx-xxx-old<br/>Scaling Down]
+            RS_NEW[New ReplicaSet<br/>nginx-xxx-new<br/>Scaling Up]
+        end
+        
+        subgraph "Pod Transition"
+            POD_OLD1[Old Pod 1<br/>영어 페이지<br/>Terminating]
+            POD_NEW1[New Pod 1<br/>한글 페이지<br/>Running]
+            POD_NEW2[New Pod 2<br/>한글 페이지<br/>Running]
+            POD_NEW3[New Pod 3<br/>한글 페이지<br/>Running]
+        end
+        
+        subgraph "Service Continuity"
+            SVC[Service<br/>nginx-service<br/>100% Available]
+            INGRESS[Ingress<br/>nginx-ingress<br/>Zero Downtime]
+        end
+    end
+    
+    CM_NEW --> POD_NEW1
+    CM_NEW --> POD_NEW2
+    CM_NEW --> POD_NEW3
+    
+    DEPLOY --> RS_OLD
+    DEPLOY --> RS_NEW
+    RS_OLD --> POD_OLD1
+    RS_NEW --> POD_NEW1
+    RS_NEW --> POD_NEW2
+    RS_NEW --> POD_NEW3
+    
+    SVC --> POD_NEW1
+    SVC --> POD_NEW2
+    SVC --> POD_NEW3
+    INGRESS --> SVC
+    
+    style CM_NEW fill:#fff3e0
+    style DEPLOY fill:#e8f5e8
+    style RS_OLD fill:#ffcdd2
+    style RS_NEW fill:#c8e6c9
+    style POD_OLD1 fill:#ffcdd2
+    style POD_NEW1 fill:#c8e6c9
+    style POD_NEW2 fill:#c8e6c9
+    style POD_NEW3 fill:#c8e6c9
+    style SVC fill:#f3e5f5
+    style INGRESS fill:#ffebee
+```
+
+**✅ Step 4 완료 상태**: 무중단 한글 업데이트 완료, 서비스 가용성 100% 유지
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -478,6 +723,77 @@ kubectl rollout history deployment/nginx-deployment -n lab-demo
 ```
 
 ### Step 5: K8s 관리 명령어 실습 (15분)
+
+#### 📊 Step 5 완료 후 리소스 현황
+```mermaid
+graph TB
+    subgraph "Management Operations"
+        subgraph "Resource Inspection"
+            GET[kubectl get<br/>리소스 목록 조회]
+            DESCRIBE[kubectl describe<br/>상세 정보 확인]
+            LOGS[kubectl logs<br/>로그 확인]
+        end
+        
+        subgraph "Pod Operations"
+            EXEC[kubectl exec<br/>컨테이너 내부 접근]
+            PORT_FWD[kubectl port-forward<br/>포트 포워딩]
+        end
+        
+        subgraph "Deployment Management"
+            SCALE[kubectl scale<br/>스케일링 조절]
+            ROLLOUT[kubectl rollout<br/>배포 관리]
+            HISTORY[kubectl rollout history<br/>배포 히스토리]
+        end
+        
+        subgraph "Network Testing"
+            DNS_TEST[Service Discovery<br/>nslookup nginx-service]
+            HTTP_TEST[HTTP Connectivity<br/>wget nginx-service/health]
+        end
+    end
+    
+    subgraph "Target Resources"
+        CLUSTER[Cluster<br/>k8s-lab-cluster]
+        NAMESPACE[Namespace<br/>lab-demo]
+        PODS[Pods<br/>nginx-deployment]
+        SERVICES[Services<br/>nginx-service]
+        INGRESS_RES[Ingress<br/>nginx-ingress]
+    end
+    
+    GET --> CLUSTER
+    GET --> NAMESPACE
+    GET --> PODS
+    GET --> SERVICES
+    
+    DESCRIBE --> PODS
+    DESCRIBE --> SERVICES
+    LOGS --> PODS
+    EXEC --> PODS
+    
+    SCALE --> PODS
+    ROLLOUT --> PODS
+    HISTORY --> PODS
+    
+    DNS_TEST --> SERVICES
+    HTTP_TEST --> SERVICES
+    
+    style GET fill:#e3f2fd
+    style DESCRIBE fill:#e3f2fd
+    style LOGS fill:#e3f2fd
+    style EXEC fill:#e1f5fe
+    style PORT_FWD fill:#e1f5fe
+    style SCALE fill:#e8f5e8
+    style ROLLOUT fill:#e8f5e8
+    style HISTORY fill:#e8f5e8
+    style DNS_TEST fill:#fff3e0
+    style HTTP_TEST fill:#fff3e0
+    style CLUSTER fill:#f3e5f5
+    style NAMESPACE fill:#f3e5f5
+    style PODS fill:#f3e5f5
+    style SERVICES fill:#f3e5f5
+    style INGRESS_RES fill:#f3e5f5
+```
+
+**✅ Step 5 완료 상태**: K8s 관리 명령어 실습 완료, 운영 관리 기술 습득
 
 **🚀 자동화 스크립트 사용**
 ```bash
