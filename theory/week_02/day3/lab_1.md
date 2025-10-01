@@ -65,6 +65,37 @@ graph TB
 
 ---
 
+## 실습 스크립트 요약
+```
+# Phase 1: 환경 준비
+cd lab_scripts
+./setup_lab_environment.sh
+cd security-optimization-lab
+
+# Phase 2: 보안 강화
+../security/security_scan.sh
+../security/build_secure_image.sh
+../security/deploy_secure_container.sh
+
+# Phase 3: 성능 최적화
+../optimization/optimize_image.sh
+../optimization/setup_caching.sh
+docker-compose -f docker-compose.optimized.yml up -d
+
+# Phase 4: 성능 테스트
+ab -n 2000 -c 20 http://localhost:3000/load-test | grep -E "(Requests per second|Time per request)"
+
+# Phase 5: 기본 모니터링
+cd ../
+monitoring/setup_monitoring.sh
+
+# Phase 6: 고급 대시보드 (추가)
+./monitoring/create_advanced_dashboard.sh
+
+# Phase 7: 통합 테스트 (추가)
+./monitoring/load_test_scenarios.sh
+```
+
 ## 📋 실습 준비 (10분)
 
 ### 🚀 자동화 스크립트 사용
