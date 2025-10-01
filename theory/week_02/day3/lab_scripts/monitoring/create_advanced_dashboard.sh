@@ -5,14 +5,29 @@
 
 echo "=== 고급 부하 테스트 대시보드 생성 ==="
 
-# 필요한 디렉토리 생성
+# 현재 디렉토리 확인 및 경로 설정
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DASHBOARD_DIR="$SCRIPT_DIR/grafana/provisioning/dashboards"
+MONITORING_DIR="$SCRIPT_DIR"
+
 echo "1. 디렉토리 구조 확인 및 생성..."
-mkdir -p monitoring/grafana/provisioning/dashboards
-mkdir -p monitoring
+echo "   - 스크립트 디렉토리: $SCRIPT_DIR"
+echo "   - 대시보드 디렉토리: $DASHBOARD_DIR"
+
+# 디렉토리 생성
+mkdir -p "$DASHBOARD_DIR"
+mkdir -p "$MONITORING_DIR"
+
+if [ ! -d "$DASHBOARD_DIR" ]; then
+    echo "   ❌ 대시보드 디렉토리 생성 실패: $DASHBOARD_DIR"
+    exit 1
+fi
+
+echo "   ✅ 디렉토리 준비 완료"
 
 echo "2. Grafana에 고급 대시보드 추가..."
 # Grafana에 고급 대시보드 추가
-cat > monitoring/grafana/provisioning/dashboards/load-test-dashboard.json << 'EOF'
+cat > "$DASHBOARD_DIR/load-test-dashboard.json" << 'EOF'
 {
   "dashboard": {
     "id": null,
@@ -180,8 +195,9 @@ EOF
 
 echo "✅ 고급 부하 테스트 대시보드 생성 완료"
 
+echo "3. 부하 테스트 시나리오 스크립트 생성..."
 # 부하 테스트 시나리오 스크립트 생성
-cat > monitoring/load_test_scenarios.sh << 'EOF'
+cat > "$MONITORING_DIR/load_test_scenarios.sh" << 'EOF'
 #!/bin/bash
 
 echo "=== Error Test App 부하 테스트 시나리오 ==="
@@ -234,7 +250,7 @@ echo "- Load Test & Performance Dashboard"
 echo "- Container Monitoring Dashboard"
 EOF
 
-chmod +x monitoring/load_test_scenarios.sh
+chmod +x "$MONITORING_DIR/load_test_scenarios.sh"
 
 echo ""
 echo "생성된 파일:"
