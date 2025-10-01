@@ -130,14 +130,14 @@ docker rm grafana cadvisor error-test-app prometheus optimized-app-cached 2>/dev
 # 기본 오브젝트 배포
 ./deploy_basic_objects.sh
 
-# 간단한 외부 접근 설정 (NodePort 중심)
-./setup_simple_access.sh
-
 # 무중단 업데이트
 ./deploy_korean_update.sh
 
 # K8s 관리 실습
 ./k8s_management_demo.sh
+
+# 전체 테스트
+./test_k8s_environment.sh
 
 # 환경 정리
 ./cleanup.sh
