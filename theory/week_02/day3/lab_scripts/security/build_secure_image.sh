@@ -69,9 +69,9 @@ USER appuser
 # 보안: 최소 권한 포트
 EXPOSE 3000
 
-# 보안: 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+# 보안: 헬스체크 추가 (IPv4 명시적 사용 + 에러 처리)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD node -e "const http = require('http'); const req = http.get({hostname: '127.0.0.1', port: 3000, path: '/health', family: 4}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.setTimeout(5000, () => { req.destroy(); process.exit(1); });"
 
 # 보안: dumb-init으로 PID 1 문제 해결
 ENTRYPOINT ["dumb-init", "--"]
@@ -176,8 +176,8 @@ echo "   - 헬스체크 기능 테스트 중..."
 docker stop secure-app-health-test > /dev/null 2>&1
 docker rm secure-app-health-test > /dev/null 2>&1
 
-# 새 테스트 컨테이너 실행
-docker run -d --name secure-app-health-test -p 3001:3000 secure-app:v1
+# 새 테스트 컨테이너 실행 (포트 매핑: 호스트 3000 → 컨테이너 3000)
+docker run -d --name secure-app-health-test -p 3000:3000 secure-app:v1
 
 # 애플리케이션 시작 대기
 echo "   - 애플리케이션 시작 대기 중..."
@@ -191,9 +191,9 @@ echo "   - 초기 헬스체크 상태: $HEALTH_STATUS"
 echo "   - 애플리케이션 시작 대기 중..."
 sleep 5
 
-# 헬스체크 재시도 로직
+# 헬스체크 재시도 로직 (호스트 3000번 포트 사용)
 for i in {1..5}; do
-    if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+    if curl -s http://localhost:3000/health > /dev/null 2>&1; then
         echo "   ✅ 애플리케이션 헬스체크 성공 (시도 $i/5)"
         HEALTH_SUCCESS="true"
         break
