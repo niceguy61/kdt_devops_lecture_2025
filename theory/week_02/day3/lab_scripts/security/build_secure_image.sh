@@ -171,26 +171,55 @@ echo "6. 헬스체크 기능 테스트..."
 
 # 헬스체크 기능 테스트
 echo "   - 헬스체크 기능 테스트 중..."
+
+# 기존 테스트 컨테이너 정리
+docker stop secure-app-health-test > /dev/null 2>&1
+docker rm secure-app-health-test > /dev/null 2>&1
+
+# 새 테스트 컨테이너 실행
 docker run -d --name secure-app-health-test -p 3001:3000 secure-app:v1
 
 # 애플리케이션 시작 대기
-sleep 10
+echo "   - 애플리케이션 시작 대기 중..."
+sleep 15
 
-# 헬스체크 상태 확인
-HEALTH_STATUS=$(docker inspect secure-app-health-test --format='{{.State.Health.Status}}' 2>/dev/null)
-echo "   - 헬스체크 상태: $HEALTH_STATUS"
+# 초기 헬스체크 상태 확인 (아직 준비 중일 수 있음)
+HEALTH_STATUS=$(docker inspect secure-app-health-test --format='{{.State.Health.Status}}' 2>/dev/null || echo "starting")
+echo "   - 초기 헬스체크 상태: $HEALTH_STATUS"
 
-# 수동 헬스체크
-if curl -s http://localhost:3001/health > /dev/null; then
-    echo "   ✅ 애플리케이션 헬스체크 성공"
-else
-    echo "   ❌ 애플리케이션 헬스체크 실패"
+# 수동 헬스체크 (포트 수정)
+echo "   - 애플리케이션 시작 대기 중..."
+sleep 5
+
+# 헬스체크 재시도 로직
+for i in {1..5}; do
+    if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+        echo "   ✅ 애플리케이션 헬스체크 성공 (시도 $i/5)"
+        HEALTH_SUCCESS="true"
+        break
+    else
+        echo "   ⏳ 헬스체크 시도 $i/5 실패, 5초 후 재시도..."
+        sleep 5
+    fi
+done
+
+if [ "$HEALTH_SUCCESS" != "true" ]; then
+    echo "   ❌ 애플리케이션 헬스체크 최종 실패"
+    echo "   - 컨테이너 로그 확인:"
+    docker logs secure-app-health-test --tail 10 | sed 's/^/     /'
 fi
+
+# Docker 헬스체크 상태 확인 (시간 대기)
+echo "   - Docker 헬스체크 상태 확인 중..."
+sleep 10
+HEALTH_STATUS=$(docker inspect secure-app-health-test --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+echo "   - Docker 헬스체크 상태: $HEALTH_STATUS"
 
 # 헬스체크 로그 확인
 HEALTH_LOG=$(docker inspect secure-app-health-test --format='{{range .State.Health.Log}}{{.Output}}{{end}}' 2>/dev/null)
 if [ -n "$HEALTH_LOG" ]; then
-    echo "   - 헬스체크 로그: $HEALTH_LOG"
+    echo "   - 헬스체크 로그:"
+    echo "$HEALTH_LOG" | sed 's/^/     /'
 fi
 
 # 테스트 컨테이너 정리
