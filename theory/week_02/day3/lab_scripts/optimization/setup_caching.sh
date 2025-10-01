@@ -55,7 +55,7 @@ services:
       - "6379:6379"
     command: >
       redis-server 
-      --maxmemory 64mb 
+      --maxmemory 128mb 
       --maxmemory-policy allkeys-lru
       --save 60 1000
       --appendonly yes
@@ -65,11 +65,11 @@ services:
     deploy:
       resources:
         limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
           memory: 128M
           cpus: '0.25'
-        reservations:
-          memory: 64M
-          cpus: '0.1'
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

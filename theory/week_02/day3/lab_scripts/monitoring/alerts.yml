@@ -1,0 +1,74 @@
+groups:
+- name: app_alerts
+  rules:
+  - alert: HighCPUUsage
+    expr: rate(container_cpu_usage_seconds_total{name=~".*optimized-app.*"}[5m]) * 100 > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage detected"
+      description: "CPU usage is above 80% for more than 2 minutes"
+
+  - alert: HighMemoryUsage
+    expr: (container_memory_usage_bytes{name=~".*optimized-app.*"} / container_spec_memory_limit_bytes{name=~".*optimized-app.*"}) * 100 > 90
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High memory usage detected"
+      description: "Memory usage is above 90%"
+
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is above 5%"
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High response time detected"
+      description: "95th percentile response time is above 500ms"
+
+  - alert: ContainerDown
+    expr: up{job="app"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Application container is down"
+      description: "The application container has been down for more than 1 minute"
+
+  - alert: HighApplicationErrors
+    expr: rate(application_errors_total[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High application error rate"
+      description: "Application error rate is above 0.1 errors/sec"
+
+  - alert: DatabaseConnectionsHigh
+    expr: database_connections_active > 40
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High database connections"
+      description: "Database connections are above 40"
+
+  - alert: MessageQueueBacklog
+    expr: message_queue_size > 50
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Message queue backlog"
+      description: "Message queue size is above 50 messages"
