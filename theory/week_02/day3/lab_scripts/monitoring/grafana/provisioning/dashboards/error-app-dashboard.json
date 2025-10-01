@@ -2,7 +2,7 @@
   "dashboard": {
     "id": null,
     "title": "Error Test App Monitoring",
-    "tags": ["error-app", "monitoring", "alerts"],
+    "tags": ["error-app", "monitoring"],
     "timezone": "browser",
     "panels": [
       {
@@ -15,13 +15,7 @@
             "legendFormat": "{{error_type}}"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "unit": "reqps"
-          }
-        }
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 0}
       },
       {
         "id": 2,
@@ -33,7 +27,7 @@
             "legendFormat": "{{status}}"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 0}
       },
       {
         "id": 3,
@@ -45,28 +39,7 @@
             "legendFormat": "Active Connections"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-        "yAxes": [
-          {
-            "min": 0,
-            "max": 50
-          }
-        ],
-        "alert": {
-          "conditions": [
-            {
-              "query": {"params": ["A", "5m", "now"]},
-              "reducer": {"params": [], "type": "last"},
-              "evaluator": {"params": [40], "type": "gt"}
-            }
-          ],
-          "executionErrorState": "alerting",
-          "for": "1m",
-          "frequency": "10s",
-          "handler": 1,
-          "name": "High DB Connections",
-          "noDataState": "no_data"
-        }
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 6}
       },
       {
         "id": 4,
@@ -78,92 +51,120 @@
             "legendFormat": "Queue Size"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-        "yAxes": [
-          {
-            "min": 0,
-            "max": 100
-          }
-        ]
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 6}
       },
       {
         "id": 5,
-        "title": "Error Rate Over Time",
-        "type": "graph",
+        "title": "Response Time Distribution",
+        "type": "heatmap",
         "targets": [
           {
-            "expr": "rate(application_errors_total[5m])",
-            "legendFormat": "{{error_type}} - {{endpoint}}"
+            "expr": "rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m])",
+            "legendFormat": "{{le}}"
           }
         ],
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
-        "yAxes": [
-          {
-            "min": 0,
-            "unit": "reqps"
-          }
-        ]
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
       },
       {
         "id": 6,
-        "title": "Response Time Distribution",
+        "title": "Error Rate by Type",
         "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(application_errors_total{job=\"error-app\"}[5m])",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      },
+      {
+        "id": 7,
+        "title": "Memory Usage (Process)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"error-app\"}",
+            "legendFormat": "Resident Memory"
+          },
+          {
+            "expr": "process_virtual_memory_bytes{job=\"error-app\"}",
+            "legendFormat": "Virtual Memory"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}
+      },
+      {
+        "id": 8,
+        "title": "CPU Usage (Process)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"error-app\"}[5m]) * 100",
+            "legendFormat": "CPU %"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 20}
+      },
+      {
+        "id": 9,
+        "title": "Request Volume",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"error-app\"}[5m]))",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 26}
+      },
+      {
+        "id": 10,
+        "title": "Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(sum(rate(http_requests_total{job=\"error-app\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"error-app\"}[5m]))) * 100",
+            "legendFormat": "Success %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 26}
+      },
+      {
+        "id": 11,
+        "title": "Average Response Time",
+        "type": "stat",
         "targets": [
           {
             "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m]))",
             "legendFormat": "50th percentile"
-          },
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 26}
+      },
+      {
+        "id": 12,
+        "title": "95th Percentile Response Time",
+        "type": "stat",
+        "targets": [
           {
             "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m]))",
             "legendFormat": "95th percentile"
-          },
-          {
-            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"error-app\"}[5m]))",
-            "legendFormat": "99th percentile"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
-        "yAxes": [
-          {
-            "min": 0,
-            "unit": "s"
-          }
-        ]
-      },
-      {
-        "id": 7,
-        "title": "Request Rate by Endpoint",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "sum by (route) (rate(http_requests_total{job=\"error-app\"}[5m]))",
-            "legendFormat": "{{route}}"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
-        "yAxes": [
-          {
-            "min": 0,
-            "unit": "reqps"
-          }
-        ]
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 26}
       }
     ],
     "time": {"from": "now-30m", "to": "now"},
     "refresh": "5s",
-    "templating": {
-      "list": []
-    },
     "annotations": {
       "list": [
         {
-          "name": "Alerts",
+          "name": "Load Tests",
           "datasource": "Prometheus",
           "enable": true,
-          "expr": "ALERTS{alertname=~\".*Error.*|.*Database.*|.*Queue.*\"}",
+          "expr": "changes(http_requests_total{job=\"error-app\"}[1m]) > 100",
           "iconColor": "red",
-          "titleFormat": "{{alertname}}",
-          "textFormat": "{{instance}}: {{description}}"
+          "titleFormat": "High Load Detected"
         }
       ]
     }

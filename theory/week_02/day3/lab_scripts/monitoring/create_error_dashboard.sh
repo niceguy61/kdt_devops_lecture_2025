@@ -27,9 +27,8 @@ echo "2. Error Test App 전용 대시보드 생성..."
 # Error Test App 전용 대시보드 생성
 cat > "$DASHBOARD_DIR/error-app-dashboard.json" << 'EOF'
 {
-  "dashboard": {
-    "id": null,
-    "title": "Error Test App Monitoring",
+  "id": null,
+  "title": "Error Test App Monitoring",
     "tags": ["error-app", "monitoring", "alerts"],
     "timezone": "browser",
     "panels": [
@@ -195,7 +194,6 @@ cat > "$DASHBOARD_DIR/error-app-dashboard.json" << 'EOF'
         }
       ]
     }
-  }
 }
 EOF
 

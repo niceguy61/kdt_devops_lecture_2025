@@ -29,9 +29,8 @@ echo "2. Grafana에 고급 대시보드 추가..."
 # Grafana에 고급 대시보드 추가
 cat > "$DASHBOARD_DIR/load-test-dashboard.json" << 'EOF'
 {
-  "dashboard": {
-    "id": null,
-    "title": "Load Test & Performance Dashboard",
+  "id": null,
+  "title": "Load Test & Performance Dashboard",
     "tags": ["load-test", "performance", "error-app"],
     "timezone": "browser",
     "panels": [
@@ -189,13 +188,57 @@ cat > "$DASHBOARD_DIR/load-test-dashboard.json" << 'EOF'
         }
       ]
     }
-  }
 }
 EOF
 
-echo "✅ 고급 부하 테스트 대시보드 생성 완료"
+echo "✅ 고급 부하 테스트 대시보드 생성 완룜"
 
-echo "3. 부하 테스트 시나리오 스크립트 생성..."
+echo "3. Grafana 대시보드 프로비저닝 설정 확인..."
+# dashboard.yml 파일 확인 및 생성
+if [ ! -f "$DASHBOARD_DIR/dashboard.yml" ]; then
+    echo "   - dashboard.yml 파일 생성 중..."
+    cat > "$DASHBOARD_DIR/dashboard.yml" << 'EOF'
+apiVersion: 1
+
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+EOF
+else
+    echo "   - dashboard.yml 파일 이미 존재"
+fi
+
+echo "4. Grafana 컨테이너 재시작..."
+# Grafana 컨테이너 재시작으로 대시보드 로드
+if docker ps | grep -q grafana; then
+    echo "   - Grafana 컨테이너 재시작 중..."
+    docker restart grafana > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "   ✅ Grafana 재시작 성공"
+    else
+        echo "   ⚠️ Grafana 재시작 실패 - 수동으로 재시작해주세요"
+    fi
+else
+    echo "   ⚠️ Grafana 컨테이너를 찾을 수 없습니다"
+    echo "   모니터링 스택을 먼저 시작해주세요"
+fi
+
+echo "5. 대시보드 파일 검증..."
+if [ -f "$DASHBOARD_DIR/load-test-dashboard.json" ]; then
+    FILE_SIZE=$(stat -f%z "$DASHBOARD_DIR/load-test-dashboard.json" 2>/dev/null || stat -c%s "$DASHBOARD_DIR/load-test-dashboard.json" 2>/dev/null)
+    echo "   ✅ 대시보드 파일 생성 완료: ${FILE_SIZE} bytes"
+else
+    echo "   ❌ 대시보드 파일 생성 실패"
+fi
+
+echo "6. 부하 테스트 시나리오 스크립트 생성..."
 # 부하 테스트 시나리오 스크립트 생성
 cat > "$MONITORING_DIR/load_test_scenarios.sh" << 'EOF'
 #!/bin/bash
@@ -253,19 +296,35 @@ EOF
 chmod +x "$MONITORING_DIR/load_test_scenarios.sh"
 
 echo ""
-echo "생성된 파일:"
-echo "- monitoring/grafana/provisioning/dashboards/load-test-dashboard.json"
-echo "- monitoring/load_test_scenarios.sh"
+echo "=== 고급 부하 테스트 대시보드 생성 완료 ==="
 echo ""
-echo "사용법:"
-echo "1. 모니터링 스택 재시작: cd monitoring && docker-compose -f docker-compose.monitoring.yml restart grafana"
-echo "2. 부하 테스트 실행: ./monitoring/load_test_scenarios.sh"
-echo "3. Grafana에서 'Load Test & Performance Dashboard' 확인"
+echo "생성된 파일:"
+echo "- $DASHBOARD_DIR/load-test-dashboard.json"
+echo "- $MONITORING_DIR/load_test_scenarios.sh"
+echo "- $DASHBOARD_DIR/dashboard.yml (프로비저닝 설정)"
+echo ""
+echo "확인 방법:"
+echo "1. Grafana 접속: http://localhost:3001 (admin/admin)"
+echo "2. 왼쪽 메뉴에서 'Dashboards' 클릭"
+echo "3. 'Load Test & Performance Dashboard' 찾기"
+echo ""
+echo "대시보드가 보이지 않는 경우:"
+echo "1. Grafana 로그 확인: docker logs grafana"
+echo "2. 수동 재시작: docker restart grafana"
+echo "3. 파일 권한 확인: ls -la $DASHBOARD_DIR/"
+echo ""
+echo "테스트 방법:"
+echo "1. 부하 테스트 실행: ./load_test_scenarios.sh"
+echo "2. 에러 테스트 실행: ./test_error_scenarios.sh"
+echo "3. Grafana에서 실시간 메트릭 확인"
+echo ""
 echo ""
 echo "대시보드 특징:"
-echo "- 실시간 요청률 모니터링"
-echo "- 응답시간 백분위수 추적"
-echo "- 엔드포인트별 에러율 분석"
-echo "- 시스템 리소스 사용량 모니터링"
-echo "- HTTP 상태코드 분포 시각화"
-echo "- 동시 사용자 수 추정"
+echo "- ✅ 실시간 요청률 모니터링"
+echo "- ✅ 응답시간 백분위수 추적 (P50, P95, P99)"
+echo "- ✅ 엔드포인트별 에러율 분석"
+echo "- ✅ 시스템 리소스 사용량 모니터링"
+echo "- ✅ HTTP 상태코드 분포 시각화"
+echo "- ✅ 동시 사용자 수 추정"
+echo "- ✅ 데이터베이스 연결 수 모니터링"
+echo "- ✅ 메시지 큐 크기 추적"

@@ -1,7 +1,6 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "Load Test & Performance Dashboard",
+  "id": null,
+  "title": "Load Test & Performance Dashboard",
     "tags": ["load-test", "performance", "error-app"],
     "timezone": "browser",
     "panels": [
@@ -159,5 +158,4 @@
         }
       ]
     }
-  }
 }
