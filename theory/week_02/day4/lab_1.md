@@ -116,17 +116,30 @@ fi
 
 ## 📊 Step별 리소스 생성 현황
 
-## 실습 코드 요약
+## 실습 코드 요약 (실무 기준)
 ```
 cd lab_scripts/lab1
+# 기존 Docker 컨테이너 정리
 docker ps
-docker stop grafana cadvisor error-test-app prometheus optimized-app-cached
-docker rm grafana cadvisor error-test-app prometheus optimized-app-cached
+docker stop grafana cadvisor error-test-app prometheus optimized-app-cached 2>/dev/null || true
+docker rm grafana cadvisor error-test-app prometheus optimized-app-cached 2>/dev/null || true
+
+# K8s 클러스터 구축
 ./setup_k8s_cluster.sh
+
+# 기본 오브젝트 배포
 ./deploy_basic_objects.sh
-./start_port_forward.sh
+
+# 간단한 외부 접근 설정 (NodePort 중심)
+./setup_simple_access.sh
+
+# 무중단 업데이트
 ./deploy_korean_update.sh
+
+# K8s 관리 실습
 ./k8s_management_demo.sh
+
+# 환경 정리
 ./cleanup.sh
 ```
 ---
@@ -483,85 +496,76 @@ kubectl get pods -n lab-demo -o wide
 
 ### Step 3: 외부 접근 설정 (5분)
 
-#### 📊 Step 3 완료 후 리소스 현황
+#### 📊 Step 3 완료 후 리소스 현황 (실무 기준)
 ```mermaid
 graph LR
-    subgraph "External Access"
-        BROWSER[🌍 Browser<br/>localhost:8080]
-        BROWSER2[🌍 Browser<br/>localhost:30080]
+    subgraph "External Access (Production)"
+        BROWSER[🌍 Browser<br/>localhost:30080<br/>NodePort 직접 접근]
     end
     
     subgraph "Kind Cluster"
-        subgraph "Port Mapping"
-            PORT_MAP[Host Port 8080<br/>→ Container Port 80]
-        end
-        
-        subgraph "Ingress Layer"
-            INGRESS_CTRL[NGINX Ingress Controller<br/>Port 80]
-            INGRESS[Ingress Resource<br/>nginx-ingress]
-        end
-        
-        subgraph "Service Layer"
-            SVC[ClusterIP Service<br/>nginx-service:80]
-            NODEPORT[NodePort Service<br/>nginx-nodeport:30080]
+        subgraph "Service Layer (실무 표준)"
+            SVC[ClusterIP Service<br/>nginx-service:80<br/>내부 통신]
+            NODEPORT[NodePort Service<br/>nginx-nodeport:30080<br/>외부 접근]
         end
         
         subgraph "Pod Layer"
-            POD1[Pod 1<br/>nginx:80]
-            POD2[Pod 2<br/>nginx:80]
-            POD3[Pod 3<br/>nginx:80]
+            POD1[Pod 1<br/>nginx:80<br/>Ready]
+            POD2[Pod 2<br/>nginx:80<br/>Ready]
+            POD3[Pod 3<br/>nginx:80<br/>Ready]
+        end
+        
+        subgraph "Network Features"
+            LB[Load Balancing<br/>자동 분산]
+            HC[Health Check<br/>자동 감지]
         end
     end
     
-    BROWSER --> PORT_MAP
-    PORT_MAP --> INGRESS_CTRL
-    INGRESS_CTRL --> INGRESS
-    INGRESS --> SVC
-    
-    BROWSER2 --> NODEPORT
+    BROWSER --> NODEPORT
+    NODEPORT --> LB
+    LB --> POD1
+    LB --> POD2
+    LB --> POD3
     
     SVC --> POD1
     SVC --> POD2
     SVC --> POD3
-    NODEPORT --> POD1
-    NODEPORT --> POD2
-    NODEPORT --> POD3
     
-    style BROWSER fill:#e3f2fd
-    style BROWSER2 fill:#e3f2fd
-    style PORT_MAP fill:#f3e5f5
-    style INGRESS_CTRL fill:#ffebee
-    style INGRESS fill:#ffebee
-    style SVC fill:#f3e5f5
-    style NODEPORT fill:#f3e5f5
+    HC --> POD1
+    HC --> POD2
+    HC --> POD3
+    
+    style BROWSER fill:#4caf50
+    style SVC fill:#e3f2fd
+    style NODEPORT fill:#ff9800
     style POD1 fill:#e8f5e8
     style POD2 fill:#e8f5e8
     style POD3 fill:#e8f5e8
+    style LB fill:#fff3e0
+    style HC fill:#f3e5f5
 ```
 
-**✅ Step 3 완료 상태**: 외부 접근 경로 활성화, 브라우저 접근 가능
+**✅ Step 3 완료 상태**: 실무급 안정적 외부 접근 구성 완료 (포트 포워딩 불필요)
 
 **🚀 자동화 스크립트 사용**
 ```bash
-# 외부 접근 설정 (포트 포워딩 + NodePort)
-./lab_scripts/lab1/setup_external_access.sh
+# NodePort로 간단한 외부 접근
+./lab_scripts/lab1/setup_simple_access.sh
 ```
 
-**📋 스크립트 내용**: [setup_external_access.sh](./lab_scripts/lab1/setup_external_access.sh)
+**📋 스크립트 내용**: [setup_simple_access.sh](./lab_scripts/lab1/setup_simple_access.sh)
 
-**3-1. 수동 실행 (학습용)**
+**3-1. 실무 방식: NodePort 직접 접근**
 ```bash
-# 포트 포워딩 설정
-kubectl port-forward svc/nginx-service 8080:80 -n lab-demo &
-echo "포트 포워딩 시작: http://localhost:8080"
-
-# 연결 테스트
-curl http://localhost:8080/health
-curl http://localhost:8080
-
-# NodePort 서비스 확인
+# NodePort 서비스 상태 확인
 kubectl get svc nginx-nodeport -n lab-demo
-echo "NodePort 접근: http://localhost:30080"
+
+# 직접 접근 테스트 (포트 포워딩 불필요!)
+curl http://localhost:30080/health
+curl http://localhost:30080
+
+echo "✅ NodePort로 안정적 접근: http://localhost:30080"
+echo "✅ 포트 포워딩 없이도 접근 가능!"
 ```
 
 ### Step 4: 한글 지원 롤링 업데이트 (10분)
@@ -915,22 +919,30 @@ wget -qO- nginx-service/health
 
 **⏱️ 예상 소요 시간**: 3-5분 (20+ 개 테스트 자동 실행)
 
-**수동 테스트 (핵심만)**
+**수동 테스트 (실무 기준)**
 ```bash
 # 1. 클러스터 상태 확인
 kubectl get nodes
 kubectl get pods --all-namespaces
 
-# 2. 애플리케이션 접근 테스트
-curl http://localhost:8080/health
-curl http://localhost:8080/info
+# 2. 실무급 접근 테스트 (포트 포워딩 불필요)
+curl http://localhost:30080/health  # NodePort 직접 접근
+curl http://localhost:30080/info
 
-# 3. 스케일링 테스트
-kubectl scale deployment nginx-deployment --replicas=2 -n lab-demo
+# 3. 무중단 스케일링 테스트
+echo "현재 접근 가능 상태에서 스케일링 테스트"
+kubectl scale deployment nginx-deployment --replicas=5 -n lab-demo
+# 스케일링 중에도 서비스 계속 접근 가능
+curl http://localhost:30080/health
 kubectl get pods -n lab-demo
 
 # 4. 서비스 디스커버리 테스트
 kubectl run test-pod --image=busybox:1.35 --rm -it -n lab-demo -- nslookup nginx-service
+
+# 5. 실무 환경 검증
+echo "=== 실무 환경 검증 ==="
+echo "NodePort 서비스: $(kubectl get svc nginx-nodeport -n lab-demo -o jsonpath='{.spec.ports[0].nodePort}')"
+echo "서비스 안정성: 포트 포워딩 없이 안정적 접근 가능"
 ```
 
 ---

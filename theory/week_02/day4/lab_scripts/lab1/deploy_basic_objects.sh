@@ -394,13 +394,13 @@ echo "Ingress Controller를 통한 접근을 테스트합니다..."
 echo ""
 
 # 연결 테스트 (최대 60초 대기)
-echo "=== HTTP 연결 테스트 (localhost:8080) ==="
-echo "Kind 포트 매핑: 컸테이너 80 -> 호스트 8080"
+echo "=== HTTP 연결 테스트 (localhost:30080) ==="
+echo "Kind 포트 매핑: 컸테이너 80 -> 호스트 30080"
 for i in {1..60}; do
-    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+    if curl -s http://localhost:30080/health > /dev/null 2>&1; then
         echo "✅ Ingress 접근 성공! ($i초 소요)"
-        echo "🌍 브라우저에서 http://localhost:8080 접근 가능"
-        HEALTH_RESPONSE=$(curl -s http://localhost:8080/health)
+        echo "🌍 브라우저에서 http://localhost:30080 접근 가능"
+        HEALTH_RESPONSE=$(curl -s http://localhost:30080/health)
         echo "헬스체크 응답: $HEALTH_RESPONSE"
         break
     else

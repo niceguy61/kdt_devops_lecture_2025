@@ -13,7 +13,7 @@ sleep 2
 
 # 백그라운드에서 포트 포워딩 시작
 echo "백그라운드에서 포트 포워딩 시작..."
-kubectl port-forward svc/nginx-service 8080:80 -n lab-demo > /dev/null 2>&1 &
+kubectl port-forward svc/nginx-nodeport 30080:80 -n lab-demo > /dev/null 2>&1 &
 PID=$!
 
 echo "✅ 포트 포워딩 시작됨 (PID: $PID)"
@@ -24,9 +24,9 @@ echo $PID > /tmp/port-forward.pid
 echo ""
 echo "연결 테스트 중..."
 for i in {1..10}; do
-    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+    if curl -s http://localhost:30080/health > /dev/null 2>&1; then
         echo "✅ 포트 포워딩 연결 성공! ($i초 소요)"
-        echo "🌐 브라우저에서 http://localhost:8080 접근 가능"
+        echo "🌐 브라우저에서 http://localhost:30080 접근 가능"
         break
     else
         echo "⏳ 연결 대기 중... ($i/10초)"
@@ -36,11 +36,11 @@ done
 
 # 최종 상태 확인
 echo ""
-if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+if curl -s http://localhost:30080/health > /dev/null 2>&1; then
     echo "🎉 포트 포워딩 설정 완료!"
     echo ""
     echo "🔧 관리 명령어:"
-    echo "- 상태 확인: curl http://localhost:8080/health"
+    echo "- 상태 확인: curl http://localhost:30080/health"
     echo "- 프로세스 확인: ps aux | grep kubectl"
     echo "- 중지: kill $PID"
     echo "- 또는: kill \$(cat /tmp/port-forward.pid)"
