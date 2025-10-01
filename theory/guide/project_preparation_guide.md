@@ -66,9 +66,7 @@
 - 환경: EKS 클러스터, RDS MySQL
 
 디버깅 정보:
-```yaml
 [kubectl describe pod 결과 붙여넣기]
-```
 
 요청:
 1. 문제 원인 분석
@@ -84,9 +82,7 @@
 역할: 시니어 DevOps 엔지니어
 
 코드 리뷰 대상:
-```yaml
 [Kubernetes 매니페스트 또는 Terraform 코드]
-```
 
 리뷰 관점:
 - 보안 베스트 프랙티스
