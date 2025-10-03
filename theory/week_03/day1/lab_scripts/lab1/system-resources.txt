@@ -1,0 +1,26 @@
+NAME                                                    READY   STATUS              RESTARTS   AGE
+pod/coredns-5d78c9869d-f6qvq                            1/1     Running             0          7s
+pod/coredns-5d78c9869d-nt47d                            0/1     Running             0          7s
+pod/etcd-lab-cluster-control-plane                      1/1     Running             0          23s
+pod/kindnet-24bgg                                       0/1     ContainerCreating   0          3s
+pod/kindnet-2tkf7                                       1/1     Running             0          8s
+pod/kindnet-pb8dl                                       1/1     Running             0          5s
+pod/kube-apiserver-lab-cluster-control-plane            1/1     Running             0          24s
+pod/kube-controller-manager-lab-cluster-control-plane   1/1     Running             0          23s
+pod/kube-proxy-66wfq                                    1/1     Running             0          8s
+pod/kube-proxy-lc44j                                    1/1     Running             0          5s
+pod/kube-proxy-spw78                                    0/1     ContainerCreating   0          3s
+pod/kube-scheduler-lab-cluster-control-plane            1/1     Running             0          21s
+
+NAME               TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+service/kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   21s
+
+NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/kindnet      3         3         2       3            2           kubernetes.io/os=linux   20s
+daemonset.apps/kube-proxy   3         3         2       3            2           kubernetes.io/os=linux   21s
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/coredns   1/2     2            1           21s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/coredns-5d78c9869d   2         2         1       8s

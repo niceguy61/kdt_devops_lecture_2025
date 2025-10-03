@@ -1,0 +1,254 @@
+Name:               lab-cluster-control-plane
+Roles:              control-plane
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=lab-cluster-control-plane
+                    kubernetes.io/os=linux
+                    node-role.kubernetes.io/control-plane=
+                    node-type=control-plane
+                    node.kubernetes.io/exclude-from-external-load-balancers=
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Fri, 03 Oct 2025 16:54:05 +0900
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  lab-cluster-control-plane
+  AcquireTime:     <unset>
+  RenewTime:       Fri, 03 Oct 2025 16:54:29 +0900
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Fri, 03 Oct 2025 16:54:25 +0900   Fri, 03 Oct 2025 16:54:05 +0900   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Fri, 03 Oct 2025 16:54:25 +0900   Fri, 03 Oct 2025 16:54:05 +0900   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Fri, 03 Oct 2025 16:54:25 +0900   Fri, 03 Oct 2025 16:54:05 +0900   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            True    Fri, 03 Oct 2025 16:54:25 +0900   Fri, 03 Oct 2025 16:54:25 +0900   KubeletReady                 kubelet is posting ready status
+Addresses:
+  InternalIP:  172.26.0.5
+  Hostname:    lab-cluster-control-plane
+Capacity:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+Allocatable:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+System Info:
+  Machine ID:                 d95b5a3a29734c758ee179a7f2c085e7
+  System UUID:                d95b5a3a29734c758ee179a7f2c085e7
+  Boot ID:                    cbfb4d21-2004-4f2f-ad5d-104d63c6c4db
+  Kernel Version:             6.6.87.1-microsoft-standard-WSL2
+  OS Image:                   Debian GNU/Linux 11 (bullseye)
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://1.7.1
+  Kubelet Version:            v1.27.3
+  Kube-Proxy Version:         v1.27.3
+PodCIDR:                      10.244.0.0/24
+PodCIDRs:                     10.244.0.0/24
+ProviderID:                   kind://docker/lab-cluster/lab-cluster-control-plane
+Non-terminated Pods:          (9 in total)
+  Namespace                   Name                                                 CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                                                 ------------  ----------  ---------------  -------------  ---
+  kube-system                 coredns-5d78c9869d-f6qvq                             100m (0%)     0 (0%)      70Mi (0%)        170Mi (0%)     7s
+  kube-system                 coredns-5d78c9869d-nt47d                             100m (0%)     0 (0%)      70Mi (0%)        170Mi (0%)     7s
+  kube-system                 etcd-lab-cluster-control-plane                       100m (0%)     0 (0%)      100Mi (0%)       0 (0%)         23s
+  kube-system                 kindnet-2tkf7                                        100m (0%)     100m (0%)   50Mi (0%)        50Mi (0%)      8s
+  kube-system                 kube-apiserver-lab-cluster-control-plane             250m (1%)     0 (0%)      0 (0%)           0 (0%)         24s
+  kube-system                 kube-controller-manager-lab-cluster-control-plane    200m (0%)     0 (0%)      0 (0%)           0 (0%)         23s
+  kube-system                 kube-proxy-66wfq                                     0 (0%)        0 (0%)      0 (0%)           0 (0%)         8s
+  kube-system                 kube-scheduler-lab-cluster-control-plane             100m (0%)     0 (0%)      0 (0%)           0 (0%)         21s
+  local-path-storage          local-path-provisioner-6bc4bddd6b-p28v2              0 (0%)        0 (0%)      0 (0%)           0 (0%)         7s
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests    Limits
+  --------           --------    ------
+  cpu                950m (3%)   100m (0%)
+  memory             290Mi (0%)  390Mi (1%)
+  ephemeral-storage  0 (0%)      0 (0%)
+  hugepages-1Gi      0 (0%)      0 (0%)
+  hugepages-2Mi      0 (0%)      0 (0%)
+Events:
+  Type    Reason                   Age   From             Message
+  ----    ------                   ----  ----             -------
+  Normal  Starting                 5s    kube-proxy       
+  Normal  Starting                 21s   kubelet          Starting kubelet.
+  Normal  NodeAllocatableEnforced  21s   kubelet          Updated Node Allocatable limit across pods
+  Normal  NodeHasSufficientMemory  21s   kubelet          Node lab-cluster-control-plane status is now: NodeHasSufficientMemory
+  Normal  NodeHasNoDiskPressure    21s   kubelet          Node lab-cluster-control-plane status is now: NodeHasNoDiskPressure
+  Normal  NodeHasSufficientPID     21s   kubelet          Node lab-cluster-control-plane status is now: NodeHasSufficientPID
+  Normal  RegisteredNode           8s    node-controller  Node lab-cluster-control-plane event: Registered Node lab-cluster-control-plane in Controller
+  Normal  NodeReady                5s    kubelet          Node lab-cluster-control-plane status is now: NodeReady
+
+
+Name:               lab-cluster-worker
+Roles:              <none>
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=lab-cluster-worker
+                    kubernetes.io/os=linux
+                    node-type=worker
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Fri, 03 Oct 2025 16:54:25 +0900
+Taints:             <none>
+Unschedulable:      false
+Lease:              Failed to get lease: leases.coordination.k8s.io "lab-cluster-worker" not found
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Fri, 03 Oct 2025 16:54:28 +0900   Fri, 03 Oct 2025 16:54:25 +0900   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Fri, 03 Oct 2025 16:54:28 +0900   Fri, 03 Oct 2025 16:54:25 +0900   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Fri, 03 Oct 2025 16:54:28 +0900   Fri, 03 Oct 2025 16:54:25 +0900   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            True    Fri, 03 Oct 2025 16:54:28 +0900   Fri, 03 Oct 2025 16:54:28 +0900   KubeletReady                 kubelet is posting ready status
+Addresses:
+  InternalIP:  172.26.0.6
+  Hostname:    lab-cluster-worker
+Capacity:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+Allocatable:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+System Info:
+  Machine ID:                 2ba3db207d2a4ccf9a2bd3f436a5b807
+  System UUID:                2ba3db207d2a4ccf9a2bd3f436a5b807
+  Boot ID:                    cbfb4d21-2004-4f2f-ad5d-104d63c6c4db
+  Kernel Version:             6.6.87.1-microsoft-standard-WSL2
+  OS Image:                   Debian GNU/Linux 11 (bullseye)
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://1.7.1
+  Kubelet Version:            v1.27.3
+  Kube-Proxy Version:         v1.27.3
+PodCIDR:                      10.244.1.0/24
+PodCIDRs:                     10.244.1.0/24
+ProviderID:                   kind://docker/lab-cluster/lab-cluster-worker
+Non-terminated Pods:          (2 in total)
+  Namespace                   Name                CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                ------------  ----------  ---------------  -------------  ---
+  kube-system                 kindnet-pb8dl       100m (0%)     100m (0%)   50Mi (0%)        50Mi (0%)      5s
+  kube-system                 kube-proxy-lc44j    0 (0%)        0 (0%)      0 (0%)           0 (0%)         5s
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests   Limits
+  --------           --------   ------
+  cpu                100m (0%)  100m (0%)
+  memory             50Mi (0%)  50Mi (0%)
+  ephemeral-storage  0 (0%)     0 (0%)
+  hugepages-1Gi      0 (0%)     0 (0%)
+  hugepages-2Mi      0 (0%)     0 (0%)
+Events:
+  Type    Reason                   Age              From             Message
+  ----    ------                   ----             ----             -------
+  Normal  Starting                 2s               kube-proxy       
+  Normal  Starting                 5s               kubelet          Starting kubelet.
+  Normal  NodeHasSufficientMemory  5s (x2 over 5s)  kubelet          Node lab-cluster-worker status is now: NodeHasSufficientMemory
+  Normal  NodeHasNoDiskPressure    5s (x2 over 5s)  kubelet          Node lab-cluster-worker status is now: NodeHasNoDiskPressure
+  Normal  NodeHasSufficientPID     5s (x2 over 5s)  kubelet          Node lab-cluster-worker status is now: NodeHasSufficientPID
+  Normal  NodeAllocatableEnforced  5s               kubelet          Updated Node Allocatable limit across pods
+  Normal  RegisteredNode           3s               node-controller  Node lab-cluster-worker event: Registered Node lab-cluster-worker in Controller
+  Normal  NodeReady                2s               kubelet          Node lab-cluster-worker status is now: NodeReady
+
+
+Name:               lab-cluster-worker2
+Roles:              <none>
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=lab-cluster-worker2
+                    kubernetes.io/os=linux
+                    node-type=worker
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Fri, 03 Oct 2025 16:54:27 +0900
+Taints:             node.kubernetes.io/not-ready:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  lab-cluster-worker2
+  AcquireTime:     <unset>
+  RenewTime:       Fri, 03 Oct 2025 16:54:28 +0900
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Fri, 03 Oct 2025 16:54:29 +0900   Fri, 03 Oct 2025 16:54:27 +0900   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Fri, 03 Oct 2025 16:54:29 +0900   Fri, 03 Oct 2025 16:54:27 +0900   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Fri, 03 Oct 2025 16:54:29 +0900   Fri, 03 Oct 2025 16:54:27 +0900   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            False   Fri, 03 Oct 2025 16:54:29 +0900   Fri, 03 Oct 2025 16:54:27 +0900   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized
+Addresses:
+  InternalIP:  172.26.0.7
+  Hostname:    lab-cluster-worker2
+Capacity:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+Allocatable:
+  cpu:                24
+  ephemeral-storage:  1055762868Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             32825520Ki
+  pods:               110
+System Info:
+  Machine ID:                 f9365e399813426e8929ba010eeb604e
+  System UUID:                f9365e399813426e8929ba010eeb604e
+  Boot ID:                    cbfb4d21-2004-4f2f-ad5d-104d63c6c4db
+  Kernel Version:             6.6.87.1-microsoft-standard-WSL2
+  OS Image:                   Debian GNU/Linux 11 (bullseye)
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://1.7.1
+  Kubelet Version:            v1.27.3
+  Kube-Proxy Version:         v1.27.3
+PodCIDR:                      10.244.2.0/24
+PodCIDRs:                     10.244.2.0/24
+ProviderID:                   kind://docker/lab-cluster/lab-cluster-worker2
+Non-terminated Pods:          (2 in total)
+  Namespace                   Name                CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                ------------  ----------  ---------------  -------------  ---
+  kube-system                 kindnet-24bgg       100m (0%)     100m (0%)   50Mi (0%)        50Mi (0%)      3s
+  kube-system                 kube-proxy-spw78    0 (0%)        0 (0%)      0 (0%)           0 (0%)         3s
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests   Limits
+  --------           --------   ------
+  cpu                100m (0%)  100m (0%)
+  memory             50Mi (0%)  50Mi (0%)
+  ephemeral-storage  0 (0%)     0 (0%)
+  hugepages-1Gi      0 (0%)     0 (0%)
+  hugepages-2Mi      0 (0%)     0 (0%)
+Events:
+  Type    Reason                   Age              From     Message
+  ----    ------                   ----             ----     -------
+  Normal  Starting                 3s               kubelet  Starting kubelet.
+  Normal  NodeHasSufficientMemory  3s (x2 over 3s)  kubelet  Node lab-cluster-worker2 status is now: NodeHasSufficientMemory
+  Normal  NodeHasNoDiskPressure    3s (x2 over 3s)  kubelet  Node lab-cluster-worker2 status is now: NodeHasNoDiskPressure
+  Normal  NodeHasSufficientPID     3s (x2 over 3s)  kubelet  Node lab-cluster-worker2 status is now: NodeHasSufficientPID
+  Normal  Starting                 2s               kubelet  Starting kubelet.
+  Normal  NodeAllocatableEnforced  2s               kubelet  Updated Node Allocatable limit across pods
+  Normal  NodeHasSufficientMemory  1s               kubelet  Node lab-cluster-worker2 status is now: NodeHasSufficientMemory
+  Normal  NodeHasNoDiskPressure    1s               kubelet  Node lab-cluster-worker2 status is now: NodeHasNoDiskPressure
+  Normal  NodeHasSufficientPID     1s               kubelet  Node lab-cluster-worker2 status is now: NodeHasSufficientPID
