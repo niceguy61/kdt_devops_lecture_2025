@@ -82,7 +82,7 @@ target_status:
 
 **상황**: API Server가 시작되지 않고 kubectl 명령어가 모두 실패
 
-**오류 설정 파일**: [broken-apiserver.yaml](../lab_scripts/challenge1/broken-apiserver.yaml)
+**오류 설정 파일**: [broken-apiserver.yaml](./lab_scripts/challenge1/broken-apiserver.yaml)
 
 **증상**:
 ```bash
@@ -98,16 +98,16 @@ curl -k https://localhost:6443/api/v1
 ```
 
 **진단 과정**:
-**스크립트 파일**: [diagnose-apiserver.sh](../lab_scripts/challenge1/diagnose-apiserver.sh)
+**스크립트 파일**: [diagnose-apiserver.sh](./lab_scripts/challenge1/diagnose-apiserver.sh)
 
 **해결 단계**:
-**스크립트 파일**: [fix-apiserver.sh](../lab_scripts/challenge1/fix-apiserver.sh)
+**스크립트 파일**: [fix-apiserver.sh](./lab_scripts/challenge1/fix-apiserver.sh)
 
 ### 시나리오 2: ETCD 연결 문제 (25분)
 
 **상황**: ETCD 클러스터가 비정상 상태이고 데이터 접근 불가
 
-**오류 설정 파일**: [broken-etcd.yaml](../lab_scripts/challenge1/broken-etcd.yaml)
+**오류 설정 파일**: [broken-etcd.yaml](./lab_scripts/challenge1/broken-etcd.yaml)
 
 **증상**:
 ```bash
@@ -122,16 +122,16 @@ kubectl exec -n kube-system etcd-master -- \
 ```
 
 **진단 과정**:
-**스크립트 파일**: [diagnose-etcd.sh](../lab_scripts/challenge1/diagnose-etcd.sh)
+**스크립트 파일**: [diagnose-etcd.sh](./lab_scripts/challenge1/diagnose-etcd.sh)
 
 **해결 단계**:
-**스크립트 파일**: [fix-etcd.sh](../lab_scripts/challenge1/fix-etcd.sh)
+**스크립트 파일**: [fix-etcd.sh](./lab_scripts/challenge1/fix-etcd.sh)
 
 ### 시나리오 3: Kubelet 인증서 만료 (25분)
 
 **상황**: Worker 노드의 Kubelet이 API Server와 통신할 수 없음
 
-**오류 설정 파일**: [broken-kubelet.conf](../lab_scripts/challenge1/broken-kubelet.conf)
+**오류 설정 파일**: [broken-kubelet.conf](./lab_scripts/challenge1/broken-kubelet.conf)
 
 **증상**:
 ```bash
@@ -147,18 +147,18 @@ sudo journalctl -u kubelet -f
 ```
 
 **진단 과정**:
-**스크립트 파일**: [diagnose-kubelet.sh](../lab_scripts/challenge1/diagnose-kubelet.sh)
+**스크립트 파일**: [diagnose-kubelet.sh](./lab_scripts/challenge1/diagnose-kubelet.sh)
 
 **해결 단계**:
-**스크립트 파일**: [fix-kubelet.sh](../lab_scripts/challenge1/fix-kubelet.sh)
+**스크립트 파일**: [fix-kubelet.sh](./lab_scripts/challenge1/fix-kubelet.sh)
 
 ### 시나리오 4: 네트워크 플러그인 오류 (20분)
 
 **상황**: CNI 플러그인 설정 오류로 Pod 간 통신 불가
 
 **오류 설정 파일**: 
-- [broken-cni-config.json](../lab_scripts/challenge1/broken-cni-config.json)
-- [broken-calico-kubeconfig](../lab_scripts/challenge1/broken-calico-kubeconfig)
+- [broken-cni-config.json](./lab_scripts/challenge1/broken-cni-config.json)
+- [broken-calico-kubeconfig](./lab_scripts/challenge1/broken-calico-kubeconfig)
 
 **증상**:
 ```bash
@@ -172,10 +172,10 @@ kubectl describe pod <coredns-pod> -n kube-system
 ```
 
 **진단 과정**:
-**스크립트 파일**: [diagnose-cni.sh](../lab_scripts/challenge1/diagnose-cni.sh)
+**스크립트 파일**: [diagnose-cni.sh](./lab_scripts/challenge1/diagnose-cni.sh)
 
 **해결 단계**:
-**스크립트 파일**: [fix-cni.sh](../lab_scripts/challenge1/fix-cni.sh)
+**스크립트 파일**: [fix-cni.sh](./lab_scripts/challenge1/fix-cni.sh)
 
 ## 🎯 성공 기준
 
@@ -257,7 +257,7 @@ sudo openssl x509 -in <cert-file> -text -noout | grep -A2 Validity
 7. **검증**: 복구 후 전체 기능 테스트
 
 ### 복구 후 검증 스크립트
-**스크립트 파일**: [verify-recovery.sh](../lab_scripts/challenge1/verify-recovery.sh)
+**스크립트 파일**: [verify-recovery.sh](./lab_scripts/challenge1/verify-recovery.sh)
 
 이 Challenge를 통해 실제 운영 환경에서 발생할 수 있는 다양한 Kubernetes 클러스터 장애 상황을 경험하고, 
 체계적인 문제 해결 능력과 클러스터 복구 기술을 습득할 수 있습니다! 🚀
