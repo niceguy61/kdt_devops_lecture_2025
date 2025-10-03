@@ -185,9 +185,15 @@ graph TB
     B1 -.-> H3
     H3 --> H1
     
-    style A1,A2,A3 fill:#e8f5e8
-    style B1,B2,B3 fill:#fff3e0
-    style H1,H2,H3 fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style H1 fill:#ffebee
+    style H2 fill:#ffebee
+    style H3 fill:#ffebee
 ```
 
 **격리의 장점**:

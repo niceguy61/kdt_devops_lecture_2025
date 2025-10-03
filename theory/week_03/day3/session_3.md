@@ -93,9 +93,15 @@ graph TB
     E --> H
     E --> I
     
-    style A,B fill:#e3f2fd
-    style C,D,E fill:#fff3e0
-    style F,G,H,I fill:#e8f5e8
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#e8f5e8
+    style I fill:#e8f5e8
 ```
 
 **각 계층의 역할**:

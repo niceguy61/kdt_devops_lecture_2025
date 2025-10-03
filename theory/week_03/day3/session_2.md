@@ -44,8 +44,12 @@ graph LR
     
     style A fill:#ffebee
     style B fill:#e8f5e8
-    style A1,A2,A3 fill:#ffcdd2
-    style B1,B2,B3 fill:#c8e6c9
+    style A1 fill:#ffcdd2
+    style A2 fill:#ffcdd2
+    style A3 fill:#ffcdd2
+    style B1 fill:#c8e6c9
+    style B2 fill:#c8e6c9
+    style B3 fill:#c8e6c9
 ```
 
 ## 📖 핵심 개념 (35분)
@@ -208,8 +212,12 @@ graph TB
     
     style I fill:#ffebee
     style R fill:#fff3e0
-    style S1,S2,S3 fill:#e8f5e8
-    style P1,P2,P3 fill:#e3f2fd
+    style S1 fill:#e8f5e8
+    style S2 fill:#e8f5e8
+    style S3 fill:#e8f5e8
+    style P1 fill:#e3f2fd
+    style P2 fill:#e3f2fd
+    style P3 fill:#e3f2fd
 ```
 
 **Ingress 설정 예시**:
