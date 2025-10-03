@@ -39,10 +39,14 @@ graph TB
     S2 -.->|연결 실패| B1
     S2 -.->|연결 실패| B2
     
-    style F1,F2 fill:#ff6b6b
-    style B1,B2 fill:#ff6b6b
-    style S1,S2 fill:#feca57
-    style U1,U2 fill:#96ceb4
+    style F1 fill:#ff6b6b
+    style F2 fill:#ff6b6b
+    style B1 fill:#ff6b6b
+    style B2 fill:#ff6b6b
+    style S1 fill:#feca57
+    style S2 fill:#feca57
+    style U1 fill:#96ceb4
+    style U2 fill:#96ceb4
 ```
 
 ## 🚀 Challenge 시작하기
