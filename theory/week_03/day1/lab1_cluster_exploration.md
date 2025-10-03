@@ -70,15 +70,7 @@ docker --version
 **수동 실행 (학습용)**:
 ```bash
 # Kind 설정 파일 생성
-cat > kind-config.yaml << 'EOF'
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-name: lab-cluster
-nodes:
-- role: control-plane
-- role: worker
-- role: worker
-EOF
+# kind-config.yaml 파일 생성
 
 # 클러스터 생성
 kind create cluster --config kind-config.yaml --wait 300s
@@ -86,6 +78,17 @@ kind create cluster --config kind-config.yaml --wait 300s
 # 상태 확인
 kubectl cluster-info
 kubectl get nodes -o wide
+```
+
+**kind-config.yaml**
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab-cluster
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
 ```
 
 ### 🎯 확인 포인트

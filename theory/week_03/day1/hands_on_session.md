@@ -39,7 +39,12 @@ echo "✅ 작업 디렉토리 준비 완료: $(pwd)"
 ### ✅ Kind 클러스터 설정 파일 생성
 ```bash
 echo "📝 클러스터 설정 파일 생성 중..."
-cat > kind-config.yaml << 'EOF'
+# kind-config.yaml 파일 생성
+echo "✅ 설정 파일 생성 완료: kind-config.yaml"
+```
+
+**kind-config.yaml**
+```yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: hands-on-cluster
@@ -47,8 +52,6 @@ nodes:
 - role: control-plane
 - role: worker
 - role: worker
-EOF
-echo "✅ 설정 파일 생성 완료: kind-config.yaml"
 ```
 
 ### ✅ 클러스터 생성
