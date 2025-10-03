@@ -74,9 +74,12 @@ graph TB
     style B fill:#4ecdc4
     style C fill:#45b7d1
     style D fill:#96ceb4
-    style E1,E2 fill:#feca57
-    style F1,F2 fill:#ff9ff3
-    style G1,G2 fill:#54a0ff
+    style E1 fill:#feca57
+    style E2 fill:#feca57
+    style F1 fill:#ff9ff3
+    style F2 fill:#ff9ff3
+    style G1 fill:#54a0ff
+    style G2 fill:#54a0ff
 ```
 
 ### 동작 원리 상세
