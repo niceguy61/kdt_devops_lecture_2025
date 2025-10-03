@@ -294,11 +294,11 @@ kubectl rollout restart deployment/<name>
 ## ✅ 성공 검증
 
 ### 최종 확인 스크립트
-**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge2/verify-success.sh)
+**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge1/verify-success.sh)
 
 ```bash
 # 전체 시스템 상태 종합 검증
-./lab_scripts/challenge2/verify-success.sh
+./verify-success.sh
 ```
 
 **검증 항목**:
@@ -320,7 +320,7 @@ kubectl rollout restart deployment/<name>
 
 그래도 정말 막혔다면... 👇
 
-**힌트 파일**: [hints.md](./lab_scripts/challenge2/hints.md)
+**힌트 파일**: [hints.md](./lab_scripts/challenge1/hints.md)
 
 ⚠️ **주의**: 힌트를 보기 전에 최소 20분은 스스로 시도해보세요. 실무에서는 힌트가 없습니다!
 
@@ -328,7 +328,7 @@ kubectl rollout restart deployment/<name>
 
 모든 문제를 해결했다고 생각되면:
 
-**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge2/verify-success.sh)
+**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge1/verify-success.sh)
 
 ```bash
 ./verify-success.sh
