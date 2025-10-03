@@ -315,39 +315,6 @@ kubectl get pods -o wide
 **다음**: [Session 2 - 핵심 컴포넌트 심화](session2_core_components.md)
 
 </div>
-    
-    subgraph "Worker Node 2"
-        E2[Kubelet<br/>노드 에이전트]
-        F2[Kube Proxy<br/>네트워크 프록시]
-        G2[Container Runtime<br/>실제 컨테이너 실행]
-        H2[Pod 3]
-        I2[Pod 4]
-    end
-    
-    A --> E1
-    A --> E2
-    B <--> A
-    C --> A
-    D --> A
-    
-    E1 --> G1
-    G1 --> H1
-    G1 --> I1
-    
-    E2 --> G2
-    G2 --> H2
-    G2 --> I2
-    
-    style A fill:#ff6b6b
-    style B fill:#4ecdc4
-    style C fill:#45b7d1
-    style D fill:#96ceb4
-    style E1 fill:#feca57
-    style E2 fill:#feca57
-    style F1 fill:#ff9ff3
-    style F2 fill:#ff9ff3
-    style G1 fill:#54a0ff
-    style G2 fill:#54a0ff
 ```
 
 ### 동작 원리 상세

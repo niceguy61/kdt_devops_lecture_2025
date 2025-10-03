@@ -33,21 +33,21 @@
 
 ```mermaid
 graph TB
-    subgraph "은행 본점 (ETCD Cluster)"
-        subgraph "금고실 (Raft Consensus)"
-            V1[주 금고<br/>(Leader Node)]
-            V2[보조 금고 1<br/>(Follower Node)]
-            V3[보조 금고 2<br/>(Follower Node)]
+    subgraph "은행 본점 - ETCD Cluster"
+        subgraph "금고실 - Raft Consensus"
+            V1[주 금고<br/>Leader Node]
+            V2[보조 금고 1<br/>Follower Node]
+            V3[보조 금고 2<br/>Follower Node]
         end
         
-        subgraph "창구 직원들 (API Servers)"
+        subgraph "창구 직원들 - API Servers"
             T1[창구 1]
-            T2[창구 2]
-            T3[창구 3]
+            T2[창고 2]
+            T3[창고 3]
         end
     end
     
-    subgraph "고객들 (Users/Controllers)"
+    subgraph "고객들 - Users/Controllers"
         C1[개인 고객]
         C2[기업 고객]
         C3[정부 기관]
@@ -81,10 +81,10 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant C as 창구직원 (API Server)
-    participant L as 주금고 (Leader)
-    participant F1 as 보조금고1 (Follower)
-    participant F2 as 보조금고2 (Follower)
+    participant C as 창구직원 - API Server
+    participant L as 주금고 - Leader
+    participant F1 as 보조금고1 - Follower
+    participant F2 as 보조금고2 - Follower
     
     C->>L: 새 계좌 개설 요청
     L->>F1: 동의하시나요?
@@ -94,7 +94,7 @@ sequenceDiagram
     L->>L: 과반수 동의 → 승인
     L->>C: 계좌 개설 완료
     
-    Note over L,F2: 3개 중 2개 이상 동의해야<br/>거래 승인 (과반수 합의)
+    Note over L,F2: 3개 중 2개 이상 동의해야<br/>거래 승인 - 과반수 합의
 ```
 
 #### 2. **실시간 동기화 (Watch Mechanism)**
@@ -147,23 +147,23 @@ kubectl exec -n kube-system etcd-control-plane -- \
 
 ```mermaid
 graph TB
-    subgraph "정부 청사 (API Server)"
-        subgraph "1층: 접수 및 보안 (Authentication & Authorization)"
-            A1[신분증 확인<br/>(Authentication)]
-            A2[권한 검사<br/>(Authorization)]
-            A3[서류 검토<br/>(Admission Control)]
+    subgraph "정부 청사 - API Server"
+        subgraph "1층: 접수 및 보안 - Authentication & Authorization"
+            A1[신분증 확인<br/>Authentication]
+            A2[권한 검사<br/>Authorization]
+            A3[서류 검토<br/>Admission Control]
         end
         
-        subgraph "2층: 업무 처리 (Request Processing)"
-            B1[민원 접수<br/>(HTTP Handler)]
-            B2[업무 분류<br/>(API Routing)]
-            B3[처리 결과<br/>(Response)]
+        subgraph "2층: 업무 처리 - Request Processing"
+            B1[민원 접수<br/>HTTP Handler]
+            B2[업무 분류<br/>API Routing]
+            B3[처리 결과<br/>Response]
         end
         
-        subgraph "지하: 기록 보관 (ETCD Interface)"
-            C1[서류 저장<br/>(ETCD Write)]
-            C2[기록 조회<br/>(ETCD Read)]
-            C3[변경 알림<br/>(Watch Events)]
+        subgraph "지하: 기록 보관 - ETCD Interface"
+            C1[서류 저장<br/>ETCD Write]
+            C2[기록 조회<br/>ETCD Read]
+            C3[변경 알림<br/>Watch Events]
         end
     end
     
@@ -251,24 +251,24 @@ curl http://localhost:8080/api/v1/pods
 
 ```mermaid
 graph TB
-    subgraph "자동화 로봇 공장 (Controller Manager)"
-        subgraph "감시실 (Watch Loop)"
-            W1[ETCD 모니터링<br/>(Event Watch)]
-            W2[상태 변화 감지<br/>(State Detection)]
-            W3[작업 큐 관리<br/>(Work Queue)]
+    subgraph "자동화 로봇 공장 - Controller Manager"
+        subgraph "감시실 - Watch Loop"
+            W1[ETCD 모니터링<br/>Event Watch]
+            W2[상태 변화 감지<br/>State Detection]
+            W3[작업 큐 관리<br/>Work Queue]
         end
         
-        subgraph "로봇 작업장 (Controllers)"
-            R1[배포 로봇<br/>(Deployment Controller)]
-            R2[복제 로봇<br/>(ReplicaSet Controller)]
-            R3[서비스 로봇<br/>(Service Controller)]
-            R4[노드 로봇<br/>(Node Controller)]
+        subgraph "로봇 작업장 - Controllers"
+            R1[배포 로봇<br/>Deployment Controller]
+            R2[복제 로봇<br/>ReplicaSet Controller]
+            R3[서비스 로봇<br/>Service Controller]
+            R4[노드 로봇<br/>Node Controller]
         end
         
-        subgraph "품질 관리 (Reconciliation)"
-            Q1[현재 상태 확인<br/>(Current State)]
-            Q2[목표 상태 비교<br/>(Desired State)]
-            Q3[차이점 해결<br/>(Reconcile Action)]
+        subgraph "품질 관리 - Reconciliation"
+            Q1[현재 상태 확인<br/>Current State]
+            Q2[목표 상태 비교<br/>Desired State]
+            Q3[차이점 해결<br/>Reconcile Action]
         end
     end
     
@@ -298,11 +298,11 @@ graph TB
 
 ```mermaid
 graph LR
-    A[원하는 상태<br/>Replicas: 3] --> B{현재 상태<br/>확인}
-    B --> C[실제 상태<br/>Replicas: 2]
+    A[원하는 상태<br/>Replicas 3개] --> B{현재 상태<br/>확인}
+    B --> C[실제 상태<br/>Replicas 2개]
     C --> D[차이점 발견<br/>1개 부족]
     D --> E[조치 실행<br/>Pod 1개 생성]
-    E --> F[결과 확인<br/>Replicas: 3]
+    E --> F[결과 확인<br/>Replicas 3개]
     F --> A
     
     style A fill:#e8f5e8
