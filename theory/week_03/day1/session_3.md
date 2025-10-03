@@ -137,9 +137,9 @@ sequenceDiagram
     
     A->>S: New Pod to Schedule
     S->>S: List All Nodes
-    S->>S: Filter Nodes (N1, N2 pass)
-    S->>S: Score Nodes (N1: 85, N2: 92)
-    S->>S: Select Best Node (N2)
+    S->>S: Filter Nodes - N1 N2 pass
+    S->>S: Score Nodes - N1 85 N2 92
+    S->>S: Select Best Node - N2
     S->>A: Bind Pod to N2
     A->>K: Pod Assignment
     K->>A: Pod Status Update
@@ -167,9 +167,9 @@ graph TB
         end
         
         subgraph "External Systems"
-            CR[Container Runtime<br/>(containerd/CRI-O)]
-            NP[Network Plugin<br/>(Calico/Flannel)]
-            SP[Storage Plugin<br/>(EBS/NFS)]
+            CR[Container Runtime<br/>containerd/CRI-O]
+            NP[Network Plugin<br/>Calico/Flannel]
+            SP[Storage Plugin<br/>EBS/NFS]
         end
     end
     
