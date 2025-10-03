@@ -97,7 +97,7 @@ kubectl get deployments frontend
 # frontend   0/3     3            0           5m
 ```
 
-**문제 파일**: [broken-frontend-deployment.yaml](./lab_scripts/challenge2/broken-frontend-deployment.yaml)
+**문제 파일**: [broken-frontend-deployment.yaml](./lab_scripts/challenge1/broken-frontend-deployment.yaml)
 
 **🔍 진단 과정**:
 1. Pod 상세 정보 확인
@@ -129,7 +129,7 @@ kubectl describe nodes
 # Memory Requests: 7.5Gi (98%)
 ```
 
-**문제 파일**: [broken-analytics-deployment.yaml](./lab_scripts/challenge2/broken-analytics-deployment.yaml)
+**문제 파일**: [broken-analytics-deployment.yaml](./lab_scripts/challenge1/broken-analytics-deployment.yaml)
 
 **🔍 진단 과정**:
 1. Pod 스케줄링 실패 원인 분석
@@ -158,7 +158,7 @@ kubectl rollout status deployment/api-server
 # Waiting for deployment "api-server" rollout to finish: 0 of 5 updated replicas are available...
 ```
 
-**문제 파일**: [broken-api-deployment.yaml](./lab_scripts/challenge2/broken-api-deployment.yaml)
+**문제 파일**: [broken-api-deployment.yaml](./lab_scripts/challenge1/broken-api-deployment.yaml)
 
 **🔍 진단 과정**:
 1. 롤링 업데이트 전략 분석
@@ -189,7 +189,7 @@ kubectl get pods -l app=database -o wide
 # database-xxx                1/1     Unknown   node-1   
 ```
 
-**문제 파일**: [broken-database-deployment.yaml](./lab_scripts/challenge2/broken-database-deployment.yaml)
+**문제 파일**: [broken-database-deployment.yaml](./lab_scripts/challenge1/broken-database-deployment.yaml)
 
 **🔍 진단 과정**:
 1. 노드 장애 상황 분석
