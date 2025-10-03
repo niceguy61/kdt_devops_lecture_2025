@@ -84,10 +84,9 @@ kubectl exec -it deployment/frontend -- nc -zv postgres-service 5432 || echo "�
 
 ### Step 1-2: 계층별 네트워크 분리 (10분)
 
-**프론트엔드 정책**:
+**프론트엔드 정책: frontend-policy.yaml**:
 
-** frontend-policy.yaml **
-```bash
+```yaml
 # 프론트엔드 보안 정책 파일 생성
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -118,7 +117,8 @@ spec:
     ports:
     - protocol: UDP
       port: 53
-
+```
+```bash
 # 정책 적용
 kubectl apply -f frontend-policy.yaml
 ```
@@ -135,10 +135,9 @@ kubectl delete deployment postgres
 kubectl delete svc postgres-service
 ```
 
-**PostgreSQL StatefulSet 생성**:
+**PostgreSQL StatefulSet 생성: postgres-statefulset.yaml**:
 
-** postgres-statefulset.yaml **
-```bash
+```yaml
 # PostgreSQL StatefulSet 파일 생성
 apiVersion: v1
 kind: Service
@@ -218,7 +217,8 @@ spec:
       resources:
         requests:
           storage: 2Gi
-
+```
+```bash
 # StatefulSet 배포
 kubectl apply -f postgres-statefulset.yaml
 ```
@@ -246,10 +246,9 @@ kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup p
 
 ### Step 3-1: 다양한 StorageClass 생성 (10분)
 
-**고성능 SSD StorageClass**:
+**고성능 SSD StorageClass: storage-classes.yaml**:
 
-** storage-classes.yaml ** 
-```bash
+```yaml
 # StorageClass 파일 생성
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -273,17 +272,17 @@ parameters:
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
-
+```
+```bash
 # StorageClass 적용
 kubectl apply -f storage-classes.yaml
 ```
 
 ### Step 3-2: 캐시용 고성능 스토리지 추가 (10분)
 
-**Redis 캐시 서버 배포**:
+**Redis 캐시 서버 배포: redis-cache.yaml**:
 
-** redis-cache.yaml **
-```bash
+```yaml
 # Redis 캐시 서버 파일 생성
 apiVersion: apps/v1
 kind: Deployment
@@ -344,7 +343,8 @@ spec:
   ports:
   - port: 6379
     targetPort: 6379
-
+```
+```bash
 # Redis 배포
 kubectl apply -f redis-cache.yaml
 ```
@@ -378,7 +378,7 @@ while true; do wget -q -O- http://frontend-service/; done
 ### Step 4-2: VPA (Vertical Pod Autoscaler) 설정 (5분)
 
 ** redis-vpa.yaml **
-```bash
+```yaml
 # VPA 설정 파일 생성 (VPA가 설치된 경우)
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
@@ -401,7 +401,8 @@ spec:
       minAllowed:
         cpu: 50m
         memory: 64Mi
-
+```
+```bash
 # VPA 적용
 kubectl apply -f redis-vpa.yaml
 ```
@@ -432,7 +433,7 @@ kubectl get pods -l app=postgres-cluster -o custom-columns=NAME:.metadata.name,P
 ### 스토리지 성능 테스트:
 
 ** storage-test.yaml **
-```bash
+```yaml
 # 스토리지 성능 테스트 Pod 파일 생성
 apiVersion: v1
 kind: Pod
@@ -465,7 +466,8 @@ spec:
   resources:
     requests:
       storage: 1Gi
-
+```
+```bash
 # 테스트 Pod 배포
 kubectl apply -f storage-test.yaml
 
@@ -511,7 +513,7 @@ kubectl label namespace shop-app istio-injection=enabled
 ### 3. 백업 자동화
 
 ** postgres-backup-cronjob.yaml **
-```bash
+```yaml
 # CronJob으로 정기 데이터베이스 백업 파일 생성
 apiVersion: batch/v1
 kind: CronJob
@@ -540,7 +542,8 @@ spec:
             persistentVolumeClaim:
               claimName: backup-pvc
           restartPolicy: OnFailure
-
+```
+```bash
 # 백업 CronJob 배포
 kubectl apply -f postgres-backup-cronjob.yaml
 ```
