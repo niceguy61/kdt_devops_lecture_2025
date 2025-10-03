@@ -1,148 +1,360 @@
 # Lab 1: 클러스터 구축 & 컴포넌트 탐험 (90분)
 
+<div align="center">
+
+**🏗️ 클러스터 구축** • **🔍 컴포넌트 분석** • **💾 ETCD 탐험** • **🌐 API 호출**
+
+*Kubernetes 클러스터의 내부 구조를 직접 구축하고 탐험하는 핵심 실습*
+
+</div>
+
+---
+
 ## 🎯 Lab 목표
-- **기본 목표**: Kubernetes 클러스터 구축 및 핵심 컴포넌트 동작 확인
-- **심화 목표**: 컴포넌트 간 통신 분석 및 ETCD 직접 조작
-- **실무 연계**: 프로덕션 환경에서의 클러스터 관리 기초 습득
 
-## 📋 사전 준비
+### 📚 학습 목표
+- **클러스터 구축**: Kind를 이용한 3노드 클러스터 생성 및 설정
+- **컴포넌트 분석**: 각 컴포넌트의 상태와 로그 분석
+- **ETCD 탐험**: 분산 저장소의 데이터 구조와 동작 원리 체험
+- **API 호출**: kubectl 없이 직접 API Server 호출
 
-### 환경 설정
-**스크립트 파일**: [setup-environment.sh](lab_scripts/lab1/setup-environment.sh)
+### 🤔 왜 필요한가?
+**실무 상황**: "클러스터에 문제가 생겼는데, 어떤 컴포넌트부터 확인해야 할까?"
 
-### 필요 도구 설치
-**스크립트 파일**: [install-tools.sh](lab_scripts/lab1/install-tools.sh)
+**Lab 후 변화**:
+- ❌ **Before**: "kubectl이 안 되면 어떻게 해야 할지 모르겠다..."
+- ✅ **After**: "API Server → ETCD → Controller 순서로 체계적으로 진단할 수 있다!"
 
-## 🔧 기본 Lab 요소 (60분)
+---
 
-### Step 1: 클러스터 구축 (20분)
+## 📋 사전 준비 (5분)
 
-#### 1.1 Kind 클러스터 생성
-**설정 파일**: [kind-config.yaml](lab_scripts/lab1/kind-config.yaml)
-**스크립트 파일**: [create-cluster.sh](lab_scripts/lab1/create-cluster.sh)
-
-#### 1.2 클러스터 기본 정보 수집
-**스크립트에 포함됨**: [create-cluster.sh](lab_scripts/lab1/create-cluster.sh)
-
-### Step 2: 컴포넌트 상태 확인 (25분)
-
-#### 2.1-2.3 컴포넌트 상태 확인 및 로그 분석
-**스크립트 파일**: [check-components.sh](lab_scripts/lab1/check-components.sh)
-
-### Step 3: ETCD 직접 조회 (25분)
-
-#### 3.1-3.3 ETCD 직접 조회 및 모니터링
-**스크립트 파일**: [etcd-exploration.sh](lab_scripts/lab1/etcd-exploration.sh)
-
-## 🚀 심화 Lab 요소 (30분)
-
-### Step 4: API Server 직접 호출 (15분)
-
-#### 4.1-4.2 API Server 직접 호출 및 성능 분석
-**스크립트 파일**: [api-server-test.sh](lab_scripts/lab1/api-server-test.sh)
-
-### Step 5: 컴포넌트 간 통신 분석 (15분)
-
-#### 5.1 네트워크 통신 확인
-**스크립트 파일**: [analyze-network.sh](lab_scripts/lab1/analyze-network.sh)
-
-#### 5.2 인증서 체인 분석
-**스크립트 파일**: [analyze-certificates.sh](lab_scripts/lab1/analyze-certificates.sh)
-
-## 📊 결과 분석 및 정리
-
-### 수집된 정보 정리
-**스크립트 파일**: [analyze-cluster.sh](lab_scripts/lab1/analyze-cluster.sh)
-
-### 학습 내용 검증
-**설정 파일**: [test-workload.yaml](lab_scripts/lab1/test-workload.yaml)
-
+### 🚀 자동화 스크립트 사용
 ```bash
-kubectl apply -f lab_scripts/lab1/test-workload.yaml
-
-# 배포 상태 확인
-kubectl get all -n lab-day1
-
-# 스케줄링 결과 확인
-kubectl get pods -n lab-day1 -o wide
-
-# 서비스 엔드포인트 확인
-kubectl get endpoints -n lab-day1
+# 환경 설정 자동화
+./lab_scripts/lab1/setup-environment.sh
 ```
 
-## 🎯 성공 기준
+**📋 스크립트 내용**: [setup-environment.sh](./lab_scripts/lab1/setup-environment.sh)
 
-### 기본 목표 달성 확인
-- [ ] Kind 클러스터 성공적으로 생성
-- [ ] 모든 시스템 컴포넌트 정상 동작 확인
-- [ ] ETCD에서 Kubernetes 리소스 직접 조회 성공
-- [ ] API Server 직접 호출 성공
-
-### 심화 목표 달성 확인
-- [ ] 컴포넌트 간 통신 구조 이해
-- [ ] 인증서 체인 분석 완료
-- [ ] 실시간 ETCD 변경사항 모니터링 성공
-- [ ] API Server 메트릭 분석 완료
-
-### 실무 연계 확인
-- [ ] 클러스터 상태 분석 스크립트 작성
-- [ ] 문제 진단을 위한 로그 수집 방법 습득
-- [ ] 컴포넌트별 헬스체크 방법 이해
-
-## 💡 트러블슈팅 가이드
-
-### 일반적인 문제와 해결책
-
-#### 1. Kind 클러스터 생성 실패
+**수동 실행 (학습용)**:
 ```bash
-# Docker 상태 확인
-sudo systemctl status docker
+# 작업 디렉토리 생성
+mkdir -p ~/k8s-lab1
+cd ~/k8s-lab1
 
-# 기존 클러스터 정리
-kind delete cluster --name lab-cluster
-
-# 재생성
-kind create cluster --config kind-config.yaml
+# 필요 도구 확인
+kubectl version --client
+kind version
+docker --version
 ```
 
-#### 2. ETCD 접속 실패
+### 필수 도구 설치 (필요시)
 ```bash
-# ETCD Pod 상태 확인
+# 도구 설치 자동화
+./lab_scripts/lab1/install-tools.sh
+```
+
+---
+
+## 🏗️ Step 1: 클러스터 구축 (20분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+# 3노드 클러스터 자동 생성
+./lab_scripts/lab1/create-cluster.sh
+```
+
+**📋 스크립트 내용**: [create-cluster.sh](./lab_scripts/lab1/create-cluster.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# Kind 설정 파일 생성
+cat > kind-config.yaml << 'EOF'
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab-cluster
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+EOF
+
+# 클러스터 생성
+kind create cluster --config kind-config.yaml --wait 300s
+
+# 상태 확인
+kubectl cluster-info
+kubectl get nodes -o wide
+```
+
+### 🎯 확인 포인트
+- [ ] 3개 노드 모두 Ready 상태
+- [ ] Control Plane 1개, Worker 2개 구성
+- [ ] kubectl 명령어 정상 동작
+
+---
+
+## 🔍 Step 2: 컴포넌트 상태 확인 (25분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+# 모든 컴포넌트 상태 자동 점검
+./lab_scripts/lab1/check-components.sh
+```
+
+**📋 스크립트 내용**: [check-components.sh](./lab_scripts/lab1/check-components.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# Control Plane 컴포넌트 확인
+kubectl get pods -n kube-system -l tier=control-plane
+
+# API Server 상태
+kubectl get pods -n kube-system -l component=kube-apiserver
+
+# ETCD 상태  
 kubectl get pods -n kube-system -l component=etcd
 
-# ETCD 로그 확인
-kubectl logs -n kube-system -l component=etcd
+# Controller Manager 상태
+kubectl get pods -n kube-system -l component=kube-controller-manager
+
+# Scheduler 상태
+kubectl get pods -n kube-system -l component=kube-scheduler
+
+# Worker 컴포넌트 확인
+kubectl get pods -n kube-system -l k8s-app=kube-proxy
+kubectl get pods -n kube-system -l app=kindnet
 ```
 
-#### 3. API Server 호출 실패
+### 🔍 로그 분석
 ```bash
-# 토큰 재획득
-kubectl create token default -n kube-system
+# 각 컴포넌트 로그 확인
+kubectl logs -n kube-system -l component=kube-apiserver --tail=10
+kubectl logs -n kube-system -l component=etcd --tail=10
+kubectl logs -n kube-system -l component=kube-controller-manager --tail=10
+kubectl logs -n kube-system -l component=kube-scheduler --tail=10
+```
 
-# 네트워크 연결 확인
+### 🎯 확인 포인트
+- [ ] 모든 Control Plane Pod가 Running 상태
+- [ ] Worker 컴포넌트 정상 동작
+- [ ] 로그에서 심각한 오류 없음
+
+---
+
+## 💾 Step 3: ETCD 직접 조회 (25분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+# ETCD 데이터 구조 완전 탐험
+./lab_scripts/lab1/etcd-exploration.sh
+```
+
+**📋 스크립트 내용**: [etcd-exploration.sh](./lab_scripts/lab1/etcd-exploration.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# ETCD Pod 이름 확인
+ETCD_POD=$(kubectl get pods -n kube-system -l component=etcd -o jsonpath='{.items[0].metadata.name}')
+
+# ETCD 데이터 구조 확인
+kubectl exec -n kube-system $ETCD_POD -- \
+  etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  get / --prefix --keys-only | head -10
+
+# 특정 리소스 확인
+kubectl exec -n kube-system $ETCD_POD -- \
+  etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  get /registry/pods/default/ --prefix --keys-only
+```
+
+### 🔍 실시간 Watch 체험
+```bash
+# 터미널 1: ETCD Watch 시작
+kubectl exec -n kube-system $ETCD_POD -- \
+  etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  watch /registry/pods/default/ --prefix
+
+# 터미널 2: Pod 생성/삭제
+kubectl run test-pod --image=nginx
+kubectl delete pod test-pod
+```
+
+### 🎯 확인 포인트
+- [ ] ETCD 데이터 구조 이해 (/registry/ 하위)
+- [ ] Pod 생성 시 실시간 데이터 변경 관찰
+- [ ] Raft 합의 알고리즘 동작 확인
+
+---
+
+## 🌐 Step 4: API Server 직접 호출 (15분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+# API Server 직접 호출 테스트
+./lab_scripts/lab1/api-server-test.sh
+```
+
+**📋 스크립트 내용**: [api-server-test.sh](./lab_scripts/lab1/api-server-test.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# kubectl proxy 시작
 kubectl proxy --port=8080 &
+
+# 직접 API 호출
+curl http://localhost:8080/api/v1/pods
+curl http://localhost:8080/api/v1/nodes
 curl http://localhost:8080/api/v1/namespaces
+
+# 메트릭 확인
+curl http://localhost:8080/metrics | grep apiserver_request
+
+# proxy 종료
+pkill -f "kubectl proxy"
 ```
 
-## 📚 추가 학습 자료
+### 🎯 확인 포인트
+- [ ] kubectl 없이 API 호출 성공
+- [ ] RESTful API 구조 이해
+- [ ] 메트릭 데이터 수집 확인
 
-### 참고 명령어 모음
+---
+
+## 🔬 Step 5: 네트워크 & 인증서 분석 (15분)
+
+### 🚀 자동화 스크립트 사용
 ```bash
-# 클러스터 정보 수집 원라이너
-kubectl get all --all-namespaces -o wide > all-resources.txt
+# 네트워크 통신 분석
+./lab_scripts/lab1/analyze-network.sh
 
-# 시스템 이벤트 확인
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
-
-# 리소스 사용량 모니터링
-watch kubectl top nodes
-
-# 컴포넌트 상태 지속 모니터링
-watch kubectl get componentstatuses
+# 인증서 체인 분석  
+./lab_scripts/lab1/analyze-certificates.sh
 ```
 
-### 정리 작업
-**스크립트 파일**: [cleanup.sh](lab_scripts/lab1/cleanup.sh)
+**📋 스크립트 내용**: 
+- [analyze-network.sh](./lab_scripts/lab1/analyze-network.sh)
+- [analyze-certificates.sh](./lab_scripts/lab1/analyze-certificates.sh)
 
-이 Lab을 통해 Kubernetes 클러스터의 내부 구조와 각 컴포넌트의 동작 원리를 직접 확인하고, 
-실제 운영 환경에서 필요한 클러스터 관리 기초 기술을 습득할 수 있습니다! 🚀
+**수동 실행 (학습용)**:
+```bash
+# Control Plane 노드 내부 접속
+docker exec -it lab-cluster-control-plane bash
+
+# 포트 사용 현황 확인
+ss -tlnp | grep -E "(6443|2379|2380|10250)"
+
+# 인증서 확인
+ls -la /etc/kubernetes/pki/
+openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout | head -20
+
+exit
+```
+
+### 🎯 확인 포인트
+- [ ] 주요 포트 바인딩 상태 확인
+- [ ] 인증서 체인 구조 이해
+- [ ] 컴포넌트 간 통신 방식 파악
+
+---
+
+## 🧹 정리 및 마무리 (10분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+# 환경 정리
+./lab_scripts/lab1/cleanup.sh
+```
+
+**수동 실행 (학습용)**:
+```bash
+# 클러스터 삭제
+kind delete cluster --name lab-cluster
+
+# 작업 파일 정리
+cd ~
+rm -rf ~/k8s-lab1
+
+# 컨텍스트 초기화
+kubectl config use-context docker-desktop 2>/dev/null || echo "기본 컨텍스트 없음"
+```
+
+---
+
+## 📊 Lab 완료 체크리스트
+
+### ✅ 기본 달성 목표
+- [ ] **클러스터 구축**: 3노드 클러스터 성공적 생성
+- [ ] **컴포넌트 확인**: 모든 핵심 컴포넌트 상태 점검
+- [ ] **ETCD 탐험**: 데이터 구조와 Watch 기능 체험
+- [ ] **API 호출**: kubectl 없이 직접 API 사용
+
+### 🚀 심화 달성 목표
+- [ ] **로그 분석**: 각 컴포넌트 로그에서 의미있는 정보 추출
+- [ ] **네트워크 이해**: 포트와 통신 구조 완전 파악
+- [ ] **인증서 분석**: TLS 인증서 체인 구조 이해
+- [ ] **메트릭 수집**: API Server 성능 지표 분석
+
+### 💡 실무 연계 성과
+- [ ] **장애 진단**: 컴포넌트별 문제 진단 순서 습득
+- [ ] **성능 분석**: 메트릭을 통한 성능 모니터링 방법
+- [ ] **보안 이해**: 인증서 기반 보안 체계 파악
+- [ ] **자동화 활용**: 스크립트를 통한 반복 작업 효율화
+
+---
+
+## 🎉 Fun Facts & 실무 팁
+
+### 🎉 재미있는 발견
+- **ETCD 키 개수**: 기본 클러스터에도 수백 개의 키가 저장됨
+- **API Server 메트릭**: 초당 수십 개의 요청이 처리됨
+- **인증서 개수**: 클러스터 내부에 10개 이상의 인증서 사용
+- **포트 바인딩**: Control Plane에서 6개 이상의 주요 포트 사용
+
+### 💡 실무 활용 팁
+- **ETCD 백업**: `etcdctl snapshot save`로 전체 클러스터 백업 가능
+- **API 디버깅**: `kubectl proxy`로 브라우저에서 API 탐험 가능
+- **로그 모니터링**: `kubectl logs -f`로 실시간 로그 추적
+- **성능 튜닝**: 메트릭 데이터로 병목 지점 식별
+
+### 🚨 주의사항
+- **ETCD 직접 수정**: 절대 프로덕션에서 직접 수정 금지
+- **인증서 관리**: 만료 전 자동 갱신 시스템 필수
+- **포트 보안**: 불필요한 포트 노출 방지
+- **로그 용량**: 로그 로테이션 설정으로 디스크 관리
+
+---
+
+## 🔗 다음 단계
+
+### 🎯 연계 학습
+- **Session 2**: 오늘 탐험한 컴포넌트들의 상세 동작 원리
+- **Session 3**: Scheduler와 Kubelet의 협력 메커니즘
+- **Challenge 1**: 실제 장애 상황에서의 진단 및 복구
+
+### 📚 추가 학습 자료
+- [Kubernetes 공식 문서 - 클러스터 아키텍처](https://kubernetes.io/docs/concepts/architecture/)
+- [ETCD 공식 문서](https://etcd.io/docs/)
+- [Kind 사용자 가이드](https://kind.sigs.k8s.io/docs/user/quick-start/)
+
+---
+
+<div align="center">
+
+**🏗️ 클러스터 구축 완료** • **🔍 컴포넌트 탐험 성공** • **💾 ETCD 마스터** • **🌐 API 전문가**
+
+*이제 Kubernetes 클러스터의 내부 구조를 완전히 파악했습니다!*
+
+**다음**: [Challenge 1 - 고장난 클러스터 복구하기](challenge1_cluster_recovery.md)
+
+</div>

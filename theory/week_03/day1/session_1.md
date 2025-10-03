@@ -32,28 +32,28 @@
 
 ```mermaid
 graph TB
-    subgraph "스마트 오피스 빌딩 (Kubernetes Cluster)"
-        subgraph "관리사무소 (Control Plane)"
-            A[접수처<br/>(API Server)]
-            B[파일 보관소<br/>(ETCD)]
-            C[시설 관리팀<br/>(Controller Manager)]
-            D[자리 배정 담당자<br/>(Scheduler)]
+    subgraph "스마트 오피스 빌딩 - Kubernetes Cluster"
+        subgraph "관리사무소 - Control Plane"
+            A[접수처<br/>API Server]
+            B[파일 보관소<br/>ETCD]
+            C[시설 관리팀<br/>Controller Manager]
+            D[자리 배정 담당자<br/>Scheduler]
         end
         
-        subgraph "사무실 층 1 (Worker Node 1)"
-            E1[층 관리인<br/>(Kubelet)]
-            F1[보안 담당자<br/>(Kube Proxy)]
-            G1[사무용품 창고<br/>(Container Runtime)]
-            H1[회의실 A<br/>(Pod)]
-            I1[회의실 B<br/>(Pod)]
+        subgraph "사무실 층 1 - Worker Node 1"
+            E1[층 관리인<br/>Kubelet]
+            F1[보안 담당자<br/>Kube Proxy]
+            G1[사무용품 창고<br/>Container Runtime]
+            H1[회의실 A<br/>Pod]
+            I1[회의실 B<br/>Pod]
         end
         
-        subgraph "사무실 층 2 (Worker Node 2)"
-            E2[층 관리인<br/>(Kubelet)]
-            F2[보안 담당자<br/>(Kube Proxy)]
-            G2[사무용품 창고<br/>(Container Runtime)]
-            H2[회의실 C<br/>(Pod)]
-            I2[회의실 D<br/>(Pod)]
+        subgraph "사무실 층 2 - Worker Node 2"
+            E2[층 관리인<br/>Kubelet]
+            F2[보안 담당자<br/>Kube Proxy]
+            G2[사무용품 창고<br/>Container Runtime]
+            H2[회의실 C<br/>Pod]
+            I2[회의실 D<br/>Pod]
         end
     end
     
@@ -427,7 +427,7 @@ timeline
     section Docker 지원 중단
         2020-2022 : Dockershim 제거 예고
                   : Kubernetes 1.24에서 완전 제거
-                  : containerd, CRI-O 권장
+                  : containerd와 CRI-O 권장
 ```
 
 ### Docker vs ContainerD 실무 비교
