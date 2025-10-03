@@ -81,9 +81,14 @@ graph TB
     E --> G[가상 네트워크]
     E --> H[라우팅 테이블]
     
-    style A,B,C,D fill:#e3f2fd
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
     style E fill:#fff3e0
-    style F,G,H fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#e8f5e8
 ```
 
 **상세 설명**:
