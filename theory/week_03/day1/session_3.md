@@ -275,19 +275,19 @@ nodeStatus:
 ```mermaid
 graph TB
     subgraph "Kube Proxy Modes"
-        subgraph "iptables Mode (Default)"
+        subgraph "iptables Mode - Default"
             I1[Service Rules]
             I2[DNAT Rules]
             I3[Load Balancing]
         end
         
-        subgraph "IPVS Mode (High Performance)"
+        subgraph "IPVS Mode - High Performance"
             V1[Virtual Server]
             V2[Real Server Pool]
             V3[Load Balancing Algorithms]
         end
         
-        subgraph "userspace Mode (Legacy)"
+        subgraph "userspace Mode - Legacy"
             U1[Proxy Process]
             U2[Round Robin]
             U3[Session Affinity]

@@ -10,6 +10,25 @@
 
 ---
 
+## 📚 Kubernetes 공식 문서 참조
+
+### 🔗 핵심 참조 문서
+- **[etcd](https://kubernetes.io/docs/concepts/overview/components/#etcd)** - ETCD 컴포넌트 개요
+- **[kube-apiserver](https://kubernetes.io/docs/concepts/overview/components/#kube-apiserver)** - API Server 상세
+- **[kube-controller-manager](https://kubernetes.io/docs/concepts/overview/components/#kube-controller-manager)** - Controller Manager 역할
+- **[Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)** - Controller 패턴 설명
+- **[API Concepts](https://kubernetes.io/docs/reference/using-api/api-concepts/)** - API 설계 개념
+- **[Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)** - 인증 메커니즘
+- **[Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)** - 인가 시스템
+- **[Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)** - 어드미션 컨트롤러
+
+### 🔗 ETCD 전용 문서
+- **[etcd Official Documentation](https://etcd.io/docs/)** - ETCD 공식 문서
+- **[Raft Consensus Algorithm](https://raft.github.io/)** - Raft 알고리즘 설명
+- **[etcd Clustering Guide](https://etcd.io/docs/v3.5/op-guide/clustering/)** - ETCD 클러스터링
+
+---
+
 ## 🎯 세션 목표
 
 ### 📚 학습 목표
