@@ -45,7 +45,8 @@ kubectl config set-context --current --namespace=lab2-workloads
 
 **🚀 자동화 스크립트 사용**
 ```bash
-./lab_scripts/lab1/create-basic-pod.sh
+cd theory/week_03/day2/lab_scripts/lab1
+./create-basic-pod.sh
 ```
 
 **📋 스크립트 내용**: [create-basic-pod.sh](./lab_scripts/lab1/create-basic-pod.sh)
@@ -85,7 +86,8 @@ kubectl describe pod web-pod
 
 **🚀 자동화 스크립트 사용**
 ```bash
-./lab_scripts/lab1/create-replicaset.sh
+cd theory/week_03/day2/lab_scripts/lab1
+./create-replicaset.sh
 ```
 
 **📋 스크립트 내용**: [create-replicaset.sh](./lab_scripts/lab1/create-replicaset.sh)
@@ -134,7 +136,8 @@ kubectl get pods --show-labels
 
 **🚀 자동화 스크립트 사용**
 ```bash
-./lab_scripts/lab1/create-deployment.sh
+cd theory/week_03/day2/lab_scripts/lab1
+./create-deployment.sh
 ```
 
 **📋 스크립트 내용**: [create-deployment.sh](./lab_scripts/lab1/create-deployment.sh)

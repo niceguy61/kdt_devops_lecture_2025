@@ -66,8 +66,8 @@ graph TB
 ### 📋 사전 준비
 ```bash
 # Challenge 환경 배포
-cd lab_scripts/challenge2
-./deploy-broken-services.sh
+cd theory/week_03/day2/lab_scripts/challenge1
+./deploy-broken.sh
 ```
 
 **🎯 배포 후 상태**: 
