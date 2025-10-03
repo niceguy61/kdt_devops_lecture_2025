@@ -330,17 +330,6 @@ kubectl get pods -o wide
 
 ---
 
-<div align="center">
-
-**🏗️ 아키텍처 마스터** • **🔄 동작 원리 완전 이해** • **🔬 실시간 체험 완료**
-
-*이제 Kubernetes의 심장박동을 직접 느꼈습니다!*
-
-**다음**: [Session 2 - 핵심 컴포넌트 심화](session2_core_components.md)
-
-</div>
-```
-
 ### 동작 원리 상세
 
 **1. 사용자 요청 처리 흐름**:
@@ -519,3 +508,13 @@ ETCDCTL_API=3 etcdctl get /registry/pods/default/ --prefix
 - **ETCD 성능**: 디스크 I/O 지연시간 10ms 이하
 - **노드 리소스**: CPU/Memory 사용률 80% 이하
 - **네트워크 지연**: Pod 간 통신 지연 5ms 이하
+
+<div align="center">
+
+**🏗️ 아키텍처 마스터** • **🔄 동작 원리 완전 이해** • **🔬 실시간 체험 완료**
+
+*이제 Kubernetes의 심장박동을 직접 느꼈습니다!*
+
+**다음**: [Session 2 - 핵심 컴포넌트 심화](session2_core_components.md)
+
+</div>
