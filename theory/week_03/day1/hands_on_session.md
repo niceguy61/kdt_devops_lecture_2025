@@ -65,10 +65,9 @@ kubectl get nodes
 
 echo "✅ 클러스터 생성 완료!"
 ```
-```
 
 **🎉 성공하면 다음과 같이 보입니다:**
-```
+```bash
 NAME                         STATUS   ROLES           AGE   VERSION
 hands-on-cluster-control-plane   Ready    control-plane   2m    v1.27.3
 hands-on-cluster-worker          Ready    <none>          2m    v1.27.3
