@@ -329,6 +329,28 @@ kubectl run test --image=busybox -it --rm -- /bin/sh
 
 ---
 
+## 💡 정말 막혔을 때만 보세요!
+
+### 🆘 힌트가 필요하신가요?
+
+충분히 시도해보셨나요? 로그도 확인해보고, 설정도 비교해보고, 구글링도 해보셨나요?
+
+그래도 정말 막혔다면... 👇
+
+**힌트 파일**: [hints.md](./lab_scripts/challenge1/hints.md)
+
+⚠️ **주의**: 힌트를 보기 전에 최소 30분은 스스로 시도해보세요. 그래야 진짜 실력이 늡니다!
+
+### 🎯 최종 검증
+
+모든 문제를 해결했다고 생각되면:
+
+**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge1/verify-success.sh)
+
+```bash
+./verify-success.sh
+```
+
 <div align="center">
 
 **🎯 실무 중심** • **🔧 문제 해결** • **📈 단계적 학습**
