@@ -126,6 +126,30 @@ graph TD
     style J fill:#feca57
 ```
 
+### 🔧 컴포넌트별 상세 역할
+
+#### API Server - 클러스터의 관문
+- **RESTful API 제공**: 모든 클러스터 리소스에 대한 CRUD 작업
+- **인증 및 인가**: 사용자 신원 확인 및 권한 검증
+- **Admission Control**: 요청 검증 및 변형
+- **ETCD와의 유일한 통신 창구**: 다른 컴포넌트는 직접 ETCD 접근 불가
+
+#### ETCD - 분산 데이터 저장소
+- **Raft 알고리즘**: 분산 합의를 통한 데이터 일관성 보장
+- **Key-Value 저장**: 모든 클러스터 상태를 JSON 형태로 저장
+- **Watch 기능**: 데이터 변경 시 실시간 알림
+- **백업 및 복원**: 클러스터 전체 상태 백업 가능
+
+#### Controller Manager - 자동화의 핵심
+- **Reconciliation Loop**: 현재 상태를 원하는 상태로 지속적 조정
+- **40개 이상의 컨트롤러**: Deployment, ReplicaSet, Service 등 각각의 컨트롤러
+- **이벤트 기반 동작**: API Server의 변경 사항을 Watch하여 반응
+
+#### Scheduler - 최적 배치 알고리즘
+- **Filtering Phase**: 조건에 맞지 않는 노드 제외
+- **Scoring Phase**: 남은 노드들에 점수 부여
+- **Binding**: 최고 점수 노드에 Pod 할당
+
 ### ⏱️ 실제 타이밍 분석
 
 | 단계 | 소요 시간 | 주요 작업 | 빌딩 비유 |
@@ -370,44 +394,12 @@ sequenceDiagram
 - **Scoring Phase**: 남은 노드들에 점수 부여
 - **Binding**: 최고 점수 노드에 Pod 할당
 
-### Container Runtime 진화 과정
+---
 
-```mermaid
-timeline
-    title Container Runtime 진화
-    
-    section Docker 시대
-        2013-2019 : Docker Engine
-                  : 모든 기능이 하나의 데몬에 통합
-                  : 무겁고 복잡한 구조
-    
-    section CRI 도입
-        2016     : Container Runtime Interface
-                 : 런타임 추상화 계층 도입
-                 : 다양한 런타임 지원 가능
-    
-    section containerd 부상
-        2017-2020 : containerd 독립
-                  : Docker에서 분리된 경량 런타임
-                  : CNCF 졸업 프로젝트
-    
-    section Docker 지원 중단
-        2020-2022 : Dockershim 제거 예고
-                  : Kubernetes 1.24에서 완전 제거
-                  : containerd와 CRI-O 권장
-```
+## 🔬 Part 3: 실시간 체험 - 클러스터 동작 관찰 (15분)
 
-### Docker vs ContainerD 실무 비교
-
-| 구분 | Docker | ContainerD |
-|------|--------|------------|
-| **아키텍처** | 모놀리식 (무거움) | 모듈형 (경량) |
-| **메모리 사용량** | ~200MB | ~50MB |
-| **시작 시간** | 느림 | 빠름 |
-| **보안** | 루트 권한 필요 | 비특권 실행 가능 |
-| **Kubernetes 지원** | Dockershim 필요 | 네이티브 지원 |
-| **이미지 빌드** | 내장 | 별도 도구 필요 |
-| **디버깅** | 풍부한 도구 | 제한적 |
+### 🎯 실습 목표
+**"이론을 실제로 확인해보자!"**
 
 ### 사용 예제
 
