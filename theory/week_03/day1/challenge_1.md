@@ -53,12 +53,11 @@ graph TB
 
 ### 📋 사전 준비
 ```bash
-# 작업 디렉토리 생성
-mkdir -p ~/k8s-challenge1
-cd ~/k8s-challenge1
+# Challenge 스크립트 디렉토리로 이동
+cd lab_scripts/challenge1
 
 # Challenge용 문제 애플리케이션 배포
-./lab_scripts/challenge1/deploy-broken-app.sh
+./deploy-broken-app.sh
 ```
 
 ---
