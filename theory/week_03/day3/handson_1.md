@@ -39,8 +39,7 @@
 
 **데이터베이스 보안 정책 생성**:
 
-** postgres-security-policy.yaml **
-# 데이터베이스 보안 정책 파일 생성
+#### 데이터베이스 보안 정책 파일 생성 : postgres-security-policy.yaml
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
