@@ -105,7 +105,10 @@ flowchart TD
     
     style A fill:#e8f5e8
     style F fill:#e0f2f1
-    style X1,X2,X3,X4 fill:#ffebee
+    style X1 fill:#ffebee
+    style X2 fill:#ffebee
+    style X3 fill:#ffebee
+    style X4 fill:#ffebee
 ```
 
 **2. Scoring Phase (점수 매기기 단계)**:
@@ -185,9 +188,17 @@ graph TB
     CSI --> SP
     
     style K fill:#ff6b6b
-    style PM,CM,VM,IM,NM fill:#4ecdc4
-    style CRI,CNI,CSI fill:#feca57
-    style CR,NP,SP fill:#96ceb4
+    style PM fill:#4ecdc4
+    style CM fill:#4ecdc4
+    style VM fill:#4ecdc4
+    style IM fill:#4ecdc4
+    style NM fill:#4ecdc4
+    style CRI fill:#feca57
+    style CNI fill:#feca57
+    style CSI fill:#feca57
+    style CR fill:#96ceb4
+    style NP fill:#96ceb4
+    style SP fill:#96ceb4
 ```
 
 #### Kubelet 동작 원리 상세
@@ -317,11 +328,19 @@ graph TB
     U1 --> P2
     U1 --> P3
     
-    style I1,I2,I3 fill:#4ecdc4
-    style V1,V2,V3 fill:#feca57
-    style U1,U2,U3 fill:#96ceb4
+    style I1 fill:#4ecdc4
+    style I2 fill:#4ecdc4
+    style I3 fill:#4ecdc4
+    style V1 fill:#feca57
+    style V2 fill:#feca57
+    style V3 fill:#feca57
+    style U1 fill:#96ceb4
+    style U2 fill:#96ceb4
+    style U3 fill:#96ceb4
     style S fill:#ff6b6b
-    style P1,P2,P3 fill:#e8f5e8
+    style P1 fill:#e8f5e8
+    style P2 fill:#e8f5e8
+    style P3 fill:#e8f5e8
 ```
 
 #### Kube Proxy 동작 모드 비교
@@ -396,9 +415,17 @@ graph TB
     D3 --> R3
     D4 --> R4
     
-    style F1,F2,F3 fill:#ffebee
-    style D1,D2,D3,D4 fill:#fff3e0
-    style R1,R2,R3,R4 fill:#e8f5e8
+    style F1 fill:#ffebee
+    style F2 fill:#ffebee
+    style F3 fill:#ffebee
+    style D1 fill:#fff3e0
+    style D2 fill:#fff3e0
+    style D3 fill:#fff3e0
+    style D4 fill:#fff3e0
+    style R1 fill:#e8f5e8
+    style R2 fill:#e8f5e8
+    style R3 fill:#e8f5e8
+    style R4 fill:#e8f5e8
 ```
 
 ### 사용 예제
