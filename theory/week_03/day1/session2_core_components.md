@@ -1,5 +1,34 @@
 # Session 2: 핵심 컴포넌트 심화 (50분)
 
+<div align="center">
+
+**💾 ETCD 저장소** • **🌐 API Server** • **🔄 Controller Manager** • **📚 공식 문서 기반**
+
+*Kubernetes 핵심 컴포넌트의 내부 동작 원리 완전 이해*
+
+</div>
+
+---
+
+## 📚 Kubernetes 공식 문서 참조
+
+### 🔗 핵심 참조 문서
+- **[etcd](https://kubernetes.io/docs/concepts/overview/components/#etcd)** - ETCD 컴포넌트 개요
+- **[kube-apiserver](https://kubernetes.io/docs/concepts/overview/components/#kube-apiserver)** - API Server 상세
+- **[kube-controller-manager](https://kubernetes.io/docs/concepts/overview/components/#kube-controller-manager)** - Controller Manager 역할
+- **[Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)** - Controller 패턴 설명
+- **[API Concepts](https://kubernetes.io/docs/reference/using-api/api-concepts/)** - API 설계 개념
+- **[Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)** - 인증 메커니즘
+- **[Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)** - 인가 시스템
+- **[Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)** - 어드미션 컨트롤러
+
+### 🔗 ETCD 전용 문서
+- **[etcd Official Documentation](https://etcd.io/docs/)** - ETCD 공식 문서
+- **[Raft Consensus Algorithm](https://raft.github.io/)** - Raft 알고리즘 설명
+- **[etcd Clustering Guide](https://etcd.io/docs/v3.5/op-guide/clustering/)** - ETCD 클러스터링
+
+---
+
 ## 🎯 필수 요소
 - **ETCD 분산 저장소 원리**
 - **API Server RESTful 설계**
@@ -472,3 +501,6 @@ kubectl get --raw /metrics | grep controller_manager
 - **재시도**: 지수 백오프로 재시도 간격 조정
 - **리더 선출**: 다중 인스턴스 실행 시 리더 선출 설정
 - **메모리 관리**: 캐시 크기 조정으로 메모리 사용량 최적화
+
+---
+

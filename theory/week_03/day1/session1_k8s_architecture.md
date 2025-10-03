@@ -1,5 +1,26 @@
 # Session 1: Kubernetes 아키텍처 & 컴포넌트 (50분)
 
+<div align="center">
+
+**🏗️ 클러스터 아키텍처** • **🔧 컴포넌트 역할** • **📚 공식 문서 기반**
+
+*Kubernetes 공식 아키텍처를 완전히 이해하는 첫 번째 세션*
+
+</div>
+
+---
+
+## 📚 Kubernetes 공식 문서 참조
+
+### 🔗 핵심 참조 문서
+- **[Cluster Architecture](https://kubernetes.io/docs/concepts/architecture/)** - 전체 클러스터 구조
+- **[Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/)** - 노드 아키텍처 상세
+- **[Control Plane Components](https://kubernetes.io/docs/concepts/overview/components/#control-plane-components)** - 컨트롤 플레인 컴포넌트
+- **[Node Components](https://kubernetes.io/docs/concepts/overview/components/#node-components)** - 노드 컴포넌트
+- **[Container Runtime](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)** - 컨테이너 런타임 설정
+
+---
+
 ## 🎯 필수 요소
 - **Cluster Architecture 완전 이해**
 - **Master-Worker 노드 역할 분담**
@@ -225,6 +246,21 @@ ETCDCTL_API=3 etcdctl get /registry/pods/default/ --prefix
 - **성장률**: Kubernetes 관련 일자리 연평균 67% 증가
 - **비용 절감**: 평균 23% 인프라 비용 절감 효과
 - **배포 속도**: 기존 대비 평균 5배 빠른 배포 속도
+
+---
+
+## 📖 추가 학습 자료
+
+### 🔗 Kubernetes 공식 문서
+- **[Kubernetes Documentation](https://kubernetes.io/docs/home/)** - 전체 문서 홈
+- **[Concepts](https://kubernetes.io/docs/concepts/)** - 핵심 개념 설명
+- **[Tutorials](https://kubernetes.io/docs/tutorials/)** - 단계별 튜토리얼
+- **[Reference](https://kubernetes.io/docs/reference/)** - API 및 CLI 레퍼런스
+
+### 📚 심화 학습
+- **[Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)** - 수동 클러스터 구축
+- **[CNCF Landscape](https://landscape.cncf.io/)** - 클라우드 네이티브 생태계
+- **[Kubernetes Blog](https://kubernetes.io/blog/)** - 최신 소식 및 기술 블로그
 
 ### Google 내부 데이터
 - **Borg 경험**: 15년간 수십억 개의 컨테이너 운영 경험이 Kubernetes 설계에 반영

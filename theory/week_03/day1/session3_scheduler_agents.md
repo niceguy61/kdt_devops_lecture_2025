@@ -1,5 +1,39 @@
 # Session 3: 스케줄러 & 에이전트 (50분)
 
+<div align="center">
+
+**📋 스케줄러** • **🤖 Kubelet** • **🌐 Kube Proxy** • **📚 공식 문서 기반**
+
+*Pod 배치부터 네트워크 관리까지, 워커 노드의 핵심 컴포넌트 완전 이해*
+
+</div>
+
+---
+
+## 📚 Kubernetes 공식 문서 참조
+
+### 🔗 핵심 참조 문서
+- **[kube-scheduler](https://kubernetes.io/docs/concepts/overview/components/#kube-scheduler)** - 스케줄러 개요
+- **[Scheduling Framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)** - 스케줄링 프레임워크
+- **[Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)** - Pod 노드 할당
+- **[kubelet](https://kubernetes.io/docs/concepts/overview/components/#kubelet)** - Kubelet 컴포넌트
+- **[Container Runtime Interface (CRI)](https://kubernetes.io/docs/concepts/architecture/cri/)** - CRI 인터페이스
+- **[kube-proxy](https://kubernetes.io/docs/concepts/overview/components/#kube-proxy)** - Kube Proxy 역할
+- **[Service Networking](https://kubernetes.io/docs/concepts/services-networking/)** - 서비스 네트워킹
+
+### 🔗 스케줄링 전용 문서
+- **[Scheduler Configuration](https://kubernetes.io/docs/reference/scheduling/config/)** - 스케줄러 설정
+- **[Scheduler Profiles](https://kubernetes.io/docs/reference/scheduling/config/#profiles)** - 스케줄러 프로필
+- **[Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)** - Taint/Toleration
+- **[Node Affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity)** - 노드 친화성
+
+### 🔗 Kubelet 전용 문서
+- **[Kubelet Configuration](https://kubernetes.io/docs/reference/config-file/kubelet/)** - Kubelet 설정
+- **[Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)** - Pod 생명주기
+- **[Container Probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes)** - 컨테이너 프로브
+
+---
+
 ## 🎯 필수 요소
 - **Scheduler 알고리즘 동작 원리**
 - **Kubelet 역할과 책임**
@@ -508,3 +542,23 @@ wget -qO- http://service-name.namespace.svc.cluster.local
 2. **로그 분석**: 정기적인 로그 분석으로 잠재적 문제 사전 발견
 3. **백업**: 설정 파일 및 인증서 백업
 4. **복구 절차**: 컴포넌트별 장애 복구 절차 문서화
+
+---
+
+## 📖 추가 학습 자료
+
+### 🔗 심화 문서
+- **[Kubernetes Scheduler](https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/)** - 스케줄러 상세 가이드
+- **[Multiple Schedulers](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)** - 다중 스케줄러 설정
+- **[Kubelet Device Plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)** - 디바이스 플러그인
+- **[Network Plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)** - 네트워크 플러그인
+
+### 📊 모니터링 및 디버깅
+- **[Troubleshooting Applications](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/)** - 애플리케이션 디버깅
+- **[Debug Services](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-service/)** - 서비스 디버깅
+- **[Monitor Node Health](https://kubernetes.io/docs/tasks/debug-application-cluster/monitor-node-health/)** - 노드 상태 모니터링
+
+### 🔧 운영 도구
+- **[crictl](https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/)** - CRI 디버깅 도구
+- **[kubectl](https://kubernetes.io/docs/reference/kubectl/)** - kubectl 명령어 레퍼런스
+- **[Metrics Server](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-usage-monitoring/)** - 리소스 모니터링

@@ -44,31 +44,10 @@
 ### Step 5: 컴포넌트 간 통신 분석 (15분)
 
 #### 5.1 네트워크 통신 확인
-```bash
-# Control Plane 노드에 접속
-docker exec -it lab-cluster-control-plane bash
-
-# 내부에서 네트워크 연결 확인
-netstat -tlnp | grep -E "(6443|2379|2380|10250|10251|10252)"
-
-# 프로세스 확인
-ps aux | grep -E "(kube-apiserver|etcd|kube-controller|kube-scheduler)"
-```
+**스크립트 파일**: [analyze-network.sh](lab_scripts/lab1/analyze-network.sh)
 
 #### 5.2 인증서 체인 분석
-```bash
-# API Server 인증서 확인
-kubectl exec -it -n kube-system $ETCD_POD -- \
-  openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout | head -20
-
-# ETCD 인증서 확인
-kubectl exec -it -n kube-system $ETCD_POD -- \
-  openssl x509 -in /etc/kubernetes/pki/etcd/server.crt -text -noout | head -20
-
-# CA 인증서 확인
-kubectl exec -it -n kube-system $ETCD_POD -- \
-  openssl x509 -in /etc/kubernetes/pki/ca.crt -text -noout | head -20
-```
+**스크립트 파일**: [analyze-certificates.sh](lab_scripts/lab1/analyze-certificates.sh)
 
 ## 📊 결과 분석 및 정리
 

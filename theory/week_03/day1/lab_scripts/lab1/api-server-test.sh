@@ -6,10 +6,19 @@ echo "=== API Server Direct Access Test ==="
 
 echo "1. Getting Authentication Token..."
 
-# ServiceAccount 토큰 획득
-TOKEN=$(kubectl get secret -n kube-system \
-  $(kubectl get serviceaccount default -n kube-system -o jsonpath='{.secrets[0].name}') \
-  -o jsonpath='{.data.token}' | base64 -d)
+# kubectl proxy를 사용하여 인증 문제 해결
+echo "Starting kubectl proxy for authenticated access..."
+kubectl proxy --port=8080 &
+PROXY_PID=$!
+sleep 3
+API_SERVER="http://localhost:8080"
+echo "Using kubectl proxy at $API_SERVER"
+
+# 백업용 토큰 방식도 시도
+TOKEN=$(kubectl create token default -n kube-system --duration=3600s 2>/dev/null)
+if [ ! -z "$TOKEN" ]; then
+    echo "Token also available as backup method"
+fi
 
 # API Server 주소 확인
 API_SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
@@ -17,30 +26,26 @@ echo "API Server: $API_SERVER"
 
 echo "2. Testing Direct API Calls..."
 
-# 직접 API 호출 테스트
+# 직접 API 호출 테스트 (kubectl proxy 사용)
 echo "Getting pods in lab-day1 namespace:"
-curl -k -H "Authorization: Bearer $TOKEN" \
-  $API_SERVER/api/v1/namespaces/lab-day1/pods
+curl -s $API_SERVER/api/v1/namespaces/lab-day1/pods
 
 echo -e "\n3. Checking API Versions..."
 
 # API 버전 확인
 echo "Available API versions:"
-curl -k -H "Authorization: Bearer $TOKEN" \
-  $API_SERVER/api
+curl -s $API_SERVER/api
 
 echo -e "\n4. Collecting API Metrics..."
 
 # 메트릭 엔드포인트 확인
 echo "API Server metrics (first 20 lines):"
-curl -k -H "Authorization: Bearer $TOKEN" \
-  $API_SERVER/metrics | head -20
+curl -s $API_SERVER/metrics | head -20
 
 echo -e "\n5. Analyzing Performance Metrics..."
 
 # API Server 메트릭 수집
-curl -k -H "Authorization: Bearer $TOKEN" \
-  $API_SERVER/metrics > api-metrics.txt
+curl -s $API_SERVER/metrics > api-metrics.txt
 
 # 주요 메트릭 분석
 echo "=== API Server Request Duration ==="
@@ -54,3 +59,9 @@ grep "etcd_request_duration_seconds" api-metrics.txt | head -10
 
 echo "API Server test completed!"
 echo "Metrics saved to api-metrics.txt"
+
+# kubectl proxy 종료
+if [ ! -z "$PROXY_PID" ]; then
+    kill $PROXY_PID 2>/dev/null
+    echo "kubectl proxy stopped"
+fi
