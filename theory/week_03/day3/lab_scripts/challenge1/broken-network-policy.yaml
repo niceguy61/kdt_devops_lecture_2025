@@ -1,0 +1,25 @@
+# 문제 4: 네트워크 정책 차단 - 라벨 불일치
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-policy
+  namespace: eshop-broken
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: wrong-backend  # 의도적 오류: 잘못된 라벨
+    ports:
+    - protocol: TCP
+      port: 5432
+
+# 문제: Network Policy가 'app: wrong-backend' 라벨을 찾지만 
+#       실제 백엔드 Pod는 'app: backend' 라벨을 가짐
+# 해결: 라벨을 'backend'로 수정

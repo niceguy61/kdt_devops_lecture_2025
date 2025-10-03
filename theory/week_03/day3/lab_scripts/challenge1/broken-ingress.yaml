@@ -1,0 +1,31 @@
+# 문제 2: Ingress 라우팅 오류 - 존재하지 않는 서비스 참조
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop-ingress
+  namespace: eshop-broken
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: shop.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nonexistent-frontend-service  # 의도적 오류: 존재하지 않는 서비스
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service  # 올바른 이름이지만 실제로는 wrong-backend-service로 생성됨
+            port:
+              number: 3000
+
+# 문제: Ingress가 'nonexistent-frontend-service'를 참조하지만 실제 서비스는 'frontend-service'
+# 해결: 서비스 이름을 'frontend-service'로 수정
