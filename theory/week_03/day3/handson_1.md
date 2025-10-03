@@ -37,9 +37,10 @@
 
 **목표**: 데이터베이스 접근을 백엔드에서만 허용
 
+**데이터베이스 보안 정책 생성**:
 ```bash
-# 데이터베이스 보안 정책 생성
-kubectl apply -f - <<EOF
+# 데이터베이스 보안 정책 파일 생성
+cat > postgres-security-policy.yaml <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -63,6 +64,9 @@ spec:
   egress:
   - {}  # 모든 아웃바운드 허용 (DNS 등)
 EOF
+
+# 정책 적용
+kubectl apply -f postgres-security-policy.yaml
 ```
 
 **검증**:
@@ -81,7 +85,8 @@ kubectl exec -it deployment/frontend -- nc -zv postgres-service 5432 || echo "�
 
 **프론트엔드 정책**:
 ```bash
-kubectl apply -f - <<EOF
+# 프론트엔드 보안 정책 파일 생성
+cat > frontend-policy.yaml <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -112,6 +117,9 @@ spec:
     - protocol: UDP
       port: 53
 EOF
+
+# 정책 적용
+kubectl apply -f frontend-policy.yaml
 ```
 
 ---
@@ -128,7 +136,8 @@ kubectl delete svc postgres-service
 
 **PostgreSQL StatefulSet 생성**:
 ```bash
-kubectl apply -f - <<EOF
+# PostgreSQL StatefulSet 파일 생성
+cat > postgres-statefulset.yaml <<EOF
 apiVersion: v1
 kind: Service
 metadata:
@@ -208,6 +217,9 @@ spec:
         requests:
           storage: 2Gi
 EOF
+
+# StatefulSet 배포
+kubectl apply -f postgres-statefulset.yaml
 ```
 
 ### Step 2-2: StatefulSet 동작 확인 (10분)
@@ -235,7 +247,8 @@ kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup p
 
 **고성능 SSD StorageClass**:
 ```bash
-kubectl apply -f - <<EOF
+# StorageClass 파일 생성
+cat > storage-classes.yaml <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -259,13 +272,17 @@ reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
 EOF
+
+# StorageClass 적용
+kubectl apply -f storage-classes.yaml
 ```
 
 ### Step 3-2: 캐시용 고성능 스토리지 추가 (10분)
 
 **Redis 캐시 서버 배포**:
 ```bash
-kubectl apply -f - <<EOF
+# Redis 캐시 서버 파일 생성
+cat > redis-cache.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -326,6 +343,9 @@ spec:
   - port: 6379
     targetPort: 6379
 EOF
+
+# Redis 배포
+kubectl apply -f redis-cache.yaml
 ```
 
 ---
@@ -357,8 +377,8 @@ while true; do wget -q -O- http://frontend-service/; done
 ### Step 4-2: VPA (Vertical Pod Autoscaler) 설정 (5분)
 
 ```bash
-# VPA 설정 (VPA가 설치된 경우)
-kubectl apply -f - <<EOF
+# VPA 설정 파일 생성 (VPA가 설치된 경우)
+cat > redis-vpa.yaml <<EOF
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -381,6 +401,9 @@ spec:
         cpu: 50m
         memory: 64Mi
 EOF
+
+# VPA 적용
+kubectl apply -f redis-vpa.yaml
 ```
 
 ---
@@ -408,8 +431,8 @@ kubectl get pods -l app=postgres-cluster -o custom-columns=NAME:.metadata.name,P
 
 ### 스토리지 성능 테스트:
 ```bash
-# 스토리지 성능 테스트 Pod
-kubectl apply -f - <<EOF
+# 스토리지 성능 테스트 Pod 파일 생성
+cat > storage-test.yaml <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -442,6 +465,9 @@ spec:
     requests:
       storage: 1Gi
 EOF
+
+# 테스트 Pod 배포
+kubectl apply -f storage-test.yaml
 
 # 성능 테스트 실행
 kubectl exec -it storage-test -n shop-app -- dd if=/dev/zero of=/test/testfile bs=1M count=100
@@ -484,8 +510,8 @@ kubectl label namespace shop-app istio-injection=enabled
 
 ### 3. 백업 자동화
 ```bash
-# CronJob으로 정기 데이터베이스 백업
-kubectl apply -f - <<EOF
+# CronJob으로 정기 데이터베이스 백업 파일 생성
+cat > postgres-backup-cronjob.yaml <<EOF
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -514,6 +540,9 @@ spec:
               claimName: backup-pvc
           restartPolicy: OnFailure
 EOF
+
+# 백업 CronJob 배포
+kubectl apply -f postgres-backup-cronjob.yaml
 ```
 
 ---
