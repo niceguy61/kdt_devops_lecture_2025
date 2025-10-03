@@ -1,263 +1,335 @@
-# Challenge 1: 고장난 클러스터 복구하기 (90분)
+# Challenge 1: 웹 애플리케이션 배포 문제 해결 (60분)
 
 ## 🎯 Challenge 목표
 **시나리오**: 
-"TechStart" 스타트업의 개발팀이 새로운 Kubernetes 클러스터를 구축했지만, 
-설정 실수로 인해 여러 컴포넌트에 장애가 발생했습니다. 
-DevOps 엔지니어로서 시스템을 진단하고 복구해야 합니다.
+"WebStart" 스타트업의 개발팀이 첫 번째 웹 애플리케이션을 Kubernetes에 배포했지만, 
+사용자들이 웹사이트에 접근할 수 없다고 신고했습니다. 
+주니어 DevOps 엔지니어로서 문제를 찾아 해결해야 합니다.
 
-## 🏗️ 시스템 아키텍처
+## 🌐 애플리케이션 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Broken Cluster Architecture"
-        subgraph "Control Plane (Master Node)"
-            A[API Server<br/>❌ 포트 오류]
-            B[ETCD<br/>❌ 연결 실패]
-            C[Controller Manager<br/>❌ 인증 오류]
-            D[Scheduler<br/>❌ 설정 오류]
+    subgraph "사용자"
+        U1[웹 브라우저]
+        U2[모바일 앱]
+    end
+    
+    subgraph "Kubernetes 클러스터"
+        subgraph "Frontend"
+            F1[웹 서버 Pod<br/>❌ 포트 오류]
+            F2[웹 서버 Pod<br/>❌ 이미지 오류]
         end
         
-        subgraph "Worker Node 1"
-            E1[Kubelet<br/>❌ 인증서 만료]
-            F1[Kube Proxy<br/>⚠️ 설정 오류]
-            G1[Container Runtime<br/>✅ 정상]
+        subgraph "Backend"
+            B1[API 서버 Pod<br/>❌ 환경변수 오류]
+            B2[API 서버 Pod<br/>❌ 리소스 부족]
         end
         
-        subgraph "Worker Node 2"
-            E2[Kubelet<br/>❌ 네트워크 오류]
-            F2[Kube Proxy<br/>❌ CNI 오류]
-            G2[Container Runtime<br/>✅ 정상]
-        end
-        
-        subgraph "Network Layer"
-            N1[CNI Plugin<br/>❌ 설정 손상]
-            N2[CoreDNS<br/>❌ 시작 실패]
+        subgraph "Services"
+            S1[Frontend Service<br/>⚠️ 잘못된 포트]
+            S2[Backend Service<br/>⚠️ 잘못된 셀렉터]
         end
     end
     
-    A -.->|연결 실패| B
-    A -.->|인증 실패| E1
-    A -.->|네트워크 오류| E2
+    U1 --> S1
+    U2 --> S1
+    S1 -.->|연결 실패| F1
+    S1 -.->|연결 실패| F2
+    S2 -.->|연결 실패| B1
+    S2 -.->|연결 실패| B2
     
-    style A fill:#ff6b6b
-    style B fill:#ff6b6b
-    style C fill:#ff6b6b
-    style D fill:#ff6b6b
-    style E1,E2 fill:#ff6b6b
-    style F1 fill:#feca57
-    style F2 fill:#ff6b6b
-    style N1,N2 fill:#ff6b6b
-    style G1,G2 fill:#96ceb4
+    style F1,F2 fill:#ff6b6b
+    style B1,B2 fill:#ff6b6b
+    style S1,S2 fill:#feca57
+    style U1,U2 fill:#96ceb4
 ```
 
-## 🔧 구현 요구사항
+## 🚀 Challenge 시작하기
 
-### 초기 클러스터 상태
-```yaml
-# 예상되는 클러스터 상태
-cluster_status:
-  api_server: "Connection refused"
-  etcd: "Unhealthy"
-  nodes: "NotReady"
-  pods: "Pending/Failed"
-  services: "Unreachable"
+### 📋 사전 준비
+```bash
+# 작업 디렉토리 생성
+mkdir -p ~/k8s-challenge1
+cd ~/k8s-challenge1
+
+# Challenge용 문제 애플리케이션 배포
+./lab_scripts/challenge1/deploy-broken-app.sh
 ```
 
-### 복구 목표
-```yaml
-# 목표 클러스터 상태
-target_status:
-  api_server: "Healthy"
-  etcd: "Healthy"
-  nodes: "Ready"
-  pods: "Running"
-  services: "Accessible"
-  dns: "Resolving"
-```
+---
 
-## ⚠️ 의도적 오류 시나리오
+## ⚠️ 문제 시나리오들
 
-### 시나리오 1: API Server 설정 오류 (20분)
+### 시나리오 1: 웹사이트 접근 불가 - 포트 문제 (15분)
 
-**상황**: API Server가 시작되지 않고 kubectl 명령어가 모두 실패
-
-**오류 설정 파일**: [broken-apiserver.yaml](./lab_scripts/challenge1/broken-apiserver.yaml)
+**상황**: 사용자가 웹사이트에 접근하려고 하지만 "연결할 수 없음" 오류 발생
 
 **증상**:
 ```bash
-# 다음 명령어들이 모두 실패
-kubectl cluster-info
-# Error: connection refused
+# 브라우저에서 접근 시도
+curl http://localhost:30080
+# curl: (7) Failed to connect to localhost port 30080: Connection refused
 
-kubectl get nodes
-# Error: Unable to connect to the server
-
-curl -k https://localhost:6443/api/v1
-# curl: (7) Failed to connect to localhost port 6443
+# Pod는 정상 실행 중
+kubectl get pods
+# NAME                        READY   STATUS    RESTARTS   AGE
+# frontend-xxx                1/1     Running   0          5m
 ```
 
+**문제 파일**: [broken-frontend-service.yaml](./lab_scripts/challenge1/broken-frontend-service.yaml)
+
 **진단 과정**:
-**스크립트 파일**: [diagnose-apiserver.sh](./lab_scripts/challenge1/diagnose-apiserver.sh)
+```bash
+# 1. Pod 상태 확인
+kubectl get pods -l app=frontend
+
+# 2. Service 상태 확인  
+kubectl get svc frontend-service
+
+# 3. Service 상세 정보 확인
+kubectl describe svc frontend-service
+
+# 4. Pod 포트 확인
+kubectl describe pod <frontend-pod-name>
+```
 
 **해결 단계**:
-**스크립트 파일**: [fix-apiserver.sh](./lab_scripts/challenge1/fix-apiserver.sh)
+1. Service와 Pod의 포트 매핑 확인
+2. targetPort 수정
+3. 서비스 재배포
+4. 접근 테스트
 
-### 시나리오 2: ETCD 연결 문제 (25분)
+### 시나리오 2: API 서버 응답 없음 - 환경변수 문제 (15분)
 
-**상황**: ETCD 클러스터가 비정상 상태이고 데이터 접근 불가
-
-**오류 설정 파일**: [broken-etcd.yaml](./lab_scripts/challenge1/broken-etcd.yaml)
+**상황**: 프론트엔드는 로드되지만 데이터가 표시되지 않음
 
 **증상**:
 ```bash
-# ETCD 상태 확인 실패
-kubectl exec -n kube-system etcd-master -- \
-  etcdctl --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  endpoint health
-# Error: context deadline exceeded
+# API 엔드포인트 테스트
+curl http://localhost:30081/api/health
+# {"error": "Database connection failed"}
+
+# Pod 로그 확인
+kubectl logs <api-pod-name>
+# Error: connect ECONNREFUSED database:5432
 ```
 
+**문제 파일**: [broken-api-deployment.yaml](./lab_scripts/challenge1/broken-api-deployment.yaml)
+
 **진단 과정**:
-**스크립트 파일**: [diagnose-etcd.sh](./lab_scripts/challenge1/diagnose-etcd.sh)
+```bash
+# 1. API Pod 로그 확인
+kubectl logs -l app=api-server
+
+# 2. 환경변수 확인
+kubectl describe pod <api-pod-name>
+
+# 3. ConfigMap/Secret 확인
+kubectl get configmap
+kubectl get secret
+```
 
 **해결 단계**:
-**스크립트 파일**: [fix-etcd.sh](./lab_scripts/challenge1/fix-etcd.sh)
+1. 환경변수 값 확인
+2. 올바른 데이터베이스 호스트명으로 수정
+3. Deployment 재배포
+4. API 응답 테스트
 
-### 시나리오 3: Kubelet 인증서 만료 (25분)
+### 시나리오 3: Pod 시작 실패 - 이미지 문제 (15분)
 
-**상황**: Worker 노드의 Kubelet이 API Server와 통신할 수 없음
-
-**오류 설정 파일**: [broken-kubelet.conf](./lab_scripts/challenge1/broken-kubelet.conf)
+**상황**: 새로운 버전 배포 후 Pod가 시작되지 않음
 
 **증상**:
 ```bash
-# 노드가 NotReady 상태
-kubectl get nodes
-# NAME      STATUS     ROLES    AGE   VERSION
-# master    Ready      master   1h    v1.28.0
-# worker1   NotReady   <none>   1h    v1.28.0
+# Pod 상태 확인
+kubectl get pods
+# NAME                        READY   STATUS         RESTARTS   AGE
+# frontend-v2-xxx             0/1     ErrImagePull   0          2m
 
-# Kubelet 로그에서 인증 오류
-sudo journalctl -u kubelet -f
-# certificate has expired or is not yet valid
+# 상세 정보 확인
+kubectl describe pod <pod-name>
+# Failed to pull image "nginx:nonexistent-tag": rpc error: code = NotFound
 ```
 
+**문제 파일**: [broken-frontend-v2.yaml](./lab_scripts/challenge1/broken-frontend-v2.yaml)
+
 **진단 과정**:
-**스크립트 파일**: [diagnose-kubelet.sh](./lab_scripts/challenge1/diagnose-kubelet.sh)
+```bash
+# 1. Pod 이벤트 확인
+kubectl describe pod <pod-name>
+
+# 2. 이미지 태그 확인
+kubectl get deployment <deployment-name> -o yaml | grep image
+
+# 3. 사용 가능한 이미지 태그 확인 (Docker Hub)
+```
 
 **해결 단계**:
-**스크립트 파일**: [fix-kubelet.sh](./lab_scripts/challenge1/fix-kubelet.sh)
+1. 올바른 이미지 태그 확인
+2. Deployment 이미지 수정
+3. 롤아웃 상태 확인
+4. Pod 정상 시작 확인
 
-### 시나리오 4: 네트워크 플러그인 오류 (20분)
+### 시나리오 4: 서비스 연결 실패 - 라벨 셀렉터 문제 (15분)
 
-**상황**: CNI 플러그인 설정 오류로 Pod 간 통신 불가
-
-**오류 설정 파일**: 
-- [broken-cni-config.json](./lab_scripts/challenge1/broken-cni-config.json)
-- [broken-calico-kubeconfig](./lab_scripts/challenge1/broken-calico-kubeconfig)
+**상황**: Pod는 실행 중이지만 Service를 통한 접근이 불가능
 
 **증상**:
 ```bash
-# Pod가 ContainerCreating 상태에서 멈춤
-kubectl get pods --all-namespaces
-# coredns pods are in Pending state
+# Service 엔드포인트 확인
+kubectl get endpoints
+# NAME              ENDPOINTS   AGE
+# backend-service   <none>      10m
 
-# CNI 오류 로그
-kubectl describe pod <coredns-pod> -n kube-system
-# Warning: FailedCreatePodSandBox: Failed to create pod sandbox
+# Pod는 정상 실행
+kubectl get pods -l app=backend
+# NAME                       READY   STATUS    RESTARTS   AGE
+# backend-xxx                1/1     Running   0          10m
 ```
 
+**문제 파일**: [broken-backend-service.yaml](./lab_scripts/challenge1/broken-backend-service.yaml)
+
 **진단 과정**:
-**스크립트 파일**: [diagnose-cni.sh](./lab_scripts/challenge1/diagnose-cni.sh)
+```bash
+# 1. Service 엔드포인트 확인
+kubectl get endpoints backend-service
+
+# 2. Service 셀렉터 확인
+kubectl describe svc backend-service
+
+# 3. Pod 라벨 확인
+kubectl get pods --show-labels
+```
 
 **해결 단계**:
-**스크립트 파일**: [fix-cni.sh](./lab_scripts/challenge1/fix-cni.sh)
+1. Service selector와 Pod labels 비교
+2. 일치하지 않는 라벨 수정
+3. Service 재배포
+4. Endpoints 생성 확인
 
 ## 🎯 성공 기준
 
 ### 기능적 요구사항
-- [ ] kubectl 명령어 정상 동작
-- [ ] 모든 노드가 Ready 상태
-- [ ] 시스템 Pod들이 Running 상태
-- [ ] Pod 간 네트워크 통신 가능
-- [ ] DNS 해결 정상 동작
+- [ ] 웹사이트 정상 접근 가능 (http://localhost:30080)
+- [ ] API 서버 정상 응답 (http://localhost:30081/api/health)
+- [ ] 모든 Pod가 Running 상태
+- [ ] 모든 Service에 Endpoints 존재
 
-### 성능 요구사항
-- [ ] API Server 응답 시간 < 1초
-- [ ] Pod 생성 시간 < 30초
-- [ ] 네트워크 지연시간 < 10ms
-- [ ] ETCD 응답 시간 < 100ms
+### 사용자 경험 요구사항
+- [ ] 웹페이지 로딩 시간 < 3초
+- [ ] API 응답 시간 < 1초
+- [ ] 에러 메시지 없이 정상 동작
+- [ ] 데이터 정상 표시
 
-### 안정성 요구사항
-- [ ] 모든 컴포넌트 헬스체크 통과
-- [ ] 로그에 ERROR 메시지 없음
-- [ ] 인증서 유효성 확인
-- [ ] 백업 및 복구 절차 수립
+## 🛠️ 도구 및 명령어 가이드
+
+### 기본 진단 명령어
+```bash
+# Pod 상태 확인
+kubectl get pods
+kubectl get pods -o wide
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+
+# Service 상태 확인
+kubectl get svc
+kubectl describe svc <service-name>
+kubectl get endpoints
+
+# 네트워크 테스트
+curl http://localhost:<port>
+kubectl port-forward pod/<pod-name> 8080:80
+```
+
+### 문제 해결 명령어
+```bash
+# 설정 수정
+kubectl edit deployment <deployment-name>
+kubectl edit service <service-name>
+
+# 재배포
+kubectl rollout restart deployment <deployment-name>
+kubectl rollout status deployment <deployment-name>
+
+# 리소스 재생성
+kubectl delete -f <file.yaml>
+kubectl apply -f <file.yaml>
+```
 
 ## 🏆 도전 과제 (보너스)
 
-### 고급 복구 기능 (+15점)
-1. **자동 복구 스크립트**: 일반적인 오류를 자동으로 감지하고 복구하는 스크립트 작성
-2. **모니터링 대시보드**: Prometheus + Grafana로 클러스터 상태 모니터링
-3. **백업 자동화**: ETCD 백업 자동화 및 복원 테스트
-4. **고가용성 구성**: 마스터 노드 3개로 HA 클러스터 구성
+### 추가 기능 구현 (+10점)
+1. **Health Check 추가**: Liveness/Readiness Probe 설정
+2. **로드밸런싱 테스트**: 여러 Pod 간 트래픽 분산 확인
+3. **롤링 업데이트**: 무중단 배포 테스트
+4. **모니터링 추가**: 기본 메트릭 수집 설정
 
-### 창의적 해결책 (+10점)
-1. **진단 도구**: 클러스터 문제를 자동으로 진단하는 도구 개발
-2. **복구 플레이북**: 단계별 복구 가이드 문서화
-3. **테스트 자동화**: 복구 후 기능 테스트 자동화
-4. **알림 시스템**: 장애 발생 시 자동 알림 시스템
+### 자동화 스크립트 (+5점)
+1. **자동 진단**: 문제를 자동으로 찾는 스크립트
+2. **자동 복구**: 일반적인 문제를 자동으로 해결
+3. **상태 모니터링**: 지속적인 상태 확인
+4. **알림 시스템**: 문제 발생 시 알림
 
-## 📊 평가 매트릭스
+## 📊 평가 기준
 
-| 영역 | 기본 (60%) | 우수 (80%) | 탁월 (100%) |
-|------|------------|------------|--------------|
-| **문제 진단** | 증상 파악 | 근본 원인 분석 | 예방 대책 수립 |
-| **복구 속도** | 90분 내 완료 | 60분 내 완료 | 45분 내 완료 |
-| **문서화** | 기본 해결 과정 | 상세 분석 보고서 | 재발 방지 가이드 |
-| **협업** | 개별 문제 해결 | 팀 내 지식 공유 | 전체 팀 멘토링 |
+| 시나리오 | 기본 (15점) | 우수 (20점) | 탁월 (25점) |
+|----------|-------------|-------------|-------------|
+| **시나리오 1** | 포트 문제 해결 | 근본 원인 설명 | 예방 방법 제시 |
+| **시나리오 2** | 환경변수 수정 | 설정 관리 방법 | 자동화 구현 |
+| **시나리오 3** | 이미지 태그 수정 | 이미지 관리 전략 | CI/CD 연계 |
+| **시나리오 4** | 라벨 매칭 해결 | 서비스 설계 원칙 | 네트워크 최적화 |
 
 ## 💡 힌트 및 팁
 
-### 디버깅 체크리스트
+### 문제 해결 순서
+1. **증상 파악**: 무엇이 작동하지 않는가?
+2. **로그 확인**: 오류 메시지에서 단서 찾기
+3. **설정 비교**: 예상값과 실제값 비교
+4. **단계적 테스트**: 한 번에 하나씩 수정
+5. **결과 검증**: 수정 후 동작 확인
+
+### 자주 하는 실수들
+- **포트 번호 혼동**: containerPort vs targetPort vs port
+- **라벨 오타**: selector와 labels의 불일치
+- **이미지 태그**: 존재하지 않는 태그 사용
+- **환경변수**: 대소문자나 특수문자 실수
+
+### 유용한 디버깅 팁
 ```bash
-# 1. 클러스터 전체 상태 확인
-kubectl cluster-info
-kubectl get nodes
-kubectl get pods --all-namespaces
+# Pod 내부 접속하여 직접 확인
+kubectl exec -it <pod-name> -- /bin/bash
 
-# 2. 시스템 컴포넌트 상태 확인
-kubectl get componentstatuses
-sudo systemctl status kubelet
-sudo systemctl status docker
+# 포트 포워딩으로 직접 테스트
+kubectl port-forward <pod-name> 8080:80
 
-# 3. 로그 분석
-sudo journalctl -u kubelet -f
-kubectl logs -n kube-system <pod-name>
-
-# 4. 네트워크 연결 확인
-sudo netstat -tlnp | grep -E "(6443|2379|10250)"
-ping <node-ip>
-
-# 5. 인증서 확인
-sudo openssl x509 -in <cert-file> -text -noout | grep -A2 Validity
+# 임시 테스트 Pod 생성
+kubectl run test --image=busybox -it --rm -- /bin/sh
 ```
 
-### 문제 해결 순서
-1. **증상 파악**: 어떤 기능이 동작하지 않는가?
-2. **로그 분석**: 오류 메시지에서 단서 찾기
-3. **설정 확인**: 설정 파일의 오타나 잘못된 값 확인
-4. **네트워크 확인**: 포트, 방화벽, DNS 설정 확인
-5. **인증서 확인**: 만료, 권한, 경로 확인
-6. **단계적 복구**: 한 번에 하나씩 문제 해결
-7. **검증**: 복구 후 전체 기능 테스트
+## ✅ 성공 검증
 
-### 복구 후 검증 스크립트
-**스크립트 파일**: [verify-recovery.sh](./lab_scripts/challenge1/verify-recovery.sh)
+### 최종 확인 스크립트
+**검증 스크립트**: [verify-success.sh](./lab_scripts/challenge1/verify-success.sh)
 
-이 Challenge를 통해 실제 운영 환경에서 발생할 수 있는 다양한 Kubernetes 클러스터 장애 상황을 경험하고, 
-체계적인 문제 해결 능력과 클러스터 복구 기술을 습득할 수 있습니다! 🚀
+```bash
+# 전체 애플리케이션 상태 검증
+./lab_scripts/challenge1/verify-success.sh
+```
+
+**검증 항목**:
+- ✅ 모든 Pod Running 상태
+- ✅ 모든 Service Endpoints 존재
+- ✅ 웹사이트 접근 가능
+- ✅ API 서버 정상 응답
+- ✅ 데이터 정상 표시
+
+---
+
+<div align="center">
+
+**🎯 실무 중심** • **🔧 문제 해결** • **📈 단계적 학습**
+
+*Kubernetes 첫 걸음을 위한 실전 문제 해결 경험*
+
+</div>
