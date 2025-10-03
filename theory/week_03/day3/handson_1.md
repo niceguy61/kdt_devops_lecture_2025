@@ -40,8 +40,8 @@
 **데이터베이스 보안 정책 생성**:
 
 ** postgres-security-policy.yaml **
-```bash
 # 데이터베이스 보안 정책 파일 생성
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -64,7 +64,9 @@ spec:
       port: 5432
   egress:
   - {}  # 모든 아웃바운드 허용 (DNS 등)
+```
 
+```bash
 # 정책 적용
 kubectl apply -f postgres-security-policy.yaml
 ```
