@@ -93,15 +93,15 @@ graph TB
 **1. Filtering Phase (필터링 단계)**:
 ```mermaid
 flowchart TD
-    A[All Nodes] --> B{Sufficient Resources?}
-    B -->|No| X1[❌ Exclude Node]
-    B -->|Yes| C{Node Selector Match?}
-    C -->|No| X2[❌ Exclude Node]
-    C -->|Yes| D{Tolerate Taints?}
-    D -->|No| X3[❌ Exclude Node]
-    D -->|Yes| E{Affinity Rules?}
-    E -->|No| X4[❌ Exclude Node]
-    E -->|Yes| F[✅ Feasible Node]
+    A[모든 노드] --> B{충분한 리소스?}
+    B -->|아니오| X1[❌ 노드 제외]
+    B -->|예| C{노드 셀렉터 일치?}
+    C -->|아니오| X2[❌ 노드 제외]
+    C -->|예| D{노드 제약 조건 통과?}
+    D -->|아니오| X3[❌ 노드 제외]
+    D -->|예| E{친화성 규칙?}
+    E -->|아니오| X4[❌ 노드 제외]
+    E -->|예| F[✅ 적합한 노드]
     
     style A fill:#e8f5e8
     style F fill:#e0f2f1
@@ -119,7 +119,7 @@ scoringWeights:
   NodeAffinity: 2              # 노드 친화성
   InterPodAffinity: 2          # Pod 간 친화성
   NodePreferAvoidPods: 10000   # Pod 회피 선호
-  TaintToleration: 3           # Taint 허용도
+  TaintToleration: 3           # 노드 제약 조건 점수
   ImageLocality: 1             # 이미지 지역성
   SelectorSpread: 1            # 셀렉터 분산
   VolumeBinding: 1             # 볼륨 바인딩
