@@ -201,60 +201,30 @@ kubectl apply -f privileged-pod.yaml
 
 ### Step 2-1: ETCD 암호화 설정 (15분)
 
-**⚠️ 이 내용은 이론 학습으로만 진행합니다**
+**⚠️ 이 내용은 이론 학습만 진행합니다**
 
-ETCD 암호화는 API Server 설정 파일 수정이 필요하여 실습 환경에서 클러스터가 중단될 위험이 있습니다.  
+ETCD 암호화는 API Server 설정 파일 수정이 필요하여 **실습 환경에서 클러스터가 중단됩니다**.  
 **개념만 이해하고 Step 2-2로 이동하세요.**
 
 ---
 
-**실습 시도 (선택사항 - 위험)**
-
-자동화 스크립트가 모든 과정을 처리합니다:
-
-```bash
-cd theory/week_03/day4/lab_scripts/handson1
-./setup-etcd-encryption.sh
-```
-
-**스크립트가 하는 일**:
-1. Kind 클러스터 자동 감지
-2. 컨테이너 내부에서 암호화 설정 파일 생성
-3. API Server 설정 자동 수정
-4. API Server 재시작 확인
-
-**스크립트 파일**: [setup-etcd-encryption.sh](./lab_scripts/handson1/setup-etcd-encryption.sh)
-
-**실패 시 복구**:
-```bash
-CLUSTER_NAME=$(kind get clusters | head -1)
-docker exec -it ${CLUSTER_NAME}-control-plane bash
-cp /etc/kubernetes/manifests/kube-apiserver.yaml.backup \
-   /etc/kubernetes/manifests/kube-apiserver.yaml
-exit
-```
-
----
-
-**이론 학습 (권장)**
-
 **ETCD 암호화란?**
 
-Kubernetes는 모든 데이터를 ETCD에 저장하는데, 기본적으로 **평문(Plain Text)**으로 저장됩니다.  
-Secret 리소스도 base64 인코딩만 되어 있어 쉽게 복호화 가능합니다.
+Kubernetes는 모든 데이터를 ETCD에 저장하는데, 기본적으로 **평문(Plain Text)**으로 저장됩니다.
 
 **문제점**:
 ```bash
 # ETCD에 직접 접근하면 Secret 내용이 그대로 보임
 etcdctl get /registry/secrets/default/my-secret
-# 출력: password=supersecret (평문으로 보임!)
+# 출력: password=supersecret (평문!)
 ```
 
-**해결책: ETCD 암호화**
+**해결책: 암호화 설정**
+
+**1. 암호화 설정 파일** (`/etc/kubernetes/encryption-config.yaml`):
 
 **예제 파일**: [encryption-config.yaml](./lab_scripts/handson1/encryption-config.yaml)
 
-1. **암호화 설정 파일 생성** (`/etc/kubernetes/encryption-config.yaml`):
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
@@ -266,45 +236,29 @@ resources:
         keys:
         - name: key1
           secret: <32바이트 랜덤 키>
-    - identity: {}  # 암호화 실패 시 평문 저장
+    - identity: {}  # 암호화 실패 시 평문
 ```
 
-**암호화 키 생성 방법**:
-```bash
-# 32바이트 랜덤 키 생성
-head -c 32 /dev/urandom | base64
-# 출력 예: Kv3L9J8H2mN5pQ7rT1wX4yZ6aB8cD0eF1gH3iJ5kL7mN9o=
-```
+**2. API Server 설정 수정**:
 
-2. **API Server에 설정 적용**:
+**수정 예제**: [kube-apiserver-encryption-patch.yaml](./lab_scripts/handson1/kube-apiserver-encryption-patch.yaml)
 
-**추가할 내용**: [kube-apiserver-encryption-patch.yaml](./lab_scripts/handson1/kube-apiserver-encryption-patch.yaml)
-
-파일 위치: `/etc/kubernetes/manifests/kube-apiserver.yaml`
-
-추가할 3가지:
-- API Server 시작 옵션에 `--encryption-provider-config` 추가
-- 설정 파일을 컨테이너에 마운트 (volumeMounts)
-- 호스트 파일 연결 (volumes)
+- API Server 시작 옵션 추가
+- 설정 파일 마운트
 - API Server 재시작
 
-3. **결과**:
+**3. 결과**:
 ```bash
-# 암호화 후 ETCD 조회
+# 암호화 후
 etcdctl get /registry/secrets/default/my-secret
-# 출력: k8s:enc:aescbc:v1:key1:암호화된데이터... (평문 안 보임!)
+# 출력: k8s:enc:aescbc:v1:key1:암호화된데이터...
 ```
 
-**프로덕션 환경 적용 시 고려사항**:
-- ✅ **키 관리**: 암호화 키를 안전하게 보관 (KMS 사용 권장)
-- ✅ **키 로테이션**: 주기적으로 암호화 키 변경
-- ✅ **성능**: 약 5-10% 성능 오버헤드 발생
-- ✅ **백업**: 암호화 키 없으면 데이터 복구 불가
-
-**실무 권장사항**:
-- 관리형 Kubernetes(EKS, GKE, AKS)는 자동으로 암호화 제공
-- 자체 구축 클러스터는 반드시 ETCD 암호화 적용
-- 클라우드 KMS(AWS KMS, Google Cloud KMS) 연동 권장
+**프로덕션 권장사항**:
+- ✅ 관리형 Kubernetes(EKS, GKE, AKS)는 자동 암호화 제공
+- ✅ 자체 구축 시 반드시 적용
+- ✅ 클라우드 KMS 연동 권장
+- ✅ 주기적인 키 로테이션
 
 ---
 
