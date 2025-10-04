@@ -13,19 +13,19 @@ kubectl label namespace production \
   pod-security.kubernetes.io/enforce- \
   pod-security.kubernetes.io/audit- \
   pod-security.kubernetes.io/warn- \
-  --ignore-not-found=true
+  2>&1 || true
 
 kubectl label namespace development \
   pod-security.kubernetes.io/enforce- \
   pod-security.kubernetes.io/audit- \
   pod-security.kubernetes.io/warn- \
-  --ignore-not-found=true
+  2>&1 || true
 
 # 테스트 Pod 삭제
 echo "2/4 테스트 리소스 삭제 중..."
-kubectl delete pod secure-app -n production --ignore-not-found=true
-kubectl delete pod privileged-app -n production --ignore-not-found=true
-kubectl delete secret test-secret -n production --ignore-not-found=true
+kubectl delete pod secure-app -n production 2>&1 || true
+kubectl delete pod privileged-app -n production 2>&1 || true
+kubectl delete secret test-secret -n production 2>&1 || true
 
 # External Secrets 삭제 (설치된 경우)
 echo "3/4 External Secrets 확인 중..."
@@ -34,7 +34,7 @@ if kubectl get namespace external-secrets-system &>/dev/null; then
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         helm uninstall external-secrets -n external-secrets-system 2>/dev/null || true
-        kubectl delete namespace external-secrets-system --ignore-not-found=true
+        kubectl delete namespace external-secrets-system 2>&1 || true
         echo "External Secrets 삭제 완료"
     else
         echo "External Secrets 유지"
