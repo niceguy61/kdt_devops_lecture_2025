@@ -1,5 +1,3 @@
-# 문제 4: 네트워크 정책 차단 - 라벨 불일치
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
