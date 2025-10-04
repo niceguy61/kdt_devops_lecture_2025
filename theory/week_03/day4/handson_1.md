@@ -236,26 +236,56 @@ sudo cat /etc/kubernetes/encryption-config.yaml
 **API Server 설정 업데이트**:
 
 ```bash
-# kube-apiserver.yaml 수정
-# WSL/Linux: /etc/kubernetes/manifests/kube-apiserver.yaml
-# Kind/Minikube: 클러스터 내부 설정 필요
+# kube-apiserver.yaml 백업
+sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
+       /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 
-# 추가할 설정:
-# --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+# 설정 파일 수정
+sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+```
 
-# volumeMounts 추가:
-# - name: encryption-config
-#   mountPath: /etc/kubernetes/encryption-config.yaml
-#   readOnly: true
+**추가할 내용**:
 
-# volumes 추가:
-# - name: encryption-config
-#   hostPath:
-#     path: /etc/kubernetes/encryption-config.yaml
-#     type: File
+1. `spec.containers[0].command` 섹션에 추가:
+```yaml
+- --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+```
 
-# API Server 재시작 후 확인
+2. `spec.containers[0].volumeMounts` 섹션에 추가:
+```yaml
+- name: encryption-config
+  mountPath: /etc/kubernetes/encryption-config.yaml
+  readOnly: true
+```
+
+3. `spec.volumes` 섹션에 추가:
+```yaml
+- name: encryption-config
+  hostPath:
+    path: /etc/kubernetes/encryption-config.yaml
+    type: File
+```
+
+**자동 적용 스크립트** (선택사항):
+```bash
+# yq 도구가 설치되어 있는 경우
+sudo yq eval '.spec.containers[0].command += ["--encryption-provider-config=/etc/kubernetes/encryption-config.yaml"]' \
+  -i /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# API Server 자동 재시작 대기 (약 30초)
+sleep 30
 kubectl get pods -n kube-system | grep kube-apiserver
+```
+
+**Kind/Minikube 환경**:
+```bash
+# Kind 클러스터의 경우
+docker exec -it kind-control-plane bash
+# 위 설정을 컨테이너 내부에서 수행
+
+# Minikube의 경우
+minikube ssh
+sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
 **암호화 검증**:
