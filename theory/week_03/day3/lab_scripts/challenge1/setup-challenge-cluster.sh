@@ -17,6 +17,27 @@ if kind get clusters 2>/dev/null | grep -q "challenge-cluster"; then
     echo "📋 노드 상태:"
     kubectl get nodes
     
+    # Ingress Controller 확인
+    echo ""
+    echo "🔍 Ingress Controller 확인 중..."
+    if kubectl get pods -n ingress-nginx 2>/dev/null | grep -q "ingress-nginx-controller"; then
+        echo "✅ Ingress Controller 이미 설치됨"
+    else
+        echo "🏷️  노드에 ingress-ready 라벨 추가 중..."
+        kubectl label node challenge-cluster-control-plane ingress-ready=true --overwrite
+        
+        echo "📦 Ingress Controller 설치 중..."
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/kind/deploy.yaml
+        
+        echo "⏳ Ingress Controller 준비 대기 중..."
+        kubectl wait --namespace ingress-nginx \
+          --for=condition=ready pod \
+          --selector=app.kubernetes.io/component=controller \
+          --timeout=90s
+        
+        echo "✅ Ingress Controller 설치 완료"
+    fi
+    
     echo ""
     echo "✅ 기존 클러스터 사용 준비 완료!"
     echo "   다음 명령어로 문제 시스템을 배포하세요:"
@@ -43,6 +64,24 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "📋 노드 상태:"
     kubectl get nodes
+    
+    # 노드에 ingress-ready 라벨 추가
+    echo ""
+    echo "🏷️  노드에 ingress-ready 라벨 추가 중..."
+    kubectl label node challenge-cluster-control-plane ingress-ready=true --overwrite
+    
+    # Ingress Controller 설치
+    echo ""
+    echo "📦 Ingress Controller 설치 중..."
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/kind/deploy.yaml
+    
+    echo "⏳ Ingress Controller 준비 대기 중..."
+    kubectl wait --namespace ingress-nginx \
+      --for=condition=ready pod \
+      --selector=app.kubernetes.io/component=controller \
+      --timeout=90s
+    
+    echo "✅ Ingress Controller 설치 완료"
     
     echo ""
     echo "✅ Challenge 3용 클러스터 준비 완료!"

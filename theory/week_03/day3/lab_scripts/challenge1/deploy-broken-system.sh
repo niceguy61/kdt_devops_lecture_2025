@@ -16,6 +16,15 @@ kubectl apply -f broken-backend-service.yaml
 echo "🎨 프론트엔드 배포 중..."
 kubectl apply -f frontend-deployment.yaml
 
+echo "⏳ Ingress Controller 준비 대기 중..."
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s 2>/dev/null || echo "⚠️  Ingress Controller 대기 시간 초과 (계속 진행)"
+
+# Admission webhook 문제 회피
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission 2>/dev/null || true
+
 echo "🌐 Ingress 배포 중 (라우팅 오류 포함)..."
 kubectl apply -f broken-ingress.yaml
 
