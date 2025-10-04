@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: database
-  namespace: day1-challenge
+  namespace: day2-challenge
 spec:
   replicas: 1
   selector:
@@ -13,27 +13,17 @@ spec:
       labels:
         app: database
     spec:
+      nodeSelector:
+        node-role: database
       containers:
       - name: postgres
         image: postgres:13
         env:
-        - name: POSTGRES_DB
-          value: "webstart"
-        - name: POSTGRES_USER
-          value: "admin"
         - name: POSTGRES_PASSWORD
           value: "password123"
         ports:
         - containerPort: 5432
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: database-service
-  namespace: day1-challenge
-spec:
-  ports:
-  - port: 5432
-    targetPort: 5432
-  selector:
-    app: database
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi

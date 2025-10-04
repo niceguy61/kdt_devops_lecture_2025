@@ -64,16 +64,26 @@ graph TB
 ## 🚀 Challenge 시작하기
 
 ### 📋 사전 준비
+
+**Step 1: Challenge용 클러스터 생성**
+```bash
+# Challenge 스크립트 디렉토리로 이동
+cd theory/week_03/day2/lab_scripts/challenge1
+
+# Challenge용 Kind 클러스터 생성
+./setup-challenge-cluster.sh
+```
+
+**Step 2: 문제 애플리케이션 배포**
 ```bash
 # Challenge 환경 배포
-cd theory/week_03/day2/lab_scripts/challenge1
 ./deploy-broken.sh
 ```
 
 **🎯 배포 후 상태**: 
-- 4개 서비스에서 각각 다른 유형의 배포 문제 발생
-- 고객 서비스 영향도 높음 → 빠른 해결 필요
-- 각 시나리오별 20-25분 내 해결 목표
+- 여러 서비스에서 배포 문제 발생
+- namespace: day2-challenge
+- 각 문제를 진단하고 해결하세요
 
 ---
 

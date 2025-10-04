@@ -11,13 +11,13 @@ echo "📁 스크립트 디렉토리: $SCRIPT_DIR"
 
 # 기존 리소스 정리
 echo "🧹 기존 리소스 정리 중..."
-kubectl delete namespace challenge1 2>/dev/null || true
+kubectl delete namespace day1-challenge 2>/dev/null || true
 sleep 5
 
 # 네임스페이스 생성
 echo "📦 네임스페이스 생성 중..."
-kubectl create namespace challenge1
-kubectl config set-context --current --namespace=challenge1
+kubectl create namespace day1-challenge
+kubectl config set-context --current --namespace=day1-challenge
 
 echo "🏗️  문제가 있는 애플리케이션들 배포 중..."
 
@@ -55,9 +55,9 @@ echo "  3. Frontend v2: 존재하지 않는 이미지 태그"
 echo "  4. Backend Service: 잘못된 라벨 셀렉터"
 echo ""
 echo "🔍 현재 상태 확인:"
-kubectl get pods -n challenge1
+kubectl get pods -n day1-challenge
 echo ""
-kubectl get svc -n challenge1
+kubectl get svc -n day1-challenge
 echo ""
 echo "🚀 Challenge 시작!"
 echo "  1. 웹사이트 접근 테스트: curl http://localhost:30080"
@@ -65,10 +65,10 @@ echo "  2. API 서버 테스트: curl http://localhost:30081"
 echo "  3. 각 문제를 하나씩 진단하고 해결하세요"
 echo ""
 echo "📋 사용 가능한 명령어:"
-echo "  kubectl get pods -n challenge1"
-echo "  kubectl describe pod <pod-name> -n challenge1"
-echo "  kubectl logs <pod-name> -n challenge1"
-echo "  kubectl get svc -n challenge1"
-echo "  kubectl describe svc <service-name> -n challenge1"
+echo "  kubectl get pods -n day1-challenge"
+echo "  kubectl describe pod <pod-name> -n day1-challenge"
+echo "  kubectl logs <pod-name> -n day1-challenge"
+echo "  kubectl get svc -n day1-challenge"
+echo "  kubectl describe svc <service-name> -n day1-challenge"
 echo ""
 echo "🎯 목표: 모든 애플리케이션이 정상 동작하도록 문제 해결!"

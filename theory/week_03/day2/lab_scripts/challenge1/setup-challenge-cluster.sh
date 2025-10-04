@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Challenge 1용 Kind 클러스터 생성 스크립트
+# Challenge 2용 Kind 클러스터 생성 스크립트
 
-echo "🚀 Challenge 1용 Kubernetes 클러스터 확인 중..."
+echo "🚀 Challenge 2용 Kubernetes 클러스터 확인 중..."
 
 # 기존 클러스터 확인
 if kind get clusters 2>/dev/null | grep -q "challenge-cluster"; then
@@ -20,7 +20,7 @@ if kind get clusters 2>/dev/null | grep -q "challenge-cluster"; then
     echo ""
     echo "✅ 기존 클러스터 사용 준비 완료!"
     echo "   다음 명령어로 문제 애플리케이션을 배포하세요:"
-    echo "   ./deploy-broken-app.sh"
+    echo "   ./deploy-broken.sh"
     exit 0
 fi
 
@@ -45,9 +45,9 @@ if [ $? -eq 0 ]; then
     kubectl get nodes
     
     echo ""
-    echo "✅ Challenge 1용 클러스터 준비 완료!"
+    echo "✅ Challenge 2용 클러스터 준비 완료!"
     echo "   다음 명령어로 문제 애플리케이션을 배포하세요:"
-    echo "   ./deploy-broken-app.sh"
+    echo "   ./deploy-broken.sh"
 else
     echo "❌ 클러스터 생성 실패!"
     exit 1
