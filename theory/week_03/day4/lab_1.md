@@ -312,6 +312,15 @@ EOF
 
 **목표**: 각 네임스페이스 간 네트워크 트래픽 격리
 
+**🚀 자동화 스크립트 사용**
+```bash
+cd theory/week_03/day4/lab_scripts/lab1
+./setup-network-policies.sh
+```
+
+**📋 스크립트 내용**: [setup-network-policies.sh](./lab_scripts/lab1/setup-network-policies.sh)
+
+**4-1. 수동 실행 (학습용)**
 ```bash
 # 개발 환경 격리 정책
 kubectl apply -f - <<EOF
