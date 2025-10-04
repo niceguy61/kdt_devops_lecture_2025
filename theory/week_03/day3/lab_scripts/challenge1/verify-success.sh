@@ -6,7 +6,7 @@
 echo "=== Challenge 1 성공 검증 시작 ==="
 echo ""
 
-NAMESPACE="eshop-broken"
+NAMESPACE="day3-challenge"
 PASS=0
 FAIL=0
 

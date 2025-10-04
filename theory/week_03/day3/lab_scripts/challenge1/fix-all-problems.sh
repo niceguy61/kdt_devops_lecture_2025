@@ -11,7 +11,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   selector:
     app: backend
@@ -23,7 +23,7 @@ echo "✅ backend-service 생성 완료"
 
 echo ""
 echo "🔧 문제 2: Ingress 라우팅 오류 수정 중..."
-kubectl patch ingress shop-ingress -n eshop-broken --type='json' -p='[
+kubectl patch ingress shop-ingress -n day3-challenge --type='json' -p='[
   {
     "op": "replace",
     "path": "/spec/rules/0/http/paths/0/backend/service/name",
@@ -34,13 +34,13 @@ echo "✅ Ingress 라우팅 수정 완료"
 
 echo ""
 echo "🔧 문제 3: PVC 바인딩 실패 수정 중..."
-kubectl delete pvc database-storage -n eshop-broken --ignore-not-found=true
+kubectl delete pvc database-storage -n day3-challenge --ignore-not-found=true
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: database-storage
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   accessModes:
   - ReadWriteOnce
@@ -53,7 +53,7 @@ echo "✅ PVC 재생성 완료"
 
 echo ""
 echo "🔧 문제 4: 네트워크 정책 차단 수정 중..."
-kubectl patch networkpolicy database-policy -n eshop-broken --type='json' -p='[
+kubectl patch networkpolicy database-policy -n day3-challenge --type='json' -p='[
   {
     "op": "replace",
     "path": "/spec/ingress/0/from/0/podSelector/matchLabels/app",
@@ -68,9 +68,9 @@ sleep 10
 
 echo ""
 echo "🔍 Pod 재시작 대기 중..."
-kubectl wait --for=condition=Ready pod -l app=database -n eshop-broken --timeout=120s
-kubectl wait --for=condition=Ready pod -l app=backend -n eshop-broken --timeout=60s
-kubectl wait --for=condition=Ready pod -l app=frontend -n eshop-broken --timeout=60s
+kubectl wait --for=condition=Ready pod -l app=database -n day3-challenge --timeout=120s
+kubectl wait --for=condition=Ready pod -l app=backend -n day3-challenge --timeout=60s
+kubectl wait --for=condition=Ready pod -l app=frontend -n day3-challenge --timeout=60s
 
 echo ""
 echo "✅ 모든 문제 해결 완료!"

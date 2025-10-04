@@ -5,7 +5,7 @@
 echo "🚀 Challenge 1: E-Shop 장애 시스템 배포 시작..."
 
 echo "📦 네임스페이스 생성 중..."
-kubectl create namespace eshop-broken --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace day3-challenge --dry-run=client -o yaml | kubectl apply -f -
 
 echo "🗄️ 데이터베이스 배포 중 (PVC 문제 포함)..."
 kubectl apply -f - <<EOF
@@ -13,7 +13,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: database-storage
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   accessModes:
   - ReadWriteOnce
@@ -26,7 +26,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: database
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   replicas: 1
   selector:
@@ -61,7 +61,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: database-service
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   selector:
     app: database
@@ -76,7 +76,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   replicas: 2
   selector:
@@ -100,7 +100,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wrong-backend-service  # 의도적 오류: 잘못된 서비스 이름
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   selector:
     app: backend
@@ -115,7 +115,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   replicas: 2
   selector:
@@ -139,7 +139,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   selector:
     app: frontend
@@ -154,7 +154,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shop-ingress
-  namespace: eshop-broken
+  namespace: day3-challenge
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -184,7 +184,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: database-policy
-  namespace: eshop-broken
+  namespace: day3-challenge
 spec:
   podSelector:
     matchLabels:
@@ -210,4 +210,4 @@ echo "3. PVC 바인딩 실패 - 불가능한 스토리지 요청"
 echo "4. 네트워크 정책 차단 - 라벨 불일치"
 echo ""
 echo "🔍 문제 해결을 시작하세요!"
-echo "kubectl get all -n eshop-broken"
+echo "kubectl get all -n day3-challenge"

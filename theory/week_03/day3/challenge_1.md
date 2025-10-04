@@ -48,13 +48,25 @@ DevOps 엔지니어로서 신속하게 문제를 진단하고 해결해야 합�
 
 ### 환경 설정
 
-**🚀 Challenge 환경 배포**
+**Step 1: Challenge용 클러스터 생성**
 ```bash
 cd theory/week_03/day3/lab_scripts/challenge1
+
+# Challenge용 Kind 클러스터 생성
+./setup-challenge-cluster.sh
+```
+
+**Step 2: 문제 시스템 배포**
+```bash
+# 장애가 있는 E-Shop 시스템 배포
 ./deploy-broken-system.sh
 ```
 
 **📋 스크립트 내용**: [deploy-broken-system.sh](./lab_scripts/challenge1/deploy-broken-system.sh)
+
+**🎯 배포 후 상태**: 
+- namespace: day3-challenge
+- 네트워크 및 스토리지 문제가 있는 시스템 배포됨
 
 ---
 
@@ -70,31 +82,31 @@ cd theory/week_03/day3/lab_scripts/challenge1
 **1단계: 현상 확인**
 ```bash
 # 전체 Pod 상태 확인
-kubectl get pods -n eshop-broken
+kubectl get pods -n day3-challenge
 
 # 프론트엔드 로그 확인
-kubectl logs deployment/frontend -n eshop-broken
+kubectl logs deployment/frontend -n day3-challenge
 
 # 서비스 상태 확인
-kubectl get svc -n eshop-broken
+kubectl get svc -n day3-challenge
 ```
 
 **2단계: 네트워크 연결 테스트**
 ```bash
 # 프론트엔드에서 백엔드 연결 테스트
-kubectl exec -it deployment/frontend -n eshop-broken -- nslookup backend-service
+kubectl exec -it deployment/frontend -n day3-challenge -- nslookup backend-service
 
 # DNS 해결 테스트
-kubectl exec -it deployment/frontend -n eshop-broken -- nslookup backend-service.eshop-broken.svc.cluster.local
+kubectl exec -it deployment/frontend -n day3-challenge -- nslookup backend-service.day3-challenge.svc.cluster.local
 ```
 
 **3단계: 서비스 설정 검사**
 ```bash
 # 서비스 상세 정보 확인
-kubectl describe svc backend-service -n eshop-broken
+kubectl describe svc backend-service -n day3-challenge
 
 # Endpoint 확인
-kubectl get endpoints backend-service -n eshop-broken
+kubectl get endpoints backend-service -n day3-challenge
 ```
 
 ### 💡 힌트
@@ -118,10 +130,10 @@ kubectl get endpoints backend-service -n eshop-broken
 **1단계: Ingress 상태 확인**
 ```bash
 # Ingress 리소스 확인
-kubectl get ingress -n eshop-broken
+kubectl get ingress -n day3-challenge
 
 # Ingress 상세 정보
-kubectl describe ingress shop-ingress -n eshop-broken
+kubectl describe ingress shop-ingress -n day3-challenge
 
 # Ingress Controller 로그 확인
 kubectl logs -n ingress-nginx deployment/ingress-nginx-controller
@@ -130,16 +142,16 @@ kubectl logs -n ingress-nginx deployment/ingress-nginx-controller
 **2단계: 백엔드 서비스 연결 확인**
 ```bash
 # Ingress가 참조하는 서비스 확인
-kubectl get svc frontend-service -n eshop-broken
+kubectl get svc frontend-service -n day3-challenge
 
 # 서비스 Endpoint 확인
-kubectl get endpoints frontend-service -n eshop-broken
+kubectl get endpoints frontend-service -n day3-challenge
 ```
 
 **3단계: 라우팅 규칙 검증**
 ```bash
 # Ingress 규칙 상세 분석
-kubectl get ingress shop-ingress -n eshop-broken -o yaml
+kubectl get ingress shop-ingress -n day3-challenge -o yaml
 
 # 호스트 및 경로 설정 확인
 curl -H "Host: shop.local" http://localhost/
@@ -166,10 +178,10 @@ curl -H "Host: shop.local" http://localhost/
 **1단계: PVC 상태 확인**
 ```bash
 # PVC 상태 조회
-kubectl get pvc -n eshop-broken
+kubectl get pvc -n day3-challenge
 
 # PVC 상세 정보
-kubectl describe pvc database-storage -n eshop-broken
+kubectl describe pvc database-storage -n day3-challenge
 
 # PV 가용성 확인
 kubectl get pv
@@ -187,10 +199,10 @@ kubectl get storageclass -o jsonpath='{.items[?(@.metadata.annotations.storagecl
 **3단계: 볼륨 프로비저닝 로그**
 ```bash
 # 시스템 이벤트 확인
-kubectl get events -n eshop-broken --sort-by='.lastTimestamp'
+kubectl get events -n day3-challenge --sort-by='.lastTimestamp'
 
 # Pod 이벤트 확인
-kubectl describe pod -l app=database -n eshop-broken
+kubectl describe pod -l app=database -n day3-challenge
 ```
 
 ### 💡 힌트
@@ -214,29 +226,29 @@ kubectl describe pod -l app=database -n eshop-broken
 **1단계: 네트워크 정책 확인**
 ```bash
 # 적용된 네트워크 정책 조회
-kubectl get networkpolicy -n eshop-broken
+kubectl get networkpolicy -n day3-challenge
 
 # 네트워크 정책 상세 정보
-kubectl describe networkpolicy database-policy -n eshop-broken
+kubectl describe networkpolicy database-policy -n day3-challenge
 ```
 
 **2단계: Pod 라벨 검증**
 ```bash
 # 데이터베이스 Pod 라벨 확인
-kubectl get pods -l app=database -n eshop-broken --show-labels
+kubectl get pods -l app=database -n day3-challenge --show-labels
 
 # 백엔드 Pod 라벨 확인
-kubectl get pods -l app=backend -n eshop-broken --show-labels
+kubectl get pods -l app=backend -n day3-challenge --show-labels
 ```
 
 **3단계: 연결 테스트**
 ```bash
 # 백엔드에서 데이터베이스 연결 테스트
-kubectl exec -it deployment/backend -n eshop-broken -- nc -zv database-service 5432
+kubectl exec -it deployment/backend -n day3-challenge -- nc -zv database-service 5432
 
 # 네트워크 정책 없이 테스트 (임시)
-kubectl delete networkpolicy database-policy -n eshop-broken
-kubectl exec -it deployment/backend -n eshop-broken -- nc -zv database-service 5432
+kubectl delete networkpolicy database-policy -n day3-challenge
+kubectl exec -it deployment/backend -n day3-challenge -- nc -zv database-service 5432
 ```
 
 ### 💡 힌트
@@ -264,7 +276,7 @@ cd theory/week_03/day3/lab_scripts/challenge1
 
 **✅ DNS 해결 확인**
 ```bash
-kubectl exec -it deployment/frontend -n eshop-broken -- nslookup backend-service
+kubectl exec -it deployment/frontend -n day3-challenge -- nslookup backend-service
 ```
 
 **✅ Ingress 라우팅 확인**
@@ -274,13 +286,13 @@ curl -H "Host: shop.local" http://localhost/
 
 **✅ PVC 바인딩 확인**
 ```bash
-kubectl get pvc -n eshop-broken
-kubectl get pods -l app=database -n eshop-broken
+kubectl get pvc -n day3-challenge
+kubectl get pods -l app=database -n day3-challenge
 ```
 
 **✅ 네트워크 연결 확인**
 ```bash
-kubectl exec -it deployment/backend -n eshop-broken -- nc -zv database-service 5432
+kubectl exec -it deployment/backend -n day3-challenge -- nc -zv database-service 5432
 ```
 
 ---
@@ -333,19 +345,19 @@ kubectl exec -it deployment/backend -n eshop-broken -- nc -zv database-service 5
 ### 🛠️ 유용한 디버깅 명령어
 ```bash
 # 전체 상태 한눈에 보기
-kubectl get all -n eshop-broken
+kubectl get all -n day3-challenge
 
 # 이벤트 시간순 정렬
-kubectl get events -n eshop-broken --sort-by='.lastTimestamp'
+kubectl get events -n day3-challenge --sort-by='.lastTimestamp'
 
 # 리소스 상세 정보
-kubectl describe <resource-type> <resource-name> -n eshop-broken
+kubectl describe <resource-type> <resource-name> -n day3-challenge
 
 # 실시간 로그 모니터링
-kubectl logs -f deployment/<deployment-name> -n eshop-broken
+kubectl logs -f deployment/<deployment-name> -n day3-challenge
 
 # 네트워크 연결 테스트
-kubectl exec -it <pod-name> -n eshop-broken -- <command>
+kubectl exec -it <pod-name> -n day3-challenge -- <command>
 ```
 
 ---
@@ -379,7 +391,7 @@ cd theory/week_03/day3/lab_scripts/challenge1
 **수동 정리**
 ```bash
 # 네임스페이스 삭제 (모든 리소스 함께 삭제)
-kubectl delete namespace eshop-broken
+kubectl delete namespace day3-challenge
 
 # hosts 파일 정리 (필요시)
 sudo sed -i '/shop.local/d' /etc/hosts

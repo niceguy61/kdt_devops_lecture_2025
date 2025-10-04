@@ -38,8 +38,8 @@
 
 **확인 명령어**:
 ```bash
-kubectl get svc -n eshop-broken
-kubectl get endpoints -n eshop-broken
+kubectl get svc -n day3-challenge
+kubectl get endpoints -n day3-challenge
 kubectl get pods -n kube-system -l k8s-app=kube-dns
 ```
 </details>
@@ -56,13 +56,13 @@ kubectl get pods -n kube-system -l k8s-app=kube-dns
 **진단 명령어**:
 ```bash
 # Service 상세 정보
-kubectl describe svc backend-service -n eshop-broken
+kubectl describe svc backend-service -n day3-challenge
 
 # Pod 라벨 확인
-kubectl get pods -n eshop-broken --show-labels
+kubectl get pods -n day3-challenge --show-labels
 
 # DNS 테스트
-kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -n eshop-broken -- nslookup backend-service
+kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -n day3-challenge -- nslookup backend-service
 ```
 </details>
 
@@ -73,7 +73,7 @@ kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -n eshop-brok
 **해결 방향**:
 - Service의 **selector**가 잘못되어 있을 가능성
 - Pod의 실제 label과 Service selector를 비교
-- `kubectl edit svc backend-service -n eshop-broken`으로 수정
+- `kubectl edit svc backend-service -n day3-challenge`으로 수정
 
 **체크 포인트**:
 ```yaml
@@ -99,9 +99,9 @@ spec:
 
 **확인 명령어**:
 ```bash
-kubectl get ingress -n eshop-broken
-kubectl describe ingress eshop-ingress -n eshop-broken
-kubectl get svc -n eshop-broken
+kubectl get ingress -n day3-challenge
+kubectl describe ingress eshop-ingress -n day3-challenge
+kubectl get svc -n day3-challenge
 ```
 </details>
 
@@ -117,10 +117,10 @@ kubectl get svc -n eshop-broken
 **진단 명령어**:
 ```bash
 # Ingress 상세 정보
-kubectl describe ingress eshop-ingress -n eshop-broken
+kubectl describe ingress eshop-ingress -n day3-challenge
 
 # Service 포트 확인
-kubectl get svc -n eshop-broken -o wide
+kubectl get svc -n day3-challenge -o wide
 
 # Ingress Controller 로그
 kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
@@ -134,7 +134,7 @@ kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
 **해결 방향**:
 - Ingress의 **backend service 이름**이 잘못되어 있을 가능성
 - Service 이름과 포트 번호를 정확히 확인
-- `kubectl edit ingress eshop-ingress -n eshop-broken`으로 수정
+- `kubectl edit ingress eshop-ingress -n day3-challenge`으로 수정
 
 **체크 포인트**:
 ```yaml
@@ -168,7 +168,7 @@ spec:
 
 **확인 명령어**:
 ```bash
-kubectl get pvc -n eshop-broken
+kubectl get pvc -n day3-challenge
 kubectl get pv
 kubectl get storageclass
 ```
@@ -186,7 +186,7 @@ kubectl get storageclass
 **진단 명령어**:
 ```bash
 # PVC 상세 정보
-kubectl describe pvc postgres-data -n eshop-broken
+kubectl describe pvc postgres-data -n day3-challenge
 
 # PV 상태 확인
 kubectl get pv -o wide
@@ -231,8 +231,8 @@ spec:
 
 **확인 명령어**:
 ```bash
-kubectl get networkpolicy -n eshop-broken
-kubectl describe networkpolicy -n eshop-broken
+kubectl get networkpolicy -n day3-challenge
+kubectl describe networkpolicy -n day3-challenge
 ```
 </details>
 
@@ -248,10 +248,10 @@ kubectl describe networkpolicy -n eshop-broken
 **진단 명령어**:
 ```bash
 # Network Policy 상세 정보
-kubectl describe networkpolicy -n eshop-broken
+kubectl describe networkpolicy -n day3-challenge
 
 # Pod 간 연결 테스트
-kubectl exec -it deployment/frontend -n eshop-broken -- nc -zv backend-service 3000
+kubectl exec -it deployment/frontend -n day3-challenge -- nc -zv backend-service 3000
 ```
 </details>
 
@@ -267,10 +267,10 @@ kubectl exec -it deployment/frontend -n eshop-broken -- nc -zv backend-service 3
 **해결 옵션**:
 ```bash
 # 옵션 1: Network Policy 수정
-kubectl edit networkpolicy <policy-name> -n eshop-broken
+kubectl edit networkpolicy <policy-name> -n day3-challenge
 
 # 옵션 2: 임시 삭제 (테스트용)
-kubectl delete networkpolicy --all -n eshop-broken
+kubectl delete networkpolicy --all -n day3-challenge
 ```
 
 **체크 포인트**:
@@ -299,22 +299,22 @@ spec:
 ### 🛠️ 유용한 디버깅 명령어
 ```bash
 # 전체 리소스 상태 확인
-kubectl get all -n eshop-broken
+kubectl get all -n day3-challenge
 
 # 이벤트 확인
-kubectl get events -n eshop-broken --sort-by='.lastTimestamp'
+kubectl get events -n day3-challenge --sort-by='.lastTimestamp'
 
 # Pod 로그 확인
-kubectl logs <pod-name> -n eshop-broken
+kubectl logs <pod-name> -n day3-challenge
 
 # Pod 내부 접속
-kubectl exec -it <pod-name> -n eshop-broken -- /bin/sh
+kubectl exec -it <pod-name> -n day3-challenge -- /bin/sh
 
 # 네트워크 연결 테스트
-kubectl exec -it <pod-name> -n eshop-broken -- nc -zv <service-name> <port>
+kubectl exec -it <pod-name> -n day3-challenge -- nc -zv <service-name> <port>
 
 # DNS 테스트
-kubectl exec -it <pod-name> -n eshop-broken -- nslookup <service-name>
+kubectl exec -it <pod-name> -n day3-challenge -- nslookup <service-name>
 ```
 
 ### 💡 문제 해결 체크리스트
