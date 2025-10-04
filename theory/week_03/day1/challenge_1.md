@@ -52,10 +52,18 @@ graph TB
 ## 🚀 Challenge 시작하기
 
 ### 📋 사전 준비
+
+**Step 1: Challenge용 클러스터 생성**
 ```bash
 # Challenge 스크립트 디렉토리로 이동
 cd lab_scripts/challenge1
 
+# Challenge용 Kind 클러스터 생성
+./setup-challenge-cluster.sh
+```
+
+**Step 2: 문제 애플리케이션 배포**
+```bash
 # Challenge용 문제 애플리케이션 배포
 ./deploy-broken-app.sh
 ```
