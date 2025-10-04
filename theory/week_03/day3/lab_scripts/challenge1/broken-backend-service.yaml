@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: wrong-backend-service  # 의도적 오류: 잘못된 서비스 이름
+  name: wrong-backend-service
   namespace: day3-challenge
 spec:
   selector:
@@ -11,6 +11,3 @@ spec:
   ports:
   - port: 3000
     targetPort: 80
-
-# 문제: 프론트엔드는 'backend-service'를 찾지만 실제로는 'wrong-backend-service'로 생성됨
-# 해결: 서비스 이름을 'backend-service'로 수정하거나 새로운 서비스 생성

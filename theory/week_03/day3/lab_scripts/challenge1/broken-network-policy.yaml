@@ -15,11 +15,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: wrong-backend  # 의도적 오류: 잘못된 라벨
+          app: wrong-backend
     ports:
     - protocol: TCP
       port: 5432
-
-# 문제: Network Policy가 'app: wrong-backend' 라벨을 찾지만 
-#       실제 백엔드 Pod는 'app: backend' 라벨을 가짐
-# 해결: 라벨을 'backend'로 수정

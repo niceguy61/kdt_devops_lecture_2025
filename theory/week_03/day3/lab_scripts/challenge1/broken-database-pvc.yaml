@@ -10,9 +10,5 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 100Ti  # 의도적 오류: 불가능한 용량
-  storageClassName: nonexistent-storage  # 의도적 오류: 존재하지 않는 StorageClass
-
-# 문제 1: 존재하지 않는 StorageClass 'nonexistent-storage'
-# 문제 2: 불가능한 스토리지 크기 100Ti
-# 해결: 적절한 크기(1Gi)와 기본 StorageClass(standard) 사용
+      storage: 100Ti
+  storageClassName: nonexistent-storage

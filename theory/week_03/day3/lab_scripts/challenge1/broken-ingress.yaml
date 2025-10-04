@@ -16,7 +16,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: nonexistent-frontend-service  # 의도적 오류: 존재하지 않는 서비스
+            name: nonexistent-frontend-service
             port:
               number: 80
       - path: /api
