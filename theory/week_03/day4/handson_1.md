@@ -208,6 +208,43 @@ ETCD 암호화는 API Server 설정 파일 수정이 필요하여 실습 환경�
 
 ---
 
+**실습 시도 (선택사항 - 위험)**
+
+자동화 스크립트를 제공하지만, **클러스터가 중단될 수 있으니 주의**하세요.
+
+```bash
+# 1. 스크립트를 Kind 컨테이너로 복사
+docker cp theory/week_03/day4/lab_scripts/handson1/setup-etcd-encryption.sh \
+  challenge-cluster-control-plane:/tmp/
+
+# 2. 컨테이너 접속 및 실행
+docker exec -it challenge-cluster-control-plane bash
+cd /tmp
+chmod +x setup-etcd-encryption.sh
+./setup-etcd-encryption.sh
+
+# 3. 컨테이너 종료
+exit
+
+# 4. API Server 재시작 확인 (30초 대기)
+sleep 30
+kubectl get pods -n kube-system | grep kube-apiserver
+```
+
+**스크립트 파일**: [setup-etcd-encryption.sh](./lab_scripts/handson1/setup-etcd-encryption.sh)
+
+**실패 시 복구 방법**:
+```bash
+docker exec -it challenge-cluster-control-plane bash
+cp /etc/kubernetes/manifests/kube-apiserver.yaml.backup \
+   /etc/kubernetes/manifests/kube-apiserver.yaml
+exit
+```
+
+---
+
+**이론 학습 (권장)**
+
 **ETCD 암호화란?**
 
 Kubernetes는 모든 데이터를 ETCD에 저장하는데, 기본적으로 **평문(Plain Text)**으로 저장됩니다.  
