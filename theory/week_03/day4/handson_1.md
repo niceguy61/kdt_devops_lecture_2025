@@ -289,6 +289,10 @@ kubectl get pods -n kube-system
 **External Secrets Operator 설치**:
 
 ```bash
+# production 네임스페이스 생성
+kubectl create namespace production 2>/dev/null || echo "네임스페이스 이미 존재"
+
+helm repo update
 # Helm으로 설치
 helm repo add external-secrets https://charts.external-secrets.io
 helm install external-secrets \
@@ -304,7 +308,7 @@ kubectl get pods -n external-secrets-system
 
 **파일 생성**: `secret-store.yaml`
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: kubernetes-backend
@@ -332,7 +336,7 @@ kubectl apply -f secret-store.yaml
 
 **파일 생성**: `external-secret.yaml`
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: app-config
