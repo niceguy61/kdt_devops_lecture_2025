@@ -323,29 +323,66 @@ sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
 sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
-**추가할 내용 (모든 환경 공통)**:
+**추가할 내용 (수동 편집 시 참고)**:
 
-1. `spec.containers[0].command` 섹션에 추가:
+**1. command 섹션 수정**
+
+파일에서 `spec.containers[0].command` 부분을 찾아 다음 줄을 추가:
+
 ```yaml
-- --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+spec:
+  containers:
+  - command:
+    - kube-apiserver
+    - --advertise-address=...
+    - --tls-cert-file=...
+    # 👇 이 줄 추가 (다른 --옵션들 사이 아무 곳이나)
+    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+    - --tls-private-key-file=...
 ```
 
-2. `spec.containers[0].volumeMounts` 섹션에 추가:
+**2. volumeMounts 섹션 수정**
+
+`spec.containers[0].volumeMounts` 부분을 찾아 다음 블록 추가:
+
 ```yaml
-- name: encryption-config
-  mountPath: /etc/kubernetes/encryption-config.yaml
-  readOnly: true
+    volumeMounts:
+    - mountPath: /etc/ssl/certs
+      name: ca-certs
+      readOnly: true
+    # 👇 이 블록 추가 (다른 volumeMounts 사이 아무 곳이나)
+    - name: encryption-config
+      mountPath: /etc/kubernetes/encryption-config.yaml
+      readOnly: true
+    - mountPath: /etc/kubernetes/pki
+      name: k8s-certs
+      readOnly: true
 ```
 
-3. `spec.volumes` 섹션에 추가:
+**3. volumes 섹션 수정**
+
+`spec.volumes` 부분을 찾아 다음 블록 추가:
+
 ```yaml
-- name: encryption-config
-  hostPath:
-    path: /etc/kubernetes/encryption-config.yaml
-    type: File
+  volumes:
+  - hostPath:
+      path: /etc/ssl/certs
+      type: DirectoryOrCreate
+    name: ca-certs
+  # 👇 이 블록 추가 (다른 volumes 사이 아무 곳이나)
+  - name: encryption-config
+    hostPath:
+      path: /etc/kubernetes/encryption-config.yaml
+      type: File
+  - hostPath:
+      path: /etc/kubernetes/pki
+      type: DirectoryOrCreate
+    name: k8s-certs
 ```
 
-**설정 적용 확인**:
+**저장 후 자동 재시작**:
+- 파일 저장 시 kubelet이 자동으로 API Server Pod 재시작
+- 약 30초 소요
 ```bash
 # API Server Pod 재시작 확인 (약 30초 소요)
 watch kubectl get pods -n kube-system | grep kube-apiserver
