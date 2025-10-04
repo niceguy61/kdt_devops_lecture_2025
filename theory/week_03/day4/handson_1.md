@@ -469,35 +469,26 @@ Kind 클러스터는 kubeadm이 없어 업그레이드 실습이 불가능합니
 
 ---
 
-## 🔍 고급 모니터링 및 감사
+## 🔍 고급 모니터링 및 감사 (이론)
 
-### 보안 감사 로깅
+**보안 감사 로깅**:
+- Kubernetes Audit Log로 모든 API 요청 기록
+- RBAC 변경사항 추적
+- 보안 이벤트 모니터링
 
+**보안 스캔 도구**:
+- Trivy: 컨테이너 이미지 취약점 스캔
+- Falco: 런타임 보안 모니터링
+- OPA Gatekeeper: 정책 기반 접근 제어
+
+**RBAC 분석**:
 ```bash
-# Audit Policy 확인
-cat /etc/kubernetes/audit-policy.yaml
-
-# 감사 로그 확인
-tail -f /var/log/kubernetes/audit.log | jq '.'
-
-# RBAC 변경 사항 필터링
-tail -f /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource | contains("role"))'
-```
-
-### 보안 스캔
-
-```bash
-# Trivy로 클러스터 스캔
-trivy k8s --report summary cluster
-
-# 네임스페이스별 스캔
-trivy k8s --report summary namespace production
-
-# RBAC 분석
+# ServiceAccount 권한 확인
 kubectl auth can-i --list --as=system:serviceaccount:production:operator-sa
 ```
 
 ---
+
 
 ## ✅ 실습 체크포인트
 
