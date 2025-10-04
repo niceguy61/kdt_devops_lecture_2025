@@ -8,7 +8,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 100%  # 모든 Pod 동시 제거 - 서비스 중단!
+      maxUnavailable: 100%
       maxSurge: 0%
   selector:
     matchLabels:
