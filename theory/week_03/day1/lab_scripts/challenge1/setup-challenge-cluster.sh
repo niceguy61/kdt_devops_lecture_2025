@@ -13,21 +13,7 @@ fi
 
 # Kind 클러스터 생성
 echo "📦 Kind 클러스터 생성 중..."
-cat <<EOF | kind create cluster --name challenge-cluster --config=-
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 30080
-    hostPort: 30080
-    protocol: TCP
-  - containerPort: 30081
-    hostPort: 30081
-    protocol: TCP
-- role: worker
-- role: worker
-EOF
+kind create cluster --name challenge-cluster --config=kind-config.yaml
 
 # 클러스터 생성 확인
 if [ $? -eq 0 ]; then
