@@ -53,10 +53,10 @@ graph LR
 ```mermaid
 graph LR
     subgraph "Version Support"
-        A[v1.28<br/>Current]
-        B[v1.27<br/>N-1]
-        C[v1.26<br/>N-2]
-        D[v1.25<br/>Unsupported]
+        A[v1.31<br/>Current]
+        B[v1.30<br/>N-1]
+        C[v1.29<br/>N-2]
+        D[v1.28<br/>Unsupported]
     end
     
     A --> B
@@ -119,28 +119,28 @@ kubeadm upgrade plan
 # 출력 예시:
 # Components that must be upgraded manually after you have upgraded the control plane with 'kubeadm upgrade apply':
 # COMPONENT   CURRENT       TARGET
-# kubelet     3 x v1.27.0   v1.28.0
+# kubelet     3 x v1.30.0   v1.31.0
 #
 # Upgrade to the latest stable version:
 # COMPONENT                 CURRENT   TARGET
-# kube-apiserver            v1.27.0   v1.28.0
-# kube-controller-manager   v1.27.0   v1.28.0
-# kube-scheduler            v1.27.0   v1.28.0
-# kube-proxy                v1.27.0   v1.28.0
-# CoreDNS                   v1.10.1   v1.11.1
-# etcd                      3.5.7-0   3.5.9-0
+# kube-apiserver            v1.30.0   v1.31.0
+# kube-controller-manager   v1.30.0   v1.31.0
+# kube-scheduler            v1.30.0   v1.31.0
+# kube-proxy                v1.30.0   v1.31.0
+# CoreDNS                   v1.11.1   v1.11.3
+# etcd                      3.5.12-0  3.5.15-0
 
 # 3. kubeadm 업그레이드
 apt-mark unhold kubeadm
-apt-get update && apt-get install -y kubeadm=1.28.0-00
+apt-get update && apt-get install -y kubeadm=1.31.0-00
 apt-mark hold kubeadm
 
 # 4. 업그레이드 적용
-kubeadm upgrade apply v1.28.0
+kubeadm upgrade apply v1.31.0
 
 # 5. kubelet과 kubectl 업그레이드
 apt-mark unhold kubelet kubectl
-apt-get update && apt-get install -y kubelet=1.28.0-00 kubectl=1.28.0-00
+apt-get update && apt-get install -y kubelet=1.31.0-00 kubectl=1.31.0-00
 apt-mark hold kubelet kubectl
 
 # 6. kubelet 재시작
@@ -159,7 +159,7 @@ kubectl drain worker-node-1 --ignore-daemonsets --delete-emptydir-data
 
 # 2. 워커 노드에서 kubeadm 업그레이드
 apt-mark unhold kubeadm
-apt-get update && apt-get install -y kubeadm=1.28.0-00
+apt-get update && apt-get install -y kubeadm=1.31.0-00
 apt-mark hold kubeadm
 
 # 3. 노드 업그레이드
@@ -167,7 +167,7 @@ kubeadm upgrade node
 
 # 4. kubelet과 kubectl 업그레이드
 apt-mark unhold kubelet kubectl
-apt-get update && apt-get install -y kubelet=1.28.0-00 kubectl=1.28.0-00
+apt-get update && apt-get install -y kubelet=1.31.0-00 kubectl=1.31.0-00
 apt-mark hold kubelet kubectl
 
 # 5. kubelet 재시작

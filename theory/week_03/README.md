@@ -346,8 +346,9 @@ graph LR
 
 ### 🎯 일일 목표
 - 프로덕션 환경에서의 모니터링과 로깅
-- 오토스케일링과 자동화 기능
-- 최신 Kubernetes 기능과 미래 트렌드
+- Helm을 이용한 패키지 관리와 배포 자동화
+- GitOps 기반 배포 파이프라인 구축
+- Service Mesh(Istio)의 개념과 실전 활용
 
 ### 📚 이론 세션 (3시간)
 
@@ -365,33 +366,35 @@ graph LR
 - Grafana는 "그래프"와 "아나"(데이터)의 합성어
 - OpenTelemetry는 관측성의 표준을 만들어가는 프로젝트
 
-#### Session 2: 오토스케일링 & 자동화 (50분)
-**🎯 학습 목표**: 자동화된 확장과 관리
+#### Session 2: Helm & 패키지 관리 (50분)
+**🎯 학습 목표**: Helm을 이용한 애플리케이션 패키지 관리
 
 **핵심 개념**:
-- **HPA (Horizontal Pod Autoscaler)**: 수평적 확장
-- **VPA (Vertical Pod Autoscaler)**: 수직적 확장
+- **Helm 기본**: Chart, Release, Repository 개념
+- **Chart 구조**: templates, values, dependencies
+- **Helm 명령어**: install, upgrade, rollback
+- **Chart 개발**: 커스텀 Chart 작성 및 배포
+
+**🎉 Fun Facts**:
+- Helm은 "Kubernetes의 패키지 매니저"
+- Chart는 Kubernetes 리소스의 템플릿 번들
+- Artifact Hub에 수천 개의 공개 Chart 존재
+- Helm 3부터 Tiller 제거로 보안 강화
+
+#### Session 3: GitOps & 오토스케일링 (50분)
+**🎯 학습 목표**: GitOps 기반 배포와 자동 확장
+
+**핵심 개념**:
+- **GitOps 원칙**: Git as Single Source of Truth
+- **ArgoCD**: 선언적 GitOps 배포
+- **HPA/VPA**: 수평/수직 오토스케일링
 - **Cluster Autoscaler**: 노드 자동 확장
-- **KEDA**: 이벤트 기반 오토스케일링
 
 **🎉 Fun Facts**:
-- HPA는 CPU, 메모리뿐만 아니라 커스텀 메트릭으로도 확장 가능
+- GitOps는 Weaveworks에서 처음 제안한 개념
+- ArgoCD는 CNCF Graduated 프로젝트
+- HPA는 커스텀 메트릭으로도 확장 가능
 - VPA는 Google에서 개발한 수직 확장 솔루션
-- KEDA는 Azure Functions 팀에서 시작된 프로젝트
-
-#### Session 3: 고급 기능 & 미래 (50분)
-**🎯 학습 목표**: Kubernetes 생태계의 확장과 미래
-
-**핵심 개념**:
-- **Custom Resources & Operators**: 쿠버네티스 확장
-- **Gateway API**: Ingress의 진화
-- **Service Mesh**: 마이크로서비스 통신 관리
-- **GitOps**: 선언적 배포의 진화
-
-**🎉 Fun Facts**:
-- Operator 패턴은 CoreOS에서 처음 제안
-- Gateway API는 Ingress의 한계를 극복하기 위해 개발
-- Istio, Linkerd 등이 대표적인 Service Mesh 솔루션
 
 ### 🛠️ 실습 세션 (3시간)
 
@@ -399,12 +402,58 @@ graph LR
 **목표**: 완전한 프로덕션 환경 구성
 
 **실습 내용**:
-1. **모니터링 스택**: Prometheus + Grafana 구축
-2. **오토스케일링**: HPA/VPA 설정
-3. **로깅 시스템**: ELK 스택 구성
-4. **GitOps**: ArgoCD를 이용한 배포 자동화
+1. **Helm 패키지 관리**: Helm Chart로 애플리케이션 배포
+2. **모니터링 스택**: Prometheus + Grafana 구축 (Helm 사용)
+3. **GitOps 파이프라인**: ArgoCD로 자동 배포
+4. **오토스케일링**: HPA/VPA 설정 및 테스트
 
 #### Challenge 5: 운영 장애 대응 (90분)
+**목표**: 복합적인 운영 문제 해결
+
+**Challenge 시나리오**:
+- **시나리오 1**: 급격한 트래픽 증가로 인한 성능 저하
+- **시나리오 2**: 모니터링 시스템 장애로 가시성 상실
+- **시나리오 3**: 자동 스케일링 오작동으로 리소스 낭비
+- **시나리오 4**: 배포 파이프라인 오류로 서비스 중단
+
+**🎮 Fun Challenge**: "운영 마스터" 되어보기 - SRE 관점에서 시스템 최적화
+
+---
+
+### 🎓 특강: Istio Service Mesh (60분 연장)
+
+#### 특강 개요
+**시간**: 실습 종료 후 1시간 연장  
+**형태**: 선택 참여 특강 (심화 학습)  
+**목표**: Service Mesh의 개념과 Istio 실전 활용
+
+#### 특강 내용
+
+**Part 1: Service Mesh 개념** (15분)
+- 마이크로서비스 통신의 복잡성
+- Service Mesh가 해결하는 문제
+- Istio vs Linkerd vs Consul 비교
+
+**Part 2: Istio 아키텍처** (15분)
+- Control Plane (Istiod)
+- Data Plane (Envoy Proxy)
+- Sidecar Injection 패턴
+
+**Part 3: 핵심 기능 실습** (20분)
+- 트래픽 관리 (Canary, Blue-Green)
+- 보안 (mTLS, Authorization)
+- 관측성 (Kiali, Jaeger)
+
+**Part 4: 실무 적용 사례** (10분)
+- Netflix, Uber의 Service Mesh 도입 사례
+- 도입 시 고려사항과 Best Practices
+- Q&A 및 토론
+
+**🎉 Fun Facts**:
+- Istio는 그리스어로 "항해하다"라는 뜻
+- Envoy는 Lyft에서 개발한 고성능 프록시
+- Service Mesh는 Netflix의 Hystrix에서 영감
+- Istio는 Google, IBM, Lyft가 공동 개발
 **목표**: 복합적인 운영 문제 해결
 
 **Challenge 시나리오**:
