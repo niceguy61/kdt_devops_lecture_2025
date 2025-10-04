@@ -450,6 +450,12 @@ rm -rf /backup/certs-backup-*
 
 ---
 
+## 💡 추가 도움이 필요하신가요?
+
+문제 해결에 어려움이 있다면 [hints.md](./lab_scripts/challenge1/hints.md) 파일을 참고하세요!
+
+---
+
 <div align="center">
 
 **🚨 보안 사고 해결** • **🔍 권한 문제 진단** • **🛠️ 보안 복구** • **🤝 팀 협업**
