@@ -281,7 +281,7 @@ kubectl get -n day3-lab pods -l app=backend
 kubectl get -n day3-lab endpoints backend-service
 
 # 데이터베이스 연결 테스트 (Pod 내부에서)
-kubectl exec -n day3-lab -it deployment/backend -- nc -zv database-service 5432 || echo "Connection test completed"
+kubectl exec -n day3-lab -it deployment/backend -- nc -zv postgres-service 5432 || echo "Connection test completed"
 ```
 
 ---
