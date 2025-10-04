@@ -194,6 +194,7 @@ echo '✅ 서비스 연결 성공!'
 ### 4.1 ETCD Watch 설정
 ```bash
 # 새 터미널에서 ETCD 변경사항 모니터링
+export ETCD_POD=$(kubectl get pods -n kube-system -l component=etcd -o jsonpath='{.items[0].metadata.name}')
 kubectl exec -n kube-system $ETCD_POD -- sh -c "
 export ETCDCTL_API=3
 etcdctl --endpoints=https://127.0.0.1:2379 \
