@@ -451,8 +451,8 @@ kubectl delete namespace test-restore
 
 ```bash
 # 현재 버전 확인
-kubectl version --short
-kubeadm version
+kubectl get nodes
+# kubeadm version (Kind 클러스터에는 없음)
 
 # 업그레이드 가능 버전 확인
 kubeadm upgrade plan
