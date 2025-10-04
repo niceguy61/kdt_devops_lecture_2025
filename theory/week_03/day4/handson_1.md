@@ -201,61 +201,23 @@ kubectl apply -f privileged-pod.yaml
 
 ### Step 2-1: ETCD 암호화 설정 (15분)
 
-**암호화 설정 파일 생성**:
+**⚠️ 선택사항: 어려우면 이론만 학습하고 Step 2-2로 이동**
 
+---
+
+**실습 과정**
+
+**1단계: Kind 컨테이너 접속**
 ```bash
-# 암호화 키 생성
-head -c 32 /dev/urandom | base64
-
-# EncryptionConfiguration 생성
-# WSL 환경에서는 sudo tee 사용
-sudo mkdir -p /etc/kubernetes
-
-cat <<EOF | sudo tee /etc/kubernetes/encryption-config.yaml
-apiVersion: apiserver.config.k8s.io/v1
-kind: EncryptionConfiguration
-resources:
-  - resources:
-    - secrets
-    providers:
-    - aescbc:
-        keys:
-        - name: key1
-          secret: $(head -c 32 /dev/urandom | base64)
-    - identity: {}
-EOF
-
-# 파일 권한 설정
-sudo chmod 600 /etc/kubernetes/encryption-config.yaml
-sudo chown root:root /etc/kubernetes/encryption-config.yaml
-
-# 생성 확인
-sudo cat /etc/kubernetes/encryption-config.yaml
-```
-
-**API Server 설정 업데이트**:
-
-**⚠️ 환경 확인 먼저!**
-
-```bash
-# 현재 Kubernetes 환경 확인
-kubectl cluster-info
-
-# Kind 사용 중인지 확인
-docker ps | grep kind
-
-# Minikube 사용 중인지 확인
-minikube status
-```
-
-**방법 1: Kind 클러스터 (WSL/Docker Desktop)**
-
-```bash
-# Kind 컨트롤 플레인 컨테이너 접속
 docker exec -it challenge-cluster-control-plane bash
+```
 
-# 컨테이너 내부에서 실행
-cat <<EOF | tee /etc/kubernetes/encryption-config.yaml
+**2단계: 암호화 설정 파일 생성**
+
+생성할 파일: `/etc/kubernetes/encryption-config.yaml`
+
+```bash
+cat <<EOF > /etc/kubernetes/encryption-config.yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -268,153 +230,71 @@ resources:
           secret: $(head -c 32 /dev/urandom | base64)
     - identity: {}
 EOF
+```
 
-# kube-apiserver.yaml 백업 및 수정
-cp /etc/kubernetes/manifests/kube-apiserver.yaml \
-   /etc/kubernetes/manifests/kube-apiserver.yaml.backup
+**3단계: API Server 설정 파일 수정**
 
-# sed로 설정 추가 (편집기 없이 자동 수정)
-# 1. command에 encryption-provider-config 추가
+수정할 파일: `/etc/kubernetes/manifests/kube-apiserver.yaml`
+
+```bash
+# 백업
+cp /etc/kubernetes/manifests/kube-apiserver.yaml{,.backup}
+
+# 3개 항목 자동 추가
 sed -i '/- --tls-cert-file/a\    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml' \
   /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# 2. volumeMounts에 encryption-config 추가  
 sed -i '/volumeMounts:/a\    - name: encryption-config\n      mountPath: /etc/kubernetes/encryption-config.yaml\n      readOnly: true' \
   /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# 3. volumes에 encryption-config 추가
 sed -i '/volumes:/a\  - name: encryption-config\n    hostPath:\n      path: /etc/kubernetes/encryption-config.yaml\n      type: File' \
   /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# 변경 확인
+# 확인
 grep encryption-provider-config /etc/kubernetes/manifests/kube-apiserver.yaml
+```
 
-# 컨테이너에서 나가기
-exit
+**무엇이 추가되었나?**
 
-# API Server 재시작 확인
+파일 `/etc/kubernetes/manifests/kube-apiserver.yaml`에 3곳이 수정됨:
+
+1. **command 섹션** - API Server 실행 옵션 추가:
+```yaml
+- --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+```
+
+2. **volumeMounts 섹션** - 컨테이너 내부 마운트:
+```yaml
+- name: encryption-config
+  mountPath: /etc/kubernetes/encryption-config.yaml
+  readOnly: true
+```
+
+3. **volumes 섹션** - 호스트 파일 연결:
+```yaml
+- name: encryption-config
+  hostPath:
+    path: /etc/kubernetes/encryption-config.yaml
+    type: File
+```
+
+**4단계: 컨테이너 종료 및 재시작 확인**
+
+```bash
+exit  # 컨테이너 종료
+
+# API Server 자동 재시작 확인 (30초 소요)
 kubectl get pods -n kube-system | grep kube-apiserver
 ```
 
-**방법 2: Minikube**
+---
 
-```bash
-# Minikube SSH 접속
-minikube ssh
+**이론 학습 (실습 생략 시)**:
+- ETCD에 저장되는 Secret을 AES-CBC로 암호화
+- 프로덕션 환경에서 필수 보안 설정
+- 약간의 성능 오버헤드 발생
 
-# 위와 동일한 방법으로 설정
-sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
-
-# SSH 종료
-exit
-
-# API Server 재시작 확인
-kubectl get pods -n kube-system | grep kube-apiserver
-```
-
-**방법 3: 실제 클러스터 (마스터 노드 직접 접근 가능)**
-
-```bash
-# kube-apiserver.yaml 백업
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
-       /etc/kubernetes/manifests/kube-apiserver.yaml.backup
-
-# 설정 파일 수정
-sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
-**추가할 내용 (수동 편집 시 참고)**:
-
-**1. command 섹션 수정**
-
-파일에서 `spec.containers[0].command` 부분을 찾아 다음 줄을 추가:
-
-```yaml
-spec:
-  containers:
-  - command:
-    - kube-apiserver
-    - --advertise-address=...
-    - --tls-cert-file=...
-    # 👇 이 줄 추가 (다른 --옵션들 사이 아무 곳이나)
-    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
-    - --tls-private-key-file=...
-```
-
-**2. volumeMounts 섹션 수정**
-
-`spec.containers[0].volumeMounts` 부분을 찾아 다음 블록 추가:
-
-```yaml
-    volumeMounts:
-    - mountPath: /etc/ssl/certs
-      name: ca-certs
-      readOnly: true
-    # 👇 이 블록 추가 (다른 volumeMounts 사이 아무 곳이나)
-    - name: encryption-config
-      mountPath: /etc/kubernetes/encryption-config.yaml
-      readOnly: true
-    - mountPath: /etc/kubernetes/pki
-      name: k8s-certs
-      readOnly: true
-```
-
-**3. volumes 섹션 수정**
-
-`spec.volumes` 부분을 찾아 다음 블록 추가:
-
-```yaml
-  volumes:
-  - hostPath:
-      path: /etc/ssl/certs
-      type: DirectoryOrCreate
-    name: ca-certs
-  # 👇 이 블록 추가 (다른 volumes 사이 아무 곳이나)
-  - name: encryption-config
-    hostPath:
-      path: /etc/kubernetes/encryption-config.yaml
-      type: File
-  - hostPath:
-      path: /etc/kubernetes/pki
-      type: DirectoryOrCreate
-    name: k8s-certs
-```
-
-**저장 후 자동 재시작**:
-- 파일 저장 시 kubelet이 자동으로 API Server Pod 재시작
-- 약 30초 소요
-```bash
-# API Server Pod 재시작 확인 (약 30초 소요)
-watch kubectl get pods -n kube-system | grep kube-apiserver
-
-# 정상 동작 확인
-kubectl get pods -n kube-system
-```
-
-**암호화 검증**:
-
-```bash
-# Secret 생성
-kubectl create secret generic test-secret \
-  --from-literal=password=supersecret \
-  -n production
-
-# ETCD에서 암호화 확인
-# WSL 환경에서는 etcdctl이 설치되어 있어야 함
-ETCDCTL_API=3 etcdctl get /registry/secrets/production/test-secret \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
-
-# 암호화되어 있으면 평문이 보이지 않음
-```
-
-**WSL 환경 참고사항**:
-- Kind/Minikube 사용 시: 컨테이너 내부에서 설정 필요
-- 실제 클러스터: 마스터 노드에서 직접 설정
-- 권한 문제: sudo 사용 필수
-- etcdctl 설치: `sudo apt-get install etcd-client` (Ubuntu/Debian)
+---
 
 ### Step 2-2: External Secrets Operator (15분)
 
