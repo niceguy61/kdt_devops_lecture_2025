@@ -10,6 +10,10 @@ NAMESPACE="day3-challenge"
 PASS=0
 FAIL=0
 
+# 이전 테스트 Pod 정리
+kubectl delete pod -n $NAMESPACE -l run --field-selector=status.phase!=Running 2>/dev/null || true
+kubectl delete pod -n $NAMESPACE --field-selector=status.phase=Succeeded 2>/dev/null || true
+
 # 색상 정의
 GREEN='\033[0;32m'
 RED='\033[0;31m'
