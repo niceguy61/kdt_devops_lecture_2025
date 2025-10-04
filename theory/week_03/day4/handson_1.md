@@ -208,9 +208,10 @@ kubectl apply -f privileged-pod.yaml
 head -c 32 /dev/urandom | base64
 
 # EncryptionConfiguration 생성
-# 주의: WSL 환경에서는 sudo 권한 필요
+# WSL 환경에서는 sudo tee 사용
 sudo mkdir -p /etc/kubernetes
-sudo cat > /etc/kubernetes/encryption-config.yaml <<EOF
+
+cat <<EOF | sudo tee /etc/kubernetes/encryption-config.yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -224,9 +225,12 @@ resources:
     - identity: {}
 EOF
 
-# 파일 권한 설정 (WSL 포함)
+# 파일 권한 설정
 sudo chmod 600 /etc/kubernetes/encryption-config.yaml
 sudo chown root:root /etc/kubernetes/encryption-config.yaml
+
+# 생성 확인
+sudo cat /etc/kubernetes/encryption-config.yaml
 ```
 
 **API Server 설정 업데이트**:
