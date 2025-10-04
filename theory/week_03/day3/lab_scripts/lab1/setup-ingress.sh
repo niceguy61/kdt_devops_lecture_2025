@@ -10,7 +10,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shop-ingress
-  namespace: shop-app
+  namespace: day3-lab
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:

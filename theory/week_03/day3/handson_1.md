@@ -45,7 +45,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: postgres-security-policy
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   podSelector:
     matchLabels:
@@ -92,7 +92,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: frontend-policy
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   podSelector:
     matchLabels:
@@ -143,7 +143,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres-headless
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   clusterIP: None
   selector:
@@ -156,7 +156,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   selector:
     app: postgres-cluster
@@ -168,7 +168,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres-cluster
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   serviceName: postgres-headless
   replicas: 3
@@ -234,10 +234,10 @@ kubectl get pods -l app=postgres-cluster
 kubectl get pvc
 
 # Headless Service DNS 테스트
-kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-headless.shop-app.svc.cluster.local
+kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-headless.day3-lab.svc.cluster.local
 
 # 개별 Pod DNS 확인
-kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless.shop-app.svc.cluster.local
+kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless.day3-lab.svc.cluster.local
 ```
 
 ---
@@ -288,7 +288,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-cache
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 1
   selector:
@@ -323,7 +323,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: redis-cache-pvc
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   accessModes:
   - ReadWriteOnce
@@ -336,7 +336,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   selector:
     app: redis-cache
@@ -357,19 +357,19 @@ kubectl apply -f redis-cache.yaml
 
 ```bash
 # 프론트엔드 HPA 생성
-kubectl autoscale deployment frontend --cpu-percent=70 --min=2 --max=10 --namespace=shop-app
+kubectl autoscale deployment frontend --cpu-percent=70 --min=2 --max=10 --namespace=day3-lab
 
 # 백엔드 HPA 생성
-kubectl autoscale deployment backend --cpu-percent=60 --min=2 --max=8 --namespace=shop-app
+kubectl autoscale deployment backend --cpu-percent=60 --min=2 --max=8 --namespace=day3-lab
 
 # HPA 상태 확인
-kubectl get hpa -n shop-app
+kubectl get hpa -n day3-lab
 ```
 
 **부하 테스트**:
 ```bash
 # 부하 생성 Pod 실행
-kubectl run load-generator --image=busybox:1.35 --rm -it --restart=Never --namespace=shop-app -- /bin/sh
+kubectl run load-generator --image=busybox:1.35 --rm -it --restart=Never --namespace=day3-lab -- /bin/sh
 
 # Pod 내부에서 실행
 while true; do wget -q -O- http://frontend-service/; done
@@ -384,7 +384,7 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: redis-vpa
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   targetRef:
     apiVersion: apps/v1
@@ -414,7 +414,7 @@ kubectl apply -f redis-vpa.yaml
 ### 네트워크 정책 디버깅:
 ```bash
 # 네트워크 정책 확인
-kubectl describe networkpolicy -n shop-app
+kubectl describe networkpolicy -n day3-lab
 
 # Pod 간 연결 테스트
 kubectl exec -it deployment/backend -- nc -zv postgres-service 5432
@@ -424,7 +424,7 @@ kubectl exec -it deployment/frontend -- nc -zv backend-service 3000
 ### StatefulSet 상태 확인:
 ```bash
 # StatefulSet 상세 정보
-kubectl describe statefulset postgres-cluster -n shop-app
+kubectl describe statefulset postgres-cluster -n day3-lab
 
 # 각 Pod의 PVC 매핑 확인
 kubectl get pods -l app=postgres-cluster -o custom-columns=NAME:.metadata.name,PVC:.spec.volumes[0].persistentVolumeClaim.claimName
@@ -439,7 +439,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: storage-test
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   containers:
   - name: test
@@ -458,7 +458,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: storage-test-pvc
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   accessModes:
   - ReadWriteOnce
@@ -472,7 +472,7 @@ spec:
 kubectl apply -f storage-test.yaml
 
 # 성능 테스트 실행
-kubectl exec -it storage-test -n shop-app -- dd if=/dev/zero of=/test/testfile bs=1M count=100
+kubectl exec -it storage-test -n day3-lab -- dd if=/dev/zero of=/test/testfile bs=1M count=100
 ```
 
 ---
@@ -507,7 +507,7 @@ kubectl exec -it storage-test -n shop-app -- dd if=/dev/zero of=/test/testfile b
 ### 2. 서비스 메시 통합
 ```bash
 # Istio 사이드카 주입으로 고급 트래픽 관리
-kubectl label namespace shop-app istio-injection=enabled
+kubectl label namespace day3-lab istio-injection=enabled
 ```
 
 ### 3. 백업 자동화
@@ -519,7 +519,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: postgres-backup
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   schedule: "0 2 * * *"  # 매일 새벽 2시
   jobTemplate:
@@ -554,17 +554,17 @@ kubectl apply -f postgres-backup-cronjob.yaml
 
 ```bash
 # 추가된 리소스 정리
-kubectl delete networkpolicy --all -n shop-app
-kubectl delete statefulset postgres-cluster -n shop-app
-kubectl delete svc postgres-headless -n shop-app
-kubectl delete deployment redis-cache -n shop-app
-kubectl delete pvc redis-cache-pvc storage-test-pvc -n shop-app
-kubectl delete hpa --all -n shop-app
-kubectl delete vpa --all -n shop-app 2>/dev/null || true
+kubectl delete networkpolicy --all -n day3-lab
+kubectl delete statefulset postgres-cluster -n day3-lab
+kubectl delete svc postgres-headless -n day3-lab
+kubectl delete deployment redis-cache -n day3-lab
+kubectl delete pvc redis-cache-pvc storage-test-pvc -n day3-lab
+kubectl delete hpa --all -n day3-lab
+kubectl delete vpa --all -n day3-lab 2>/dev/null || true
 kubectl delete storageclass fast-ssd slow-hdd 2>/dev/null || true
 
 # 전체 환경 정리 (Lab 1과 동일)
-kubectl delete namespace shop-app
+kubectl delete namespace day3-lab
 ```
 
 ---

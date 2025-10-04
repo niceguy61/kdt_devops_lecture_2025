@@ -10,7 +10,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 2
   selector:
@@ -41,7 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-nodeport
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: NodePort
   selector:

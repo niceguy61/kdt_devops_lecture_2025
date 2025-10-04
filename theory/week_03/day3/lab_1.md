@@ -93,13 +93,13 @@ cd theory/week_03/day3/lab_scripts/lab1
 **1-1. 수동 실행 (학습용)**
 ```bash
 # 네임스페이스 생성
-kubectl create -n day3-lab namespace shop-app
+kubectl create -n day3-lab namespace day3-lab
 
 # 기본 네임스페이스 설정
-kubectl config set-context --current --namespace=shop-app
+kubectl config set-context --current --namespace=day3-lab
 
 # 확인
-kubectl get -n day3-lab namespace shop-app
+kubectl get -n day3-lab namespace day3-lab
 ```
 
 ---
@@ -124,7 +124,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-data
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   accessModes:
   - ReadWriteOnce
@@ -156,7 +156,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 1
   selector:
@@ -191,7 +191,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: database-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:
@@ -228,7 +228,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 2
   selector:
@@ -259,7 +259,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:
@@ -306,7 +306,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 2
   selector:
@@ -337,7 +337,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:
@@ -358,7 +358,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-nodeport
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: NodePort
   selector:
@@ -396,7 +396,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shop-ingress
-  namespace: shop-app
+  namespace: day3-lab
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -473,7 +473,7 @@ echo "PostgreSQL Pod 재시작 후 데이터 확인 완료"
 ## 🔍 실습 체크포인트
 
 ### ✅ 기본 구성 확인
-- [ ] **네임스페이스**: shop-app 네임스페이스 생성 및 설정
+- [ ] **네임스페이스**: day3-lab 네임스페이스 생성 및 설정
 - [ ] **PVC**: postgres-data PVC 생성 및 바인딩
 - [ ] **데이터베이스**: PostgreSQL Pod 정상 실행
 - [ ] **백엔드**: Node.js API 서버 2개 Pod 실행
@@ -516,7 +516,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: postgres-policy
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   podSelector:
     matchLabels:
@@ -549,7 +549,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **수동 정리**
 ```bash
 # 네임스페이스 삭제 (모든 리소스 함께 삭제)
-kubectl delete -n day3-lab namespace shop-app
+kubectl delete -n day3-lab namespace day3-lab
 
 # hosts 파일 정리 (선택사항)
 sudo sed -i '/shop.local/d' /etc/hosts

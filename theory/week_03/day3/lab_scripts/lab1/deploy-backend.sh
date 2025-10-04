@@ -10,7 +10,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 2
   selector:
@@ -41,7 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:

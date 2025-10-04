@@ -10,7 +10,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-data
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   accessModes:
   - ReadWriteOnce

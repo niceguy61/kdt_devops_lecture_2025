@@ -10,7 +10,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   replicas: 1
   selector:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
-  namespace: shop-app
+  namespace: day3-lab
 spec:
   type: ClusterIP
   selector:
