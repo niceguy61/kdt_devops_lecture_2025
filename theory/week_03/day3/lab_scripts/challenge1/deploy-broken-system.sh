@@ -20,10 +20,15 @@ echo "⏳ Ingress Controller 준비 대기 중..."
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
-  --timeout=120s 2>/dev/null || echo "⚠️  Ingress Controller 대기 시간 초과 (계속 진행)"
+  --timeout=120s 2>/dev/null || echo "⚠️  Ingress Controller 대기 시간 초과"
 
-# Admission webhook 문제 회피
-kubectl delete validatingwebhookconfiguration ingress-nginx-admission 2>/dev/null || true
+echo "⏳ Admission webhook 준비 대기 중..."
+if ! kubectl wait --namespace ingress-nginx \
+  --for=condition=complete job/ingress-nginx-admission-create \
+  --timeout=60s 2>/dev/null; then
+    echo "⚠️  Admission webhook 대기 시간 초과, webhook 비활성화"
+    kubectl delete validatingwebhookconfiguration ingress-nginx-admission 2>/dev/null || true
+fi
 
 echo "🌐 Ingress 배포 중 (라우팅 오류 포함)..."
 kubectl apply -f broken-ingress.yaml
