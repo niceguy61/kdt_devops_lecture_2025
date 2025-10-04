@@ -274,7 +274,7 @@ cp /etc/kubernetes/manifests/kube-apiserver.yaml \
    /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 
 nano /etc/kubernetes/manifests/kube-apiserver.yaml
-# 아래 추가할 내용은 문서 하단 "추가할 내용" 섹션 참조
+# 편집 후 저장: Ctrl+O, Enter, Ctrl+X (추가할 내용은 아래 "추가할 내용" 섹션 참조)
 
 # 컨테이너에서 나가기
 exit
