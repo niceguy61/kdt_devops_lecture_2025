@@ -210,71 +210,29 @@ ETCD 암호화는 API Server 설정 파일 수정이 필요하여 실습 환경�
 
 **실습 시도 (선택사항 - 위험)**
 
-도전하고 싶다면 아래 명령어를 **Kind 컨테이너 내부**에서 실행하세요:
+자동화 스크립트가 모든 과정을 처리합니다:
 
 ```bash
-# 1. Kind 컨테이너 접속
-docker exec -it challenge-cluster-control-plane bash
-
-# 2. 아래 전체 명령어를 복사해서 한 번에 실행
-cat <<'SCRIPT' > /tmp/setup-encryption.sh
-#!/bin/bash
-set -e
-
-echo "=== ETCD 암호화 설정 시작 ==="
-
-# 암호화 설정 파일 생성
-cat <<EOF > /etc/kubernetes/encryption-config.yaml
-apiVersion: apiserver.config.k8s.io/v1
-kind: EncryptionConfiguration
-resources:
-  - resources:
-    - secrets
-    providers:
-    - aescbc:
-        keys:
-        - name: key1
-          secret: $(head -c 32 /dev/urandom | base64)
-    - identity: {}
-EOF
-
-# 백업
-cp /etc/kubernetes/manifests/kube-apiserver.yaml{,.backup}
-
-# 설정 수정
-sed -i '/- --tls-cert-file/a\    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml' \
-  /etc/kubernetes/manifests/kube-apiserver.yaml
-
-sed -i '/volumeMounts:/a\    - name: encryption-config\n      mountPath: /etc/kubernetes/encryption-config.yaml\n      readOnly: true' \
-  /etc/kubernetes/manifests/kube-apiserver.yaml
-
-sed -i '/volumes:/a\  - name: encryption-config\n    hostPath:\n      path: /etc/kubernetes/encryption-config.yaml\n      type: File' \
-  /etc/kubernetes/manifests/kube-apiserver.yaml
-
-echo "✅ 설정 완료"
-grep encryption-provider-config /etc/kubernetes/manifests/kube-apiserver.yaml
-SCRIPT
-
-chmod +x /tmp/setup-encryption.sh
-/tmp/setup-encryption.sh
-
-# 3. 컨테이너 종료
-exit
-
-# 4. API Server 재시작 확인 (30초 대기)
-sleep 30
-kubectl get pods -n kube-system | grep kube-apiserver
+cd theory/week_03/day4/lab_scripts/handson1
+./setup-etcd-encryption.sh
 ```
+
+**스크립트가 하는 일**:
+1. Kind 클러스터 자동 감지
+2. 컨테이너 내부에서 암호화 설정 파일 생성
+3. API Server 설정 자동 수정
+4. API Server 재시작 확인
+
+**스크립트 파일**: [setup-etcd-encryption.sh](./lab_scripts/handson1/setup-etcd-encryption.sh)
 
 **실패 시 복구**:
 ```bash
-docker exec -it challenge-cluster-control-plane bash
+CLUSTER_NAME=$(kind get clusters | head -1)
+docker exec -it ${CLUSTER_NAME}-control-plane bash
 cp /etc/kubernetes/manifests/kube-apiserver.yaml.backup \
    /etc/kubernetes/manifests/kube-apiserver.yaml
 exit
 ```
-
-**참고 스크립트**: [setup-etcd-encryption.sh](./lab_scripts/handson1/setup-etcd-encryption.sh)
 
 ---
 
