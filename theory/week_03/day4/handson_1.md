@@ -252,7 +252,7 @@ minikube status
 
 ```bash
 # Kind 컨트롤 플레인 컨테이너 접속
-docker exec -it kind-control-plane bash
+docker exec -it challenge-cluster-control-plane bash
 
 # 컨테이너 내부에서 실행
 cat <<EOF | tee /etc/kubernetes/encryption-config.yaml
@@ -273,8 +273,8 @@ EOF
 cp /etc/kubernetes/manifests/kube-apiserver.yaml \
    /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 
-vi /etc/kubernetes/manifests/kube-apiserver.yaml
-# 아래 내용 추가 후 저장 (:wq)
+nano /etc/kubernetes/manifests/kube-apiserver.yaml
+# 아래 추가할 내용은 문서 하단 "추가할 내용" 섹션 참조
 
 # 컨테이너에서 나가기
 exit
@@ -290,7 +290,7 @@ kubectl get pods -n kube-system | grep kube-apiserver
 minikube ssh
 
 # 위와 동일한 방법으로 설정
-sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # SSH 종료
 exit
@@ -307,7 +307,7 @@ sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
        /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 
 # 설정 파일 수정
-sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
 **추가할 내용 (모든 환경 공통)**:
