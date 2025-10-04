@@ -370,14 +370,23 @@ kubectl get secret app-config-secret -n production
 
 ## 💾 Step 3: ETCD 백업 및 복원 (20분)
 
-### Step 3-1: ETCD 백업 자동화 (10분)
+**⚠️ 이 내용은 이론 학습만 진행합니다**
 
-**3-1. 백업 스크립트 생성**
+Kind 클러스터에서는 ETCD에 직접 접근이 어렵습니다.  
+**개념만 이해하고 다음 단계로 이동하세요.**
+
+---
+
+**ETCD 백업의 중요성**
+
+ETCD는 Kubernetes의 모든 데이터를 저장하는 핵심 데이터베이스입니다.  
+백업이 없으면 클러스터 장애 시 복구 불가능합니다.
+
+**백업 스크립트 예제**:
 
 ```bash
-cat > /usr/local/bin/etcd-backup.sh <<'EOF'
 #!/bin/bash
-set -e
+# ETCD 백업 스크립트
 
 BACKUP_DIR="/backup/etcd"
 DATE=$(date +%Y%m%d-%H%M%S)
@@ -385,7 +394,7 @@ BACKUP_FILE="$BACKUP_DIR/etcd-snapshot-$DATE.db"
 
 mkdir -p $BACKUP_DIR
 
-echo "Starting ETCD backup..."
+# 스냅샷 생성
 ETCDCTL_API=3 etcdctl snapshot save $BACKUP_FILE \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
@@ -393,61 +402,43 @@ ETCDCTL_API=3 etcdctl snapshot save $BACKUP_FILE \
   --key=/etc/kubernetes/pki/etcd/server.key
 
 # 백업 검증
-ETCDCTL_API=3 etcdctl snapshot status $BACKUP_FILE --write-out=table
+ETCDCTL_API=3 etcdctl snapshot status $BACKUP_FILE
 
-# 7일 이상 된 백업 삭제
-find $BACKUP_DIR -name "etcd-snapshot-*.db" -mtime +7 -delete
-
-echo "Backup completed: $BACKUP_FILE"
-EOF
-
-chmod +x /usr/local/bin/etcd-backup.sh
-
-# 백업 실행 테스트
-/usr/local/bin/etcd-backup.sh
+# 오래된 백업 삭제 (7일 이상)
+find $BACKUP_DIR -name "*.db" -mtime +7 -delete
 ```
 
-**CronJob으로 자동 백업**:
-
+**자동 백업 설정**:
 ```bash
-# Cron 작업 등록 (매일 새벽 2시)
-(crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/etcd-backup.sh >> /var/log/etcd-backup.log 2>&1") | crontab -
-
-# Cron 작업 확인
-crontab -l
+# Cron으로 매일 새벽 2시 백업
+0 2 * * * /usr/local/bin/etcd-backup.sh >> /var/log/etcd-backup.log 2>&1
 ```
-
-### Step 3-2: ETCD 복원 테스트 (10분)
 
 **복원 절차**:
-
 ```bash
-# 1. 현재 상태 백업
-ETCDCTL_API=3 etcdctl snapshot save /backup/etcd/before-restore.db \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
+# 1. 클러스터 중지
+systemctl stop kubelet etcd
 
-# 2. 테스트용 리소스 생성
-kubectl create namespace test-restore
-kubectl create deployment nginx --image=nginx -n test-restore
+# 2. 기존 데이터 백업
+mv /var/lib/etcd /var/lib/etcd.backup
 
-# 3. 복원 시뮬레이션 (실제로는 클러스터 중지 필요)
-echo "복원 절차:"
-echo "1. systemctl stop kubelet"
-echo "2. systemctl stop etcd"
-echo "3. mv /var/lib/etcd /var/lib/etcd.backup"
-echo "4. ETCDCTL_API=3 etcdctl snapshot restore /backup/etcd/before-restore.db --data-dir=/var/lib/etcd"
-echo "5. chown -R etcd:etcd /var/lib/etcd"
-echo "6. systemctl start etcd"
-echo "7. systemctl start kubelet"
+# 3. 스냅샷에서 복원
+ETCDCTL_API=3 etcdctl snapshot restore backup.db \
+  --data-dir=/var/lib/etcd
 
-# 4. 정리
-kubectl delete namespace test-restore
+# 4. 권한 설정 및 재시작
+chown -R etcd:etcd /var/lib/etcd
+systemctl start etcd kubelet
 ```
 
+**프로덕션 권장사항**:
+- ✅ 매일 자동 백업
+- ✅ 원격 저장소에 백업 복사 (S3, GCS 등)
+- ✅ 정기적인 복원 테스트
+- ✅ 백업 보관 정책 (30일 이상)
+
 ---
+
 
 ## 🔄 Step 4: 클러스터 업그레이드 (15분)
 
