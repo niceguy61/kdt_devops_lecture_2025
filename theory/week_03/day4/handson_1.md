@@ -273,8 +273,21 @@ EOF
 cp /etc/kubernetes/manifests/kube-apiserver.yaml \
    /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 
-nano /etc/kubernetes/manifests/kube-apiserver.yaml
-# 편집 후 저장: Ctrl+O, Enter, Ctrl+X (추가할 내용은 아래 "추가할 내용" 섹션 참조)
+# sed로 설정 추가 (편집기 없이 자동 수정)
+# 1. command에 encryption-provider-config 추가
+sed -i '/- --tls-cert-file/a\    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml' \
+  /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# 2. volumeMounts에 encryption-config 추가  
+sed -i '/volumeMounts:/a\    - name: encryption-config\n      mountPath: /etc/kubernetes/encryption-config.yaml\n      readOnly: true' \
+  /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# 3. volumes에 encryption-config 추가
+sed -i '/volumes:/a\  - name: encryption-config\n    hostPath:\n      path: /etc/kubernetes/encryption-config.yaml\n      type: File' \
+  /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# 변경 확인
+grep encryption-provider-config /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # 컨테이너에서 나가기
 exit
