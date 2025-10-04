@@ -29,7 +29,7 @@ spec:
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
-          timeoutSeconds: 1  # 너무 짧은 타임아웃
+          timeoutSeconds: 1
         readinessProbe:
           httpGet:
             path: /ready
