@@ -262,6 +262,28 @@ etcdctl get /registry/secrets/default/my-secret
 
 ---
 
+**⚠️ 실습 시도 후 클러스터가 깨진 경우 복구 방법**
+
+**방법 1: 자동 복구 스크립트**
+```bash
+cd theory/week_03/day4/lab_scripts/handson1
+./rollback-etcd-encryption.sh
+```
+
+**방법 2: 클러스터 재생성 (빠름)**
+```bash
+# 클러스터 삭제 및 재생성
+kind delete cluster --name challenge-cluster
+kind create cluster --name challenge-cluster
+
+# 정상 동작 확인
+kubectl get pods -n kube-system
+```
+
+**복구 스크립트**: [rollback-etcd-encryption.sh](./lab_scripts/handson1/rollback-etcd-encryption.sh)
+
+---
+
 ### Step 2-2: External Secrets Operator (15분)
 
 **External Secrets Operator 설치**:
