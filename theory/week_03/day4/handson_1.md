@@ -64,56 +64,22 @@ kubectl label namespace production env=prod
 
 **목표**: 프로덕션 네임스페이스에 가장 엄격한 보안 정책 적용
 
-**💡 직접 작성 실습**: 아래 요구사항을 만족하는 스크립트를 직접 작성해보세요!
+**1-1. Pod Security Standards 라벨 적용**
 
-**📝 작성할 스크립트**: `apply-pod-security-standards.sh`
-
-**요구사항**:
-1. Production 네임스페이스에 `restricted` 정책 적용
-2. Development 네임스페이스에 `baseline` 정책 적용
-3. Staging 네임스페이스에 `baseline` 정책 적용
-4. 각 정책은 `enforce`, `audit`, `warn` 모드 모두 설정
-5. 적용 후 결과 확인 메시지 출력
-
-**힌트**:
 ```bash
-#!/bin/bash
-# Pod Security Standards 적용 스크립트
-
-echo "=== Pod Security Standards 적용 시작 ==="
-
 # Production: restricted 정책
-kubectl label namespace production \
-  pod-security.kubernetes.io/enforce=??? \
-  pod-security.kubernetes.io/audit=??? \
-  pod-security.kubernetes.io/warn=???
-
-# Development: baseline 정책
-kubectl label namespace development \
-  # 여기에 코드 작성
-
-# Staging: baseline 정책
-# 여기에 코드 작성
-
-echo "=== 적용 완료 ==="
-kubectl get namespace -L pod-security.kubernetes.io/enforce
-```
-
-**정답 확인용 명령어**:
-```bash
-# Pod Security Standards 라벨 적용
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=restricted \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 
-# 개발 환경은 Baseline 적용
+# Development: baseline 정책
 kubectl label namespace development \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/audit=baseline \
   pod-security.kubernetes.io/warn=baseline
 
-# 스테이징 환경도 Baseline 적용
+# Staging: baseline 정책
 kubectl label namespace staging \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/audit=baseline \
@@ -127,10 +93,10 @@ kubectl get namespace staging -o yaml | grep pod-security
 
 ### Step 1-2: 보안 강화된 Pod 배포 (10분)
 
-**Restricted 정책을 만족하는 Pod 예시**:
+**1-2. Restricted 정책을 만족하는 Pod 배포**
 
-```bash
-kubectl apply -f - <<EOF
+**파일 생성**: `secure-app-pod.yaml`
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -171,18 +137,21 @@ spec:
     emptyDir: {}
   - name: run
     emptyDir: {}
-EOF
+```
+
+**배포 및 확인**:
+```bash
+kubectl apply -f secure-app-pod.yaml
 
 # Pod 상태 확인
 kubectl get pod secure-app -n production
 kubectl describe pod secure-app -n production
 ```
 
-**위반 사례 테스트**:
+**1-3. 위반 사례 테스트 (정책 차단 확인)**
 
-```bash
-# 특권 컨테이너 시도 (차단되어야 함)
-kubectl apply -f - <<EOF
+**파일 생성**: `privileged-pod.yaml`
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -194,10 +163,15 @@ spec:
     image: nginx:alpine
     securityContext:
       privileged: true
-EOF
+```
 
-# 오류 메시지 확인
-# Error: pods "privileged-app" is forbidden: violates PodSecurity "restricted:latest"
+**테스트**:
+```bash
+# 배포 시도 (차단되어야 함)
+kubectl apply -f privileged-pod.yaml
+
+# 예상 결과: Error from server (Forbidden): error when creating...
+# Pod Security Standards에 의해 차단됨
 ```
 
 ---
@@ -268,10 +242,10 @@ helm install external-secrets \
 kubectl get pods -n external-secrets-system
 ```
 
-**SecretStore 설정 (Kubernetes Secret 백엔드)**:
+**2-2. SecretStore 설정**
 
-```bash
-kubectl apply -f - <<EOF
+**파일 생성**: `secret-store.yaml`
+```yaml
 apiVersion: external-secrets.io/v1beta1
 kind: SecretStore
 metadata:
@@ -289,10 +263,17 @@ spec:
           type: ConfigMap
           name: kube-root-ca.crt
           key: ca.crt
-EOF
+```
 
-# ExternalSecret 생성
-kubectl apply -f - <<EOF
+**배포**:
+```bash
+kubectl apply -f secret-store.yaml
+```
+
+**2-3. ExternalSecret 생성**
+
+**파일 생성**: `external-secret.yaml`
+```yaml
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -311,7 +292,16 @@ spec:
     remoteRef:
       key: db-credentials
       property: password
-EOF
+```
+
+**배포 및 확인**:
+```bash
+kubectl apply -f external-secret.yaml
+
+# 확인
+kubectl get secretstore -n production
+kubectl get externalsecret -n production
+kubectl get secret app-config-secret -n production
 ```
 
 ---
@@ -320,45 +310,7 @@ EOF
 
 ### Step 3-1: ETCD 백업 자동화 (10분)
 
-**💡 직접 작성 실습**: ETCD 백업 스크립트를 직접 작성해보세요!
-
-**📝 작성할 스크립트**: `create-etcd-backup.sh`
-
-**요구사항**:
-1. `/backup/etcd` 디렉토리에 백업 파일 저장
-2. 백업 파일명: `etcd-snapshot-YYYYMMDD-HHMMSS.db` 형식
-3. ETCD 스냅샷 생성 및 검증
-4. 7일 이상 된 백업 파일 자동 삭제
-5. 백업 완료 메시지 출력
-
-**힌트**:
-```bash
-#!/bin/bash
-set -e
-
-BACKUP_DIR="/backup/etcd"
-DATE=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="$BACKUP_DIR/etcd-snapshot-$DATE.db"
-
-mkdir -p $BACKUP_DIR
-
-echo "Starting ETCD backup..."
-ETCDCTL_API=3 etcdctl snapshot save $BACKUP_FILE \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
-
-# 백업 검증
-ETCDCTL_API=3 etcdctl snapshot status $BACKUP_FILE --write-out=table
-
-# 7일 이상 된 백업 삭제
-find $BACKUP_DIR -name "etcd-snapshot-*.db" -mtime +7 -delete
-
-echo "Backup completed: $BACKUP_FILE"
-```
-
-**정답 확인용 - 백업 스크립트 생성**:
+**3-1. 백업 스크립트 생성**
 
 ```bash
 cat > /usr/local/bin/etcd-backup.sh <<'EOF'
@@ -585,8 +537,14 @@ kubectl exec -it vault-0 -n vault-system -- vault auth enable kubernetes
 # Gatekeeper 설치
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 
-# 정책 템플릿 생성
-kubectl apply -f - <<EOF
+# 설치 확인
+kubectl get pods -n gatekeeper-system
+```
+
+**정책 템플릿 생성**
+
+**파일 생성**: `required-labels-template.yaml`
+```yaml
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -615,7 +573,39 @@ spec:
           count(missing) > 0
           msg := sprintf("You must provide labels: %v", [missing])
         }
-EOF
+```
+
+**배포**:
+```bash
+kubectl apply -f required-labels-template.yaml
+```
+
+**Constraint 생성 및 테스트**
+
+**파일 생성**: `require-labels-constraint.yaml`
+```yaml
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: require-app-env-labels
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["production"]
+  parameters:
+    labels: ["app", "env"]
+```
+
+**배포 및 테스트**:
+```bash
+kubectl apply -f require-labels-constraint.yaml
+
+# 테스트: 라벨 없는 Pod 배포 시도 (차단되어야 함)
+kubectl run test-pod --image=nginx -n production
+
+# 예상 결과: Error from server (Forbidden): admission webhook denied...
 ```
 
 ---
