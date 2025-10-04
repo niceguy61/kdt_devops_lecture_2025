@@ -87,7 +87,7 @@ else
 fi
 
 # 모든 Deployment Ready 확인
-NOT_READY=$(kubectl get deployments -n $NAMESPACE --no-headers | awk '{if ($2 != $4) print $1}' | wc -l)
+NOT_READY=$(kubectl get deployments -n $NAMESPACE --no-headers | awk '{split($2,a,"/"); if (a[1] != a[2]) print $1}' | wc -l)
 if [ "$NOT_READY" -eq 0 ]; then
     echo -e "${GREEN}✅ PASS${NC}: 모든 Deployment가 Ready"
     ((PASS++))
