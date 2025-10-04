@@ -3,25 +3,25 @@
 # Challenge 1: 성공 검증 스크립트
 cd "$(dirname "$0")"
 
-echo "🔍 Challenge 1 성공 검증 시작..."
+echo "🔍 day2-challenge 성공 검증 시작..."
 
 echo ""
 echo "=== 네임스페이스 상태 ==="
-kubectl get namespace challenge1
+kubectl get namespace day2-challenge
 
 echo ""
 echo "=== Deployment 상태 ==="
-kubectl get deployments -n challenge1
+kubectl get deployments -n day2-challenge
 
 echo ""
 echo "=== Pod 상태 ==="
-kubectl get pods -n challenge1 -o wide
+kubectl get pods -n day2-challenge -o wide
 
 echo ""
 echo "=== 상세 검증 ==="
 
 # broken-app 검증
-BROKEN_READY=$(kubectl get deployment broken-app -n challenge1 -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+BROKEN_READY=$(kubectl get deployment broken-app -n day2-challenge -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
 if [ "$BROKEN_READY" = "3" ]; then
     echo "✅ broken-app: 3개 Pod 모두 Ready"
 else
@@ -29,7 +29,7 @@ else
 fi
 
 # resource-hungry 검증
-RESOURCE_READY=$(kubectl get deployment resource-hungry -n challenge1 -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+RESOURCE_READY=$(kubectl get deployment resource-hungry -n day2-challenge -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
 if [ "$RESOURCE_READY" = "2" ]; then
     echo "✅ resource-hungry: 2개 Pod 모두 Ready"
 else
