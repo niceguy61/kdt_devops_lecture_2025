@@ -31,12 +31,75 @@
 
 ---
 
+## 🛠️ 환경 준비
+
+### 환경 설정
+
+**🚀 자동화 스크립트 사용**
+```bash
+cd theory/week_03/day4/lab_scripts/handson1
+./setup-environment.sh
+```
+
+**📋 스크립트 내용**: [setup-environment.sh](./lab_scripts/handson1/setup-environment.sh)
+
+**수동 실행 (학습용)**
+```bash
+# 네임스페이스 생성 (없는 경우)
+kubectl create namespace development
+kubectl create namespace staging
+kubectl create namespace production
+
+# 라벨 추가
+kubectl label namespace development env=dev
+kubectl label namespace staging env=staging
+kubectl label namespace production env=prod
+```
+
+---
+
 ## 🔒 Step 1: Pod Security Standards 적용 (25분)
 
 ### Step 1-1: Restricted 정책 적용 (15분)
 
 **목표**: 프로덕션 네임스페이스에 가장 엄격한 보안 정책 적용
 
+**💡 직접 작성 실습**: 아래 요구사항을 만족하는 스크립트를 직접 작성해보세요!
+
+**📝 작성할 스크립트**: `apply-pod-security-standards.sh`
+
+**요구사항**:
+1. Production 네임스페이스에 `restricted` 정책 적용
+2. Development 네임스페이스에 `baseline` 정책 적용
+3. Staging 네임스페이스에 `baseline` 정책 적용
+4. 각 정책은 `enforce`, `audit`, `warn` 모드 모두 설정
+5. 적용 후 결과 확인 메시지 출력
+
+**힌트**:
+```bash
+#!/bin/bash
+# Pod Security Standards 적용 스크립트
+
+echo "=== Pod Security Standards 적용 시작 ==="
+
+# Production: restricted 정책
+kubectl label namespace production \
+  pod-security.kubernetes.io/enforce=??? \
+  pod-security.kubernetes.io/audit=??? \
+  pod-security.kubernetes.io/warn=???
+
+# Development: baseline 정책
+kubectl label namespace development \
+  # 여기에 코드 작성
+
+# Staging: baseline 정책
+# 여기에 코드 작성
+
+echo "=== 적용 완료 ==="
+kubectl get namespace -L pod-security.kubernetes.io/enforce
+```
+
+**정답 확인용 명령어**:
 ```bash
 # Pod Security Standards 라벨 적용
 kubectl label namespace production \
@@ -50,8 +113,16 @@ kubectl label namespace development \
   pod-security.kubernetes.io/audit=baseline \
   pod-security.kubernetes.io/warn=baseline
 
+# 스테이징 환경도 Baseline 적용
+kubectl label namespace staging \
+  pod-security.kubernetes.io/enforce=baseline \
+  pod-security.kubernetes.io/audit=baseline \
+  pod-security.kubernetes.io/warn=baseline
+
 # 정책 확인
 kubectl get namespace production -o yaml | grep pod-security
+kubectl get namespace development -o yaml | grep pod-security
+kubectl get namespace staging -o yaml | grep pod-security
 ```
 
 ### Step 1-2: 보안 강화된 Pod 배포 (10분)
@@ -249,7 +320,45 @@ EOF
 
 ### Step 3-1: ETCD 백업 자동화 (10분)
 
-**백업 스크립트 생성**:
+**💡 직접 작성 실습**: ETCD 백업 스크립트를 직접 작성해보세요!
+
+**📝 작성할 스크립트**: `create-etcd-backup.sh`
+
+**요구사항**:
+1. `/backup/etcd` 디렉토리에 백업 파일 저장
+2. 백업 파일명: `etcd-snapshot-YYYYMMDD-HHMMSS.db` 형식
+3. ETCD 스냅샷 생성 및 검증
+4. 7일 이상 된 백업 파일 자동 삭제
+5. 백업 완료 메시지 출력
+
+**힌트**:
+```bash
+#!/bin/bash
+set -e
+
+BACKUP_DIR="/backup/etcd"
+DATE=$(date +%Y%m%d-%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/etcd-snapshot-$DATE.db"
+
+mkdir -p $BACKUP_DIR
+
+echo "Starting ETCD backup..."
+ETCDCTL_API=3 etcdctl snapshot save $BACKUP_FILE \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key
+
+# 백업 검증
+ETCDCTL_API=3 etcdctl snapshot status $BACKUP_FILE --write-out=table
+
+# 7일 이상 된 백업 삭제
+find $BACKUP_DIR -name "etcd-snapshot-*.db" -mtime +7 -delete
+
+echo "Backup completed: $BACKUP_FILE"
+```
+
+**정답 확인용 - 백업 스크립트 생성**:
 
 ```bash
 cat > /usr/local/bin/etcd-backup.sh <<'EOF'
@@ -513,6 +622,17 @@ EOF
 
 ## 🧹 실습 정리
 
+### 환경 정리 스크립트
+
+**🚀 자동화 정리**
+```bash
+cd theory/week_03/day4/lab_scripts/handson1
+./cleanup.sh
+```
+
+**📋 스크립트 내용**: [cleanup.sh](./lab_scripts/handson1/cleanup.sh)
+
+**수동 정리**
 ```bash
 # Pod Security Standards 라벨 제거
 kubectl label namespace production pod-security.kubernetes.io/enforce-
