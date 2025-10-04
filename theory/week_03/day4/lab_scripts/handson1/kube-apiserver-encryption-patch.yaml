@@ -1,0 +1,15 @@
+# kube-apiserver.yaml에 추가할 내용
+
+# 1. spec.containers[0].command 섹션에 추가:
+- --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+
+# 2. spec.containers[0].volumeMounts 섹션에 추가:
+- name: encryption-config
+  mountPath: /etc/kubernetes/encryption-config.yaml
+  readOnly: true
+
+# 3. spec.volumes 섹션에 추가:
+- name: encryption-config
+  hostPath:
+    path: /etc/kubernetes/encryption-config.yaml
+    type: File

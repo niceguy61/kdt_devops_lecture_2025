@@ -1,0 +1,13 @@
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+    - secrets
+    providers:
+    - aescbc:
+        keys:
+        - name: key1
+          # 실제 사용 시 아래 명령어로 생성한 키로 교체:
+          # head -c 32 /dev/urandom | base64
+          secret: REPLACE_WITH_YOUR_BASE64_KEY
+    - identity: {}
