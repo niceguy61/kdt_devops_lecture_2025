@@ -106,7 +106,7 @@ etcdctl --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key \
-  get / --prefix --keys-only | head -10
+  get / --prefix --keys-only --limit=10
 "
 ```
 
@@ -185,7 +185,6 @@ echo '🔗 서비스 연결 테스트 시작...'
 wget -qO- http://nginx-demo.hands-on-demo.svc.cluster.local | head -5
 echo '✅ 서비스 연결 성공!'
 "
-```
 ```
 
 ---
