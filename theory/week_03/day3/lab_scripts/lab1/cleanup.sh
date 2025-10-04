@@ -5,7 +5,7 @@
 echo "🧹 Lab 1 환경 정리 시작..."
 
 echo "🗑️ 네임스페이스 삭제 중 (모든 리소스 포함)..."
-kubectl delete namespace shop-app --ignore-not-found=true
+kubectl delete namespace day3-lab --ignore-not-found=true
 
 echo "📝 hosts 파일 정리 안내:"
 echo "다음 명령어로 hosts 파일에서 shop.local 제거:"
