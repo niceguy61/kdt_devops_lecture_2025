@@ -27,8 +27,8 @@ kind version
 
 ### ✅ 2. 작업 디렉토리 생성
 ```bash
-mkdir -p ~/k8s-hands-on
-cd ~/k8s-hands-on
+mkdir -p path-to
+cd path-to
 echo "✅ 작업 디렉토리 준비 완료: $(pwd)"
 ```
 
@@ -240,11 +240,12 @@ kubectl cluster-info
 ```bash
 # 실습 환경 정리
 kubectl delete namespace hands-on-demo
+exit
 kind delete cluster --name hands-on-cluster
 
 # 작업 디렉토리 정리
 cd ~
-rm -rf ~/k8s-hands-on
+rm -rf ~/path-to
 ```
 
 ---
