@@ -208,7 +208,9 @@ kubectl apply -f privileged-pod.yaml
 head -c 32 /dev/urandom | base64
 
 # EncryptionConfiguration 생성
-cat > /etc/kubernetes/encryption-config.yaml <<EOF
+# 주의: WSL 환경에서는 sudo 권한 필요
+sudo mkdir -p /etc/kubernetes
+sudo cat > /etc/kubernetes/encryption-config.yaml <<EOF
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -222,8 +224,31 @@ resources:
     - identity: {}
 EOF
 
-# API Server 설정 업데이트 (kube-apiserver.yaml)
-# --encryption-provider-config=/etc/kubernetes/encryption-config.yaml 추가
+# 파일 권한 설정 (WSL 포함)
+sudo chmod 600 /etc/kubernetes/encryption-config.yaml
+sudo chown root:root /etc/kubernetes/encryption-config.yaml
+```
+
+**API Server 설정 업데이트**:
+
+```bash
+# kube-apiserver.yaml 수정
+# WSL/Linux: /etc/kubernetes/manifests/kube-apiserver.yaml
+# Kind/Minikube: 클러스터 내부 설정 필요
+
+# 추가할 설정:
+# --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+
+# volumeMounts 추가:
+# - name: encryption-config
+#   mountPath: /etc/kubernetes/encryption-config.yaml
+#   readOnly: true
+
+# volumes 추가:
+# - name: encryption-config
+#   hostPath:
+#     path: /etc/kubernetes/encryption-config.yaml
+#     type: File
 
 # API Server 재시작 후 확인
 kubectl get pods -n kube-system | grep kube-apiserver
@@ -238,6 +263,7 @@ kubectl create secret generic test-secret \
   -n production
 
 # ETCD에서 암호화 확인
+# WSL 환경에서는 etcdctl이 설치되어 있어야 함
 ETCDCTL_API=3 etcdctl get /registry/secrets/production/test-secret \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
@@ -246,6 +272,12 @@ ETCDCTL_API=3 etcdctl get /registry/secrets/production/test-secret \
 
 # 암호화되어 있으면 평문이 보이지 않음
 ```
+
+**WSL 환경 참고사항**:
+- Kind/Minikube 사용 시: 컨테이너 내부에서 설정 필요
+- 실제 클러스터: 마스터 노드에서 직접 설정
+- 권한 문제: sudo 사용 필수
+- etcdctl 설치: `sudo apt-get install etcd-client` (Ubuntu/Debian)
 
 ### Step 2-2: External Secrets Operator (15분)
 
