@@ -23,9 +23,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: backend-service  # 올바른 이름이지만 실제로는 wrong-backend-service로 생성됨
+            name: backend-service
             port:
               number: 3000
-
-# 문제: Ingress가 'nonexistent-frontend-service'를 참조하지만 실제 서비스는 'frontend-service'
-# 해결: 서비스 이름을 'frontend-service'로 수정
