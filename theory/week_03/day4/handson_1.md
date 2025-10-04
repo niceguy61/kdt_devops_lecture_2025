@@ -174,6 +174,27 @@ kubectl apply -f privileged-pod.yaml
 # Pod Security Standards에 의해 차단됨
 ```
 
+**실패 이유 분석**:
+
+이 Pod가 차단된 이유는 `production` 네임스페이스에 적용된 **Restricted** Pod Security Standard를 위반했기 때문입니다.
+
+**위반 항목**:
+1. **privileged: true** 설정
+   - Restricted 정책은 특권 컨테이너를 절대 허용하지 않음
+   - 특권 컨테이너는 호스트의 모든 리소스에 접근 가능하여 보안 위험
+
+**Restricted 정책 요구사항**:
+- `runAsNonRoot: true` 필수
+- `allowPrivilegeEscalation: false` 필수
+- `privileged: false` 필수 (기본값)
+- `capabilities: drop: [ALL]` 필수
+- `seccompProfile: RuntimeDefault` 필수
+
+**보안 관점**:
+- 특권 컨테이너는 컨테이너 격리를 무력화
+- 호스트 커널에 직접 접근 가능
+- 프로덕션 환경에서는 절대 사용 금지
+
 ---
 
 ## 🔐 Step 2: Secret 암호화 및 관리 (30분)
