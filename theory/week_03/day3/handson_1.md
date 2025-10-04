@@ -113,7 +113,8 @@ spec:
     ports:
     - protocol: TCP
       port: 3000
-  - to: {}  # DNS 등 시스템 트래픽
+  - to: # DNS 접근 허용
+    - namespaceSelector: {}
     ports:
     - protocol: UDP
       port: 53
@@ -327,7 +328,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: fast-ssd
+  storageClassName: standard
   resources:
     requests:
       storage: 1Gi
