@@ -235,6 +235,72 @@ sudo cat /etc/kubernetes/encryption-config.yaml
 
 **API Server 설정 업데이트**:
 
+**⚠️ 환경 확인 먼저!**
+
+```bash
+# 현재 Kubernetes 환경 확인
+kubectl cluster-info
+
+# Kind 사용 중인지 확인
+docker ps | grep kind
+
+# Minikube 사용 중인지 확인
+minikube status
+```
+
+**방법 1: Kind 클러스터 (WSL/Docker Desktop)**
+
+```bash
+# Kind 컨트롤 플레인 컨테이너 접속
+docker exec -it kind-control-plane bash
+
+# 컨테이너 내부에서 실행
+cat <<EOF | tee /etc/kubernetes/encryption-config.yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+    - secrets
+    providers:
+    - aescbc:
+        keys:
+        - name: key1
+          secret: $(head -c 32 /dev/urandom | base64)
+    - identity: {}
+EOF
+
+# kube-apiserver.yaml 백업 및 수정
+cp /etc/kubernetes/manifests/kube-apiserver.yaml \
+   /etc/kubernetes/manifests/kube-apiserver.yaml.backup
+
+vi /etc/kubernetes/manifests/kube-apiserver.yaml
+# 아래 내용 추가 후 저장 (:wq)
+
+# 컨테이너에서 나가기
+exit
+
+# API Server 재시작 확인
+kubectl get pods -n kube-system | grep kube-apiserver
+```
+
+**방법 2: Minikube**
+
+```bash
+# Minikube SSH 접속
+minikube ssh
+
+# 위와 동일한 방법으로 설정
+sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# SSH 종료
+exit
+
+# API Server 재시작 확인
+kubectl get pods -n kube-system | grep kube-apiserver
+```
+
+**방법 3: 실제 클러스터 (마스터 노드 직접 접근 가능)**
+
 ```bash
 # kube-apiserver.yaml 백업
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
@@ -244,7 +310,7 @@ sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
-**추가할 내용**:
+**추가할 내용 (모든 환경 공통)**:
 
 1. `spec.containers[0].command` 섹션에 추가:
 ```yaml
@@ -266,26 +332,13 @@ sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
     type: File
 ```
 
-**자동 적용 스크립트** (선택사항):
+**설정 적용 확인**:
 ```bash
-# yq 도구가 설치되어 있는 경우
-sudo yq eval '.spec.containers[0].command += ["--encryption-provider-config=/etc/kubernetes/encryption-config.yaml"]' \
-  -i /etc/kubernetes/manifests/kube-apiserver.yaml
+# API Server Pod 재시작 확인 (약 30초 소요)
+watch kubectl get pods -n kube-system | grep kube-apiserver
 
-# API Server 자동 재시작 대기 (약 30초)
-sleep 30
-kubectl get pods -n kube-system | grep kube-apiserver
-```
-
-**Kind/Minikube 환경**:
-```bash
-# Kind 클러스터의 경우
-docker exec -it kind-control-plane bash
-# 위 설정을 컨테이너 내부에서 수행
-
-# Minikube의 경우
-minikube ssh
-sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+# 정상 동작 확인
+kubectl get pods -n kube-system
 ```
 
 **암호화 검증**:
