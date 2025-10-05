@@ -10,6 +10,35 @@
 
 ---
 
+## ⚠️ 사전 요구사항
+
+### 빠른 시작 (자동 환경 설정)
+```bash
+cd lab_scripts/handson1
+./00-setup-environment.sh
+```
+
+**자동 설치 항목**:
+- ✅ Kubernetes 클러스터 (challenge-cluster, 없으면 자동 생성)
+- ✅ day5-handson Namespace
+- ✅ Helm
+- ✅ Prometheus Operator (ServiceMonitor CRD 포함)
+- ✅ Metrics Server
+
+### 수동 환경 확인
+```bash
+# 클러스터 확인
+kubectl cluster-info
+
+# Prometheus Operator CRD 확인
+kubectl get crd servicemonitors.monitoring.coreos.com
+
+# Namespace 확인
+kubectl get namespace day5-handson monitoring
+```
+
+---
+
 ## 🕘 실습 정보
 **시간**: 14:00-15:30 (90분)  
 **목표**: Lab 1 확장 + 실무 고급 기능 구현  
@@ -91,6 +120,88 @@ graph TB
 
 ---
 
+## 🛠️ Step 0: 환경 설정 (10분)
+
+### Step 0-1: 클러스터 생성
+
+**클러스터 확인 및 생성**:
+```bash
+# 클러스터 확인
+kubectl cluster-info
+
+# 없으면 kind 클러스터 생성
+kind create cluster --name challenge-cluster --config - <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+EOF
+```
+
+### Step 0-2: Namespace 생성
+
+```bash
+# day5-handson namespace 생성
+kubectl create namespace day5-handson
+
+# monitoring namespace 생성
+kubectl create namespace monitoring
+
+# 기본 namespace 설정
+kubectl config set-context --current --namespace=day5-handson
+```
+
+### Step 0-3: 필수 컴포넌트 설치
+
+**Helm 설치**:
+```bash
+# Helm 설치
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Repository 추가
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+**Prometheus Operator 설치**:
+```bash
+# Prometheus Operator 설치 (ServiceMonitor CRD 포함)
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+  --set grafana.enabled=false \
+  --wait
+```
+
+**Metrics Server 설치**:
+```bash
+# Metrics Server 설치
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# 준비 대기 (30초)
+sleep 30
+```
+
+### Step 0-4: 환경 확인
+
+```bash
+# 클러스터 정보
+kubectl cluster-info
+
+# CRD 확인
+kubectl get crd servicemonitors.monitoring.coreos.com
+
+# Namespace 확인
+kubectl get namespace day5-handson monitoring
+
+# 현재 namespace 확인
+kubectl config view --minify | grep namespace:
+```
+
+---
+
 ## 🛠️ Step 1: 커스텀 메트릭 기반 HPA (25분)
 
 ### Step 1-1: 메트릭을 노출하는 애플리케이션 배포
@@ -101,7 +212,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: metrics-app
-  namespace: default
+  namespace: day5-handson
 spec:
   replicas: 2
   selector:
@@ -134,7 +245,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: metrics-app
-  namespace: default
+  namespace: day5-handson
   labels:
     app: metrics-app
 spec:
@@ -149,7 +260,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: metrics-app
-  namespace: default
+  namespace: day5-handson
 spec:
   selector:
     matchLabels:
@@ -161,10 +272,10 @@ spec:
 
 ```bash
 # 배포
-kubectl apply -f metrics-app-deployment.yaml
+kubectl apply -f metrics-app-deployment.yaml -n day5-handson
 
 # 메트릭 확인
-kubectl port-forward svc/metrics-app 8080:8080
+kubectl port-forward -n day5-handson svc/metrics-app 8080:8080
 curl http://localhost:8080/metrics
 ```
 
