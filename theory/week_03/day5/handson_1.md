@@ -633,19 +633,32 @@ argocd account get-user-info
 
 ### Step 3-1: 클러스터 등록
 
+**현재 클러스터 등록**:
 ```bash
 # 현재 클러스터를 ArgoCD에 등록
 argocd cluster add $(kubectl config current-context)
 
 # 등록된 클러스터 확인
 argocd cluster list
-
-# 추가 클러스터 등록 (다른 kubeconfig 사용)
-argocd cluster add dev-cluster --kubeconfig ~/.kube/dev-config
-argocd cluster add prod-cluster --kubeconfig ~/.kube/prod-config
 ```
 
-### Step 3-2: 환경별 Application 생성
+**추가 클러스터 등록 (선택사항 - 멀티 클러스터 환경)**:
+```bash
+# 다른 클러스터가 있는 경우에만 실행
+# argocd cluster add dev-cluster --kubeconfig ~/.kube/dev-config
+# argocd cluster add prod-cluster --kubeconfig ~/.kube/prod-config
+```
+
+**💡 단일 클러스터 환경**:
+- 현재 실습은 단일 클러스터(challenge-cluster)로 진행
+- 멀티 클러스터는 개념 이해 목적
+- Namespace로 환경 분리 (development, production)
+
+### Step 3-2: 환경별 Application 생성 (단일 클러스터)
+
+**💡 단일 클러스터에서 환경 분리**:
+- 같은 클러스터 내에서 Namespace로 환경 분리
+- `server: https://kubernetes.default.svc` 사용
 
 ```yaml
 # apps/dev-app.yaml
@@ -655,7 +668,7 @@ metadata:
   name: web-app-dev
   namespace: argocd
 spec:
-  project: day5-handson
+  project: default
   source:
     repoURL: https://github.com/your-org/your-repo
     targetRevision: develop
@@ -669,7 +682,7 @@ spec:
         - name: image.tag
           value: "dev-latest"
   destination:
-    server: https://dev-cluster-api-server
+    server: https://kubernetes.default.svc  # 현재 클러스터
     namespace: development
   syncPolicy:
     automated:
@@ -685,7 +698,7 @@ metadata:
   name: web-app-prod
   namespace: argocd
 spec:
-  project: day5-handson
+  project: default
   source:
     repoURL: https://github.com/your-org/your-repo
     targetRevision: main
@@ -699,7 +712,7 @@ spec:
         - name: image.tag
           value: "v1.2.0"
   destination:
-    server: https://prod-cluster-api-server
+    server: https://kubernetes.default.svc  # 현재 클러스터
     namespace: production
   syncPolicy:
     automated:
