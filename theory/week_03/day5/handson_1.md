@@ -1007,6 +1007,355 @@ kubectl logs -f deployment/production-app -n production
 - [ ] 보안 설정 적용
 - [ ] Chart 배포 성공
 
+### ✅ GitHub 연동 GitOps
+- [ ] GitHub 저장소 생성 및 초기 설정
+- [ ] ArgoCD Application 등록
+- [ ] Git Push → 자동 배포 확인
+- [ ] Self-Heal 기능 테스트
+- [ ] 변경 이력 추적 및 롤백
+
+---
+
+## 🛠️ Step 5: GitHub 연동 GitOps 실습 (20분)
+
+### 🎯 학습 목표
+- Git을 Single Source of Truth로 사용
+- 코드 변경 → 자동 배포 파이프라인 체험
+- GitOps의 실시간 동기화 확인
+
+### Step 5-1: GitHub 저장소 생성 및 초기 설정
+
+**1. GitHub 저장소 생성 (웹 UI)**
+```
+1. https://github.com 접속 및 로그인
+2. 우측 상단 '+' → 'New repository' 클릭
+3. Repository name: k8s-gitops-demo
+4. Public 선택
+5. 'Create repository' 클릭
+```
+
+**2. 로컬에 클론 및 애플리케이션 매니페스트 생성**
+```bash
+# 저장소 클론 (본인의 username으로 변경)
+git clone https://github.com/<your-username>/k8s-gitops-demo.git
+cd k8s-gitops-demo
+
+# Git 사용자 설정 (처음 사용하는 경우)
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
+
+# 디렉토리 구조 생성
+mkdir -p apps/demo-app
+
+# Deployment 매니페스트 생성
+cat > apps/demo-app/deployment.yaml <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: day5-handson
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        version: v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginxinc/nginx-unprivileged:1.21
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+EOF
+
+# Service 매니페스트 생성
+cat > apps/demo-app/service.yaml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: day5-handson
+spec:
+  selector:
+    app: demo-app
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+EOF
+
+# README 생성
+cat > README.md <<EOF
+# Kubernetes GitOps Demo
+
+ArgoCD를 사용한 GitOps 실습 저장소
+
+## 구조
+- apps/demo-app: 데모 애플리케이션 매니페스트
+EOF
+```
+
+**3. GitHub에 Push**
+```bash
+# 파일 추가
+git add .
+
+# 커밋
+git commit -m "Initial deployment: 2 replicas"
+
+# Push (첫 push 시 인증 필요)
+git push origin main
+```
+
+> **💡 GitHub 인증 방법**:
+> - Personal Access Token 사용 권장
+> - Settings → Developer settings → Personal access tokens → Generate new token
+> - repo 권한 선택 후 생성
+> - Push 시 username과 token 입력
+
+### Step 5-2: ArgoCD Application 생성
+
+**1. ArgoCD Application 매니페스트 작성**
+```bash
+# 로컬 작업 디렉토리로 이동
+cd /mnt/d/github/kdt_devops_lecture_2025/theory/week_03/day5/lab_scripts/handson1
+
+# ArgoCD Application 생성 (본인의 GitHub username으로 변경)
+cat > github-demo-app.yaml <<EOF
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/k8s-gitops-demo.git
+    targetRevision: main
+    path: apps/demo-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: day5-handson
+  syncPolicy:
+    automated:
+      prune: true      # 삭제된 리소스 자동 제거
+      selfHeal: true   # 수동 변경 시 자동 복구
+    syncOptions:
+    - CreateNamespace=true
+EOF
+```
+
+**2. ArgoCD에 Application 등록**
+```bash
+# Application 생성
+kubectl apply -f github-demo-app.yaml
+
+# Application 상태 확인
+kubectl get application -n argocd demo-app
+
+# ArgoCD CLI로 확인
+argocd app get demo-app
+
+# 동기화 상태 확인
+argocd app sync demo-app
+```
+
+**3. 배포 확인**
+```bash
+# Pod 확인 (2개 실행 중이어야 함)
+kubectl get pods -n day5-handson -l app=demo-app
+
+# Service 확인
+kubectl get svc -n day5-handson demo-app
+
+# 애플리케이션 접속 테스트
+kubectl port-forward -n day5-handson svc/demo-app 8082:80
+# 브라우저에서 http://localhost:8082 접속
+```
+
+### Step 5-3: 실시간 GitOps 변경 테스트
+
+**시나리오 1: Replica 수 변경**
+
+```bash
+# 1. 현재 상태 확인
+kubectl get pods -n day5-handson -l app=demo-app
+# 출력: 2개 Pod 실행 중
+
+# 2. GitHub 저장소에서 파일 수정
+cd k8s-gitops-demo
+
+# deployment.yaml 수정 (replicas: 2 → 5)
+sed -i 's/replicas: 2/replicas: 5/' apps/demo-app/deployment.yaml
+
+# 변경 사항 확인
+git diff
+
+# 3. 커밋 및 Push
+git add apps/demo-app/deployment.yaml
+git commit -m "Scale up to 5 replicas"
+git push origin main
+
+# 4. ArgoCD 자동 동기화 대기 (약 3분 이내)
+# 실시간 모니터링
+watch -n 2 kubectl get pods -n day5-handson -l app=demo-app
+
+# ArgoCD 동기화 상태 확인
+argocd app get demo-app --refresh
+```
+
+**시나리오 2: 이미지 버전 업데이트**
+
+```bash
+# 1. 이미지 태그 변경 (1.21 → 1.22)
+cd k8s-gitops-demo
+sed -i 's/nginx-unprivileged:1.21/nginx-unprivileged:1.22/' apps/demo-app/deployment.yaml
+
+# 2. 커밋 및 Push
+git add apps/demo-app/deployment.yaml
+git commit -m "Update nginx to 1.22"
+git push origin main
+
+# 3. 롤링 업데이트 확인
+kubectl rollout status deployment/demo-app -n day5-handson
+
+# Pod 이미지 확인
+kubectl get pods -n day5-handson -l app=demo-app -o jsonpath='{.items[*].spec.containers[*].image}'
+```
+
+**시나리오 3: 리소스 제한 변경**
+
+```bash
+# 1. 리소스 제한 수정
+cd k8s-gitops-demo
+cat > apps/demo-app/deployment.yaml <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: day5-handson
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        version: v2
+    spec:
+      containers:
+      - name: nginx
+        image: nginxinc/nginx-unprivileged:1.22
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m      # 50m → 100m
+            memory: 128Mi  # 64Mi → 128Mi
+          limits:
+            cpu: 200m      # 100m → 200m
+            memory: 256Mi  # 128Mi → 256Mi
+EOF
+
+# 2. 커밋 및 Push
+git add apps/demo-app/deployment.yaml
+git commit -m "Increase resource limits"
+git push origin main
+
+# 3. 변경 확인
+kubectl describe pod -n day5-handson -l app=demo-app | grep -A 5 "Limits"
+```
+
+### Step 5-4: ArgoCD UI에서 변경 이력 확인
+
+```bash
+# ArgoCD UI 접속 (이미 포트포워딩 중이라면 생략)
+kubectl port-forward -n argocd svc/argocd-server 8080:443
+
+# 브라우저에서 https://localhost:8080 접속
+# Username: admin
+# Password: (이전에 확인한 비밀번호)
+```
+
+**UI에서 확인할 내용:**
+1. **Applications 목록**: demo-app 상태 확인
+2. **App Details**: 
+   - Sync Status: Synced
+   - Health Status: Healthy
+   - Last Sync: 최근 동기화 시간
+3. **History**: Git 커밋 이력과 배포 이력
+4. **Events**: 실시간 이벤트 로그
+5. **Resource Tree**: 배포된 리소스 시각화
+
+### Step 5-5: 수동 변경 시 Self-Heal 테스트
+
+```bash
+# 1. kubectl로 직접 replica 수 변경 (GitOps 위반)
+kubectl scale deployment demo-app -n day5-handson --replicas=3
+
+# 2. 잠시 후 Pod 수 확인
+kubectl get pods -n day5-handson -l app=demo-app
+# 출력: 3개로 줄어듦
+
+# 3. ArgoCD가 자동으로 복구 (약 1-2분 이내)
+# selfHeal: true 설정으로 Git 상태(5개)로 자동 복구
+watch -n 2 kubectl get pods -n day5-handson -l app=demo-app
+
+# 4. ArgoCD 이벤트 확인
+argocd app get demo-app
+# Sync Status: OutOfSync → Synced로 자동 변경
+```
+
+### 💡 GitOps 핵심 개념 정리
+
+**Git = Single Source of Truth**
+```mermaid
+graph LR
+    A[개발자] -->|1. 코드 수정| B[Git Repository]
+    B -->|2. 자동 감지| C[ArgoCD]
+    C -->|3. 자동 배포| D[Kubernetes]
+    D -->|4. 상태 보고| C
+    C -->|5. 불일치 시<br/>자동 복구| D
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#f3e5f5
+```
+
+**GitOps 장점:**
+- ✅ **감사 추적**: 모든 변경이 Git 커밋으로 기록
+- ✅ **롤백 용이**: Git revert로 즉시 이전 상태 복구
+- ✅ **일관성**: Git 상태와 클러스터 상태 항상 동기화
+- ✅ **협업**: Pull Request를 통한 코드 리뷰
+- ✅ **재현성**: Git 저장소만 있으면 전체 환경 재구성 가능
+
+### 🧹 실습 정리
+
+```bash
+# ArgoCD Application 삭제
+kubectl delete application demo-app -n argocd
+
+# Namespace 리소스 확인 및 정리
+kubectl delete deployment demo-app -n day5-handson
+kubectl delete service demo-app -n day5-handson
+
+# GitHub 저장소는 유지 (포트폴리오로 활용 가능)
+```
+
 ---
 
 ## 🚀 추가 도전 과제
