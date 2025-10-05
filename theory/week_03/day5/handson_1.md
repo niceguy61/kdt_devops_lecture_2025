@@ -846,6 +846,11 @@ service:
   type: ClusterIP
   port: 80
 
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
 ingress:
   enabled: true
   className: nginx
