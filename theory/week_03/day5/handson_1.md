@@ -1319,6 +1319,372 @@ argocd app get demo-app
 # Sync Status: OutOfSync → Synced로 자동 변경
 ```
 
+### Step 5-6: CI/CD 파이프라인 통합 (GitHub Actions)
+
+> **💡 실무 GitOps 완전체**: 코드 변경 → 이미지 빌드 → 매니페스트 업데이트 → 자동 배포
+
+**전체 CI/CD 흐름**
+```mermaid
+graph TB
+    A[개발자] -->|1. 코드 Push| B[GitHub Repository]
+    B -->|2. Webhook 트리거| C[GitHub Actions]
+    
+    subgraph "CI: 빌드 & 테스트"
+        C -->|3. 코드 체크아웃| D[Build]
+        D -->|4. Docker 빌드| E[Docker Image]
+        E -->|5. Push| F[Docker Hub/ECR]
+    end
+    
+    subgraph "CD: 배포 자동화"
+        F -->|6. 이미지 태그 업데이트| G[매니페스트 수정]
+        G -->|7. Git Push| B
+        B -->|8. 변경 감지| H[ArgoCD]
+        H -->|9. 자동 배포| I[Kubernetes]
+    end
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
+```
+
+**1. 애플리케이션 소스 코드 추가**
+
+```bash
+cd k8s-gitops-demo
+
+# 소스 코드 디렉토리 생성
+mkdir -p src
+
+# 간단한 웹 애플리케이션 작성
+cat > src/index.html <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitOps Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { font-size: 3rem; margin: 0; }
+        p { font-size: 1.5rem; margin-top: 1rem; }
+        .version { 
+            margin-top: 2rem; 
+            font-size: 1rem; 
+            opacity: 0.8; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 GitOps Demo</h1>
+        <p>Automated CI/CD with GitHub Actions & ArgoCD</p>
+        <div class="version">Version: 1.0.0</div>
+    </div>
+</body>
+</html>
+EOF
+
+# Dockerfile 작성
+cat > Dockerfile <<EOF
+FROM nginxinc/nginx-unprivileged:1.21-alpine
+
+# 소스 코드 복사
+COPY src/index.html /usr/share/nginx/html/index.html
+
+# 포트 설정
+EXPOSE 8080
+
+# 헬스체크
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1
+
+# nginx 실행
+CMD ["nginx", "-g", "daemon off;"]
+EOF
+
+# .dockerignore 작성
+cat > .dockerignore <<EOF
+.git
+.github
+apps
+README.md
+*.md
+EOF
+```
+
+**2. GitHub Actions 워크플로우 작성**
+
+```bash
+# GitHub Actions 디렉토리 생성
+mkdir -p .github/workflows
+
+# CI/CD 파이프라인 작성
+cat > .github/workflows/ci-cd.yaml <<'EOF'
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/gitops-demo
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. 코드 체크아웃
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    # 2. Docker Buildx 설정
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    # 3. Docker Hub 로그인
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    # 4. 이미지 태그 생성 (Git SHA 사용)
+    - name: Generate image tag
+      id: image_tag
+      run: |
+        SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+        echo "tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "Image tag: ${SHORT_SHA}"
+    
+    # 5. Docker 이미지 빌드 및 Push
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.DOCKER_IMAGE }}:${{ steps.image_tag.outputs.tag }}
+          ${{ env.DOCKER_IMAGE }}:latest
+        cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:latest
+        cache-to: type=inline
+    
+    # 6. Kubernetes 매니페스트 업데이트
+    - name: Update Kubernetes manifest
+      run: |
+        sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ steps.image_tag.outputs.tag }}|" \
+          apps/demo-app/deployment.yaml
+        
+        # 변경 사항 확인
+        git diff apps/demo-app/deployment.yaml
+    
+    # 7. 변경사항 커밋 및 Push
+    - name: Commit and push changes
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "actions@github.com"
+        git add apps/demo-app/deployment.yaml
+        git commit -m "🚀 Update image to ${{ steps.image_tag.outputs.tag }}" || exit 0
+        git push
+    
+    # 8. 배포 완료 알림
+    - name: Deployment summary
+      run: |
+        echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image**: ${{ env.DOCKER_IMAGE }}:${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "ArgoCD will automatically sync the changes within 3 minutes." >> $GITHUB_STEP_SUMMARY
+EOF
+```
+
+**3. GitHub Secrets 설정**
+
+```bash
+# GitHub 웹 UI에서 설정:
+# Repository → Settings → Secrets and variables → Actions → New repository secret
+
+# 필요한 Secrets:
+# 1. DOCKER_USERNAME: Docker Hub 사용자명
+# 2. DOCKER_PASSWORD: Docker Hub 비밀번호 또는 Access Token
+```
+
+**Docker Hub Access Token 생성 방법:**
+```
+1. https://hub.docker.com 로그인
+2. Account Settings → Security → New Access Token
+3. Description: "GitHub Actions"
+4. Access permissions: Read, Write, Delete
+5. Generate → 토큰 복사 (한 번만 표시됨)
+```
+
+**4. 전체 파일 구조 확인**
+
+```bash
+# 디렉토리 구조
+tree -L 3 -a
+
+# 출력:
+# .
+# ├── .github
+# │   └── workflows
+# │       └── ci-cd.yaml
+# ├── .dockerignore
+# ├── Dockerfile
+# ├── README.md
+# ├── apps
+# │   └── demo-app
+# │       ├── deployment.yaml
+# │       └── service.yaml
+# └── src
+#     └── index.html
+```
+
+**5. 변경사항 커밋 및 Push**
+
+```bash
+# 모든 파일 추가
+git add .
+
+# 커밋
+git commit -m "Add CI/CD pipeline with GitHub Actions"
+
+# Push (CI/CD 파이프라인 트리거)
+git push origin main
+```
+
+**6. CI/CD 파이프라인 동작 확인**
+
+```bash
+# GitHub Actions 실행 확인 (웹 UI)
+# Repository → Actions 탭 → 최근 워크플로우 실행 확인
+
+# 파이프라인 단계:
+# ✅ Checkout code
+# ✅ Set up Docker Buildx
+# ✅ Login to Docker Hub
+# ✅ Generate image tag
+# ✅ Build and push Docker image
+# ✅ Update Kubernetes manifest
+# ✅ Commit and push changes
+# ✅ Deployment summary
+```
+
+**7. 자동 배포 확인**
+
+```bash
+# ArgoCD가 매니페스트 변경 감지 (약 3분 이내)
+argocd app get demo-app --refresh
+
+# 새 이미지로 롤링 업데이트 확인
+kubectl rollout status deployment/demo-app -n day5-handson
+
+# Pod 이미지 확인
+kubectl get pods -n day5-handson -l app=demo-app \
+  -o jsonpath='{.items[*].spec.containers[*].image}'
+
+# 애플리케이션 접속 테스트
+kubectl port-forward -n day5-handson svc/demo-app 8082:80
+# 브라우저에서 http://localhost:8082 접속
+```
+
+**8. 코드 변경 → 자동 배포 테스트**
+
+```bash
+# HTML 파일 수정 (버전 업데이트)
+sed -i 's/Version: 1.0.0/Version: 2.0.0/' src/index.html
+sed -i 's/background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)/background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)/' src/index.html
+
+# 변경사항 커밋 및 Push
+git add src/index.html
+git commit -m "Update to version 2.0.0 with new color scheme"
+git push origin main
+
+# GitHub Actions 실행 확인
+# Repository → Actions → 최근 워크플로우 확인
+
+# 자동 배포 모니터링
+watch -n 5 'kubectl get pods -n day5-handson -l app=demo-app'
+
+# 배포 완료 후 확인
+kubectl port-forward -n day5-handson svc/demo-app 8082:80
+# 브라우저에서 새로운 버전 확인
+```
+
+**9. 배포 이력 및 롤백**
+
+```bash
+# Git 커밋 이력 확인
+git log --oneline --graph -10
+
+# ArgoCD 배포 이력 확인
+argocd app history demo-app
+
+# 이전 버전으로 롤백 (Git revert 사용)
+git revert HEAD --no-edit
+git push origin main
+
+# ArgoCD가 자동으로 이전 버전 배포
+watch kubectl get pods -n day5-handson -l app=demo-app
+```
+
+### 💡 CI/CD 파이프라인 핵심 개념
+
+**완전한 GitOps 워크플로우:**
+```
+개발자 코드 변경
+    ↓
+GitHub Push
+    ↓
+GitHub Actions 트리거
+    ↓
+Docker 이미지 빌드 & Push
+    ↓
+매니페스트 자동 업데이트
+    ↓
+Git에 변경사항 커밋
+    ↓
+ArgoCD 변경 감지
+    ↓
+Kubernetes 자동 배포
+    ↓
+운영 환경 업데이트 완료
+```
+
+**주요 장점:**
+- ✅ **완전 자동화**: 코드 Push만으로 전체 배포 완료
+- ✅ **일관성**: 모든 환경이 Git 상태와 동일
+- ✅ **추적성**: Git 커밋으로 모든 변경 이력 관리
+- ✅ **롤백 용이**: Git revert로 즉시 이전 버전 복구
+- ✅ **보안**: 클러스터 접근 권한 불필요 (Pull 방식)
+
 ### 💡 GitOps 핵심 개념 정리
 
 **Git = Single Source of Truth**
