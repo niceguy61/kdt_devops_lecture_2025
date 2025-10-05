@@ -5,6 +5,8 @@
 
 set -e
 
+NAMESPACE="day5-lab"
+
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Week 3 Day 5 Lab 1: 환경 정리                           ║"
 echo "╚════════════════════════════════════════════════════════════╝"
@@ -14,7 +16,7 @@ echo "   - HPA (web-app-hpa)"
 echo "   - 테스트 애플리케이션 (web-app)"
 echo "   - Prometheus Stack"
 echo "   - ArgoCD"
-echo "   - Namespace (monitoring, argocd)"
+echo "   - Namespace (monitoring, argocd, $NAMESPACE)"
 echo ""
 
 read -p "정말 삭제하시겠습니까? (y/n) " -n 1 -r
@@ -29,8 +31,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "1. HPA 삭제"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if kubectl get hpa web-app-hpa &> /dev/null; then
-    kubectl delete hpa web-app-hpa
+if kubectl get hpa -n $NAMESPACE web-app-hpa &> /dev/null; then
+    kubectl delete hpa -n $NAMESPACE web-app-hpa
     echo "✅ HPA 삭제 완료"
 else
     echo "ℹ️  HPA가 존재하지 않습니다."
@@ -41,10 +43,10 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "2. 테스트 애플리케이션 삭제"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if kubectl get deployment web-app &> /dev/null; then
-    kubectl delete deployment web-app
-    kubectl delete service web-app
-    kubectl delete servicemonitor web-app
+if kubectl get deployment -n $NAMESPACE web-app &> /dev/null; then
+    kubectl delete deployment -n $NAMESPACE web-app
+    kubectl delete service -n $NAMESPACE web-app
+    kubectl delete servicemonitor -n $NAMESPACE web-app
     echo "✅ 테스트 애플리케이션 삭제 완료"
 else
     echo "ℹ️  테스트 애플리케이션이 존재하지 않습니다."
@@ -80,13 +82,49 @@ echo "5. Namespace 삭제"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if kubectl get namespace monitoring &> /dev/null; then
-    kubectl delete namespace monitoring
+    echo "monitoring Namespace 삭제 중..."
+    kubectl delete namespace monitoring --timeout=60s &
+    MONITORING_PID=$!
+    
+    # 60초 대기
+    sleep 60
+    
+    # 아직 실행 중이면 강제 삭제
+    if kill -0 $MONITORING_PID 2>/dev/null; then
+        echo "⚠️  Namespace 삭제가 지연되고 있습니다. 강제 삭제 중..."
+        kubectl delete namespace monitoring --grace-period=0 --force 2>/dev/null || true
+        
+        # Finalizer 제거
+        kubectl get namespace monitoring -o json 2>/dev/null | \
+          jq '.spec.finalizers = []' | \
+          kubectl replace --raw "/api/v1/namespaces/monitoring/finalize" -f - 2>/dev/null || true
+    fi
+    
     echo "✅ monitoring Namespace 삭제 완료"
 fi
 
 if kubectl get namespace argocd &> /dev/null; then
-    kubectl delete namespace argocd
+    echo "argocd Namespace 삭제 중..."
+    kubectl delete namespace argocd --timeout=60s &
+    ARGOCD_PID=$!
+    
+    sleep 60
+    
+    if kill -0 $ARGOCD_PID 2>/dev/null; then
+        echo "⚠️  Namespace 삭제가 지연되고 있습니다. 강제 삭제 중..."
+        kubectl delete namespace argocd --grace-period=0 --force 2>/dev/null || true
+        
+        kubectl get namespace argocd -o json 2>/dev/null | \
+          jq '.spec.finalizers = []' | \
+          kubectl replace --raw "/api/v1/namespaces/argocd/finalize" -f - 2>/dev/null || true
+    fi
+    
     echo "✅ argocd Namespace 삭제 완료"
+fi
+
+if kubectl get namespace $NAMESPACE &> /dev/null; then
+    kubectl delete namespace $NAMESPACE --timeout=30s || true
+    echo "✅ $NAMESPACE Namespace 삭제 완료"
 fi
 
 echo ""
@@ -113,6 +151,6 @@ echo "   - HPA"
 echo "   - 테스트 애플리케이션"
 echo "   - Prometheus Stack"
 echo "   - ArgoCD"
-echo "   - Namespace (monitoring, argocd)"
+echo "   - Namespace (monitoring, argocd, $NAMESPACE)"
 echo ""
 echo "💡 클러스터가 깨끗하게 정리되었습니다."

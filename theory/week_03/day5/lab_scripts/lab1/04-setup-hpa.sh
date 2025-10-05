@@ -5,8 +5,17 @@
 
 set -e
 
+NAMESPACE="day5-lab"
+
 echo "=== Metrics Server 및 HPA 설정 시작 ==="
 echo ""
+
+# Namespace 확인
+if ! kubectl get namespace $NAMESPACE &> /dev/null; then
+    echo "❌ Namespace '$NAMESPACE'가 존재하지 않습니다."
+    echo "먼저 ./00-setup-cluster.sh를 실행하세요."
+    exit 1
+fi
 
 # Metrics Server 설치
 echo "1. Metrics Server 설치 중..."
@@ -51,12 +60,11 @@ fi
 # HPA 생성
 echo ""
 echo "4. HPA 생성 중..."
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl apply -n $NAMESPACE -f -
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: web-app-hpa
-  namespace: default
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -106,20 +114,20 @@ echo ""
 sleep 5
 
 echo "📊 HPA 상태:"
-kubectl get hpa web-app-hpa
+kubectl get hpa -n $NAMESPACE web-app-hpa
 
 echo ""
 echo "📋 HPA 상세 정보:"
-kubectl describe hpa web-app-hpa
+kubectl describe hpa -n $NAMESPACE web-app-hpa
 
 echo ""
 echo "=== HPA 설정 완료 ==="
 echo ""
 echo "💡 부하 테스트:"
-echo "   kubectl run load-generator --image=busybox --restart=Never -- /bin/sh -c \"while true; do wget -q -O- http://web-app; done\""
+echo "   kubectl run -n $NAMESPACE load-generator --image=busybox --restart=Never -- /bin/sh -c \"while true; do wget -q -O- http://web-app; done\""
 echo ""
 echo "💡 HPA 모니터링:"
-echo "   watch kubectl get hpa web-app-hpa"
+echo "   watch kubectl get hpa -n $NAMESPACE web-app-hpa"
 echo ""
 echo "💡 부하 중지:"
-echo "   kubectl delete pod load-generator"
+echo "   kubectl delete pod -n $NAMESPACE load-generator"

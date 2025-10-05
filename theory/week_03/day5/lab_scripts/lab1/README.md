@@ -10,6 +10,14 @@
 
 ### 📦 개별 설치 스크립트
 
+#### 0. 클러스터 환경 설정 (필수)
+```bash
+./00-setup-cluster.sh
+```
+- Kubernetes 클러스터 확인 (없으면 kind 클러스터 생성)
+- day5-lab Namespace 생성
+- 기본 Namespace 설정
+
 #### 1. Helm 설치
 ```bash
 ./01-install-helm.sh
@@ -57,12 +65,15 @@
 
 ### 전체 설치 (권장)
 ```bash
-# 모든 컴포넌트 한 번에 설치
+# 모든 컴포넌트 한 번에 설치 (환경 설정 포함)
 ./00-install-all.sh
 ```
 
 ### 단계별 설치
 ```bash
+# 0단계: 환경 설정 (필수)
+./00-setup-cluster.sh
+
 # 1단계씩 실행
 ./01-install-helm.sh
 ./02-install-prometheus.sh
@@ -105,37 +116,37 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 ### 전체 리소스 확인
 ```bash
+# day5-lab Namespace
+kubectl get all -n day5-lab
+kubectl get hpa -n day5-lab
+
 # Monitoring Namespace
 kubectl get all -n monitoring
 
 # ArgoCD Namespace
 kubectl get all -n argocd
-
-# Default Namespace (애플리케이션)
-kubectl get all
-kubectl get hpa
 ```
 
 ### HPA 모니터링
 ```bash
 # HPA 상태 실시간 확인
-watch kubectl get hpa web-app-hpa
+watch kubectl get hpa -n day5-lab web-app-hpa
 
 # Pod 개수 변화 확인
-watch kubectl get pods -l app=web-app
+watch kubectl get pods -n day5-lab -l app=web-app
 ```
 
 ## 🧪 부하 테스트
 
 ### 부하 생성
 ```bash
-kubectl run load-generator --image=busybox --restart=Never -- /bin/sh -c \
+kubectl run -n day5-lab load-generator --image=busybox --restart=Never -- /bin/sh -c \
   "while true; do wget -q -O- http://web-app; done"
 ```
 
 ### 부하 중지
 ```bash
-kubectl delete pod load-generator
+kubectl delete pod -n day5-lab load-generator
 ```
 
 ## ⚠️ 주의사항

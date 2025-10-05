@@ -5,8 +5,17 @@
 
 set -e
 
+NAMESPACE="day5-lab"
+
 echo "=== 테스트 애플리케이션 배포 시작 ==="
 echo ""
+
+# Namespace 확인
+if ! kubectl get namespace $NAMESPACE &> /dev/null; then
+    echo "❌ Namespace '$NAMESPACE'가 존재하지 않습니다."
+    echo "먼저 ./00-setup-cluster.sh를 실행하세요."
+    exit 1
+fi
 
 # 임시 디렉토리 생성
 TEMP_DIR=$(mktemp -d)
@@ -14,12 +23,11 @@ cd "$TEMP_DIR"
 
 # Deployment 생성
 echo "1. Deployment 생성 중..."
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl apply -n $NAMESPACE -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-app
-  namespace: default
   labels:
     app: web-app
 spec:
@@ -52,12 +60,11 @@ echo "✅ Deployment 생성 완료"
 # Service 생성
 echo ""
 echo "2. Service 생성 중..."
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl apply -n $NAMESPACE -f -
 apiVersion: v1
 kind: Service
 metadata:
   name: web-app
-  namespace: default
   labels:
     app: web-app
 spec:
@@ -75,12 +82,11 @@ echo "✅ Service 생성 완료"
 # ServiceMonitor 생성
 echo ""
 echo "3. ServiceMonitor 생성 중..."
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl apply -n $NAMESPACE -f -
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: web-app
-  namespace: default
   labels:
     app: web-app
 spec:
@@ -101,21 +107,21 @@ echo "4. 배포 상태 확인 중..."
 echo ""
 
 echo "🔍 Pod 상태:"
-kubectl get pods -l app=web-app
+kubectl get pods -n $NAMESPACE -l app=web-app
 
 echo ""
 echo "🌐 Service 상태:"
-kubectl get svc web-app
+kubectl get svc -n $NAMESPACE web-app
 
 echo ""
 echo "📊 ServiceMonitor 상태:"
-kubectl get servicemonitor web-app
+kubectl get servicemonitor -n $NAMESPACE web-app
 
 echo ""
 echo "=== 배포 완료 ==="
 echo ""
 echo "💡 애플리케이션 접속:"
-echo "   kubectl port-forward svc/web-app 8080:80"
+echo "   kubectl port-forward -n $NAMESPACE svc/web-app 8080:80"
 echo "   http://localhost:8080"
 
 # 임시 디렉토리 정리
