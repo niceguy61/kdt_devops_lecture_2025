@@ -1,5 +1,4 @@
 # Challenge 1 - 문제 3: Application 설정 오류
-# 의도적 오류: 존재하지 않는 브랜치와 잘못된 경로
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -9,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<username>/k8s-gitops-demo.git  # <username>을 본인 것으로 변경
-    targetRevision: develop  # 오류: 존재하지 않는 브랜치
-    path: apps/wrong-path    # 오류: 잘못된 경로
+    repoURL: https://github.com/<username>/k8s-gitops-demo.git
+    targetRevision: develop
+    path: apps/wrong-path
   destination:
     server: https://kubernetes.default.svc
     namespace: day5-challenge
@@ -19,11 +18,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-
-# 해결 방법:
-# 1. targetRevision을 'main'으로 변경
-# 2. path를 'apps/demo-app'으로 변경
-# 3. syncOptions에 CreateNamespace=true 추가 (필요시)
-#
-# kubectl patch application challenge-app-3 -n argocd --type merge \
-#   -p '{"spec":{"source":{"targetRevision":"main","path":"apps/demo-app"}}}'

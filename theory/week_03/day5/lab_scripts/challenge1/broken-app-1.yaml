@@ -1,5 +1,4 @@
 # Challenge 1 - 문제 1: Git 저장소 인증 실패
-# 의도적 오류: 존재하지 않는 사용자의 저장소
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -9,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/invalid-user-12345/k8s-gitops-demo.git  # 오류: 존재하지 않는 사용자
+    repoURL: https://github.com/invalid-user-12345/k8s-gitops-demo.git
     targetRevision: main
     path: apps/demo-app
   destination:
@@ -21,10 +20,3 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-
-# 해결 방법:
-# 1. 본인의 GitHub 저장소로 변경
-# 2. Private 저장소인 경우 인증 정보 추가
-#    argocd repo add https://github.com/<username>/k8s-gitops-demo.git \
-#      --username <username> \
-#      --password <personal-access-token>

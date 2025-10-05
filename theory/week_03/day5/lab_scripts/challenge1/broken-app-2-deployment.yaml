@@ -1,5 +1,4 @@
 # Challenge 1 - 문제 2: YAML 문법 오류
-# 의도적 오류: resources가 잘못된 위치에 있음
 
 apiVersion: apps/v1
 kind: Deployment
@@ -21,24 +20,10 @@ spec:
         image: nginxinc/nginx-unprivileged:1.21
         ports:
         - containerPort: 8080
-      resources:  # 오류: containers와 같은 레벨 (잘못된 들여쓰기)
+      resources:
         requests:
           cpu: 100m
           memory: 128Mi
         limits:
           cpu: 200m
           memory: 256Mi
-
-# 해결 방법:
-# resources를 containers 하위로 이동 (2칸 더 들여쓰기)
-# 
-# 올바른 구조:
-# spec:
-#   containers:
-#   - name: nginx
-#     image: nginxinc/nginx-unprivileged:1.21
-#     ports:
-#     - containerPort: 8080
-#     resources:  # containers 하위
-#       requests:
-#         cpu: 100m
