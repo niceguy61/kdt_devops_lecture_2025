@@ -9,6 +9,7 @@ echo "=== Week 3 Day 5 Lab 1 환경 설정 ==="
 echo ""
 
 NAMESPACE="day5-lab"
+CLUSTER_NAME="challenge-cluster"
 
 # 클러스터 확인
 echo "1. Kubernetes 클러스터 확인 중..."
@@ -34,7 +35,7 @@ else
         fi
         
         # 클러스터 생성
-        cat <<EOF | kind create cluster --name day5-lab --config=-
+        cat <<EOF | kind create cluster --name $CLUSTER_NAME --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -43,7 +44,7 @@ nodes:
 - role: worker
 EOF
         
-        echo "✅ kind 클러스터 생성 완료"
+        echo "✅ kind 클러스터 '$CLUSTER_NAME' 생성 완료"
     else
         echo "클러스터 설정이 취소되었습니다."
         exit 1

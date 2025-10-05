@@ -10,6 +10,26 @@ echo ""
 
 # Namespace 생성
 echo "1. monitoring Namespace 생성 중..."
+
+# 기존 Namespace가 Terminating 상태인지 확인
+if kubectl get namespace monitoring 2>/dev/null | grep -q Terminating; then
+    echo "⚠️  기존 monitoring Namespace가 삭제 중입니다. 완료될 때까지 대기..."
+    
+    # Finalizer 제거로 강제 삭제
+    kubectl patch namespace monitoring -p '{"spec":{"finalizers":[]}}' --type=merge 2>/dev/null || true
+    
+    # 완전히 삭제될 때까지 대기 (최대 60초)
+    for i in {1..60}; do
+        if ! kubectl get namespace monitoring &>/dev/null; then
+            echo "✅ 기존 Namespace 삭제 완료"
+            break
+        fi
+        echo -n "."
+        sleep 1
+    done
+    echo ""
+fi
+
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 echo "✅ Namespace 생성 완료"
 

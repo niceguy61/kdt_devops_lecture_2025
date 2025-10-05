@@ -6,17 +6,16 @@
 set -e
 
 NAMESPACE="day5-lab"
+CLUSTER_NAME="challenge-cluster"
 
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║  Week 3 Day 5 Lab 1: 환경 정리                           ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
-echo "⚠️  다음 리소스들이 삭제됩니다:"
-echo "   - HPA (web-app-hpa)"
-echo "   - 테스트 애플리케이션 (web-app)"
-echo "   - Prometheus Stack"
-echo "   - ArgoCD"
-echo "   - Namespace (monitoring, argocd, $NAMESPACE)"
+echo "⚠️  다음 작업이 수행됩니다:"
+echo "   1. 포트포워딩 중지"
+echo "   2. kind 클러스터 완전 삭제"
+echo "   3. 모든 리소스 정리"
 echo ""
 
 read -p "정말 삭제하시겠습니까? (y/n) " -n 1 -r
@@ -28,117 +27,46 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "1. HPA 삭제"
+echo "1. 포트포워딩 중지"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if kubectl get hpa -n $NAMESPACE web-app-hpa &> /dev/null; then
-    kubectl delete hpa -n $NAMESPACE web-app-hpa
-    echo "✅ HPA 삭제 완료"
+# 포트포워딩 중지 스크립트 실행
+if [ -f "./07-stop-portforward.sh" ]; then
+    ./07-stop-portforward.sh
 else
-    echo "ℹ️  HPA가 존재하지 않습니다."
+    # 수동으로 포트포워딩 프로세스 종료
+    pkill -f "port-forward.*monitoring" 2>/dev/null || true
+    pkill -f "port-forward.*argocd" 2>/dev/null || true
+    pkill -f "port-forward.*day5-lab" 2>/dev/null || true
+    echo "✅ 포트포워딩 중지 완료"
 fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "2. 테스트 애플리케이션 삭제"
+echo "2. kind 클러스터 삭제"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if kubectl get deployment -n $NAMESPACE web-app &> /dev/null; then
-    kubectl delete deployment -n $NAMESPACE web-app
-    kubectl delete service -n $NAMESPACE web-app
-    kubectl delete servicemonitor -n $NAMESPACE web-app
-    echo "✅ 테스트 애플리케이션 삭제 완료"
-else
-    echo "ℹ️  테스트 애플리케이션이 존재하지 않습니다."
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "3. Prometheus Stack 삭제"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-if helm list -n monitoring | grep -q prometheus; then
-    helm uninstall prometheus -n monitoring
-    echo "✅ Prometheus Stack 삭제 완료"
-else
-    echo "ℹ️  Prometheus Stack이 설치되어 있지 않습니다."
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "4. ArgoCD 삭제"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-if kubectl get namespace argocd &> /dev/null; then
-    kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-    echo "✅ ArgoCD 삭제 완료"
-else
-    echo "ℹ️  ArgoCD가 설치되어 있지 않습니다."
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "5. Namespace 삭제"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-if kubectl get namespace monitoring &> /dev/null; then
-    echo "monitoring Namespace 삭제 중..."
-    kubectl delete namespace monitoring --timeout=60s &
-    MONITORING_PID=$!
-    
-    # 60초 대기
-    sleep 60
-    
-    # 아직 실행 중이면 강제 삭제
-    if kill -0 $MONITORING_PID 2>/dev/null; then
-        echo "⚠️  Namespace 삭제가 지연되고 있습니다. 강제 삭제 중..."
-        kubectl delete namespace monitoring --grace-period=0 --force 2>/dev/null || true
-        
-        # Finalizer 제거
-        kubectl get namespace monitoring -o json 2>/dev/null | \
-          jq '.spec.finalizers = []' | \
-          kubectl replace --raw "/api/v1/namespaces/monitoring/finalize" -f - 2>/dev/null || true
+if command -v kind &> /dev/null; then
+    if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+        echo "kind 클러스터 '$CLUSTER_NAME' 삭제 중..."
+        kind delete cluster --name $CLUSTER_NAME
+        echo "✅ kind 클러스터 삭제 완료"
+    else
+        echo "ℹ️  kind 클러스터 '$CLUSTER_NAME'가 존재하지 않습니다."
     fi
-    
-    echo "✅ monitoring Namespace 삭제 완료"
-fi
-
-if kubectl get namespace argocd &> /dev/null; then
-    echo "argocd Namespace 삭제 중..."
-    kubectl delete namespace argocd --timeout=60s &
-    ARGOCD_PID=$!
-    
-    sleep 60
-    
-    if kill -0 $ARGOCD_PID 2>/dev/null; then
-        echo "⚠️  Namespace 삭제가 지연되고 있습니다. 강제 삭제 중..."
-        kubectl delete namespace argocd --grace-period=0 --force 2>/dev/null || true
-        
-        kubectl get namespace argocd -o json 2>/dev/null | \
-          jq '.spec.finalizers = []' | \
-          kubectl replace --raw "/api/v1/namespaces/argocd/finalize" -f - 2>/dev/null || true
-    fi
-    
-    echo "✅ argocd Namespace 삭제 완료"
-fi
-
-if kubectl get namespace $NAMESPACE &> /dev/null; then
-    kubectl delete namespace $NAMESPACE --timeout=30s || true
-    echo "✅ $NAMESPACE Namespace 삭제 완료"
+else
+    echo "ℹ️  kind가 설치되어 있지 않습니다."
 fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "6. Metrics Server 삭제 (선택)"
+echo "3. 임시 파일 정리"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-read -p "Metrics Server도 삭제하시겠습니까? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    kubectl delete -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-    echo "✅ Metrics Server 삭제 완료"
-else
-    echo "ℹ️  Metrics Server는 유지됩니다."
+# 포트포워딩 PID 디렉토리 삭제
+if [ -d "/tmp/day5-lab-portforward" ]; then
+    rm -rf /tmp/day5-lab-portforward
+    echo "✅ 임시 파일 정리 완료"
 fi
 
 echo ""
@@ -147,10 +75,22 @@ echo "║  🎉 정리 완료!                                            ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 echo "✅ 삭제된 리소스:"
-echo "   - HPA"
-echo "   - 테스트 애플리케이션"
-echo "   - Prometheus Stack"
-echo "   - ArgoCD"
-echo "   - Namespace (monitoring, argocd, $NAMESPACE)"
+echo "   - 포트포워딩 프로세스"
+echo "   - kind 클러스터 ($CLUSTER_NAME)"
+echo "   - 모든 Kubernetes 리소스"
 echo ""
-echo "💡 클러스터가 깨끗하게 정리되었습니다."
+echo "💡 새로 시작하려면:"
+echo "   ./00-install-all.sh"
+
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  🎉 정리 완료!                                            ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "✅ 삭제된 리소스:"
+echo "   - 포트포워딩 프로세스"
+echo "   - kind 클러스터 ($CLUSTER_NAME)"
+echo "   - 모든 Kubernetes 리소스"
+echo ""
+echo "💡 새로 시작하려면:"
+echo "   ./00-install-all.sh"
