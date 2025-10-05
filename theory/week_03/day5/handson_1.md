@@ -927,8 +927,9 @@ securityContext:
     drop:
     - ALL
   readOnlyRootFilesystem: true
-
+```
 # Nginx용 임시 디렉토리
+```yaml
 volumeMounts:
   - name: cache
     mountPath: /var/cache/nginx
@@ -948,11 +949,6 @@ volumes:
 nodeSelector: {}
 tolerations: []
 affinity: {}
-```
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: true
 ```
 
 ### Step 4-4: Chart 검증 및 배포
