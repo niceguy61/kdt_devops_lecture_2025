@@ -393,17 +393,17 @@ kubectl describe hpa -n day5-handson metrics-app-hpa
 
 ```bash
 # 부하 생성
-kubectl run load-generator --image=busybox --restart=Never -- /bin/sh -c \
+kubectl run -n day5-handson load-generator --image=busybox --restart=Never -- /bin/sh -c \
   "while true; do wget -q -O- http://metrics-app:8080; done"
 
 # HPA 동작 관찰
-watch kubectl get hpa metrics-app-hpa
+watch kubectl get hpa -n day5-handson metrics-app-hpa
 
 # 커스텀 메트릭 확인
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/http_requests_per_second" | jq .
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/day5-handson/pods/*/http_requests_per_second" | jq .
 
 # 부하 중지
-kubectl delete pod load-generator
+kubectl delete pod -n day5-handson load-generator
 ```
 
 ---
@@ -525,8 +525,8 @@ spec:
     # Pod Memory Usage High
     - alert: PodMemoryUsageHigh
       expr: |
-        (container_memory_usage_bytes{namespace="default"} / 
-         container_spec_memory_limit_bytes{namespace="default"}) > 0.9
+        (container_memory_usage_bytes{namespace="day5-handson"} / 
+         container_spec_memory_limit_bytes{namespace="day5-handson"}) > 0.9
       for: 5m
       labels:
         severity: critical
@@ -537,7 +537,7 @@ spec:
     # Pod CPU Throttling
     - alert: PodCPUThrottling
       expr: |
-        rate(container_cpu_cfs_throttled_seconds_total{namespace="default"}[5m]) > 0.5
+        rate(container_cpu_cfs_throttled_seconds_total{namespace="day5-handson"}[5m]) > 0.5
       for: 5m
       labels:
         severity: warning
@@ -548,8 +548,8 @@ spec:
     # HPA at Max Capacity
     - alert: HPAMaxedOut
       expr: |
-        kube_horizontalpodautoscaler_status_current_replicas{namespace="default"} ==
-        kube_horizontalpodautoscaler_spec_max_replicas{namespace="default"}
+        kube_horizontalpodautoscaler_status_current_replicas{namespace="day5-handson"} ==
+        kube_horizontalpodautoscaler_spec_max_replicas{namespace="day5-handson"}
       for: 15m
       labels:
         severity: warning
@@ -617,7 +617,7 @@ metadata:
   name: web-app-dev
   namespace: argocd
 spec:
-  project: default
+  project: day5-handson
   source:
     repoURL: https://github.com/your-org/your-repo
     targetRevision: develop
@@ -647,7 +647,7 @@ metadata:
   name: web-app-prod
   namespace: argocd
 spec:
-  project: default
+  project: day5-handson
   source:
     repoURL: https://github.com/your-org/your-repo
     targetRevision: main
@@ -692,13 +692,13 @@ metadata:
   name: root-app
   namespace: argocd
 spec:
-  project: default
+  project: day5-handson
   source:
     repoURL: https://github.com/your-org/gitops-repo
     targetRevision: HEAD
     path: apps
   destination:
-    server: https://kubernetes.default.svc
+    server: https://kubernetes.day5-handson.svc
     namespace: argocd
   syncPolicy:
     automated:
@@ -973,19 +973,23 @@ spec:
 
 ```bash
 # HPA 삭제
-kubectl delete hpa metrics-app-hpa
+kubectl delete hpa -n day5-handson metrics-app-hpa
 
 # 애플리케이션 삭제
-kubectl delete -f metrics-app-deployment.yaml
+kubectl delete -f metrics-app-deployment.yaml -n day5-handson
 
 # Prometheus Adapter 삭제
 helm uninstall prometheus-adapter -n monitoring
 
-# Helm Chart 삭제
-helm uninstall production-app -n production
+# Helm Chart 삭제 (있다면)
+helm uninstall production-app -n production 2>/dev/null || true
 
 # Namespace 삭제
-kubectl delete namespace production
+kubectl delete namespace day5-handson
+kubectl delete namespace production 2>/dev/null || true
+
+# 또는 클러스터 전체 삭제
+kind delete cluster --name challenge-cluster
 ```
 
 ---
