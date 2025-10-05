@@ -18,10 +18,12 @@ cd lab_scripts/handson1
 ./00-setup-environment.sh
 ```
 
+**📋 스크립트 내용**: [00-setup-environment.sh](./lab_scripts/handson1/00-setup-environment.sh)
+
 **자동 설치 항목**:
 - ✅ Kubernetes 클러스터 (challenge-cluster, 없으면 자동 생성)
-- ✅ day5-handson Namespace
-- ✅ Helm
+- ✅ day5-handson, monitoring Namespace
+- ✅ Helm 저장소 (prometheus-community, bitnami)
 - ✅ Prometheus Operator (ServiceMonitor CRD 포함)
 - ✅ Metrics Server
 
@@ -809,7 +811,7 @@ name: production-app
 description: Production-ready Kubernetes application
 type: application
 version: 1.0.0
-appVersion: "2.1.0"
+appVersion: "1.21"
 
 keywords:
   - web
@@ -822,11 +824,11 @@ maintainers:
 
 dependencies:
   - name: postgresql
-    version: 12.1.0
+    version: "16.7.27"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
   - name: redis
-    version: 17.3.0
+    version: "22.0.7"
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
 ```
@@ -838,78 +840,115 @@ dependencies:
 replicaCount: 3
 
 image:
-  repository: nginx
+  repository: nginxinc/nginx-unprivileged
   pullPolicy: IfNotPresent
   tag: "1.21"
-
-service:
-  type: ClusterIP
-  port: 80
 
 serviceAccount:
   create: true
   annotations: {}
   name: ""
 
+service:
+  type: ClusterIP
+  port: 8080
+
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+  annotations: {}
   hosts:
     - host: app.example.com
       paths:
         - path: /
           pathType: Prefix
-  tls:
-    - secretName: app-tls
-      hosts:
-        - app.example.com
+  tls: []
+
+httpRoute:
+  enabled: false
 
 resources:
   limits:
     cpu: 500m
     memory: 512Mi
   requests:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 100m
+    memory: 128Mi
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 3
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 80
 
-# 의존성 설정
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+# 의존성 설정 (기본 비활성화)
 postgresql:
-  enabled: true
+  enabled: false
   auth:
     username: appuser
     password: changeme
     database: appdb
 
 redis:
-  enabled: true
+  enabled: false
   auth:
-    enabled: true
-    password: changeme
+    enabled: false
 
 # 모니터링
 monitoring:
-  enabled: true
+  enabled: false
   serviceMonitor:
-    enabled: true
+    enabled: false
     interval: 30s
 
-# 보안
+# 보안 설정
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
+  runAsUser: 101
+  fsGroup: 101
 
 securityContext:
   allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+# Nginx용 임시 디렉토리
+volumeMounts:
+  - name: cache
+    mountPath: /var/cache/nginx
+  - name: run
+    mountPath: /var/run
+  - name: tmp
+    mountPath: /tmp
+
+volumes:
+  - name: cache
+    emptyDir: {}
+  - name: run
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+```
   capabilities:
     drop:
     - ALL
@@ -919,6 +958,9 @@ securityContext:
 ### Step 4-4: Chart 검증 및 배포
 
 ```bash
+# Chart 의존성 업데이트
+helm dependency update production-app/
+
 # Chart 검증
 helm lint production-app/
 
@@ -926,7 +968,7 @@ helm lint production-app/
 helm template production-app production-app/
 
 # Dry-run 테스트
-helm install production-app production-app/ --dry-run --debug
+helm install production-app production-app/ --dry-run --debug -n production
 
 # Chart 설치
 helm install production-app production-app/ \
@@ -936,6 +978,9 @@ helm install production-app production-app/ \
 # 설치 확인
 helm list -n production
 kubectl get all -n production
+
+# Pod 로그 확인
+kubectl logs -f deployment/production-app -n production
 ```
 
 ---
