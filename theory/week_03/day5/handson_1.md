@@ -184,6 +184,23 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 sleep 30
 ```
 
+**ArgoCD 설치**:
+```bash
+# argocd namespace 생성
+kubectl create namespace argocd
+
+# ArgoCD 설치
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# ArgoCD CLI 설치
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+
+# ArgoCD 준비 대기
+kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
+```
+
 ### Step 0-4: 환경 확인
 
 ```bash
@@ -194,7 +211,10 @@ kubectl cluster-info
 kubectl get crd servicemonitors.monitoring.coreos.com
 
 # Namespace 확인
-kubectl get namespace day5-handson monitoring
+kubectl get namespace day5-handson monitoring argocd
+
+# ArgoCD CLI 확인
+argocd version --client
 
 # 현재 namespace 확인
 kubectl config view --minify | grep namespace:
