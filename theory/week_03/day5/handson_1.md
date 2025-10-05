@@ -613,6 +613,24 @@ for i in {1..10}; do kubectl delete pod load-$i; done
 
 ## 🛠️ Step 3: 멀티 클러스터 GitOps (25분)
 
+### Step 3-0: ArgoCD 로그인
+
+**ArgoCD 서버 접속**:
+```bash
+# ArgoCD 서버 포트포워딩 (백그라운드)
+kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+
+# 초기 admin 비밀번호 확인
+ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+echo "ArgoCD Password: $ARGOCD_PASSWORD"
+
+# ArgoCD 로그인
+argocd login localhost:8080 --username admin --password $ARGOCD_PASSWORD --insecure
+
+# 로그인 확인
+argocd account get-user-info
+```
+
 ### Step 3-1: 클러스터 등록
 
 ```bash
