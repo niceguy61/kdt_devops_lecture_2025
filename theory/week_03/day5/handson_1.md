@@ -348,7 +348,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: metrics-app-hpa
-  namespace: default
+  namespace: day5-handson
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -382,11 +382,11 @@ spec:
 
 ```bash
 # HPA 생성
-kubectl apply -f custom-metrics-hpa.yaml
+kubectl apply -f custom-metrics-hpa.yaml -n day5-handson
 
 # HPA 상태 확인
-kubectl get hpa metrics-app-hpa
-kubectl describe hpa metrics-app-hpa
+kubectl get hpa -n day5-handson metrics-app-hpa
+kubectl describe hpa -n day5-handson metrics-app-hpa
 ```
 
 ### Step 1-5: 부하 테스트
