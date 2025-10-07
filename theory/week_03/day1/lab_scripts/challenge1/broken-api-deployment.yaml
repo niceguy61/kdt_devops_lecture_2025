@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: httpd:2.4
+        image: httpd:2.4.62
         ports:
         - containerPort: 80
         env:

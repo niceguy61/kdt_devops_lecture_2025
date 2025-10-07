@@ -330,7 +330,7 @@ spec:
     spec:
       containers:
       - name: web-app
-        image: nginx:1.21
+        image: nginxinc/nginx-unprivileged:1.25
         ports:
         - containerPort: 80
           name: http

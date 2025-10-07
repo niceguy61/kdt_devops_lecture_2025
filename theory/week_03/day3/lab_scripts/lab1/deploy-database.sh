@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:13
+        image: postgres:16
         env:
         - name: POSTGRES_DB
           value: shopdb

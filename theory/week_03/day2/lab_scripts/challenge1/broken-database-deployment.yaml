@@ -17,7 +17,7 @@ spec:
         node-role: database
       containers:
       - name: postgres
-        image: postgres:13
+        image: postgres:16
         env:
         - name: POSTGRES_PASSWORD
           value: "password123"

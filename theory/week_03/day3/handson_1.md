@@ -183,7 +183,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:13
+        image: postgres:16
         env:
         - name: POSTGRES_DB
           value: shopdb
@@ -235,10 +235,10 @@ kubectl get pods -l app=postgres-cluster
 kubectl get pvc
 
 # Headless Service DNS 테스트
-kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-headless.day3-lab.svc.cluster.local
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-headless.day3-lab.svc.cluster.local
 
 # 개별 Pod DNS 확인
-kubectl run dns-test --image=busybox:1.35 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless.day3-lab.svc.cluster.local
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless.day3-lab.svc.cluster.local
 ```
 
 ---
@@ -370,7 +370,7 @@ kubectl get hpa -n day3-lab
 **부하 테스트**:
 ```bash
 # 부하 생성 Pod 실행
-kubectl run load-generator --image=busybox:1.35 --rm -it --restart=Never --namespace=day3-lab -- /bin/sh
+kubectl run load-generator --image=busybox:1.36 --rm -it --restart=Never --namespace=day3-lab -- /bin/sh
 
 # Pod 내부에서 실행
 while true; do wget -q -O- http://frontend-service/; done
@@ -444,7 +444,7 @@ metadata:
 spec:
   containers:
   - name: test
-    image: busybox:1.35
+    image: busybox:1.36
     command: ["/bin/sh"]
     args: ["-c", "while true; do sleep 3600; done"]
     volumeMounts:
@@ -529,7 +529,7 @@ spec:
         spec:
           containers:
           - name: backup
-            image: postgres:13
+            image: postgres:16
             command: ["/bin/bash"]
             args: ["-c", "pg_dump -h postgres-service -U shopuser shopdb > /backup/backup-$(date +%Y%m%d).sql"]
             env:
