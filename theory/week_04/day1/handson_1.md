@@ -172,9 +172,13 @@ graph TB
     P2 <--> P3
     P1 <--> P3
     
-    style P1,P2,P3 fill:#4caf50
+    style P1 fill:#4caf50
+    style P2 fill:#4caf50
+    style P3 fill:#4caf50
     style ISTIOD fill:#2196f3
-    style S1,S2,S3 fill:#fff3e0
+    style S1 fill:#fff3e0
+    style S2 fill:#fff3e0
+    style S3 fill:#fff3e0
 ```
 
 **🔧 Service Mesh가 해결하는 문제**:
