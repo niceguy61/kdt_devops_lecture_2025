@@ -98,7 +98,7 @@ graph TB
         end
         
         subgraph "데이터베이스"
-            RDS[RDS `(PostgreSQL/MySQL)`<br/>단일 데이터베이스]
+            RDS[RDS PostgreSQL/MySQL<br/>단일 데이터베이스]
         end
         
         subgraph "스토리지"
