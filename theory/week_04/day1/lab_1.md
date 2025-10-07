@@ -59,9 +59,14 @@ graph TB
         MS4 --> RDS5[RDS<br/>Order DB]
     end
     
-    style M1,M2 fill:#ff9800
-    style MS1,MS2,MS3,MS4 fill:#4caf50
-    style APIGW,APIGW2 fill:#2196f3
+    style M1 fill:#ff9800
+    style M2 fill:#ff9800
+    style MS1 fill:#4caf50
+    style MS2 fill:#4caf50
+    style MS3 fill:#4caf50
+    style MS4 fill:#4caf50
+    style APIGW fill:#2196f3
+    style APIGW2 fill:#2196f3
 ```
 
 ---
