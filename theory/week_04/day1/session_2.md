@@ -373,8 +373,13 @@ graph TB
     
     D -.->|이벤트| E
     
-    style A,B,C,D fill:#ffebee
-    style E,F,G fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
 ```
 
 **✅ 장점**:
@@ -417,9 +422,12 @@ graph TB
     D --> E
     D --> F
     
-    style A,B fill:#e3f2fd
-    style C,D fill:#e8f5e8
-    style E,F fill:#fff3e0
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#fff3e0
 ```
 
 **✅ 장점**:
@@ -469,7 +477,10 @@ graph TB
     C --> E
     D --> E
     
-    style A,B,C,D fill:#ffcdd2
+    style A fill:#ffcdd2
+    style B fill:#ffcdd2
+    style C fill:#ffcdd2
+    style D fill:#ffcdd2
     style E fill:#ffcdd2
 ```
 
@@ -494,7 +505,9 @@ graph TB
     B --> D
     C --> D
     
-    style A,B,C fill:#ffcdd2
+    style A fill:#ffcdd2
+    style B fill:#ffcdd2
+    style C fill:#ffcdd2
     style D fill:#ff5252
 ```
 
