@@ -1008,37 +1008,37 @@ EOF
 **Saga 패턴 테스트**
 ```bash
 # Saga 시작
-kubectl exec -n testing deployment/load-tester -- curl -s http://saga-orchestrator/api/saga/start
+kubectl exec -n testing deployment/load-tester -- curl -s http://saga-orchestrator.ecommerce-microservices.svc.cluster.local/api/saga/start
 
 # 보상 트랜잭션 테스트
-kubectl exec -n testing deployment/load-tester -- curl -s http://saga-orchestrator/api/saga/compensate
+kubectl exec -n testing deployment/load-tester -- curl -s http://saga-orchestrator.ecommerce-microservices.svc.cluster.local/api/saga/compensate
 ```
 
 **CQRS 패턴 테스트**
 ```bash
 # Command 실행
-kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service/api/commands/create-user
+kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service.ecommerce-microservices.svc.cluster.local/api/commands/create-user
 
 # Query 실행
-kubectl exec -n testing deployment/load-tester -- curl -s http://query-service/api/queries/users
+kubectl exec -n testing deployment/load-tester -- curl -s http://query-service.ecommerce-microservices.svc.cluster.local/api/queries/users
 ```
 
 **Event Sourcing 테스트**
 ```bash
 # 이벤트 조회
-kubectl exec -n testing deployment/load-tester -- curl -s http://event-store/api/events
+kubectl exec -n testing deployment/load-tester -- curl -s http://event-store.ecommerce-microservices.svc.cluster.local/api/events
 
 # 이벤트 재생
-kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://event-store/api/events/replay
+kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://event-store.ecommerce-microservices.svc.cluster.local/api/events/replay
 ```
 
 **Service Mesh 기능 테스트**
 ```bash
 # 카나리 배포 테스트
-kubectl exec -n testing deployment/load-tester -- curl -s -H "canary: true" http://user-service/api/users
+kubectl exec -n testing deployment/load-tester -- curl -s -H "canary: true" http://user-service.ecommerce-microservices.svc.cluster.local/api/users
 
 # 일반 트래픽 테스트
-kubectl exec -n testing deployment/load-tester -- curl -s http://user-service/api/users
+kubectl exec -n testing deployment/load-tester -- curl -s http://user-service.ecommerce-microservices.svc.cluster.local/api/users
 ```
 
 ---
