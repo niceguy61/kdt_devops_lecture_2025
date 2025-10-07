@@ -27,6 +27,7 @@
 **현실 문제 상황**:
 - 💼 **실무 시나리오**: "우리 서비스도 마이크로서비스로 바꿔야 하나요?"
 - 🏠 **일상 비유**: 아파트 vs 단독주택 - 각각의 장단점
+- ☁️ **AWS 아키텍처**: "EKS + API Gateway + Lambda로 마이크로서비스 구현"
 - 📊 **시장 현실**: Netflix, Amazon은 마이크로서비스, 하지만 모든 회사가 그럴 필요는 없다
 
 **학습 전후 비교**:
@@ -41,6 +42,22 @@ graph LR
 ---
 
 ## 📖 핵심 개념 (35분)
+
+### 📐 이론적 배경: Conway's Law와 아키텍처 진화 (3분)
+
+**Conway's Law (1968)**:
+> "시스템을 설계하는 조직은 그 조직의 커뮤니케이션 구조를 복사한 설계를 만들어낸다"
+
+**수학적 표현**:
+```
+Architecture_Complexity ∝ Organization_Communication_Paths
+Communication_Paths = n(n-1)/2  (n = 팀 수)
+```
+
+**아키텍처 진화 이론**:
+- **단일체 → 분산**: 조직 성장에 따른 자연스러운 진화
+- **임계점**: 팀 규모 7±2명 (Miller's Rule)
+- **분산 시스템 복잡도**: O(n²) vs O(n log n) 트레이드오프
 
 ### 🔍 개념 1: 모놀리스 아키텍처 - 하나로 통합된 시스템 (12분)
 
@@ -68,6 +85,50 @@ graph TB
     style E fill:#ffebee
 ```
 
+**☁️ AWS 모놀리스 아키텍처**:
+```mermaid
+graph TB
+    subgraph "AWS 모놀리스 구현"
+        subgraph "로드밸런서"
+            ALB[Application Load Balancer]
+        end
+        
+        subgraph "컴퓨팅"
+            EC2[EC2 Auto Scaling Group<br/>단일 애플리케이션]
+        end
+        
+        subgraph "데이터베이스"
+            RDS[RDS (PostgreSQL/MySQL)<br/>단일 데이터베이스]
+        end
+        
+        subgraph "스토리지"
+            S3[S3 Bucket<br/>파일 저장소]
+        end
+        
+        subgraph "모니터링"
+            CW[CloudWatch<br/>통합 로깅]
+        end
+    end
+    
+    ALB --> EC2
+    EC2 --> RDS
+    EC2 --> S3
+    EC2 --> CW
+    
+    style ALB fill:#ff9800
+    style EC2 fill:#4caf50
+    style RDS fill:#2196f3
+    style S3 fill:#9c27b0
+    style CW fill:#ff5722
+```
+
+**🔧 AWS 서비스 매핑**:
+- **로드밸런싱** → **ALB**: HTTP/HTTPS 트래픽 분산
+- **애플리케이션** → **EC2 Auto Scaling**: 단일 JAR/WAR 파일 배포
+- **데이터베이스** → **RDS**: 모든 데이터를 하나의 DB에 저장
+- **파일 저장** → **S3**: 정적 파일 및 업로드 파일 관리
+- **모니터링** → **CloudWatch**: 애플리케이션 전체 로그 통합 관리
+
 **모놀리스의 특징**:
 
 1. **단일 배포 단위**:
@@ -92,12 +153,30 @@ graph TB
 - ✅ **트랜잭션**: ACID 트랜잭션 쉽게 구현
 - ✅ **디버깅**: 전체 시스템을 한 번에 디버깅 가능
 
+**📐 성능 분석 (이론적)**:
+```
+모놀리스 통신 비용: O(1) - 메모리 내 함수 호출
+- 함수 호출 지연시간: ~1-10 nanoseconds
+- 메모리 접근 시간: ~100 nanoseconds
+- 캐시 적중률: 95%+ (단일 프로세스)
+```
+
 **❌ 모놀리스 단점**:
 - ❌ **확장성 제한**: 전체 시스템을 함께 확장해야 함
 - ❌ **기술 스택 고정**: 하나의 기술 스택에 종속
 - ❌ **팀 확장 어려움**: 여러 팀이 같은 코드베이스 작업 시 충돌
 - ❌ **장애 전파**: 한 부분의 오류가 전체 시스템 영향
 - ❌ **배포 위험**: 작은 변경도 전체 시스템 재배포
+
+**📊 확장성 한계 (Amdahl's Law 적용)**:
+```
+Speedup = 1 / ((1-P) + P/N)
+P = 병렬화 가능한 부분 비율
+N = 프로세서 수
+
+모놀리스 한계: 단일 인스턴스 수직 확장만 가능
+이론적 최대 성능 = 하드웨어 물리적 한계
+```
 
 ### 🔍 개념 2: 마이크로서비스 아키텍처 - 독립적인 서비스들 (12분)
 
@@ -142,17 +221,110 @@ graph TB
     style D1 fill:#e3f2fd
 ```
 
+**☁️ AWS 마이크로서비스 아키텍처**:
+```mermaid
+graph TB
+    subgraph "AWS 마이크로서비스 구현"
+        subgraph "API 게이트웨이"
+            APIGW[API Gateway<br/>통합 엔드포인트]
+        end
+        
+        subgraph "User Service"
+            EKS1[EKS Pod<br/>User API]
+            RDS1[RDS<br/>User DB]
+        end
+        
+        subgraph "Product Service"
+            LAMBDA1[Lambda<br/>Product API]
+            DYNAMO1[DynamoDB<br/>Product DB]
+        end
+        
+        subgraph "Order Service"
+            ECS1[ECS Fargate<br/>Order API]
+            RDS2[RDS<br/>Order DB]
+        end
+        
+        subgraph "메시징"
+            SQS[SQS<br/>비동기 통신]
+            SNS[SNS<br/>이벤트 발행]
+        end
+        
+        subgraph "모니터링"
+            XRAY[X-Ray<br/>분산 추적]
+            CW[CloudWatch<br/>로그 수집]
+        end
+    end
+    
+    APIGW --> EKS1
+    APIGW --> LAMBDA1
+    APIGW --> ECS1
+    
+    EKS1 --> RDS1
+    LAMBDA1 --> DYNAMO1
+    ECS1 --> RDS2
+    
+    EKS1 --> SQS
+    LAMBDA1 --> SNS
+    ECS1 --> SQS
+    
+    EKS1 --> XRAY
+    LAMBDA1 --> XRAY
+    ECS1 --> XRAY
+    
+    style APIGW fill:#ff9800
+    style EKS1 fill:#4caf50
+    style LAMBDA1 fill:#2196f3
+    style ECS1 fill:#9c27b0
+    style SQS fill:#ff5722
+    style XRAY fill:#795548
+```
+
+**🔧 AWS 서비스 매핑**:
+- **API 통합** → **API Gateway**: 모든 서비스의 통합 엔드포인트
+- **User Service** → **EKS + RDS**: 컨테이너 기반 사용자 관리
+- **Product Service** → **Lambda + DynamoDB**: 서버리스 상품 관리
+- **Order Service** → **ECS Fargate + RDS**: 컨테이너 기반 주문 처리
+- **서비스 통신** → **SQS/SNS**: 비동기 메시징 및 이벤트 처리
+- **분산 추적** → **X-Ray**: 마이크로서비스 간 요청 추적
+
 **마이크로서비스의 특징**:
+
+**📐 분산 시스템 이론 적용**:
+```
+CAP 정리 (Brewer's Theorem):
+- Consistency (일관성)
+- Availability (가용성)  
+- Partition tolerance (분할 내성)
+
+마이크로서비스 = AP 시스템 (최종 일관성 선택)
+```
 
 1. **독립적 배포**:
    - 각 서비스별 독립적 배포 가능
    - 서비스별 다른 배포 주기
    - 장애 격리 및 빠른 복구
 
+**📊 장애 격리 수학적 모델**:
+```
+전체 시스템 가용성 = ∏(개별 서비스 가용성)
+모놀리스: 99.9% (단일 장애점)
+마이크로서비스: 99.9%^n (n개 서비스, 하지만 Circuit Breaker로 보완)
+```
+
 2. **기술 다양성**:
    - 서비스별 최적 기술 스택 선택
    - 언어, 데이터베이스, 프레임워크 자유 선택
    - 기술 실험 및 혁신 용이
+
+**🔬 네트워크 통신 오버헤드 분석**:
+```
+마이크로서비스 통신 비용:
+- 네트워크 지연시간: 0.1-10ms (동일 AZ)
+- 직렬화/역직렬화: 0.1-1ms
+- HTTP/gRPC 오버헤드: 10-100μs
+
+총 통신 비용: 모놀리스 대비 100-1000배 증가
+```
 
 3. **팀 자율성**:
    - 서비스별 전담 팀 구성

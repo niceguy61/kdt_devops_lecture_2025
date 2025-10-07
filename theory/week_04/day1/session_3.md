@@ -27,6 +27,7 @@
 **현실 문제 상황**:
 - 💼 **실무 시나리오**: "분산 트랜잭션을 어떻게 처리해야 하나요?"
 - 🧩 **일상 비유**: 오케스트라 연주 - 각 악기(서비스)의 조화로운 협연
+- ☁️ **AWS 아키텍처**: "Step Functions + SQS + EventBridge로 분산 트랜잭션 구현"
 - 📊 **기술적 도전**: 데이터 일관성, 성능, 복잡성 관리
 
 **학습 전후 비교**:
@@ -41,6 +42,34 @@ graph LR
 ---
 
 ## 📖 핵심 개념 (35분)
+
+### 📐 이론적 배경: 분산 시스템 이론과 합의 알고리즘 (3분)
+
+**ACID vs BASE 트레이드오프**:
+```
+ACID (전통적 RDBMS):
+- Atomicity: 원자성 (All or Nothing)
+- Consistency: 일관성 (데이터 무결성)
+- Isolation: 격리성 (동시성 제어)
+- Durability: 지속성 (영구 저장)
+
+BASE (분산 시스템):
+- Basically Available: 기본적 가용성
+- Soft state: 유연한 상태
+- Eventual consistency: 최종 일관성
+```
+
+**분산 합의 문제 (Consensus Problem)**:
+```
+FLP 불가능성 정리 (1985):
+비동기 분산 시스템에서 단일 프로세스 장애가 있을 때
+결정론적 합의 알고리즘은 불가능
+
+해결책: 부분 동기 모델 + 확률적 알고리즘
+- Paxos (1989): 이론적 완전성
+- Raft (2013): 실용적 구현
+- PBFT (1999): 비잔틴 장애 허용
+```
 
 ### 🔍 개념 1: Saga 패턴 - 분산 트랜잭션 관리 (12분)
 
@@ -71,6 +100,86 @@ sequenceDiagram
 ```
 
 **🔄 Saga 패턴 유형**:
+
+**📐 수학적 모델링**:
+```
+Saga Transaction = {T₁, T₂, ..., Tₙ, C₁, C₂, ..., Cₙ}
+- Tᵢ: i번째 트랜잭션
+- Cᵢ: i번째 보상 트랜잭션 (Compensating Transaction)
+
+성공 시나리오: T₁ → T₂ → ... → Tₙ
+실패 시나리오: T₁ → ... → Tₖ (실패) → Cₖ₋₁ → ... → C₁
+
+보상 가능성 조건: ∀i, Tᵢ ∘ Cᵢ = Identity (멱등성)
+```
+
+**🔬 복잡도 분석**:
+```
+Orchestration Saga:
+- 시간 복잡도: O(n) - 순차 실행
+- 공간 복잡도: O(n) - 상태 저장
+- 장애 복구: O(k) - k개 보상 트랜잭션
+
+Choreography Saga:
+- 시간 복잡도: O(log n) - 병렬 실행 가능
+- 공간 복잡도: O(1) - 분산 상태
+- 장애 복구: O(n) - 전체 체인 추적 필요
+```
+
+**☁️ AWS Saga 패턴 구현**:
+```mermaid
+graph TB
+    subgraph "AWS Orchestration Saga"
+        subgraph "Step Functions"
+            SF[Step Functions<br/>Saga Orchestrator]
+        end
+        
+        subgraph "Services"
+            LAMBDA1[Lambda: User Service]
+            LAMBDA2[Lambda: Payment Service]
+            LAMBDA3[Lambda: Inventory Service]
+            LAMBDA4[Lambda: Shipping Service]
+        end
+        
+        subgraph "Compensation"
+            COMP1[Lambda: Cancel User]
+            COMP2[Lambda: Refund Payment]
+            COMP3[Lambda: Restore Inventory]
+            COMP4[Lambda: Cancel Shipping]
+        end
+        
+        subgraph "State Management"
+            DYNAMO[DynamoDB<br/>Saga State]
+            SQS[SQS DLQ<br/>Failed Steps]
+        end
+    end
+    
+    SF --> LAMBDA1
+    SF --> LAMBDA2
+    SF --> LAMBDA3
+    SF --> LAMBDA4
+    
+    SF -.-> COMP1
+    SF -.-> COMP2
+    SF -.-> COMP3
+    SF -.-> COMP4
+    
+    SF --> DYNAMO
+    SF --> SQS
+    
+    style SF fill:#ff9800
+    style LAMBDA1,LAMBDA2,LAMBDA3,LAMBDA4 fill:#4caf50
+    style COMP1,COMP2,COMP3,COMP4 fill:#f44336
+    style DYNAMO fill:#2196f3
+    style SQS fill:#ff5722
+```
+
+**🔧 AWS Saga 서비스 매핑**:
+- **Saga Orchestrator** → **Step Functions**: 워크플로우 상태 머신
+- **Service Tasks** → **Lambda Functions**: 각 비즈니스 로직 실행
+- **Compensation Tasks** → **Lambda Functions**: 실패 시 보상 트랜잭션
+- **State Storage** → **DynamoDB**: Saga 실행 상태 저장
+- **Error Handling** → **SQS DLQ**: 실패한 단계 재처리
 
 **1. Orchestration Saga (중앙 집중식)**:
 ```mermaid

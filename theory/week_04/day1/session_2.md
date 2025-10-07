@@ -27,6 +27,7 @@
 **현실 문제 상황**:
 - 💼 **실무 시나리오**: "어떻게 서비스를 나눠야 할지 모르겠어요"
 - 🧩 **일상 비유**: 퍼즐 조각 맞추기 - 올바른 경계가 중요
+- ☁️ **AWS 아키텍처**: "DDD + EKS Namespace + API Gateway로 서비스 경계 구현"
 - 📊 **실패 사례**: 잘못된 서비스 분해로 인한 분산 모놀리스
 
 **학습 전후 비교**:
@@ -41,6 +42,28 @@ graph LR
 ---
 
 ## 📖 핵심 개념 (35분)
+
+### 📐 이론적 배경: 복잡성 이론과 모듈화 (3분)
+
+**복잡성 이론 (Complexity Theory)**:
+```
+시스템 복잡도 = f(컴포넌트 수, 상호작용 수)
+Essential Complexity vs Accidental Complexity (Fred Brooks)
+
+모듈화 원칙:
+- High Cohesion (높은 응집도): 관련 기능들의 집중
+- Low Coupling (낮은 결합도): 모듈 간 의존성 최소화
+```
+
+**정보 은닉 이론 (David Parnas, 1972)**:
+```
+모듈 분해 기준:
+1. 변경 가능성에 따른 분해
+2. 설계 결정의 은닉
+3. 인터페이스를 통한 추상화
+
+DDD = 정보 은닉 + 도메인 지식의 체계적 적용
+```
 
 ### 🔍 개념 1: Domain-Driven Design 기초 (12분)
 
@@ -91,15 +114,42 @@ graph TB
 
 **DDD 핵심 개념**:
 
+**📐 수학적 모델링**:
+```
+Domain = {Entities, Value Objects, Aggregates, Services}
+Bounded Context = Domain ∩ Language ∩ Team
+
+Context Mapping 관계:
+- Shared Kernel: BC₁ ∩ BC₂ ≠ ∅
+- Customer-Supplier: BC₁ → BC₂ (단방향 의존)
+- Conformist: BC₁ ⊆ BC₂ (완전 종속)
+```
+
 1. **도메인(Domain)**:
    - 비즈니스 영역의 지식과 활동
    - 해결하고자 하는 문제 공간
    - 전문가의 지식이 집약된 영역
 
+**🔬 인지 과학적 접근**:
+```
+도메인 모델링 = 인간의 인지 구조 모방
+- 청킹(Chunking): 관련 정보의 그룹화
+- 추상화(Abstraction): 핵심 개념 추출
+- 패턴 인식(Pattern Recognition): 반복되는 구조 식별
+```
+
 2. **바운디드 컨텍스트(Bounded Context)**:
    - 도메인 모델이 적용되는 경계
    - 같은 용어가 다른 의미를 가질 수 있는 범위
    - 마이크로서비스의 논리적 경계
+
+**📊 경계 설정 알고리즘**:
+```
+응집도 측정: Cohesion(C) = Σ(intra-module connections) / total connections
+결합도 측정: Coupling(C) = Σ(inter-module connections) / total connections
+
+최적 경계: max(Cohesion) ∧ min(Coupling)
+```
 
 3. **유비쿼터스 언어(Ubiquitous Language)**:
    - 도메인 전문가와 개발자가 공유하는 공통 언어
@@ -120,6 +170,68 @@ graph TB
     style D fill:#f3e5f5
     style E fill:#e3f2fd
 ```
+
+**☁️ AWS DDD 구현 아키텍처**:
+```mermaid
+graph TB
+    subgraph "AWS DDD 기반 마이크로서비스"
+        subgraph "User Context"
+            EKS1[EKS Namespace: user-context]
+            RDS1[RDS: user-db]
+            SVC1[Service: user-api]
+        end
+        
+        subgraph "Order Context"
+            EKS2[EKS Namespace: order-context]
+            RDS2[RDS: order-db]
+            SVC2[Service: order-api]
+        end
+        
+        subgraph "Payment Context"
+            LAMBDA1[Lambda: payment-service]
+            DYNAMO1[DynamoDB: payment-data]
+        end
+        
+        subgraph "Context Integration"
+            APIGW[API Gateway<br/>Context Router]
+            EVENTBRIDGE[EventBridge<br/>Domain Events]
+        end
+        
+        subgraph "Anti-Corruption Layer"
+            ACL1[Lambda: user-acl]
+            ACL2[Lambda: order-acl]
+        end
+    end
+    
+    APIGW --> SVC1
+    APIGW --> SVC2
+    APIGW --> LAMBDA1
+    
+    SVC1 --> RDS1
+    SVC2 --> RDS2
+    LAMBDA1 --> DYNAMO1
+    
+    SVC1 --> EVENTBRIDGE
+    SVC2 --> EVENTBRIDGE
+    LAMBDA1 --> EVENTBRIDGE
+    
+    SVC1 --> ACL1
+    SVC2 --> ACL2
+    
+    style EKS1 fill:#4caf50
+    style EKS2 fill:#2196f3
+    style LAMBDA1 fill:#ff9800
+    style APIGW fill:#9c27b0
+    style EVENTBRIDGE fill:#ff5722
+```
+
+**🔧 AWS DDD 서비스 매핑**:
+- **Bounded Context** → **EKS Namespace**: 컨텍스트별 격리된 환경
+- **Domain Service** → **Kubernetes Service**: 도메인 로직 캡슐화
+- **Aggregate** → **RDS/DynamoDB**: 데이터 일관성 경계
+- **Domain Events** → **EventBridge**: 컨텍스트 간 이벤트 통신
+- **Anti-Corruption Layer** → **Lambda**: 외부 시스템 격리 계층
+- **Context Map** → **API Gateway**: 컨텍스트 간 통신 라우팅
 
 ### 🔍 개념 2: 서비스 분해 패턴과 전략 (12분)
 

@@ -95,6 +95,61 @@ graph LR
 - 🏠 **일상 비유**: "아파트 단지에서 각 동 간 연락이 복잡해지면 관리사무소가 필요하듯이"
 - ☁️ **AWS 아키텍처**: "API Gateway + ALB + Service Mesh(App Mesh)로 트래픽 관리"
 - 📊 **시장 동향**: "Netflix, Uber 등 대규모 서비스의 필수 아키텍처 패턴"
+
+**🏗️ 실제 AWS 아키텍처**:
+```mermaid
+graph TB
+    subgraph "AWS 클라우드"
+        subgraph "인터넷 게이트웨이"
+            IGW[Internet Gateway]
+        end
+        
+        subgraph "로드 밸런서 계층"
+            ALB[Application Load Balancer]
+            API[API Gateway]
+        end
+        
+        subgraph "컴퓨팅 계층"
+            EKS[EKS Cluster]
+            EC2[EC2 Instances]
+            FARGATE[Fargate Tasks]
+        end
+        
+        subgraph "서비스 메시"
+            APPMESH[AWS App Mesh]
+            ENVOY[Envoy Proxy]
+        end
+        
+        subgraph "모니터링"
+            CW[CloudWatch]
+            XRAY[X-Ray]
+        end
+    end
+    
+    IGW --> ALB
+    IGW --> API
+    ALB --> EKS
+    API --> FARGATE
+    EKS --> APPMESH
+    FARGATE --> APPMESH
+    APPMESH --> ENVOY
+    ENVOY --> CW
+    ENVOY --> XRAY
+    
+    style IGW fill:#ff9800
+    style ALB fill:#4caf50
+    style API fill:#2196f3
+    style EKS fill:#9c27b0
+    style APPMESH fill:#f44336
+    style CW fill:#ff5722
+```
+
+**🔧 구현 세부사항**:
+- **API Gateway**: REST/GraphQL API 엔드포인트 관리
+- **ALB**: L7 로드밸런싱 및 SSL 터미네이션
+- **EKS**: Kubernetes 기반 컨테이너 오케스트레이션
+- **App Mesh**: 서비스 간 통신 제어 및 관측성
+- **CloudWatch + X-Ray**: 통합 모니터링 및 분산 추적
 ```
 
 #### 📖 핵심 개념 (35분 - 체계적 지식 구축)
@@ -123,6 +178,28 @@ graph TB
     style B fill:#fff3e0
     style C fill:#e8f5e8
 ```
+
+**☁️ AWS 구현 예시**:
+```mermaid
+graph TB
+    subgraph "AWS 서비스"
+        A1[AWS 서비스 1]
+        A2[AWS 서비스 2]
+        A3[AWS 서비스 3]
+    end
+    
+    A1 --> A2
+    A2 --> A3
+    
+    style A1 fill:#ff9800
+    style A2 fill:#4caf50
+    style A3 fill:#2196f3
+```
+
+**🔧 AWS 서비스 매핑**:
+- **[개념 요소 1]** → **[AWS 서비스명]**: [구체적 역할]
+- **[개념 요소 2]** → **[AWS 서비스명]**: [구체적 역할]
+- **[개념 요소 3]** → **[AWS 서비스명]**: [구체적 역할]
 
 **🔍 개념 2: [심화 내용 및 응용]**
 > **정의**: [개념 1과 연결된 심화 정의]
@@ -201,6 +278,7 @@ graph LR
 **🔍 개념 심화**: 세션 1에서 배운 기본 개념의 고급 활용
 **🔗 개념 연결**: 이전 세션과의 논리적 연결고리
 **🛠️ 실습 준비**: 오후 실습에서 사용할 구체적 기술
+**☁️ AWS 고급 구현**: 심화된 AWS 서비스 조합과 아키텍처
 
 #### 🌟 실무 연계 (15분 - 현장 적용성 강화)
 
@@ -246,6 +324,7 @@ graph TB
 **🔄 개념 통합**: 세션 1, 2에서 배운 내용의 종합적 이해
 **🚀 고급 활용**: 기본 개념들을 조합한 고급 기법
 **🎯 실습 연계**: 오후 실습에서 직접 사용할 구체적 방법
+**☁️ AWS 통합 아키텍처**: 전체 AWS 서비스의 통합적 활용
 
 #### 🔗 전체 연결 및 정리 (15분 - 학습 통합)
 
@@ -548,6 +627,48 @@ graph LR
     style E fill:#e8f5e8
 ```
 
+**4. AWS 실제 아키텍처 설명용** (필수):
+```mermaid
+graph TB
+    subgraph "AWS 클라우드"
+        subgraph "네트워크 계층"
+            VPC[VPC]
+            IGW[Internet Gateway]
+            ALB[Application Load Balancer]
+        end
+        
+        subgraph "컴퓨팅 계층"
+            EKS[EKS Cluster]
+            EC2[EC2 Instances]
+            LAMBDA[Lambda Functions]
+        end
+        
+        subgraph "데이터 계층"
+            RDS[RDS Database]
+            S3[S3 Storage]
+            REDIS[ElastiCache Redis]
+        end
+        
+        subgraph "모니터링"
+            CW[CloudWatch]
+            XRAY[X-Ray]
+        end
+    end
+    
+    IGW --> ALB
+    ALB --> EKS
+    EKS --> RDS
+    EKS --> S3
+    EKS --> REDIS
+    EKS --> CW
+    EKS --> XRAY
+    
+    style VPC fill:#ff9800
+    style EKS fill:#4caf50
+    style RDS fill:#2196f3
+    style CW fill:#ff5722
+```
+
 **4. 비교/대조 다이어그램** (스타일 분리 적용):
 ```mermaid
 graph TB
@@ -810,7 +931,7 @@ graph TB
 - [ ] 동기부여를 위한 현실 문제 제시
 - [ ] 최소 2개 이상의 Mermaid 다이어그램
 - [ ] 핵심 개념의 단계별 설명
-- [ ] 실생활 비유 및 AWS 아키텍처 매핑
+- [ ] 실생활 비유 및 AWS 아키텍처 매핑 (다이어그램 포함)
 - [ ] 페어 토론 및 상호작용 시간
 - [ ] 새로운 용어의 체계적 정리
 - [ ] 이해도 확인 질문
