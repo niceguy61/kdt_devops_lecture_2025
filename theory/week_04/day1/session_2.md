@@ -262,7 +262,13 @@ graph TB
 
 **🎯 분해 패턴들**:
 
-**1. Decompose by Business Capability**:
+**1. Decompose by Business Capability (비즈니스 기능별 분해)**:
+
+**📋 핵심 원칙**:
+- **단일 책임**: 각 서비스는 하나의 비즈니스 기능만 담당
+- **높은 응집도**: 관련된 기능들을 함께 그룹화
+- **낮은 결합도**: 서비스 간 의존성 최소화
+
 ```mermaid
 graph TB
     subgraph "🛒 E-Commerce 비즈니스 기능"
@@ -289,7 +295,22 @@ graph TB
     style F1 fill:#fce4ec
 ```
 
-**2. Decompose by Data**:
+**✅ 장점**:
+- 비즈니스 도메인과 직접 매핑
+- 팀별 명확한 책임 영역
+- 독립적인 개발 및 배포 가능
+
+**❌ 단점**:
+- 초기 도메인 분석 복잡
+- 비즈니스 요구사항 변경 시 서비스 경계 재조정 필요
+
+**2. Decompose by Data (데이터 소유권 기반 분해)**:
+
+**📋 핵심 원칙**:
+- **Database per Service**: 각 서비스가 자체 데이터베이스 소유
+- **데이터 캡슐화**: 다른 서비스는 API를 통해서만 데이터 접근
+- **트랜잭션 경계**: 서비스 내에서만 ACID 트랜잭션 보장
+
 ```mermaid
 graph TB
     subgraph "💾 데이터 소유권 기반 분해"
@@ -306,19 +327,119 @@ graph TB
     B1 --> B2[📦 Product Service]
     C1 --> C2[🛒 Order Service]
     
+    A2 -.->|API 호출| B2
+    C2 -.->|API 호출| A2
+    C2 -.->|API 호출| B2
+    
     style A1 fill:#e8f5e8
     style B1 fill:#fff3e0
     style C1 fill:#ffebee
 ```
 
-**🚨 안티패턴 - 피해야 할 분해 방식**:
+**✅ 장점**:
+- 데이터 일관성 명확
+- 서비스별 최적화된 데이터베이스 선택 가능
+- 데이터 보안 및 접근 제어 용이
 
-**❌ 기술 계층별 분해**:
+**❌ 단점**:
+- 분산 트랜잭션 복잡성
+- 데이터 중복 가능성
+- 조인 쿼리 불가능
+
+**3. Decompose by Transaction (트랜잭션 경계 기반 분해)**:
+
+**📋 핵심 원칙**:
+- **ACID 경계**: 강한 일관성이 필요한 데이터를 하나의 서비스로 그룹화
+- **Saga 패턴**: 서비스 간 분산 트랜잭션 관리
+- **최종 일관성**: 서비스 간에는 최종 일관성 허용
+
 ```mermaid
 graph TB
-    A[🖥️ Presentation Layer Service]
-    B[⚙️ Business Logic Service]
-    C[💾 Data Access Service]
+    subgraph "💳 결제 트랜잭션 서비스"
+        A[💰 결제 처리]
+        B[💳 카드 검증]
+        C[🏦 은행 연동]
+        D[📊 결제 이력]
+    end
+    
+    subgraph "🛒 주문 트랜잭션 서비스"
+        E[📝 주문 생성]
+        F[📦 재고 차감]
+        G[🚚 배송 예약]
+    end
+    
+    A --> B --> C --> D
+    E --> F --> G
+    
+    D -.->|이벤트| E
+    
+    style A,B,C,D fill:#ffebee
+    style E,F,G fill:#e8f5e8
+```
+
+**✅ 장점**:
+- 강한 일관성 보장
+- 트랜잭션 롤백 용이
+- 데이터 무결성 확보
+
+**❌ 단점**:
+- 서비스 크기가 커질 수 있음
+- 성능 제약 가능성
+- 확장성 제한
+
+**4. Decompose by Team (팀 구조 기반 분해 - Conway's Law)**:
+
+**📋 핵심 원칙**:
+- **팀 자율성**: 각 팀이 독립적으로 서비스 개발/운영
+- **Two Pizza Team**: 팀 크기 6-8명 유지
+- **Full Stack Ownership**: 개발부터 운영까지 전체 책임
+
+```mermaid
+graph TB
+    subgraph "👥 Frontend Team"
+        A[🖥️ Web UI Service]
+        B[📱 Mobile API Service]
+    end
+    
+    subgraph "👥 Backend Team"
+        C[⚙️ Core Business Service]
+        D[🔄 Integration Service]
+    end
+    
+    subgraph "👥 Data Team"
+        E[📊 Analytics Service]
+        F[🔍 Search Service]
+    end
+    
+    A --> C
+    B --> C
+    C --> D
+    D --> E
+    D --> F
+    
+    style A,B fill:#e3f2fd
+    style C,D fill:#e8f5e8
+    style E,F fill:#fff3e0
+```
+
+**✅ 장점**:
+- 팀 자율성 극대화
+- 빠른 의사결정
+- 명확한 책임 소재
+
+**❌ 단점**:
+- 기술적 최적화 제한
+- 중복 기능 발생 가능
+- 팀 간 조율 필요
+
+**🚨 안티패턴 - 피해야 할 분해 방식**:
+
+**❌ 1. 기술 계층별 분해 (Layered Anti-Pattern)**:
+```mermaid
+graph TB
+    A[🖥️ Presentation Layer Service<br/>UI/API 계층만 담당]
+    B[⚙️ Business Logic Service<br/>비즈니스 로직만 담당]
+    C[💾 Data Access Service<br/>데이터 접근만 담당]
     
     A --> B --> C
     
@@ -326,6 +447,72 @@ graph TB
     style B fill:#ffcdd2
     style C fill:#ffcdd2
 ```
+
+**문제점**:
+- **높은 결합도**: 모든 요청이 3개 서비스를 거쳐야 함
+- **분산 모놀리스**: 네트워크 호출만 증가, 실질적 분리 효과 없음
+- **성능 저하**: 불필요한 네트워크 오버헤드
+- **장애 전파**: 한 계층 장애 시 전체 시스템 영향
+
+**❌ 2. CRUD 기반 분해 (CRUD Anti-Pattern)**:
+```mermaid
+graph TB
+    A[📝 Create Service<br/>생성만 담당]
+    B[👁️ Read Service<br/>조회만 담당]
+    C[✏️ Update Service<br/>수정만 담당]
+    D[🗑️ Delete Service<br/>삭제만 담당]
+    
+    E[(공유 데이터베이스)]
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    style A,B,C,D fill:#ffcdd2
+    style E fill:#ffcdd2
+```
+
+**문제점**:
+- **공유 데이터베이스**: Database per Service 원칙 위반
+- **비즈니스 로직 분산**: 관련 로직이 여러 서비스에 흩어짐
+- **트랜잭션 복잡성**: 단순한 비즈니스 로직도 분산 트랜잭션 필요
+- **데이터 일관성**: 동시성 제어 복잡
+
+**❌ 3. 공유 데이터베이스 패턴 (Shared Database Anti-Pattern)**:
+```mermaid
+graph TB
+    subgraph "여러 마이크로서비스"
+        A[👤 User Service]
+        B[📦 Product Service]
+        C[🛒 Order Service]
+    end
+    
+    D[(🚫 공유 데이터베이스<br/>Shared Database)]
+    
+    A --> D
+    B --> D
+    C --> D
+    
+    style A,B,C fill:#ffcdd2
+    style D fill:#ff5252
+```
+
+**문제점**:
+- **강한 결합**: 데이터베이스 스키마 변경 시 모든 서비스 영향
+- **배포 의존성**: 독립적 배포 불가능
+- **확장성 제한**: 데이터베이스가 병목점
+- **팀 자율성 저해**: 스키마 변경 시 모든 팀 조율 필요
+
+**✅ 올바른 분해 원칙 요약**:
+
+| 원칙 | 설명 | 체크포인트 |
+|------|------|------------|
+| **비즈니스 중심** | 기술이 아닌 비즈니스 기능 기준 | "이 서비스가 해결하는 비즈니스 문제는?" |
+| **데이터 소유권** | 각 서비스가 자체 데이터 소유 | "다른 서비스 DB에 직접 접근하는가?" |
+| **독립 배포** | 다른 서비스와 무관하게 배포 가능 | "이 서비스만 배포할 수 있는가?" |
+| **팀 자율성** | 팀이 독립적으로 개발/운영 | "다른 팀 승인 없이 변경 가능한가?" |
+| **장애 격리** | 한 서비스 장애가 다른 서비스에 미치는 영향 최소화 | "이 서비스 장애 시 다른 서비스는?" |
 *문제점: 모든 기능 변경 시 3개 서비스 모두 수정 필요*
 
 **❌ 데이터베이스 테이블별 분해**:
