@@ -81,10 +81,14 @@ graph TB
 
 ## 🔧 Challenge 환경 배포
 
-### 환경 설정
+### Step 1: 환경 설정
 ```bash
-# Challenge 환경 배포
 cd theory/week_04/day1/lab_scripts/challenge1
+./setup-environment.sh
+```
+
+### Step 2: 문제 시스템 배포
+```bash
 ./deploy-broken-system.sh
 ```
 
