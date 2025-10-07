@@ -208,6 +208,32 @@ kubectl label namespace ecommerce-microservices istio-injection=enabled
 kubectl label namespace ecommerce-monolith istio-injection=enabled
 ```
 
+**🔧 Istio가 실제 서비스에 적용되는 과정**:
+
+**1단계: 네임스페이스 라벨링**
+- `kubectl label namespace ecommerce-microservices istio-injection=enabled` 명령으로 네임스페이스에 Istio 자동 주입 활성화
+- 이후 해당 네임스페이스에 생성되는 모든 Pod에 Envoy Sidecar가 자동으로 주입됨
+
+**2단계: Pod 재시작 (기존 서비스의 경우)**
+- 기존에 실행 중인 Pod들은 Sidecar가 없는 상태이므로 재시작 필요
+- `kubectl rollout restart deployment/command-service -n ecommerce-microservices`로 Deployment 재시작
+- 새로 생성되는 Pod에는 자동으로 `istio-proxy` 컨테이너가 추가됨
+
+**3단계: Sidecar 주입 확인**
+- `kubectl get pods -n ecommerce-microservices`로 확인 시 `READY` 컬럼이 `2/2`로 표시됨
+- 각 Pod에 애플리케이션 컨테이너 + Envoy Sidecar 컨테이너 총 2개 실행
+
+**4단계: 트래픽 흐름 변경**
+- 기존: `Service → Pod → Application Container`
+- Istio 적용 후: `Service → Pod → Envoy Sidecar → Application Container`
+- 모든 인바운드/아웃바운드 트래픽이 Envoy를 거쳐 처리됨
+
+**5단계: Service Mesh 기능 활성화**
+- mTLS 자동 적용: 서비스 간 통신 자동 암호화
+- 트래픽 관리: Virtual Service, Destination Rule로 라우팅 제어
+- 관측성: 자동으로 메트릭, 로그, 분산 추적 수집
+- 보안 정책: Authorization Policy로 접근 제어
+
 **Istio Gateway 설정**
 ```bash
 cat <<EOF | kubectl apply -f -
