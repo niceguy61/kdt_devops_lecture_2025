@@ -53,7 +53,7 @@ echo ""
 echo "3/4 모놀리스 성능 테스트 실행 중..."
 echo "--- 모놀리스 /api/users 테스트 ---"
 kubectl exec -n testing $TESTER_POD -- sh -c "
-    for i in \$(seq 1 10); do
+    for i in \$(seq 1 100); do
         curl -s -w 'Response time: %{time_total}s\n' -o /dev/null http://monolith-service.ecommerce-monolith.svc.cluster.local/api/users
         sleep 0.1
     done
@@ -62,7 +62,7 @@ kubectl exec -n testing $TESTER_POD -- sh -c "
 echo ""
 echo "--- 모놀리스 /api/products 테스트 ---"
 kubectl exec -n testing $TESTER_POD -- sh -c "
-    for i in \$(seq 1 5); do
+    for i in \$(seq 1 50); do
         curl -s -w 'Response time: %{time_total}s\n' -o /dev/null http://monolith-service.ecommerce-monolith.svc.cluster.local/api/products
         sleep 0.1
     done

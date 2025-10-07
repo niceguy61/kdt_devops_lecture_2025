@@ -33,6 +33,9 @@
 
 ## 🏗️ 전체 아키텍처
 
+**🌐 Service Mesh 통합 아키텍처**:
+> Lab 1의 기본 마이크로서비스에 Istio Service Mesh를 추가하여 고급 네트워킹, 보안, 관측성 기능 구현
+
 ```mermaid
 graph TB
     subgraph "Client Layer"
@@ -40,24 +43,32 @@ graph TB
     end
     
     subgraph "Service Mesh (Istio)"
-        IG[Istio Gateway]
-        VS[Virtual Service]
+        IG[Istio Gateway<br/>외부 트래픽 진입점]
+        VS[Virtual Service<br/>라우팅 규칙]
+        
+        subgraph "Envoy Sidecar Proxies"
+            E1[Envoy<br/>User Service]
+            E2[Envoy<br/>Order Service]
+            E3[Envoy<br/>Payment Service]
+            E4[Envoy<br/>Command Service]
+            E5[Envoy<br/>Query Service]
+        end
     end
     
     subgraph "CQRS Services"
-        WS[Write Service<br/>Command Handler]
-        RS[Read Service<br/>Query Handler]
+        WS[Write Service<br/>Command Handler] --> E4
+        RS[Read Service<br/>Query Handler] --> E5
     end
     
     subgraph "Saga Orchestration"
-        SF[Step Functions<br/>Saga Orchestrator]
-        CS[Compensation Service]
+        SF[Saga Orchestrator<br/>분산 트랜잭션 관리]
+        CS[Compensation Service<br/>보상 트랜잭션]
     end
     
     subgraph "Event Sourcing"
-        ES[Event Store<br/>EventBridge]
-        EP[Event Processor]
-        PR[Projection Service]
+        ES[Event Store<br/>이벤트 저장소]
+        EP[Event Processor<br/>이벤트 처리기]
+        PR[Projection Service<br/>뷰 생성기]
     end
     
     subgraph "Data Layer"
@@ -67,8 +78,14 @@ graph TB
     
     U --> IG
     IG --> VS
-    VS --> WS
-    VS --> RS
+    VS --> E1
+    VS --> E2
+    VS --> E3
+    
+    E1 <--> E2
+    E2 <--> E3
+    E1 <--> E4
+    E2 <--> E5
     
     WS --> SF
     SF --> CS
@@ -82,11 +99,32 @@ graph TB
     RS --> RDB
     
     style IG fill:#ff9800
-    style WS fill:#4caf50
-    style RS fill:#2196f3
-    style SF fill:#9c27b0
-    style ES fill:#ff5722
+    style E1 fill:#4caf50
+    style E2 fill:#4caf50
+    style E3 fill:#4caf50
+    style E4 fill:#4caf50
+    style E5 fill:#4caf50
+    style WS fill:#2196f3
+    style RS fill:#9c27b0
+    style SF fill:#ff5722
+    style ES fill:#795548
 ```
+
+**🔧 Service Mesh 역할**:
+- **Istio Gateway**: 외부 트래픽의 단일 진입점, AWS ALB 역할
+- **Virtual Service**: 라우팅 규칙 정의, AWS API Gateway 라우팅과 유사
+- **Envoy Sidecar**: 각 서비스 옆에 배치된 프록시, 모든 네트워크 트래픽 처리
+- **Control Plane (Istiod)**: 설정 배포 및 인증서 관리
+
+**🎯 Service Mesh 없이 vs 있을 때**:
+
+| 기능 | Service Mesh 없이 | Service Mesh 있을 때 |
+|------|-------------------|----------------------|
+| **서비스 디스커버리** | 수동 설정 필요 | 자동 발견 |
+| **로드밸런싱** | 애플리케이션 레벨 | 네트워크 레벨 |
+| **보안 (mTLS)** | 각 서비스에서 구현 | 자동 적용 |
+| **모니터링** | 각 서비스별 구현 | 통합 관측성 |
+| **트래픽 제어** | 코드 수정 필요 | 설정으로 제어 |
 
 ---
 
@@ -101,6 +139,55 @@ cd theory/week_04/day1/lab_scripts/handson1
 ```
 
 ### Step 1-2: Istio Service Mesh 설치 (15분)
+
+**🌐 Service Mesh란?**
+> **정의**: 마이크로서비스 간 통신을 관리하는 인프라 계층
+
+**🏗️ Service Mesh 아키텍처**:
+```mermaid
+graph TB
+    subgraph "Service Mesh (Istio)"
+        subgraph "Data Plane"
+            P1[Envoy Proxy<br/>Sidecar]
+            P2[Envoy Proxy<br/>Sidecar]
+            P3[Envoy Proxy<br/>Sidecar]
+        end
+        
+        subgraph "Control Plane"
+            ISTIOD[Istiod<br/>제어 평면]
+        end
+    end
+    
+    subgraph "Application Services"
+        S1[User Service] --> P1
+        S2[Order Service] --> P2
+        S3[Payment Service] --> P3
+    end
+    
+    ISTIOD -.-> P1
+    ISTIOD -.-> P2
+    ISTIOD -.-> P3
+    
+    P1 <--> P2
+    P2 <--> P3
+    P1 <--> P3
+    
+    style P1,P2,P3 fill:#4caf50
+    style ISTIOD fill:#2196f3
+    style S1,S2,S3 fill:#fff3e0
+```
+
+**🔧 Service Mesh가 해결하는 문제**:
+- **서비스 디스커버리**: 서비스 위치 자동 발견
+- **로드밸런싱**: 트래픽 분산 및 장애 조치
+- **보안**: mTLS 자동 적용, 인증/인가
+- **관측성**: 메트릭, 로그, 분산 추적
+- **트래픽 관리**: 카나리 배포, 서킷 브레이커
+
+**☁️ AWS에서의 Service Mesh**:
+- **AWS App Mesh**: AWS 관리형 Service Mesh
+- **EKS + Istio**: 오픈소스 Istio 사용
+- **Fargate + App Mesh**: 서버리스 환경에서 Service Mesh
 
 **Istio 설치**
 ```bash
