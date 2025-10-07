@@ -15,6 +15,11 @@
 **목표**: Lab 1 기반 고급 패턴 구현 및 프로덕션급 기능 추가  
 **방식**: Lab 1 확장 + 고급 패턴 + 실무 최적화
 
+## ⚠️ 사전 준비사항
+**AWS CLI 설정 필수**:
+- AWS IAM Access Key가 설정되어 있지 않다면 **[AWS IAM Access Key 생성 가이드](../../guide/aws-iam-setup.md)**를 먼저 완료하고 오세요
+- `aws sts get-caller-identity` 명령어가 정상 작동해야 합니다
+
 ## 🎯 실습 목표
 
 ### 📚 학습 목표
