@@ -183,8 +183,14 @@ graph TB
     SF --> SQS
     
     style SF fill:#ff9800
-    style LAMBDA1,LAMBDA2,LAMBDA3,LAMBDA4 fill:#4caf50
-    style COMP1,COMP2,COMP3,COMP4 fill:#f44336
+    style LAMBDA1 fill:#4caf50
+    style LAMBDA2 fill:#4caf50
+    style LAMBDA3 fill:#4caf50
+    style LAMBDA4 fill:#4caf50
+    style COMP1 fill:#f44336
+    style COMP2 fill:#f44336
+    style COMP3 fill:#f44336
+    style COMP4 fill:#f44336
     style DYNAMO fill:#2196f3
     style SQS fill:#ff5722
 ```
