@@ -8,6 +8,20 @@
 
 </div>
 
+## 📚 AWS 공식 문서 참조
+
+### 🔗 관련 AWS 서비스 문서
+- **[Amazon EKS](https://docs.aws.amazon.com/eks/)**: Kubernetes 관리형 서비스
+- **[AWS Lambda](https://docs.aws.amazon.com/lambda/)**: 서버리스 컴퓨팅
+- **[Amazon API Gateway](https://docs.aws.amazon.com/apigateway/)**: API 관리 및 배포
+- **[Amazon EventBridge](https://docs.aws.amazon.com/eventbridge/)**: 이벤트 기반 아키텍처
+- **[AWS App Mesh](https://docs.aws.amazon.com/app-mesh/)**: 서비스 메시
+
+### 🏗️ 설계 패턴 가이드
+- **[Domain-Driven Design on AWS](https://aws.amazon.com/blogs/architecture/domain-driven-design-on-aws/)**: DDD 구현 가이드
+- **[Event-Driven Architecture](https://docs.aws.amazon.com/whitepapers/latest/modern-application-development-on-aws/event-driven-architectures.html)**: 이벤트 기반 설계
+- **[API Gateway Patterns](https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/api-implementation.html)**: API 설계 패턴
+
 ---
 
 ## 🕘 세션 정보

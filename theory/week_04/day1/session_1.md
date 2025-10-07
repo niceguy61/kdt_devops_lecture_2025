@@ -8,6 +8,20 @@
 
 </div>
 
+## 📚 AWS 공식 문서 참조
+
+### 🔗 관련 AWS 서비스 문서
+- **[Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)**: HTTP/HTTPS 로드밸런싱
+- **[Amazon EC2 Auto Scaling](https://docs.aws.amazon.com/autoscaling/ec2/)**: 자동 확장 및 축소
+- **[Amazon RDS](https://docs.aws.amazon.com/rds/)**: 관리형 관계형 데이터베이스
+- **[Amazon S3](https://docs.aws.amazon.com/s3/)**: 객체 스토리지 서비스
+- **[Amazon CloudWatch](https://docs.aws.amazon.com/cloudwatch/)**: 모니터링 및 로깅
+
+### 🏗️ 아키텍처 가이드
+- **[AWS Well-Architected Framework](https://docs.aws.amazon.com/wellarchitected/)**: 아키텍처 설계 원칙
+- **[Microservices on AWS](https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/)**: AWS 마이크로서비스 백서
+- **[Serverless Application Lens](https://docs.aws.amazon.com/wellarchitected/latest/serverless-applications-lens/)**: 서버리스 아키텍처 가이드
+
 ---
 
 ## 🕘 세션 정보

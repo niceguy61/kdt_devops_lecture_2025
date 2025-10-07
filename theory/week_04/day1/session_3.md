@@ -8,6 +8,21 @@
 
 </div>
 
+## 📚 AWS 공식 문서 참조
+
+### 🔗 관련 AWS 서비스 문서
+- **[AWS Step Functions](https://docs.aws.amazon.com/step-functions/)**: 워크플로우 오케스트레이션 (Saga 패턴)
+- **[Amazon SQS](https://docs.aws.amazon.com/sqs/)**: 메시지 큐 서비스
+- **[Amazon SNS](https://docs.aws.amazon.com/sns/)**: 알림 및 이벤트 발행
+- **[Amazon DynamoDB](https://docs.aws.amazon.com/dynamodb/)**: NoSQL 데이터베이스
+- **[AWS X-Ray](https://docs.aws.amazon.com/xray/)**: 분산 추적 서비스
+
+### 🏗️ 패턴 구현 가이드
+- **[Saga Pattern with Step Functions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-standard-vs-express.html)**: Saga 패턴 구현
+- **[Event Sourcing on AWS](https://aws.amazon.com/blogs/compute/building-event-sourcing-applications-with-amazon-msk-and-amazon-s3/)**: 이벤트 소싱 구현
+- **[CQRS Pattern](https://docs.aws.amazon.com/whitepapers/latest/modern-application-development-on-aws/cqrs-pattern.html)**: 읽기/쓰기 분리 패턴
+- **[Distributed Data Management](https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/distributed-data-management.html)**: 분산 데이터 관리
+
 ---
 
 ## 🕘 세션 정보
