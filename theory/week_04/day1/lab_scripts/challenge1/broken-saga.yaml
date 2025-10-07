@@ -1,0 +1,153 @@
+# 문제 1: Saga 패턴 트랜잭션 실패
+# 의도적 오류들이 포함된 Saga 구현
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: ecommerce-microservices
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: service-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: service-config
+        configMap:
+          name: order-service-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-config
+  namespace: ecommerce-microservices
+data:
+  default.conf: |
+    server {
+        listen 80;
+        # 의도적 오류 1: 잘못된 location 블록 문법
+        location /api/orders {
+            return 200 '{"service": "order-service", "action": "create_order", "saga_id": "saga-001", "status": "initiated"}'  # 세미콜론 누락
+            add_header Content-Type application/json;
+        }
+        location /api/orders/compensate {
+            return 200 '{"service": "order-service", "action": "cancel_order", "saga_id": "saga-001", "status": "compensated"}';
+            add_header Content-Type application/json;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: ecommerce-microservices
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: ecommerce-microservices
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: service-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: service-config
+        configMap:
+          name: payment-service-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-service-config
+  namespace: ecommerce-microservices
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location /api/payments {
+            return 200 '{"service": "payment-service", "action": "process_payment", "saga_id": "saga-001", "status": "completed", "amount": 100.00}';
+            add_header Content-Type application/json;
+        }
+        location /api/payments/compensate {
+            return 200 '{"service": "payment-service", "action": "refund_payment", "saga_id": "saga-001", "status": "refunded", "amount": 100.00}';
+            add_header Content-Type application/json;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: ecommerce-microservices
+spec:
+  selector:
+    app: payment-service
+  ports:
+  - port: 80
+    targetPort: 80
+---
+# 의도적 오류 2: Saga Job의 잘못된 설정
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: saga-orchestrator
+  namespace: ecommerce-microservices
+spec:
+  # 의도적 오류: backoffLimit이 0으로 설정되어 재시도 불가
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - name: saga-orchestrator
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "=== Saga Transaction Started ==="
+          echo "Step 1: Validate User"
+          
+          # 의도적 오류 3: 잘못된 서비스 URL로 호출 실패
+          echo "Calling order service..."
+          wget -q -O- http://wrong-order-service/api/orders || echo "Order service call failed"
+          
+          echo "Step 2: Create Order - FAILED"
+          echo "Step 3: Process Payment - SKIPPED"
+          echo "=== Saga Transaction Failed ==="
+          
+          # 의도적 오류 4: 실패 시 exit code 1로 Job 실패 처리
+          exit 1
+      restartPolicy: Never

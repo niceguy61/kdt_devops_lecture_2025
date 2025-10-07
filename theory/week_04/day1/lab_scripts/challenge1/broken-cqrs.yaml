@@ -1,0 +1,151 @@
+# 문제 2: CQRS 패턴 읽기/쓰기 분리 오류
+# Command와 Query 서비스의 의도적 오류들
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: command-service
+  namespace: ecommerce-microservices
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: command-service
+  template:
+    metadata:
+      labels:
+        app: command-service
+    spec:
+      containers:
+      - name: command-service
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: command-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: command-config
+        configMap:
+          name: command-service-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: command-service-config
+  namespace: ecommerce-microservices
+data:
+  default.conf: |
+    server {
+        listen 80;
+        # 의도적 오류 1: 잘못된 JSON 형식 (따옴표 누락)
+        location /api/commands/create-user {
+            return 200 '{
+                command_id: "cmd-001",
+                type: "CreateUserCommand",
+                status: "accepted",
+                event_id: "evt-001",
+                timestamp: "2024-01-01T10:00:00Z"
+            }';
+            add_header Content-Type application/json;
+        }
+        # 의도적 오류 2: 잘못된 location 경로
+        location /api/commands/update-user-wrong {
+            return 200 '{
+                "command_id": "cmd-002", 
+                "type": "UpdateUserCommand",
+                "status": "accepted",
+                "event_id": "evt-002",
+                "timestamp": "2024-01-01T10:01:00Z"
+            }';
+            add_header Content-Type application/json;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: command-service
+  namespace: ecommerce-microservices
+spec:
+  selector:
+    app: command-service
+  ports:
+  # 의도적 오류 3: 잘못된 포트 매핑
+  - port: 80
+    targetPort: 8080  # 컨테이너는 80포트인데 8080으로 매핑
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: query-service
+  namespace: ecommerce-microservices
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: query-service
+  template:
+    metadata:
+      labels:
+        app: query-service
+    spec:
+      containers:
+      - name: query-service
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: query-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: query-config
+        configMap:
+          name: query-service-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: query-service-config
+  namespace: ecommerce-microservices
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location /api/queries/users {
+            # 의도적 오류 4: 잘못된 JSON 구조 (배열 문법 오류)
+            return 200 '{
+                "users": [
+                    {"id": 1, "name": "John Doe", "email": "john@example.com", "status": "active"},
+                    {"id": 2, "name": "Jane Smith", "email": "jane@example.com", "status": "active"  # 닫는 괄호 누락
+                ],
+                "total": 2,
+                "source": "materialized_view",
+                "last_updated": "2024-01-01T10:01:00Z"
+            }';
+            add_header Content-Type application/json;
+        }
+        location /api/queries/user-stats {
+            return 200 '{
+                "total_users": 1000,
+                "active_users": 850,
+                "new_users_today": 25,
+                "source": "aggregated_view",
+                "last_updated": "2024-01-01T10:00:00Z"
+            }';
+            add_header Content-Type application/json;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: query-service
+  namespace: ecommerce-microservices
+spec:
+  selector:
+    # 의도적 오류 5: 잘못된 라벨 셀렉터
+    app: wrong-query-service  # 실제 Pod 라벨과 불일치
+  ports:
+  - port: 80
+    targetPort: 80

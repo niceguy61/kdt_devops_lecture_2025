@@ -1,0 +1,134 @@
+# 문제 3: Event Sourcing 이벤트 처리 중단
+# Event Store와 Event Processor의 의도적 오류들
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-store
+  namespace: ecommerce-microservices
+data:
+  events.json: |
+    {
+      "events": [
+        {
+          "event_id": "evt-001",
+          "aggregate_id": "user-123",
+          "event_type": "UserCreated",
+          "version": 1,
+          "timestamp": "2024-01-01T10:00:00Z",
+          "data": {"name": "John Doe", "email": "john@example.com"}
+        },
+        {
+          "event_id": "evt-002",
+          "aggregate_id": "user-123",
+          "event_type": "UserUpdated",
+          "version": 2,
+          "timestamp": "2024-01-01T10:01:00Z",
+          "data": {"email": "john.doe@example.com"}
+        }
+      ]
+    }
+---
+# 의도적 오류 1: 잘못된 CronJob 스케줄 표현식
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: event-processor
+  namespace: ecommerce-microservices
+spec:
+  # 의도적 오류: 잘못된 cron 표현식 (6개 필드 대신 5개 필요)
+  schedule: "*/5 * * * * *"  # 초 단위 포함으로 잘못된 형식
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: event-processor
+            image: busybox:1.35
+            command: ['sh', '-c']
+            args:
+            - |
+              echo "=== Event Processing Started ==="
+              echo "Reading events from Event Store..."
+              # 의도적 오류 2: 잘못된 파일 경로
+              cat /wrong-events/events.json || echo "Failed to read events"
+              echo "=== Event Processing Failed ==="
+            volumeMounts:
+            - name: event-store
+              mountPath: /events  # 스크립트에서는 /wrong-events 참조
+          volumes:
+          - name: event-store
+            configMap:
+              name: event-store
+          restartPolicy: OnFailure
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-store-api
+  namespace: ecommerce-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-store-api
+  template:
+    metadata:
+      labels:
+        app: event-store-api
+    spec:
+      containers:
+      - name: event-store-api
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: eventstore-config
+          mountPath: /etc/nginx/conf.d
+        - name: event-data
+          # 의도적 오류 3: 잘못된 볼륨 마운트 경로
+          mountPath: /usr/share/nginx/html/wrong-events  # nginx 설정과 경로 불일치
+      volumes:
+      - name: eventstore-config
+        configMap:
+          name: event-store-api-config
+      - name: event-data
+        configMap:
+          name: event-store
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-store-api-config
+  namespace: ecommerce-microservices
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location /api/events {
+            # 의도적 오류 4: 잘못된 alias 경로 (실제 마운트 경로와 불일치)
+            alias /usr/share/nginx/html/events/events.json;
+            add_header Content-Type application/json;
+        }
+        location /api/events/replay {
+            return 200 '{
+                "replay_id": "replay-001",
+                "status": "started",
+                "events_count": 1000,
+                "estimated_time": "30s"
+            }';
+            add_header Content-Type application/json;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-store-api
+  namespace: ecommerce-microservices
+spec:
+  selector:
+    app: event-store-api
+  ports:
+  - port: 80
+    targetPort: 80
