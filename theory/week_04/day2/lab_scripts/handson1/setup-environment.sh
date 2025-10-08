@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Week 4 Day 2 Hands-on 1: 환경 준비
-# 기본 네트워크와 디렉토리 구조 생성
+# 기본 네트워크 생성
 
 echo "=== API Gateway 고급 실습 환경 준비 시작 ==="
 echo ""
@@ -18,12 +18,11 @@ fi
 # 작업 디렉토리 생성
 echo ""
 echo "2. 작업 디렉토리 생성 중..."
-mkdir -p api-gateway-advanced/{kong,consul,services,monitoring}
-cd api-gateway-advanced
+mkdir -p services monitoring/prometheus
 echo "   ✅ 디렉토리 생성 완료"
 
 echo ""
 echo "=== 환경 준비 완료 ==="
 echo ""
-echo "작업 디렉토리: api-gateway-advanced"
+echo "작업 디렉토리: $(pwd)"
 echo "Docker 네트워크: api-gateway-net"
