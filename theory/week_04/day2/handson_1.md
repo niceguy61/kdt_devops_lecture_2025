@@ -101,10 +101,21 @@ graph TB
     K1 -.-> M3
     S1 -.-> M4
     
-    style A1,A2,A3 fill:#ffebee
-    style K1,K2,K3 fill:#e3f2fd
-    style S1,S1v2,S2,S3,S4 fill:#e8f5e8
-    style M1,M2,M3,M4 fill:#fff3e0
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style A3 fill:#ffebee
+    style K1 fill:#e3f2fd
+    style K2 fill:#e3f2fd
+    style K3 fill:#e3f2fd
+    style S1 fill:#e8f5e8
+    style S1v2 fill:#e8f5e8
+    style S2 fill:#e8f5e8
+    style S3 fill:#e8f5e8
+    style S4 fill:#e8f5e8
+    style M1 fill:#fff3e0
+    style M2 fill:#fff3e0
+    style M3 fill:#fff3e0
+    style M4 fill:#fff3e0
 ```
 
 ---
