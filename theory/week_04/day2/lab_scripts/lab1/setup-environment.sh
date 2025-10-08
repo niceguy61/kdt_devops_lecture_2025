@@ -1,64 +1,46 @@
 #!/bin/bash
 
-# Week 4 Day 2 Lab 1: 환경 준비
-# Kubernetes 클러스터 확인 및 기존 리소스 정리
+# Lab 1 환경 준비 스크립트
 
-echo "=== Istio Gateway API Lab 환경 준비 시작 ==="
+echo "=== Istio Service Mesh Lab 환경 준비 시작 ==="
 echo ""
 
-# Kubernetes 클러스터 확인
-echo "1. Kubernetes 클러스터 확인 중..."
-if ! kubectl cluster-info &>/dev/null; then
-    echo "   ❌ Kubernetes 클러스터에 연결할 수 없습니다"
-    echo "   💡 kind, minikube, 또는 다른 클러스터를 시작하세요"
-    exit 1
+# 1. 기존 클러스터 확인 및 삭제
+echo "1. 기존 클러스터 확인 중..."
+if kind get clusters | grep -q "w4d2-lab"; then
+    echo "   ⚠️  기존 w4d2-lab 클러스터 발견"
+    echo "   🗑️  기존 클러스터 삭제 중..."
+    kind delete cluster --name w4d2-lab
+    echo "   ✅ 기존 클러스터 삭제 완료"
 fi
-echo "   ✅ Kubernetes 클러스터 연결 확인"
 
-# 기존 리소스 정리
+# 2. Kind 클러스터 생성 (Istio Ingress Gateway 포트 매핑)
 echo ""
-echo "2. 기존 리소스 정리 중..."
+echo "2. Kind 클러스터 생성 중 (포트 80 매핑)..."
+cat <<YAML | kind create cluster --name w4d2-lab --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30080
+    hostPort: 80
+    protocol: TCP
+YAML
 
-# HTTPRoute 삭제
-kubectl delete httproute user-route product-route order-route 2>/dev/null || true
+echo "   ✅ 클러스터 생성 완료"
 
-# Gateway 삭제
-kubectl delete gateway api-gateway 2>/dev/null || true
-
-# 서비스 삭제
-kubectl delete deployment,service user-service product-service order-service 2>/dev/null || true
-
-# Port-forward 프로세스 종료
-pkill -f "kubectl port-forward" 2>/dev/null || true
-
-echo "   ✅ 기존 리소스 정리 완료"
-
-# 필수 도구 확인
+# 3. kubectl 컨텍스트 설정
 echo ""
-echo "3. 필수 도구 확인 중..."
+echo "3. kubectl 컨텍스트 설정 중..."
+kubectl config use-context kind-w4d2-lab
+echo "   ✅ 컨텍스트 설정 완료"
 
-if ! command -v kubectl &>/dev/null; then
-    echo "   ❌ kubectl이 설치되지 않았습니다"
-    exit 1
-fi
-echo "   ✅ kubectl: $(kubectl version --client --short 2>/dev/null | head -1)"
-
-if ! command -v curl &>/dev/null; then
-    echo "   ❌ curl이 설치되지 않았습니다"
-    exit 1
-fi
-echo "   ✅ curl: 설치됨"
-
-# Istio 확인
+# 4. 클러스터 상태 확인
 echo ""
-echo "4. Istio 설치 확인 중..."
-if kubectl get namespace istio-system &>/dev/null; then
-    echo "   ℹ️  Istio가 이미 설치되어 있습니다"
-    echo "   💡 기존 Istio를 사용합니다"
-else
-    echo "   ℹ️  Istio가 설치되지 않았습니다"
-    echo "   💡 Step 2에서 Istio를 설치하세요"
-fi
+echo "4. 클러스터 상태 확인 중..."
+kubectl cluster-info
+kubectl get nodes
 
 echo ""
 echo "=== 환경 준비 완료 ==="
@@ -66,4 +48,4 @@ echo ""
 echo "작업 디렉토리: $(pwd)"
 echo "Kubernetes Context: $(kubectl config current-context)"
 echo ""
-echo "다음 단계: Istio 설치"
+echo "다음 단계: ./step2-install-istio.sh"

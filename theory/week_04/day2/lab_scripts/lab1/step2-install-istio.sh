@@ -18,15 +18,22 @@ fi
 cd istio-1.20.0
 export PATH=$PWD/bin:$PATH
 
-# Istio 설치
+# Istio 설치 (demo profile)
 echo ""
 echo "2. Istio 설치 중..."
-istioctl install --set profile=minimal -y
+istioctl install --set profile=demo -y
+
+# Ingress Gateway를 NodePort 30080으로 설정
+echo ""
+echo "3. Ingress Gateway NodePort 설정 중..."
+kubectl patch svc istio-ingressgateway -n istio-system --type='json' \
+  -p='[{"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30080}]'
 
 # 설치 확인
 echo ""
-echo "3. Istio 설치 확인 중..."
+echo "4. Istio 설치 확인 중..."
 kubectl wait --for=condition=ready pod -l app=istiod -n istio-system --timeout=120s
+kubectl wait --for=condition=ready pod -l app=istio-ingressgateway -n istio-system --timeout=120s
 
 echo ""
 kubectl get pods -n istio-system
@@ -35,9 +42,11 @@ kubectl get svc -n istio-system
 
 # Default namespace에 Sidecar Injection 활성화
 echo ""
-echo "4. Sidecar Injection 활성화 중..."
+echo "5. Sidecar Injection 활성화 중..."
 kubectl label namespace default istio-injection=enabled --overwrite
 kubectl get namespace default --show-labels
 
 echo ""
 echo "=== Step 2: Istio 설치 완료 ==="
+echo ""
+echo "💡 Ingress Gateway: http://localhost"

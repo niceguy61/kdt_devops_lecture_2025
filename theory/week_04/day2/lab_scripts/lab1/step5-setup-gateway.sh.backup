@@ -5,7 +5,7 @@
 echo "=== Step 5: Gateway & HTTPRoute 설정 시작 ==="
 echo ""
 
-# Gateway 생성
+# Gateway 생성 (hostname 제거 - 브라우저 테스트 가능)
 echo "1. Gateway 생성 중..."
 cat <<EOF | kubectl apply -f -
 apiVersion: gateway.networking.k8s.io/v1
@@ -17,7 +17,6 @@ spec:
   gatewayClassName: istio
   listeners:
   - name: http
-    hostname: "*.example.com"
     port: 80
     protocol: HTTP
     allowedRoutes:
@@ -28,7 +27,7 @@ EOF
 sleep 3
 kubectl get gateway api-gateway
 
-# HTTPRoute 생성
+# HTTPRoute 생성 (hostname 제거)
 echo ""
 echo "2. HTTPRoute 생성 중..."
 cat <<EOF | kubectl apply -f -
@@ -39,8 +38,6 @@ metadata:
 spec:
   parentRefs:
   - name: api-gateway
-  hostnames:
-  - "api.example.com"
   rules:
   - matches:
     - path:
@@ -57,8 +54,6 @@ metadata:
 spec:
   parentRefs:
   - name: api-gateway
-  hostnames:
-  - "api.example.com"
   rules:
   - matches:
     - path:
@@ -75,8 +70,6 @@ metadata:
 spec:
   parentRefs:
   - name: api-gateway
-  hostnames:
-  - "api.example.com"
   rules:
   - matches:
     - path:
