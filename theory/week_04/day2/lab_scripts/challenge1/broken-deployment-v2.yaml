@@ -7,12 +7,12 @@ spec:
   selector:
     matchLabels:
       app: user-service
-      version: v2  # 🐛 BUG: version이 아닌 ver
+      version: v2  # 🐛 BUG: 태그 확인
   template:
     metadata:
       labels:
         app: user-service
-        version: v2  # 🐛 BUG: version이 아닌 ver
+        version: v2  # 🐛 BUG: 태그 확인
     spec:
       containers:
       - name: user-service

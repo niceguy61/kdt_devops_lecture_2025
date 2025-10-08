@@ -14,18 +14,14 @@ spec:
     route:
     - destination:
         host: user-service
-        subset: v1
-      weight: 90
-    - destination:
-        host: user-service
-        subset: v2
-      weight: 10
+        port:
+          number: 80
   - match:
     - uri:
-        prefix: /product  # 🐛 BUG: 잘못된 경로
+        prefix: /product  # 🐛 BUG: prefix 오류
     route:
     - destination:
-        host: wrong-product-service  # 🐛 BUG: 잘못된 host
+        host: wrong-product-service  # 🐛 BUG: 잘못된 서비스
         port:
           number: 80
   - match:
@@ -35,4 +31,4 @@ spec:
     - destination:
         host: order-service
         port:
-          number: 8080  # 🐛 BUG: 잘못된 포트
+          number: 8080  # 🐛 BUG: 포트 오류

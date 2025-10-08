@@ -4,7 +4,7 @@ metadata:
   name: api-gateway
 spec:
   selector:
-    istio: wrong-gateway  # 🐛 BUG: 잘못된 selector
+    istio: wrong-gateway  # 🐛 BUG: 잘못된 selector (ingressgateway여야 함)
   servers:
   - port:
       number: 80
