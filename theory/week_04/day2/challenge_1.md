@@ -43,21 +43,17 @@ curl http://localhost:9090/users
 
 ### 🔍 확인해야 할 사항
 1. Gateway 리소스가 정상적으로 생성되었는가?
-2. Ingress Gateway Service가 올바른 포트로 노출되어 있는가?
+2. Gateway의 selector가 올바른가?
 3. Gateway와 Ingress Gateway 간 연결이 정상인가?
 
 ### 📋 문제 파일
 - `broken-gateway.yaml`
-- Ingress Gateway Service 설정
 
 ### ✅ 해결 확인
 ```bash
 curl http://localhost:9090/users
 # User Service v1 (정상 응답)
 ```
-
----
-
 ## 🚨 시나리오 2: 일부 경로 접근 불가 (25분)
 
 ### 문제 상황

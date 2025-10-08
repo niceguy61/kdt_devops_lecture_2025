@@ -40,7 +40,7 @@ istioctl install --set profile=demo -y
 
 # 잘못된 NodePort 설정 (시나리오 1)
 kubectl patch svc istio-ingressgateway -n istio-system --type='json' \
-  -p='[{"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30091}]'
+  -p='[{"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30090}]'
 
 kubectl label namespace default istio-injection=enabled --overwrite
 kubectl wait --for=condition=ready pod -l app=istiod -n istio-system --timeout=120s
