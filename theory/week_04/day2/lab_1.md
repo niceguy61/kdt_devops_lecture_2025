@@ -104,398 +104,67 @@ cd theory/week_04/day2/lab_scripts/lab1
 
 ## 🚀 Step 2: Istio 설치 (15분)
 
-### Step 2-1: Istio 다운로드 및 설치
-
+**🚀 자동화 스크립트 사용**
 ```bash
-# Istio 다운로드
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
-
-# PATH 추가
-cd istio-1.20.0
-export PATH=$PWD/bin:$PATH
-
-# Istio 설치 (minimal profile)
-istioctl install --set profile=minimal -y
+./step2-install-istio.sh
 ```
 
-**설치 확인**
-```bash
-kubectl get pods -n istio-system
-kubectl get svc -n istio-system
-```
-
-**예상 출력**:
-```
-NAME                      READY   STATUS    RESTARTS   AGE
-istiod-xxxxxxxxxx-xxxxx   1/1     Running   0          30s
-
-NAME            TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)
-istio-ingressgateway   LoadBalancer   10.96.xxx.xxx   <pending>     15021:xxxxx/TCP,80:xxxxx/TCP,443:xxxxx/TCP
-istiod          ClusterIP      10.96.xxx.xxx   <none>        15010/TCP,15012/TCP,443/TCP,15014/TCP
-```
-
-### Step 2-2: Default Namespace에 Sidecar Injection 활성화
-
-```bash
-kubectl label namespace default istio-injection=enabled
-
-# 확인
-kubectl get namespace default --show-labels
-```
+**📋 스크립트 내용**: [step2-install-istio.sh](./lab_scripts/lab1/step2-install-istio.sh)
 
 ---
 
 ## 🌐 Step 3: Gateway API 설치 (5분)
 
-### Step 3-1: Gateway API CRDs 설치
-
+**🚀 자동화 스크립트 사용**
 ```bash
-kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.0.0" | kubectl apply -f -; }
+./step3-install-gateway-api.sh
 ```
 
-**설치 확인**
-```bash
-kubectl get crd | grep gateway
-```
+**📋 스크립트 내용**: [step3-install-gateway-api.sh](./lab_scripts/lab1/step3-install-gateway-api.sh)
 
 ---
 
 ## 🚀 Step 4: 마이크로서비스 배포 (15분)
 
-### Step 4-1: User Service 배포
-
+**🚀 자동화 스크립트 사용**
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: user-service
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: user-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: user-service
-        version: v1
-    spec:
-      containers:
-      - name: user-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=User Service v1"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-spec:
-  selector:
-    app: user-service
-  ports:
-  - port: 80
-    targetPort: 8080
-EOF
+./step4-deploy-services.sh
 ```
 
-### Step 4-2: Product Service 배포
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-service
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: product-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: product-service
-        version: v1
-    spec:
-      containers:
-      - name: product-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=Product Service v1"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: product-service
-spec:
-  selector:
-    app: product-service
-  ports:
-  - port: 80
-    targetPort: 8080
-EOF
-```
-
-### Step 4-3: Order Service 배포
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-service
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: order-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: order-service
-        version: v1
-    spec:
-      containers:
-      - name: order-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=Order Service v1"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service
-spec:
-  selector:
-    app: order-service
-  ports:
-  - port: 80
-    targetPort: 8080
-EOF
-```
-
-### Step 4-4: Sidecar Injection 확인
-
-```bash
-# Pod 확인 (2/2 READY = 앱 컨테이너 + Envoy Sidecar)
-kubectl get pods
-
-# Sidecar 상세 확인
-kubectl describe pod -l app=user-service | grep -A 5 "Containers:"
-```
-
-**예상 출력**:
-```
-NAME                              READY   STATUS    RESTARTS   AGE
-user-service-xxxxxxxxxx-xxxxx     2/2     Running   0          30s
-user-service-xxxxxxxxxx-xxxxx     2/2     Running   0          30s
-product-service-xxxxxxxxxx-xxxxx  2/2     Running   0          30s
-...
-```
+**📋 스크립트 내용**: [step4-deploy-services.sh](./lab_scripts/lab1/step4-deploy-services.sh)
 
 ---
 
 ## 🔀 Step 5: Gateway & HTTPRoute 설정 (20분)
 
-### Step 5-1: Gateway 생성
-
+**🚀 자동화 스크립트 사용**
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: api-gateway
-  namespace: default
-spec:
-  gatewayClassName: istio
-  listeners:
-  - name: http
-    hostname: "*.example.com"
-    port: 80
-    protocol: HTTP
-    allowedRoutes:
-      namespaces:
-        from: Same
-EOF
+./step5-setup-gateway.sh
 ```
 
-**Gateway 확인**
-```bash
-kubectl get gateway api-gateway
-kubectl describe gateway api-gateway
-```
-
-### Step 5-2: HTTPRoute 생성
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: user-route
-spec:
-  parentRefs:
-  - name: api-gateway
-  hostnames:
-  - "api.example.com"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /users
-    backendRefs:
-    - name: user-service
-      port: 80
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: product-route
-spec:
-  parentRefs:
-  - name: api-gateway
-  hostnames:
-  - "api.example.com"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /products
-    backendRefs:
-    - name: product-service
-      port: 80
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: order-route
-spec:
-  parentRefs:
-  - name: api-gateway
-  hostnames:
-  - "api.example.com"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /orders
-    backendRefs:
-    - name: order-service
-      port: 80
-EOF
-```
-
-**HTTPRoute 확인**
-```bash
-kubectl get httproute
-```
+**📋 스크립트 내용**: [step5-setup-gateway.sh](./lab_scripts/lab1/step5-setup-gateway.sh)
 
 ---
 
 ## ✅ Step 6: 통합 테스트 (30분)
 
-### Step 6-1: Ingress Gateway 접근 설정
-
+**🚀 자동화 스크립트 사용**
 ```bash
-# Ingress Gateway Service 확인
-kubectl get svc -n istio-system istio-ingressgateway
-
-# Port-forward 설정
-kubectl port-forward -n istio-system svc/istio-ingressgateway 8080:80 &
+./step6-test.sh
 ```
 
-### Step 6-2: 기본 라우팅 테스트
-
-```bash
-# User Service 테스트
-curl -H "Host: api.example.com" http://localhost:8080/users
-
-# Product Service 테스트
-curl -H "Host: api.example.com" http://localhost:8080/products
-
-# Order Service 테스트
-curl -H "Host: api.example.com" http://localhost:8080/orders
-```
-
-**예상 출력**:
-```
-User Service v1
-Product Service v1
-Order Service v1
-```
-
-### Step 6-3: 로드밸런싱 테스트
-
-```bash
-echo "=== 로드밸런싱 테스트 (10회 요청) ==="
-for i in {1..10}; do
-  echo "Request $i:"
-  curl -s -H "Host: api.example.com" http://localhost:8080/users
-done
-```
-
-### Step 6-4: Istio Sidecar 확인
-
-```bash
-# Envoy 설정 확인
-kubectl exec -it deploy/user-service -c istio-proxy -- pilot-agent request GET config_dump | head -50
-
-# Istio Proxy 상태 확인
-istioctl proxy-status
-```
-
-### Step 6-5: Service Mesh 트래픽 확인
-
-```bash
-# Kiali 대시보드 (선택사항)
-istioctl dashboard kiali &
-
-# 또는 Prometheus 메트릭 확인
-kubectl exec -it deploy/user-service -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio
-```
+**📋 스크립트 내용**: [step6-test.sh](./lab_scripts/lab1/step6-test.sh)
 
 ---
 
 ## 🧹 실습 정리
 
+**🚀 자동화 스크립트 사용**
 ```bash
-# HTTPRoute 삭제
-kubectl delete httproute user-route product-route order-route
-
-# Gateway 삭제
-kubectl delete gateway api-gateway
-
-# 서비스 삭제
-kubectl delete deployment,service user-service product-service order-service
-
-# Istio 삭제 (선택사항)
-istioctl uninstall --purge -y
-kubectl delete namespace istio-system
-
-# Gateway API CRDs 삭제 (선택사항)
-kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.0.0" | kubectl delete -f -
-
-# Namespace label 제거
-kubectl label namespace default istio-injection-
-
-# Port-forward 종료
-pkill -f "kubectl port-forward"
+./cleanup.sh
 ```
+
+**📋 스크립트 내용**: [cleanup.sh](./lab_scripts/lab1/cleanup.sh)
 
 ---
 

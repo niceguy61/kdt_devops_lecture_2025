@@ -1,51 +1,60 @@
 #!/bin/bash
 
 # Week 4 Day 2 Hands-on 1: 환경 정리
-# 모든 컨테이너와 리소스 제거
+# 고급 기능 리소스 제거
 
-echo "=== API Gateway 고급 실습 환경 정리 시작 ==="
+echo "=== Istio 고급 트래픽 관리 실습 환경 정리 시작 ==="
 echo ""
 
-# 컨테이너 중지 및 제거
-echo "1. 컨테이너 중지 및 제거 중..."
-containers=(
-    "kong"
-    "kong-database"
-    "consul"
-    "user-service"
-    "product-service"
-    "order-service"
-    "auth-service"
-    "prometheus"
-    "grafana"
-)
+# VirtualService 삭제
+echo "1. VirtualService 삭제 중..."
+kubectl delete virtualservice user-service product-service 2>/dev/null || true
+echo "   ✅ VirtualService 삭제 완료"
 
-for container in "${containers[@]}"; do
-    if docker ps -a | grep -q "$container"; then
-        docker rm -f "$container" 2>/dev/null
-        echo "   ✅ $container 제거 완료"
-    fi
-done
-
-# 네트워크 제거
+# DestinationRule 삭제
 echo ""
-echo "2. Docker 네트워크 제거 중..."
-if docker network inspect api-gateway-net >/dev/null 2>&1; then
-    docker network rm api-gateway-net
-    echo "   ✅ 네트워크 제거 완료"
-fi
+echo "2. DestinationRule 삭제 중..."
+kubectl delete destinationrule user-service product-service 2>/dev/null || true
+echo "   ✅ DestinationRule 삭제 완료"
 
-# 작업 디렉토리 제거 (선택사항)
+# v2 Deployment 삭제
 echo ""
-echo "3. 작업 디렉토리 정리..."
-read -p "작업 디렉토리를 삭제하시겠습니까? (y/N): " -n 1 -r
+echo "3. v2 Deployment 삭제 중..."
+kubectl delete deployment user-service-v2 product-service-v2 2>/dev/null || true
+echo "   ✅ v2 Deployment 삭제 완료"
+
+# Security 정책 삭제
+echo ""
+echo "4. Security 정책 삭제 중..."
+kubectl delete peerauthentication default 2>/dev/null || true
+kubectl delete authorizationpolicy user-service-policy 2>/dev/null || true
+echo "   ✅ Security 정책 삭제 완료"
+
+# Kiali 삭제 (선택사항)
+echo ""
+read -p "Kiali를 삭제하시겠습니까? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    rm -rf ~/api-gateway-advanced
-    echo "   ✅ 디렉토리 삭제 완료"
+    kubectl delete -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml 2>/dev/null || true
+    echo "   ✅ Kiali 삭제 완료"
 else
-    echo "   ℹ️  디렉토리 유지"
+    echo "   ℹ️  Kiali 유지"
 fi
+
+# Kiali 프로세스 종료
+echo ""
+echo "5. Kiali 프로세스 종료 중..."
+pkill -f "istioctl dashboard kiali" 2>/dev/null || true
+echo "   ✅ Kiali 프로세스 종료 완료"
+
+# 트래픽 생성 프로세스 종료
+echo ""
+echo "6. 트래픽 생성 프로세스 종료 중..."
+pkill -f "curl.*api.example.com" 2>/dev/null || true
+echo "   ✅ 트래픽 생성 프로세스 종료 완료"
 
 echo ""
 echo "=== 환경 정리 완료 ==="
+echo ""
+echo "💡 Lab 1 리소스는 유지됩니다"
+echo "   전체 정리를 원하면 Lab 1의 cleanup을 실행하세요"
