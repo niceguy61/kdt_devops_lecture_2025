@@ -102,7 +102,11 @@ graph TB
     RS --> RDB
     
     style ING fill:#ff9800
-    style S1,S2,S3,S4,S5 fill:#4caf50
+    style S1 fill:#4caf50
+    style S2 fill:#4caf50
+    style S3 fill:#4caf50
+    style S4 fill:#4caf50
+    style S5 fill:#4caf50
     style WS fill:#2196f3
     style RS fill:#9c27b0
     style SF fill:#ff5722
@@ -177,8 +181,16 @@ graph TB
     P2 <--> P5
     
     style ING fill:#ff9800
-    style S1,S2,S3,S4,S5 fill:#4caf50
-    style P1,P2,P3,P4,P5 fill:#2196f3
+    style S1 fill:#4caf50
+    style S2 fill:#4caf50
+    style S3 fill:#4caf50
+    style S4 fill:#4caf50
+    style S5 fill:#4caf50
+    style P1 fill:#2196f3
+    style P2 fill:#2196f3
+    style P3 fill:#2196f3
+    style P4 fill:#2196f3
+    style P5 fill:#2196f3
 ```
 
 **🔧 Kubernetes 네이티브의 장점**:
