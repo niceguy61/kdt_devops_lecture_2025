@@ -23,12 +23,7 @@ spec:
   - match:
     - uri:
         prefix: /product  # 🐛 BUG: /잘못된 prefix
-    route:
-    - destination:
-        host: wrong-product-service  # 🐛 BUG: 잘못된 서비스명
-        port:
-          number: 80
-    fault:  # 🐛 BUG: fault가 route 뒤에 있음 (앞에 있어야 함)
+    fault:
       delay:
         percentage:
           value: 50
@@ -37,6 +32,11 @@ spec:
         percentage:
           value: 20
         httpStatus: 503
+    route:
+    - destination:
+        host: product-service
+        port:
+          number: 8080  # 🐛 BUG: 잘못된 포트
   - match:
     - uri:
         prefix: /orders
