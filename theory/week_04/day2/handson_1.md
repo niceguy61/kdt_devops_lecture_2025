@@ -191,7 +191,7 @@ curl -i http://localhost:8001/
 **JWT 인증 서비스 생성**
 ```bash
 # 간단한 JWT 인증 서비스 (Node.js)
-cat > ~/api-gateway-advanced/services/auth-service.js << 'EOF'
+cat > api-gateway-advanced/services/auth-service.js << 'EOF'
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const app = express();
@@ -241,7 +241,7 @@ EOF
 
 **Dockerfile 생성**
 ```bash
-cat > ~/api-gateway-advanced/services/Dockerfile.auth << 'EOF'
+cat > api-gateway-advanced/services/Dockerfile.auth << 'EOF'
 FROM node:22-alpine
 WORKDIR /app
 RUN npm install express jsonwebtoken
@@ -252,7 +252,7 @@ EOF
 
 **인증 서비스 빌드 및 실행**
 ```bash
-cd ~/api-gateway-advanced/services
+cd api-gateway-advanced/services
 docker build -t auth-service -f Dockerfile.auth .
 
 docker run -d --name auth-service \
@@ -352,9 +352,9 @@ curl -i http://localhost:8000/users \
 
 **Prometheus 설정 파일 생성**
 ```bash
-mkdir -p ~/api-gateway-advanced/monitoring/prometheus
+mkdir -p api-gateway-advanced/monitoring/prometheus
 
-cat > ~/api-gateway-advanced/monitoring/prometheus/prometheus.yml << 'EOF'
+cat > api-gateway-advanced/monitoring/prometheus/prometheus.yml << 'EOF'
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -382,7 +382,7 @@ docker run -d \
   --name prometheus \
   --network api-gateway-net \
   -p 9090:9090 \
-  -v ~/api-gateway-advanced/monitoring/prometheus:/etc/prometheus \
+  -v api-gateway-advanced/monitoring/prometheus:/etc/prometheus \
   prom/prometheus:v2.54.1 \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus
