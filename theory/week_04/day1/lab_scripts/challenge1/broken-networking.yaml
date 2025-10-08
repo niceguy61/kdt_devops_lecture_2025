@@ -55,8 +55,8 @@ metadata:
   namespace: ecommerce-microservices
 spec:
   selector:
-    # 의도적 오류 1: 잘못된 라벨 셀렉터
-    app: wrong-user-service  # 실제 Pod 라벨과 불일치
+    # 🔧 FIX ME 1: Service에 엔드포인트가 없습니다
+    app: wrong-user-service
   ports:
   - port: 80
     targetPort: 80
@@ -78,7 +78,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            # 의도적 오류 3: 존재하지 않는 서비스 참조
+            # 🔧 FIX ME 2: Ingress가 서비스를 찾을 수 없습니다
             name: nonexistent-user-service
             port:
               number: 80
@@ -88,8 +88,8 @@ spec:
           service:
             name: command-service
             port:
-              # 의도적 오류 4: 잘못된 포트 번호
-              number: 8080  # 실제 서비스는 80포트
+              # 🔧 FIX ME 3: 연결이 거부됩니다 (Connection refused)
+              number: 8080
       - path: /api/queries
         pathType: Prefix
         backend:

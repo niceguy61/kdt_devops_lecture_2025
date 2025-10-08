@@ -38,9 +38,9 @@ data:
   default.conf: |
     server {
         listen 80;
-        # 의도적 오류 1: 잘못된 location 블록 문법
+        # 🔧 FIX ME 5: Nginx 설정 문법 오류가 있습니다
         location /api/orders {
-            return 200 '{"service": "order-service", "action": "create_order", "saga_id": "saga-001", "status": "initiated"}'  # 세미콜론 누락
+            return 200 '{"service": "order-service", "action": "create_order", "saga_id": "saga-001", "status": "initiated"}'
             add_header Content-Type application/json;
         }
         location /api/orders/compensate {
@@ -127,7 +127,7 @@ metadata:
   name: saga-orchestrator
   namespace: ecommerce-microservices
 spec:
-  # 의도적 오류: backoffLimit이 0으로 설정되어 재시도 불가
+  # 🔧 FIX ME 1: Job이 재시도를 하지 않습니다
   backoffLimit: 0
   template:
     spec:
@@ -140,14 +140,15 @@ spec:
           echo "=== Saga Transaction Started ==="
           echo "Step 1: Validate User"
           
-          # 의도적 오류 3: 잘못된 서비스 URL로 호출 실패
+          # 🔧 FIX ME 2: 서비스 URL이 해결되지 않습니다
           echo "Calling order service..."
           wget -q -O- http://wrong-order-service/api/orders || echo "Order service call failed"
           
+          # 🔧 FIX ME 3: 트랜잭션이 실패로 표시됩니다
           echo "Step 2: Create Order - FAILED"
           echo "Step 3: Process Payment - SKIPPED"
           echo "=== Saga Transaction Failed ==="
           
-          # 의도적 오류 4: 실패 시 exit code 1로 Job 실패 처리
+          # 🔧 FIX ME 4: Job이 항상 실패합니다
           exit 1
       restartPolicy: Never

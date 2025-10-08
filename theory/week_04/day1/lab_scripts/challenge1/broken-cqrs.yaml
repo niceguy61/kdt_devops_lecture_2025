@@ -38,7 +38,7 @@ data:
   default.conf: |
     server {
         listen 80;
-        # 의도적 오류 1: 잘못된 JSON 형식 (따옴표 누락)
+        # 🔧 FIX ME 1: JSON 형식이 올바르지 않습니다
         location /api/commands/create-user {
             return 200 '{
                 command_id: "cmd-001",
@@ -49,7 +49,7 @@ data:
             }';
             add_header Content-Type application/json;
         }
-        # 의도적 오류 2: 잘못된 location 경로
+        # 🔧 FIX ME 2: 이 경로로는 접근할 수 없습니다
         location /api/commands/update-user-wrong {
             return 200 '{
                 "command_id": "cmd-002", 
@@ -71,9 +71,9 @@ spec:
   selector:
     app: command-service
   ports:
-  # 의도적 오류 3: 잘못된 포트 매핑
+  # 🔧 FIX ME 3: Service가 Pod에 연결되지 않습니다
   - port: 80
-    targetPort: 8080  # 컨테이너는 80포트인데 8080으로 매핑
+    targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -113,11 +113,11 @@ data:
     server {
         listen 80;
         location /api/queries/users {
-            # 의도적 오류 4: 잘못된 JSON 구조 (배열 문법 오류)
+            # 🔧 FIX ME 4: JSON 응답이 유효하지 않습니다
             return 200 '{
                 "users": [
                     {"id": 1, "name": "John Doe", "email": "john@example.com", "status": "active"},
-                    {"id": 2, "name": "Jane Smith", "email": "jane@example.com", "status": "active"  # 닫는 괄호 누락
+                    {"id": 2, "name": "Jane Smith", "email": "jane@example.com", "status": "active"
                 ],
                 "total": 2,
                 "source": "materialized_view",
@@ -144,8 +144,8 @@ metadata:
   namespace: ecommerce-microservices
 spec:
   selector:
-    # 의도적 오류 5: 잘못된 라벨 셀렉터
-    app: wrong-query-service  # 실제 Pod 라벨과 불일치
+    # 🔧 FIX ME 5: Service에 엔드포인트가 없습니다
+    app: wrong-query-service
   ports:
   - port: 80
     targetPort: 80

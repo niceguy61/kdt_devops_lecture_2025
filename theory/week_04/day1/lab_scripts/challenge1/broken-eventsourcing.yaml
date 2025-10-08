@@ -36,8 +36,8 @@ metadata:
   name: event-processor
   namespace: ecommerce-microservices
 spec:
-  # 의도적 오류: 잘못된 cron 표현식 (6개 필드 대신 5개 필요)
-  schedule: "*/5 * * * * *"  # 초 단위 포함으로 잘못된 형식
+  # 🔧 FIX ME 1: CronJob이 생성되지 않습니다 (스케줄 형식 오류)
+  schedule: "*/5 * * * * *"
   jobTemplate:
     spec:
       template:
@@ -50,7 +50,7 @@ spec:
             - |
               echo "=== Event Processing Started ==="
               echo "Reading events from Event Store..."
-              # 의도적 오류 2: 잘못된 파일 경로
+              # 🔧 FIX ME 2: 이벤트 파일을 찾을 수 없습니다
               cat /wrong-events/events.json || echo "Failed to read events"
               echo "=== Event Processing Failed ==="
             volumeMounts:
@@ -86,8 +86,8 @@ spec:
         - name: eventstore-config
           mountPath: /etc/nginx/conf.d
         - name: event-data
-          # 의도적 오류 3: 잘못된 볼륨 마운트 경로
-          mountPath: /usr/share/nginx/html/wrong-events  # nginx 설정과 경로 불일치
+          # 🔧 FIX ME 3: API가 이벤트 데이터를 찾을 수 없습니다
+          mountPath: /usr/share/nginx/html/wrong-events
       volumes:
       - name: eventstore-config
         configMap:
@@ -106,7 +106,7 @@ data:
     server {
         listen 80;
         location /api/events {
-            # 의도적 오류 4: 잘못된 alias 경로 (실제 마운트 경로와 불일치)
+            # 🔧 FIX ME 4: 404 Not Found 오류가 발생합니다
             alias /usr/share/nginx/html/events/events.json;
             add_header Content-Type application/json;
         }

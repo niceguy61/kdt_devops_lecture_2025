@@ -440,6 +440,155 @@ kubectl exec -n testing deployment/load-tester -- curl -v [service-url]
 
 ---
 
+## 🌐 웹 인터페이스로 결과 확인
+
+모든 문제를 해결한 후, 웹 브라우저에서 실제 서비스를 확인할 수 있습니다.
+
+### Step 1: 포트 포워딩 설정 (자동화 스크립트)
+
+**🚀 간편한 방법 (권장)**:
+```bash
+cd theory/week_04/day1/lab_scripts/challenge1
+./start-port-forward.sh
+```
+
+**📋 스크립트 내용**: [start-port-forward.sh](./lab_scripts/challenge1/start-port-forward.sh)
+
+**수동 설정 (학습용)**:
+```bash
+# User Service 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/user-service 8081:80 > /dev/null 2>&1 &
+
+# Command Service 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/command-service 8082:80 > /dev/null 2>&1 &
+
+# Query Service 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/query-service 8083:80 > /dev/null 2>&1 &
+
+# Event Store API 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/event-store-api 8084:80 > /dev/null 2>&1 &
+
+# Order Service 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/order-service 8085:80 > /dev/null 2>&1 &
+
+# Payment Service 포트 포워딩
+kubectl port-forward -n ecommerce-microservices svc/payment-service 8086:80 > /dev/null 2>&1 &
+```
+
+### Step 2: 웹 브라우저에서 확인
+
+각 URL을 브라우저에서 열어 JSON 응답을 확인하세요:
+
+1. **📊 User Service**: http://localhost:8081/api/users
+   ```json
+   {"service": "user-service", "users": [{"id": 1, "name": "John Doe"}], "total": 1}
+   ```
+
+2. **✍️ Command Service**: http://localhost:8082/api/commands/create-user
+   ```json
+   {"command_id": "cmd-001", "type": "CreateUserCommand", "status": "accepted", "event_id": "evt-001", "timestamp": "2024-01-01T10:00:00Z"}
+   ```
+
+3. **📖 Query Service**: http://localhost:8083/api/queries/users
+   ```json
+   {"service": "query-service", "users": [{"id": 1, "name": "John Doe"}], "total": 1}
+   ```
+
+4. **📦 Event Store API**: http://localhost:8084/api/events
+   ```json
+   {"events": [{"event_id": "evt-001", "aggregate_id": "user-123", "event_type": "UserCreated", ...}, ...]}
+   ```
+
+5. **🛒 Order Service**: http://localhost:8085/api/orders
+   ```json
+   {"service": "order-service", "action": "create_order", "saga_id": "saga-001", "status": "initiated"}
+   ```
+
+6. **💳 Payment Service**: http://localhost:8086/api/payments
+   ```json
+   {"service": "payment-service", "action": "process_payment", "saga_id": "saga-001", "status": "completed", "amount": 100.00}
+   ```
+
+**💡 curl로도 테스트 가능**:
+```bash
+# 모든 서비스 한 번에 테스트
+curl -s http://localhost:8081/api/users | jq .
+curl -s http://localhost:8082/api/commands/create-user | jq .
+curl -s http://localhost:8083/api/queries/users | jq .
+curl -s http://localhost:8084/api/events | jq .
+curl -s http://localhost:8085/api/orders | jq .
+curl -s http://localhost:8086/api/payments | jq .
+```
+
+### Step 3: 포트 포워딩 종료
+
+확인이 끝나면 포트 포워딩을 종료하세요:
+
+**🚀 간편한 방법 (권장)**:
+```bash
+cd theory/week_04/day1/lab_scripts/challenge1
+./stop-port-forward.sh
+```
+
+**수동 종료 (학습용)**:
+```bash
+# 모든 kubectl port-forward 프로세스 종료
+pkill -f "kubectl port-forward"
+
+echo "✅ 포트 포워딩 종료 완료!"
+```
+
+---
+
+## 💡 도움이 필요하신가요?
+
+### ⏰ 20분 규칙
+
+**먼저 스스로 해결을 시도하세요!**
+- 최소 20분 동안 문제를 분석하고 해결을 시도하세요
+- 로그를 확인하고, 설정을 검증하고, 팀원들과 토론하세요
+- 체계적인 디버깅 프로세스를 따라가세요
+
+### 📚 힌트 참고 (20분 후)
+
+20분 이상 시도했지만 여전히 막힌다면:
+
+```bash
+# 힌트 문서 확인
+cat theory/week_04/day1/lab_scripts/challenge1/hints.md
+```
+
+**힌트 문서 내용**:
+- 각 문제별 단계적 힌트
+- 확인해야 할 명령어
+- 찾아야 할 오류 패턴
+- 일반적인 디버깅 팁
+
+### 🔓 완전한 해결 방법 (최후의 수단)
+
+힌트를 봤지만 여전히 해결이 어렵다면:
+
+```bash
+# 완전한 해결 방법 확인
+cat theory/week_04/day1/lab_scripts/challenge1/solutions.md
+```
+
+**Solutions 문서 내용**:
+- 모든 오류의 상세한 설명
+- 단계별 수정 명령어
+- 수정 전후 비교
+- 학습 포인트 정리
+
+### 🤝 팀워크 활용
+
+혼자 해결하기 어렵다면:
+- 팀원들과 함께 문제를 분석하세요
+- 각자 다른 패턴을 담당하여 병렬로 해결하세요
+- 발견한 단서를 실시간으로 공유하세요
+- 서로의 해결 과정에서 배우세요
+
+---
+
 ## 🧹 Challenge 정리
 
 ```bash

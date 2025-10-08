@@ -51,8 +51,8 @@ run_test "Order Service 정상 응답" \
     "Order Service가 정상적인 JSON 응답을 반환해야 합니다"
 
 run_test "Payment Service 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s http://payment-service.ecommerce-microservices.svc.cluster.local/api/payments | grep -q 'completed'" \
-    "Payment Service가 정상적으로 응답해야 합니다"
+    "kubectl exec -n testing deployment/load-tester -- curl -s http://payment-service.ecommerce-microservices.svc.cluster.local/api/payments | grep -q 'completed' && kubectl get jobs saga-orchestrator -n ecommerce-microservices -o jsonpath='{.status.succeeded}' | grep -q '1'" \
+    "Payment Service가 정상적으로 응답하고 Saga가 완료되어야 합니다"
 
 # 2. CQRS 패턴 검증
 show_progress "2/4 CQRS 패턴 복구 검증"
@@ -66,8 +66,8 @@ run_test "Query Service 정상 응답" \
     "Query Service가 사용자 데이터를 정상 반환해야 합니다"
 
 run_test "Command Service 엔드포인트 연결" \
-    "kubectl get endpoints command-service -n ecommerce-microservices -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]'" \
-    "Command Service의 엔드포인트가 정상적으로 연결되어야 합니다"
+    "kubectl get endpoints command-service -n ecommerce-microservices -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]' && kubectl get svc command-service -n ecommerce-microservices -o jsonpath='{.spec.ports[0].targetPort}' | grep -q '^80$'" \
+    "Command Service의 엔드포인트가 정상 연결되고 포트가 올바르게 설정되어야 합니다"
 
 # 3. Event Sourcing 검증
 show_progress "3/4 Event Sourcing 복구 검증"
@@ -77,8 +77,8 @@ run_test "Event Store API 정상 응답" \
     "Event Store API가 이벤트 데이터를 정상 반환해야 합니다"
 
 run_test "CronJob 정상 스케줄링" \
-    "kubectl get cronjobs event-processor -n ecommerce-microservices -o jsonpath='{.spec.schedule}' | grep -q '*/5 * * * *'" \
-    "CronJob이 올바른 스케줄 표현식을 가져야 합니다"
+    "kubectl get cronjobs event-processor -n ecommerce-microservices -o jsonpath='{.spec.schedule}' | grep -E '^\*/5 \* \* \* \*$'" \
+    "CronJob이 올바른 스케줄 표현식을 가져야 합니다 (매일 5분마다, 요일 필드 없음)"
 
 run_test "Event Processor 실행 가능" \
     "kubectl create job event-processor-test --from=cronjob/event-processor -n ecommerce-microservices && sleep 10 && kubectl logs job/event-processor-test -n ecommerce-microservices | grep -q 'Processing'" \
@@ -92,8 +92,8 @@ run_test "User Service 엔드포인트 연결" \
     "User Service의 엔드포인트가 정상 연결되어야 합니다"
 
 run_test "Ingress 라우팅 정상" \
-    "kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o jsonpath='{.spec.rules[0].http.paths[0].backend.service.name}' | grep -q 'user-service'" \
-    "Ingress가 올바른 서비스로 라우팅해야 합니다"
+    "kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o jsonpath='{.spec.rules[0].http.paths[0].backend.service.name}' | grep -q 'user-service' && kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o jsonpath='{.spec.rules[0].http.paths[1].backend.service.port.number}' | grep -q '^80$'" \
+    "Ingress가 올바른 서비스와 포트로 라우팅해야 합니다"
 
 run_test "DNS 해결 정상" \
     "kubectl exec -n testing deployment/load-tester -- nslookup user-service.ecommerce-microservices.svc.cluster.local | grep -q 'Address:'" \
