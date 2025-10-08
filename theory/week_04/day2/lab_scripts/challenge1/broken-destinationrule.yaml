@@ -10,7 +10,7 @@ spec:
       version: v1
   - name: v2
     labels:
-      version: v2  # 🐛 BUG: 태그 오류
+      ver: v2  # 🐛 BUG: 태그 오류
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
