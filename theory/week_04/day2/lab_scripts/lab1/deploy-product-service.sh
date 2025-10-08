@@ -29,7 +29,10 @@ docker run -d \
 echo "4. Product Service 코드 생성 중..."
 cat > ~/microservices-lab/services/product-service/app.js << 'EOF'
 const express = require('express');
-const consul = require('consul')();
+const consul = require('consul')({
+  host: 'consul-server',
+  port: 8500
+});
 const app = express();
 const PORT = 3002;
 
@@ -143,25 +146,34 @@ app.patch('/products/:id/stock', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Product Service running on port ${PORT}`);
   
-  // Consul에 서비스 등록
-  consul.agent.service.register({
-    id: 'product-service-1',
-    name: 'product-service',
-    tags: ['api', 'products', 'v1'],
-    address: 'product-service',
-    port: PORT,
-    check: {
-      http: `http://product-service:${PORT}/health`,
-      interval: '10s',
-      timeout: '3s'
-    }
-  }, (err) => {
-    if (err) {
-      console.error('Consul registration failed:', err);
-    } else {
-      console.log('✅ Service registered with Consul');
-    }
-  });
+  // Consul 등록 재시도 함수
+  const registerWithConsul = (retries = 5) => {
+    consul.agent.service.register({
+      id: 'product-service-1',
+      name: 'product-service',
+      tags: ['api', 'products', 'v1'],
+      address: 'product-service',
+      port: PORT,
+      check: {
+        http: `http://product-service:${PORT}/health`,
+        interval: '10s',
+        timeout: '3s'
+      }
+    }, (err) => {
+      if (err) {
+        console.error('Consul registration failed:', err.message);
+        if (retries > 0) {
+          console.log(`Retrying Consul registration... (${retries} attempts left)`);
+          setTimeout(() => registerWithConsul(retries - 1), 2000);
+        }
+      } else {
+        console.log('✅ Service registered with Consul');
+      }
+    });
+  };
+  
+  // 2초 후 Consul 등록 시도 (Consul 서버 준비 대기)
+  setTimeout(() => registerWithConsul(), 2000);
 });
 
 // Graceful shutdown
