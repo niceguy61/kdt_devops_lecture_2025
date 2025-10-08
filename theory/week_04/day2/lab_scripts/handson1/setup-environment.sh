@@ -18,12 +18,12 @@ fi
 # 작업 디렉토리 생성
 echo ""
 echo "2. 작업 디렉토리 생성 중..."
-mkdir -p ~/api-gateway-advanced/{kong,consul,services,monitoring}
-cd ~/api-gateway-advanced
+mkdir -p api-gateway-advanced/{kong,consul,services,monitoring}
+cd api-gateway-advanced
 echo "   ✅ 디렉토리 생성 완료"
 
 echo ""
 echo "=== 환경 준비 완료 ==="
 echo ""
-echo "작업 디렉토리: ~/api-gateway-advanced"
+echo "작업 디렉토리: api-gateway-advanced"
 echo "Docker 네트워크: api-gateway-net"

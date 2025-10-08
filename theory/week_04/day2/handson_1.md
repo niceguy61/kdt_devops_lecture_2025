@@ -141,7 +141,7 @@ docker run -d --name kong-database \
   -e POSTGRES_USER=kong \
   -e POSTGRES_DB=kong \
   -e POSTGRES_PASSWORD=kong \
-  postgres:13
+  postgres:16
 ```
 
 **Kong 데이터베이스 마이그레이션**
@@ -152,7 +152,7 @@ docker run --rm \
   -e KONG_PG_HOST=kong-database \
   -e KONG_PG_USER=kong \
   -e KONG_PG_PASSWORD=kong \
-  kong:3.0 kong migrations bootstrap
+  kong:3.8 kong migrations bootstrap
 ```
 
 ### Step 1-3: Kong Gateway 시작 (4분)
@@ -172,7 +172,7 @@ docker run -d --name kong \
   -e KONG_ADMIN_LISTEN=0.0.0.0:8001 \
   -p 8000:8000 \
   -p 8001:8001 \
-  kong:3.0
+  kong:3.8
 ```
 
 **Kong 상태 확인**
@@ -242,7 +242,7 @@ EOF
 **Dockerfile 생성**
 ```bash
 cat > ~/api-gateway-advanced/services/Dockerfile.auth << 'EOF'
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app
 RUN npm install express jsonwebtoken
 COPY auth-service.js .
@@ -383,7 +383,7 @@ docker run -d \
   --network api-gateway-net \
   -p 9090:9090 \
   -v ~/api-gateway-advanced/monitoring/prometheus:/etc/prometheus \
-  prom/prometheus:latest \
+  prom/prometheus:v2.54.1 \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/prometheus
 ```
@@ -406,7 +406,7 @@ docker run -d \
   --network api-gateway-net \
   -p 3001:3000 \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana:latest
+  grafana/grafana:11.2.2
 ```
 
 **Grafana 데이터소스 설정**
