@@ -123,12 +123,12 @@ GET /api/orders    → (변환) → order-service:3003/orders
 ```mermaid
 graph LR
     subgraph "내부 통신"
-        A1[Order Service] --> A2[/users<br/>직접 경로]
+        A1[Order Service] --> A2[`/users`<br/>직접 경로]
         A2 --> A3[User Service]
     end
     
     subgraph "외부 API"
-        B1[모바일 앱] --> B2[/api/users<br/>API 경로]
+        B1[모바일 앱] --> B2[`/api/users`<br/>API 경로]
         B2 --> B3[Kong Plugins]
         B3 --> B4[User Service]
     end
