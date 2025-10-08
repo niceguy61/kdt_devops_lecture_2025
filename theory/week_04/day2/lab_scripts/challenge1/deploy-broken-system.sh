@@ -5,30 +5,31 @@
 echo "=== Challenge 1: 망가진 시스템 배포 시작 ==="
 echo ""
 
-# 1. 기존 클러스터 삭제
-echo "1. 기존 클러스터 정리 중..."
-kind delete cluster --name w4d2-challenge 2>/dev/null || true
+# 클러스터 확인
+if ! kubectl cluster-info &> /dev/null; then
+    echo "❌ Kubernetes 클러스터에 연결할 수 없습니다"
+    echo ""
+    echo "먼저 환경을 준비하세요:"
+    echo "  ./setup-environment.sh"
+    exit 1
+fi
 
-# 2. 새 클러스터 생성 (포트 9090)
+# 컨텍스트 확인
+CURRENT_CONTEXT=$(kubectl config current-context)
+if [[ "$CURRENT_CONTEXT" != "kind-w4d2-challenge" ]]; then
+    echo "⚠️  현재 컨텍스트: $CURRENT_CONTEXT"
+    echo "⚠️  w4d2-challenge 클러스터가 아닙니다"
+    echo ""
+    read -p "계속 진행하시겠습니까? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Istio 설치
 echo ""
-echo "2. Challenge 클러스터 생성 중 (포트 9090)..."
-cat <<YAML | kind create cluster --name w4d2-challenge --config=-
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 30090
-    hostPort: 9090
-    protocol: TCP
-YAML
-
-kubectl config use-context kind-w4d2-challenge
-kubectl wait --for=condition=ready node --all --timeout=60s
-
-# 3. Istio 설치
-echo ""
-echo "3. Istio 설치 중..."
+echo "1. Istio 설치 중..."
 if [ ! -d "istio-1.20.0" ]; then
     curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
 fi
@@ -47,9 +48,9 @@ kubectl wait --for=condition=ready pod -l app=istio-ingressgateway -n istio-syst
 
 cd ..
 
-# 4. 기본 서비스 배포
+# 기본 서비스 배포
 echo ""
-echo "4. 기본 서비스 배포 중..."
+echo "2. 기본 서비스 배포 중..."
 kubectl apply -f - <<YAML
 apiVersion: v1
 kind: Service
@@ -161,9 +162,9 @@ kubectl wait --for=condition=ready pod -l app=user-service --timeout=60s
 kubectl wait --for=condition=ready pod -l app=product-service --timeout=60s
 kubectl wait --for=condition=ready pod -l app=order-service --timeout=60s
 
-# 5. 망가진 설정 배포
+# 망가진 설정 배포
 echo ""
-echo "5. 망가진 설정 배포 중..."
+echo "3. 망가진 설정 배포 중..."
 
 # 시나리오 1: Gateway
 kubectl apply -f broken-gateway.yaml
@@ -175,8 +176,6 @@ kubectl apply -f broken-virtualservice.yaml
 kubectl apply -f broken-deployment-v2.yaml
 kubectl wait --for=condition=ready pod -l app=user-service,ver=v2 --timeout=60s
 kubectl apply -f broken-destinationrule.yaml
-
-# 시나리오 4는 별도 (Fault Injection은 나중에 수동으로 적용)
 
 echo ""
 echo "=== 망가진 시스템 배포 완료 ==="

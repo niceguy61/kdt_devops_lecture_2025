@@ -32,27 +32,6 @@
 
 ---
 
-## 🛠️ Step 1: Challenge 환경 배포 (5분)
-
-### Step 1-1: 작업 디렉토리 이동
-
-```bash
-cd theory/week_04/day2/lab_scripts/challenge1
-```
-
-### Step 1-2: 망가진 환경 배포
-
-```bash
-./deploy-broken-system.sh
-```
-
-**배포 내용:**
-- 새로운 클러스터 생성 (w4d2-challenge, 포트 9090)
-- Istio 설치
-- 의도적으로 잘못된 설정 배포
-- 4개 장애 시나리오 주입
-
----
 
 ## 🚨 시나리오 1: Gateway 접근 불가 (20분)
 
