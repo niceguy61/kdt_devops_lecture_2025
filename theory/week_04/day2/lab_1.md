@@ -11,7 +11,7 @@
 ---
 
 ## 🕘 실습 정보
-**시간**: 12:00-13:50 (110분, 점심시간 포함)
+**시간**: 12:00-12:50 (50분)
 **목표**: Istio + VirtualService로 마이크로서비스 플랫폼 구축
 **방식**: 실무 표준 Service Mesh 패턴 활용
 **작업 위치**: `theory/week_04/day2/lab_scripts/lab1`
@@ -37,7 +37,7 @@
 ```mermaid
 graph TB
     subgraph "External"
-        C[Client]
+        C[Client<br/>localhost:80]
     end
     
     subgraph "Kubernetes Cluster"
@@ -46,7 +46,7 @@ graph TB
         end
         
         subgraph "Istio Gateway"
-            IG[Istio Gateway<br/>:80]
+            IG[Istio Gateway<br/>NodePort 30080]
         end
         
         subgraph "Istio Routing"
@@ -93,15 +93,18 @@ graph TB
 cd theory/week_04/day2/lab_scripts/lab1
 ```
 
-### Step 1-2: 환경 설정
+### Step 1-2: Kind 클러스터 생성 (포트 매핑 포함)
 
+**🚀 자동화 스크립트 사용**
 ```bash
 ./setup-environment.sh
 ```
 
+**📋 스크립트 내용**: [setup-environment.sh](./lab_scripts/lab1/setup-environment.sh)
+
 ---
 
-## 🚀 Step 2: Istio 설치 (15분)
+## 🚀 Step 2: Istio 설치 (10분)
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -110,23 +113,9 @@ cd theory/week_04/day2/lab_scripts/lab1
 
 **📋 스크립트 내용**: [step2-install-istio.sh](./lab_scripts/lab1/step2-install-istio.sh)
 
-**2-1. 수동 실행 (학습용)**
-```bash
-# Istio 다운로드 및 설치
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-*
-export PATH=$PWD/bin:$PATH
-
-# Istio 설치 (demo 프로파일)
-istioctl install --set profile=demo -y
-
-# 네임스페이스에 자동 사이드카 주입 활성화
-kubectl label namespace default istio-injection=enabled
-```
-
 ---
 
-## 🚀 Step 3: 마이크로서비스 배포 (15분)
+## 🚀 Step 3: 마이크로서비스 배포 (10분)
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -135,40 +124,90 @@ kubectl label namespace default istio-injection=enabled
 
 **📋 스크립트 내용**: [step3-deploy-services.sh](./lab_scripts/lab1/step3-deploy-services.sh)
 
-**3-1. 수동 실행 (학습용)**
-```bash
-# User Service 배포
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-spec:
-  selector:
-    app: user-service
-  ports:
-  - port: 80
-    targetPort: 8080
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: user-service
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: user-service
-  template:
-    metadata:
-      labels:
-        app: user-service
-        version: v1
-    spec:
-      containers:
-      - name: user-service
-        image: hashicorp/http-echo
-        args:
-        - "-text=User Service v1"
-        ports:
-        - containerPort: 8080
+
+## 🔀 Step 4: Gateway & VirtualService 설정 (15분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+./step4-setup-routing.sh
+```
+
+**📋 스크립트 내용**: [step4-setup-routing.sh](./lab_scripts/lab1/step4-setup-routing.sh)
+
+---
+
+## ✅ Step 5: 통합 테스트 (10분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+./step5-test.sh
+```
+
+**📋 스크립트 내용**: [step5-test.sh](./lab_scripts/lab1/step5-test.sh)
+
+**5-1. 브라우저 테스트**
+- http://localhost/users
+- http://localhost/products
+- http://localhost/orders
+
+---
+
+## ✅ 실습 체크포인트
+
+### ✅ 기본 구성 확인
+- [ ] Kind 클러스터 생성 (포트 80 매핑)
+- [ ] Istio 설치 완료
+- [ ] Ingress Gateway NodePort 30080 설정
+- [ ] Sidecar Injection 활성화
+
+### ✅ 서비스 배포 확인
+- [ ] 3개 서비스 배포 완료
+- [ ] 각 Pod에 2개 컨테이너 (앱 + Envoy)
+- [ ] 모든 Pod Running 상태
+
+### ✅ 라우팅 설정 확인
+- [ ] Istio Gateway 생성
+- [ ] VirtualService 라우팅 규칙 설정
+- [ ] DestinationRule 로드밸런싱 설정
+
+### ✅ 통합 테스트 확인
+- [ ] localhost/users 정상 응답
+- [ ] localhost/products 정상 응답
+- [ ] localhost/orders 정상 응답
+- [ ] 로드밸런싱 동작 확인
+
+---
+
+## 🧹 실습 정리
+
+**🚀 자동화 스크립트 사용**
+```bash
+./cleanup.sh
+```
+
+---
+
+## 💡 실습 회고
+
+### 🤝 페어 회고 (5분)
+1. **Istio vs Ingress**: VirtualService의 장점은 무엇인가요?
+2. **Sidecar 패턴**: Envoy Proxy가 각 Pod에 주입되는 이유는?
+3. **Service Mesh**: 실무에서 Service Mesh가 필요한 상황은?
+4. **포트 매핑**: Kind 클러스터에서 포트 매핑이 필요한 이유는?
+
+### 📊 학습 성과
+- **Istio 기초**: Service Mesh 개념과 Sidecar 패턴 이해
+- **VirtualService**: Istio 라우팅 규칙 설정 방법 습득
+- **실무 기술**: 대기업에서 실제 사용하는 기술 스택 경험
+- **트래픽 관리**: Istio를 통한 고급 트래픽 제어 기초
+
+---
+
+<div align="center">
+
+**🌐 Istio Service Mesh** • **🔍 VirtualService 라우팅** • **🔄 Traffic Management**
+
+*실무 표준 기술로 마이크로서비스 플랫폼 구축 완료*
+
+</div>
