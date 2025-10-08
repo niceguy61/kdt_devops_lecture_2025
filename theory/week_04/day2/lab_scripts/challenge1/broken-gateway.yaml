@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    istio: wrong-gateway  # 🐛 BUG: 잘못된 selector (ingressgateway여야 함)
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"

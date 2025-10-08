@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-v2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+      ver: v2  # 🐛 BUG: 태그 확인
+  template:
+    metadata:
+      labels:
+        app: user-service
+        ver: v2  # 🐛 BUG: 태그 확인
+    spec:
+      containers:
+      - name: user-service
+        image: hashicorp/http-echo
+        args:
+        - "-text=User Service v2 🚀"
+        - "-listen=:80"
+        ports:
+        - containerPort: 80
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: user-service
+spec:
+  host: user-service
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2  # ✅ 정상: subset 정의 추가됨

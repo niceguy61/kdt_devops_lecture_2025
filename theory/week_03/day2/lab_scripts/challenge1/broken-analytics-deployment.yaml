@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: analytics
-        image: python:3.9
+        image: python:3.13
         command: ["sleep", "3600"]
         resources:
           requests:

@@ -1,0 +1,47 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-routes
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - api-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /users
+    route:
+    - destination:
+        host: user-service
+        subset: v1
+      weight: 90
+    - destination:
+        host: user-service
+        subset: v2
+      weight: 10
+  - match:
+    - uri:
+        prefix: /product  # 🐛 BUG: /잘못된 prefix
+    fault:
+      delay:
+        percentage:
+          value: 50
+        fixedDelay: 3s
+      abort:
+        percentage:
+          value: 20
+        httpStatus: 503
+    route:
+    - destination:
+        host: product-service
+        port:
+          number: 8080  # 🐛 BUG: 잘못된 포트
+  - match:
+    - uri:
+        prefix: /orders
+    route:
+    - destination:
+        host: order-service
+        port:
+          number: 8080  # 🐛 BUG: 포트 오류

@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Step 6: 통합 테스트
+
+echo "=== Step 6: 통합 테스트 시작 ==="
+echo ""
+
+# istioctl PATH 설정
+if [ -d "istio-1.20.0" ]; then
+    cd istio-1.20.0
+    export PATH=$PWD/bin:$PATH
+    cd ..
+fi
+
+# Ingress Gateway NodePort 확인
+echo "1. Ingress Gateway 포트 확인 중..."
+INGRESS_PORT=$(kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+echo "   Ingress NodePort: $INGRESS_PORT"
+
+# 기본 라우팅 테스트
+echo ""
+echo "2. 기본 라우팅 테스트..."
+echo ""
+echo "User Service:"
+curl -s http://localhost:$INGRESS_PORT/users
+echo ""
+echo ""
+echo "Product Service:"
+curl -s http://localhost:$INGRESS_PORT/products
+echo ""
+echo ""
+echo "Order Service:"
+curl -s http://localhost:$INGRESS_PORT/orders
+echo ""
+
+# 로드밸런싱 테스트
+echo ""
+echo "3. 로드밸런싱 테스트 (10회 요청)..."
+for i in {1..10}; do
+  echo "Request $i:"
+  curl -s http://localhost:$INGRESS_PORT/users
+done
+
+# Istio Proxy 상태 확인
+echo ""
+echo ""
+echo "4. Istio Proxy 상태 확인..."
+if command -v istioctl &> /dev/null; then
+    istioctl proxy-status
+else
+    echo "   ℹ️  istioctl을 찾을 수 없습니다"
+fi
+
+echo ""
+echo "=== Step 6: 통합 테스트 완료 ==="
+echo ""
+echo "💡 추가 테스트를 원하면 다음 명령어를 사용하세요:"
+echo ""
+echo "   # User Service"
+echo "   curl http://localhost:$INGRESS_PORT/users"
+echo ""
+echo "   # Product Service"
+echo "   curl http://localhost:$INGRESS_PORT/products"
+echo ""
+echo "   # Order Service"
+echo "   curl http://localhost:$INGRESS_PORT/orders"

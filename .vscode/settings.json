@@ -1,0 +1,23 @@
+{
+  "amazonQ.mcp": {
+    "servers": {
+      "filesystem": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "d:\\github\\kdt_devops_lecture_2025"
+        ]
+      },
+      "sqlite": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-sqlite",
+          "--db-path",
+          "d:\\github\\kdt_devops_lecture_2025\\data\\lecture.db"
+        ]
+      }
+    }
+  }
+}

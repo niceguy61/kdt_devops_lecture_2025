@@ -1,5 +1,5 @@
 narration
-.amazonq
+# .amazonq
 pdfs
 # scripts
 security-optimization-lab
@@ -10,3 +10,4 @@ agents
 solutions.md
 test
 production-app
+istio-*
