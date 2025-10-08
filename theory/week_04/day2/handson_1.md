@@ -1,76 +1,84 @@
-# Week 4 Day 2 Hands-on 1: Istio 고급 트래픽 관리 & 배포 전략
+# Week 4 Day 2 Hands-on 1: Istio 고급 트래픽 관리
 
 <div align="center">
 
-**🚀 Canary 배포** • **🔄 Blue-Green 배포** • **📊 트래픽 분할** • **🔐 보안**
+**🔄 Traffic Splitting** • **💥 Fault Injection** • **🎯 Canary Deployment**
 
-*Lab 1을 기반으로 프로덕션급 배포 전략 구현*
+*Istio를 활용한 고급 트래픽 제어 및 장애 테스트*
 
 </div>
 
 ---
 
 ## 🕘 실습 정보
-**시간**: 14:00-15:50 (110분)
-**목표**: Istio를 활용한 고급 트래픽 관리 및 무중단 배포
-**방식**: Lab 1 기반 확장
+**시간**: 14:00-14:50 (50분)
+**목표**: 카나리 배포와 장애 주입으로 실무 시나리오 체험
+**방식**: Lab 1 기반 심화 실습 (수동 실행)
 **작업 위치**: `theory/week_04/day2/lab_scripts/handson1`
 
 ## 🎯 실습 목표
 
 ### 📚 학습 목표
-- **Canary 배포**: 점진적 트래픽 전환으로 안전한 배포
-- **Blue-Green 배포**: 즉시 전환 및 롤백 전략
-- **트래픽 분할**: 가중치 기반 트래픽 제어
-- **실무 배포**: Netflix, Google의 실제 배포 전략
+- **Traffic Splitting**: 가중치 기반 트래픽 분할
+- **Canary Deployment**: 점진적 배포 전략
+- **Fault Injection**: 장애 상황 시뮬레이션
+- **Resilience Testing**: 시스템 복원력 테스트
 
 ### 🛠️ 구현 목표
-- **v1 → v2 Canary**: 10% → 50% → 100% 점진적 전환
-- **Blue-Green 전환**: 즉시 전환 및 롤백 테스트
-- **A/B 테스팅**: 헤더 기반 트래픽 라우팅
-- **모니터링**: Kiali로 트래픽 시각화
+- **v2 서비스 배포**: 새 버전 서비스 추가
+- **90/10 트래픽 분할**: v1 90%, v2 10%
+- **장애 주입**: 지연 및 오류 시뮬레이션
+- **실시간 테스트**: 브라우저로 결과 확인
 
 ---
 
-## 🏗️ 확장된 아키텍처
+## 🏗️ 전체 아키텍처
 
 ```mermaid
 graph TB
     subgraph "External"
-        C[Client]
+        C[Client<br/>localhost:8080]
     end
     
-    subgraph "Istio Gateway"
-        GW[Gateway]
-        VS[VirtualService<br/>Traffic Rules]
-        DR[DestinationRule<br/>Subsets]
+    subgraph "Kubernetes Cluster"
+        subgraph "Istio Gateway"
+            IG[Istio Gateway]
+        end
+        
+        subgraph "Traffic Management"
+            VS[VirtualService<br/>Traffic Splitting]
+            FI[Fault Injection<br/>지연/오류]
+        end
+        
+        subgraph "User Service"
+            US1[User Service v1<br/>90%]
+            US2[User Service v2<br/>10%]
+        end
+        
+        subgraph "Product Service"
+            PS[Product Service<br/>+ Fault Injection]
+        end
+        
+        subgraph "Order Service"
+            OS[Order Service]
+        end
     end
     
-    subgraph "User Service Versions"
-        US1[User Service v1<br/>90% traffic]
-        US2[User Service v2<br/>10% traffic]
-    end
+    C --> IG
+    IG --> VS
+    VS --> FI
+    FI --> US1
+    FI --> US2
+    FI --> PS
+    FI --> OS
     
-    subgraph "Product Service"
-        PS1[Product v1<br/>Blue]
-        PS2[Product v2<br/>Green]
-    end
-    
-    C --> GW
-    GW --> VS
-    VS --> DR
-    DR --> US1
-    DR --> US2
-    DR --> PS1
-    DR --> PS2
-    
-    style GW fill:#ffebee
-    style VS fill:#e3f2fd
-    style DR fill:#fff3e0
+    style IG fill:#ffebee
+    style VS fill:#fff3e0
+    style FI fill:#ffcdd2
     style US1 fill:#e8f5e8
     style US2 fill:#c8e6c9
-    style PS1 fill:#bbdefb
-    style PS2 fill:#c8e6c9
+    style PS fill:#ffebee
+    style OS fill:#e8f5e8
 ```
 
 ---
@@ -83,28 +91,36 @@ graph TB
 cd theory/week_04/day2/lab_scripts/handson1
 ```
 
-### Step 1-2: 환경 설정
+### Step 1-2: Lab 1 환경 확인
 
+**🚀 자동 확인 스크립트**
 ```bash
 ./setup-environment.sh
 ```
 
-> **💡 참고**: Lab 1이 완료되어 있어야 합니다. Istio와 기본 서비스가 배포되어 있어야 합니다.
+**📋 스크립트 내용**: [setup-environment.sh](./lab_scripts/handson1/setup-environment.sh)
+
+**💡 빠른 전체 설정 (선택사항)**
+```bash
+# 수동 실행을 건너뛰고 싶다면
+./setup-all.sh
+# 그리고 Step 5 테스트로 이동
+```
 
 ---
 
-## 🚀 Step 2: Canary 배포 구현 (30분)
+## 🚀 Step 2: User Service v2 배포 (10분)
 
-### Step 2-1: User Service v2 배포 (10분)
+### Step 2-1: v2 Deployment 생성
 
 ```bash
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service-v2
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: user-service
@@ -117,25 +133,34 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: hashicorp/http-echo:latest
+        image: hashicorp/http-echo
         args:
-        - "-text=User Service v2 - New Features!"
+        - "-text=User Service v2 🚀"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
 EOF
 ```
 
-**배포 확인**
+### Step 2-2: 배포 확인
+
 ```bash
+# Pod 확인
 kubectl get pods -l app=user-service
-# v1: 2개, v2: 1개 Pod 확인
+
+# v1과 v2 모두 Running 상태 확인
+# user-service-xxx (v1) - 2개
+# user-service-v2-xxx (v2) - 2개
 ```
 
-### Step 2-2: DestinationRule 생성 (5분)
+---
+
+## 🔄 Step 3: Traffic Splitting 설정 (15분)
+
+### Step 3-1: DestinationRule 업데이트 (subset 정의)
 
 ```bash
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
@@ -149,21 +174,25 @@ spec:
   - name: v2
     labels:
       version: v2
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
 EOF
 ```
 
-### Step 2-3: VirtualService로 트래픽 분할 (15분)
+### Step 3-2: VirtualService 업데이트 (90/10 분할)
 
-**Phase 1: v2에 10% 트래픽**
 ```bash
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: user-service
+  name: api-routes
 spec:
   hosts:
-  - user-service
+  - "*"
+  gateways:
+  - api-gateway
   http:
   - match:
     - uri:
@@ -177,205 +206,63 @@ spec:
         host: user-service
         subset: v2
       weight: 10
-EOF
-```
-
-**Canary 테스트 (10% v2)**
-```bash
-echo "=== Canary 배포 테스트 (v1: 90%, v2: 10%) ==="
-for i in {1..20}; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/users
-done | sort | uniq -c
-```
-
-**Phase 2: v2에 50% 트래픽**
-```bash
-kubectl patch virtualservice user-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/users"}}],
-      "route": [
-        {"destination": {"host": "user-service", "subset": "v1"}, "weight": 50},
-        {"destination": {"host": "user-service", "subset": "v2"}, "weight": 50}
-      ]
-    }]
-  }
-}'
-
-# 테스트
-for i in {1..20}; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/users
-done | sort | uniq -c
-```
-
-**Phase 3: v2에 100% 트래픽**
-```bash
-kubectl patch virtualservice user-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/users"}}],
-      "route": [
-        {"destination": {"host": "user-service", "subset": "v2"}, "weight": 100}
-      ]
-    }]
-  }
-}'
-
-# 테스트
-for i in {1..10}; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/users
-done
-```
-
----
-
-## 🔄 Step 3: Blue-Green 배포 구현 (25분)
-
-### Step 3-1: Product Service v2 배포 (Green) (10분)
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-service-v2
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: product-service
-      version: v2
-  template:
-    metadata:
-      labels:
-        app: product-service
-        version: v2
-    spec:
-      containers:
-      - name: product-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=Product Service v2 - Green Deployment"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
-EOF
-```
-
-### Step 3-2: DestinationRule 생성 (5분)
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: product-service
-spec:
-  host: product-service
-  subsets:
-  - name: blue
-    labels:
-      version: v1
-  - name: green
-    labels:
-      version: v2
-EOF
-```
-
-### Step 3-3: Blue-Green 전환 (10분)
-
-**현재 상태: Blue (v1) 활성**
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: product-service
-spec:
-  hosts:
-  - product-service
-  http:
   - match:
     - uri:
         prefix: /products
     route:
     - destination:
         host: product-service
-        subset: blue
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /orders
+    route:
+    - destination:
+        host: order-service
+        port:
+          number: 80
 EOF
-
-# 테스트
-curl -s -H "Host: api.example.com" http://localhost:8080/products
 ```
 
-**Green으로 즉시 전환**
+### Step 3-3: Traffic Splitting 테스트
+
 ```bash
-kubectl patch virtualservice product-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/products"}}],
-      "route": [
-        {"destination": {"host": "product-service", "subset": "green"}}
-      ]
-    }]
-  }
-}'
-
-# 테스트
-for i in {1..5}; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/products
-done
+# 100번 호출하여 v1/v2 비율 확인
+for i in {1..100}; do
+  curl -s http://localhost:808080/users
+done | sort | uniq -c
 ```
 
-**롤백 (Blue로 복귀)**
-```bash
-kubectl patch virtualservice product-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/products"}}],
-      "route": [
-        {"destination": {"host": "product-service", "subset": "blue"}}
-      ]
-    }]
-  }
-}'
-
-# 테스트
-curl -s -H "Host: api.example.com" http://localhost:8080/products
+**예상 결과:**
 ```
+  90 User Service v1
+  10 User Service v2 🚀
+```
+
+**브라우저 테스트:**
+- http://localhost:808080/users 를 10번 새로고침
+- 대부분 "User Service v1"
+- 가끔 "User Service v2 🚀" 표시
 
 ---
 
-## 🎯 Step 4: A/B 테스팅 구현 (20분)
+## 💥 Step 4: Fault Injection 설정 (10분)
 
-### Step 4-1: 헤더 기반 라우팅
+### Step 4-1: VirtualService에 Fault Injection 추가
 
 ```bash
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: user-service
+  name: api-routes
 spec:
   hosts:
-  - user-service
+  - "*"
+  gateways:
+  - api-gateway
   http:
-  # Beta 사용자는 v2로
-  - match:
-    - headers:
-        x-user-type:
-          exact: beta
-      uri:
-        prefix: /users
-    route:
-    - destination:
-        host: user-service
-        subset: v2
-  # 일반 사용자는 v1로
   - match:
     - uri:
         prefix: /users
@@ -383,240 +270,261 @@ spec:
     - destination:
         host: user-service
         subset: v1
-EOF
-```
-
-**A/B 테스트**
-```bash
-# 일반 사용자 (v1)
-echo "=== 일반 사용자 ==="
-curl -s -H "Host: api.example.com" http://localhost:8080/users
-
-# Beta 사용자 (v2)
-echo -e "\n=== Beta 사용자 ==="
-curl -s -H "Host: api.example.com" -H "x-user-type: beta" http://localhost:8080/users
-```
-
-### Step 4-2: 지역 기반 라우팅
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: product-service
-spec:
-  hosts:
-  - product-service
-  http:
-  # 한국 사용자는 v2로
-  - match:
-    - headers:
-        x-region:
-          exact: kr
-      uri:
-        prefix: /products
-    route:
+      weight: 90
     - destination:
-        host: product-service
-        subset: green
-  # 기타 지역은 v1로
+        host: user-service
+        subset: v2
+      weight: 10
   - match:
     - uri:
         prefix: /products
+    fault:
+      delay:
+        percentage:
+          value: 50
+        fixedDelay: 3s
+      abort:
+        percentage:
+          value: 20
+        httpStatus: 503
     route:
     - destination:
         host: product-service
-        subset: blue
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /orders
+    route:
+    - destination:
+        host: order-service
+        port:
+          number: 80
 EOF
 ```
 
-**지역 기반 테스트**
-```bash
-# 기타 지역 (Blue)
-echo "=== 기타 지역 ==="
-curl -s -H "Host: api.example.com" http://localhost:8080/products
+### Step 4-2: Fault Injection 테스트
 
-# 한국 (Green)
-echo -e "\n=== 한국 지역 ==="
-curl -s -H "Host: api.example.com" -H "x-region: kr" http://localhost:8080/products
+**지연 테스트:**
+```bash
+# 응답 시간 측정
+time curl http://localhost:808080/products
+
+# 여러 번 실행하여 50% 확률로 3초 지연 확인
 ```
+
+**오류 테스트:**
+```bash
+# 20번 호출하여 오류율 확인
+for i in {1..20}; do
+  echo -n "요청 $i: "
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:808080/products
+done
+```
+
+**예상 결과:**
+- 약 50%는 3초 후 200 응답
+- 약 20%는 즉시 503 오류
+- 나머지 30%는 즉시 200 응답
+
+**브라우저 테스트:**
+- http://localhost:808080/products 를 여러 번 새로고침
+- 가끔 느린 응답 (3초 대기)
+- 가끔 "503 Service Unavailable" 오류
 
 ---
 
-## 📊 Step 5: Kiali로 트래픽 시각화 (15분)
+## ✅ Step 5: 종합 테스트 (10분)
 
-### Step 5-1: Kiali 설치
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
-
-# Kiali 대시보드 실행
-istioctl dashboard kiali &
-```
-
-### Step 5-2: 트래픽 생성
+### Step 5-1: 전체 시스템 테스트
 
 ```bash
-# 지속적인 트래픽 생성
-while true; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/users > /dev/null
-  curl -s -H "Host: api.example.com" http://localhost:8080/products > /dev/null
-  curl -s -H "Host: api.example.com" -H "x-user-type: beta" http://localhost:8080/users > /dev/null
-  sleep 0.5
-done &
-
-TRAFFIC_PID=$!
-```
-
-### Step 5-3: Kiali에서 확인
-
-**Kiali 대시보드에서 확인할 항목**:
-1. **Graph**: 서비스 간 트래픽 흐름
-2. **Versioned App Graph**: v1, v2 트래픽 분할 시각화
-3. **Traffic Distribution**: 가중치 기반 분산 확인
-4. **Request Rate**: 초당 요청 수
-
-```bash
-# 트래픽 생성 중지
-kill $TRAFFIC_PID
-```
-
----
-
-## 🔐 Step 6: 보안 정책 (선택사항, 15분)
-
-### Step 6-1: mTLS 활성화
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: default
-spec:
-  mtls:
-    mode: STRICT
-EOF
-```
-
-### Step 6-2: Authorization Policy
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: user-service-policy
-spec:
-  selector:
-    matchLabels:
-      app: user-service
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/default"]
-    to:
-    - operation:
-        methods: ["GET"]
-EOF
-```
-
----
-
-## ✅ 통합 테스트 (10분)
-
-### 전체 배포 전략 테스트
-
-```bash
-echo "=== 1. Canary 배포 테스트 ==="
-kubectl patch virtualservice user-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/users"}}],
-      "route": [
-        {"destination": {"host": "user-service", "subset": "v1"}, "weight": 70},
-        {"destination": {"host": "user-service", "subset": "v2"}, "weight": 30}
-      ]
-    }]
-  }
-}'
-
-for i in {1..10}; do
-  curl -s -H "Host: api.example.com" http://localhost:8080/users
+# 1. Traffic Splitting 확인
+echo "=== Traffic Splitting 테스트 ==="
+for i in {1..20}; do
+  curl -s http://localhost:808080/users
 done | sort | uniq -c
 
-echo -e "\n=== 2. Blue-Green 전환 테스트 ==="
-kubectl patch virtualservice product-service --type merge -p '
-{
-  "spec": {
-    "http": [{
-      "match": [{"uri": {"prefix": "/products"}}],
-      "route": [
-        {"destination": {"host": "product-service", "subset": "green"}}
-      ]
-    }]
-  }
-}'
+# 2. Fault Injection 확인
+echo ""
+echo "=== Fault Injection 테스트 ==="
+for i in {1..10}; do
+  echo -n "요청 $i: "
+  time curl -s http://localhost:808080/products
+  echo ""
+done
 
-curl -s -H "Host: api.example.com" http://localhost:8080/products
+# 3. 정상 서비스 확인
+echo ""
+echo "=== Order Service (정상) ==="
+curl http://localhost:808080/orders
+```
 
-echo -e "\n=== 3. A/B 테스팅 ==="
-curl -s -H "Host: api.example.com" http://localhost:8080/users
-curl -s -H "Host: api.example.com" -H "x-user-type: beta" http://localhost:8080/users
+### Step 5-2: 브라우저 종합 테스트
 
-echo -e "\n✅ 전체 테스트 완료"
+**테스트 시나리오:**
+1. **http://localhost:808080/users** - 10번 새로고침
+   - v1과 v2가 약 9:1 비율로 표시되는지 확인
+
+2. **http://localhost:808080/products** - 10번 새로고침
+   - 느린 응답 (3초) 발생 확인
+   - 503 오류 발생 확인
+
+3. **http://localhost:808080/orders** - 정상 동작 확인
+
+---
+
+## ✅ 실습 체크포인트
+
+### ✅ Traffic Splitting 확인
+- [ ] User Service v2 배포 완료 (2개 Pod)
+- [ ] DestinationRule subset 정의 (v1, v2)
+- [ ] VirtualService weight 설정 (90/10)
+- [ ] curl 테스트로 비율 확인
+- [ ] 브라우저에서 v1/v2 번갈아 표시
+
+### ✅ Fault Injection 확인
+- [ ] Product Service에 지연 주입 (50%, 3초)
+- [ ] Product Service에 오류 주입 (20%, 503)
+- [ ] curl 테스트로 지연/오류 확인
+- [ ] 브라우저에서 느린 응답 체험
+- [ ] 브라우저에서 503 오류 확인
+
+---
+
+## 🚀 추가 실험 (선택사항)
+
+### 실험 1: 트래픽 비율 변경
+
+**v2를 50%로 증가:**
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-routes
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - api-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /users
+    route:
+    - destination:
+        host: user-service
+        subset: v1
+      weight: 50
+    - destination:
+        host: user-service
+        subset: v2
+      weight: 50
+  # ... (나머지 동일)
+EOF
+```
+
+### 실험 2: 장애 비율 조정
+
+**지연을 100%, 5초로 변경:**
+```bash
+fault:
+  delay:
+    percentage:
+      value: 100
+    fixedDelay: 5s
+```
+
+### 실험 3: 헤더 기반 라우팅
+
+**특정 헤더가 있으면 v2로 라우팅:**
+```bash
+http:
+- match:
+  - headers:
+      version:
+        exact: v2
+    uri:
+      prefix: /users
+  route:
+  - destination:
+      host: user-service
+      subset: v2
+```
+
+**테스트:**
+```bash
+curl -H "version: v2" http://localhost:808080/users
 ```
 
 ---
 
 ## 🧹 실습 정리
 
+**🚀 자동 정리 스크립트**
 ```bash
 ./cleanup.sh
 ```
 
 **📋 스크립트 내용**: [cleanup.sh](./lab_scripts/handson1/cleanup.sh)
 
+**수동 정리:**
+```bash
+# v2 삭제
+kubectl delete deployment user-service-v2
+
+# VirtualService 복원 (Lab 1 상태)
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-routes
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - api-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /users
+    route:
+    - destination:
+        host: user-service
+        port:
+          number: 80
+  # ... (나머지 서비스)
+EOF
+```
+
 ---
 
 ## 💡 실습 회고
 
-### 🤝 팀 회고 (10분)
-1. **Canary vs Blue-Green**: 각 배포 전략의 장단점은?
-2. **트래픽 분할**: 실무에서 어떤 비율로 시작하는 것이 안전할까?
-3. **A/B 테스팅**: 헤더 기반 라우팅의 실무 활용 사례는?
-4. **롤백 전략**: 문제 발생 시 얼마나 빠르게 롤백할 수 있나?
+### 🤝 페어 회고 (5분)
+1. **Canary Deployment**: 실무에서 어떤 상황에 유용할까요?
+2. **Fault Injection**: 장애 테스트가 왜 중요한가요?
+3. **Traffic Splitting**: 90/10 비율을 어떻게 결정하나요?
+4. **실무 적용**: 이 기능들을 어떤 프로젝트에 적용하고 싶나요?
 
 ### 📊 학습 성과
-- **Canary 배포**: 점진적 트래픽 전환으로 안전한 배포
-- **Blue-Green 배포**: 즉시 전환 및 빠른 롤백
-- **A/B 테스팅**: 헤더 기반 트래픽 라우팅
-- **실무 배포**: Netflix, Google의 실제 배포 전략 체험
+- **Canary Deployment**: 점진적 배포 전략 이해 및 구현
+- **Traffic Splitting**: 가중치 기반 트래픽 제어 습득
+- **Fault Injection**: 장애 상황 시뮬레이션 및 테스트
+- **실무 패턴**: Netflix, Google 등에서 사용하는 배포 전략 체험
 
-### 🏢 실무 적용 사례
-
-**Netflix**:
-- Canary: 1% → 10% → 50% → 100% (각 단계 1시간)
-- 자동 롤백: 에러율 5% 초과 시
-
-**Google**:
-- Blue-Green: 새 버전 완전 배포 후 트래픽 전환
-- Shadow Traffic: 실제 트래픽 복제하여 테스트
-
-**Uber**:
-- A/B 테스팅: 지역별, 사용자 그룹별 기능 테스트
-- 점진적 확대: 1개 도시 → 10개 도시 → 전체
+### 🌟 실무 인사이트
+- **Netflix**: 카나리 배포로 수천 개 마이크로서비스 안전하게 배포
+- **Google**: Chaos Engineering으로 시스템 복원력 지속 검증
+- **Uber**: 트래픽 분할로 A/B 테스트 및 점진적 기능 출시
 
 ---
 
 <div align="center">
 
-**🚀 Canary** • **🔄 Blue-Green** • **🎯 A/B Testing** • **📊 Traffic Management**
+**🔄 Canary Deployment** • **💥 Chaos Engineering** • **🎯 Production Ready**
 
-*프로덕션급 배포 전략 구현 완료*
+*실무 배포 전략과 장애 테스트 완벽 마스터*
 
 </div>
