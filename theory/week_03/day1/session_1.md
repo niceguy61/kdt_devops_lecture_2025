@@ -289,9 +289,54 @@ kubectl run nginx-pod --image=nginx:1.20 --port=80
 
 ---
 
-## 🔬 Part 3: 실시간 동작 관찰 체험 (15분)
+## 🔬 Part 4: 실시간 동작 관찰 체험 (10분)
 
-### 🚀 체험 1: 멀티 터미널 실시간 모니터링
+### 🎯 체험 목표
+**"이론을 실제로 확인해보자!"**
+
+### 🚀 Step 1: 로컬 Kubernetes 클러스터 생성 (3분)
+
+**Kind (Kubernetes in Docker) 사용**:
+```bash
+# Kind 설치 확인
+kind version
+
+# 단일 노드 클러스터 생성
+kind create cluster --name session1-demo
+
+# 클러스터 정보 확인
+kubectl cluster-info --context kind-session1-demo
+
+# 노드 확인
+kubectl get nodes
+```
+
+**Minikube 사용 (대안)**:
+```bash
+# Minikube 시작
+minikube start --driver=docker
+
+# 클러스터 상태 확인
+minikube status
+
+# kubectl 컨텍스트 확인
+kubectl config current-context
+```
+
+### 🔍 Step 2: 클러스터 컴포넌트 확인 (2분)
+
+```bash
+# Control Plane 컴포넌트 확인
+kubectl get pods -n kube-system
+
+# 각 컴포넌트 상태 확인
+kubectl get componentstatuses
+
+# 노드 상세 정보
+kubectl describe node
+```
+
+### 🧪 Step 3: 실시간 모니터링 (5분)
 
 ```bash
 # 터미널 1: Pod 상태 실시간 관찰
@@ -302,18 +347,14 @@ kubectl get events -w --sort-by='.lastTimestamp'
 
 # 터미널 3: 실제 Pod 생성 (모든 과정 동시 관찰!)
 kubectl run session1-demo --image=nginx:alpine
-```
 
-### 🔍 체험 2: 스케줄링 과정 직접 확인
-
-```bash
-# 여러 Pod 동시 생성으로 스케줄링 과정 관찰
+# 스케줄링 과정 확인
 for i in {1..3}; do
   kubectl run scheduler-demo-$i --image=nginx &
 done
 wait
 
-# 결과 확인: 어떤 노드에 배치되었는지 확인
+# 결과 확인: 어떤 노드에 배치되었는지
 kubectl get pods -o wide
 ```
 
