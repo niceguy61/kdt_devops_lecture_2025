@@ -51,23 +51,29 @@
 kubectl config current-context
 # 출력: kind-challenge-cluster
 
-# 클러스터 정보 확인
-kubectl cluster-info
+# 노드 확인
+kubectl get nodes
+# 출력:
+# NAME                              STATUS   ROLES           AGE   VERSION
+# challenge-cluster-control-plane   Ready    control-plane   10m   v1.27.3
 
 # Control Plane 컴포넌트 확인
-kubectl get pods -n kube-system
-
-# 노드 이름 확인 (Kind의 경우)
-kubectl get nodes
-# 출력: challenge-cluster-control-plane
+kubectl get pods -n kube-system | grep -E "etcd|apiserver|controller|scheduler"
+# 출력:
+# etcd-challenge-cluster-control-plane                      1/1     Running   0          10m
+# kube-apiserver-challenge-cluster-control-plane            1/1     Running   0          10m
+# kube-controller-manager-challenge-cluster-control-plane   1/1     Running   0          10m
+# kube-scheduler-challenge-cluster-control-plane            1/1     Running   0          10m
 ```
 
-**💡 참고**: Kind로 생성한 클러스터의 경우:
+**💡 참고**: Kind로 생성한 클러스터의 명명 규칙:
 - **클러스터 이름**: `challenge-cluster`
 - **컨텍스트**: `kind-challenge-cluster`
 - **Control Plane 노드**: `challenge-cluster-control-plane`
 - **ETCD Pod**: `etcd-challenge-cluster-control-plane`
 - **API Server Pod**: `kube-apiserver-challenge-cluster-control-plane`
+- **Controller Manager Pod**: `kube-controller-manager-challenge-cluster-control-plane`
+- **Scheduler Pod**: `kube-scheduler-challenge-cluster-control-plane`
 
 ---
 
