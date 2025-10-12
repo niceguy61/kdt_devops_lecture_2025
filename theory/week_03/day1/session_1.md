@@ -302,10 +302,10 @@ kubectl run nginx-pod --image=nginx:1.20 --port=80
 kind version
 
 # 단일 노드 클러스터 생성
-kind create cluster --name session1-demo
+kind create cluster --name challenge-cluster
 
 # 클러스터 정보 확인
-kubectl cluster-info --context kind-session1-demo
+kubectl cluster-info --context kind-challenge-cluster
 
 # 노드 확인
 kubectl get nodes
@@ -313,11 +313,11 @@ kubectl get nodes
 
 **Minikube 사용 (대안)**:
 ```bash
-# Minikube 시작
-minikube start --driver=docker
+# Minikube 시작 (프로파일명 지정)
+minikube start --driver=docker -p challenge-cluster
 
 # 클러스터 상태 확인
-minikube status
+minikube status -p challenge-cluster
 
 # kubectl 컨텍스트 확인
 kubectl config current-context
