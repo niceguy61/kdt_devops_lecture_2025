@@ -152,7 +152,7 @@ sequenceDiagram
 
 ```bash
 # 실제 ETCD Watch 체험
-kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- \
+kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- sh -c "
   ETCDCTL_API=3 etcdctl watch /registry/pods/default/ --prefix \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
@@ -175,7 +175,7 @@ kubectl run etcd-demo --image=nginx
 /registry/secrets/kube-system/token-xxx    # Secret 정보
 
 # 실제 데이터 확인
-kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- \
+kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- sh -c "
   ETCDCTL_API=3 etcdctl get /registry/pods/default/ --prefix --keys-only
 ```
 
