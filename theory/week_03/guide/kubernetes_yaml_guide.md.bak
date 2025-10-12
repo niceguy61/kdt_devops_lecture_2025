@@ -12,21 +12,21 @@
 
 ## 📋 목차
 
-1. [YAML 기본 문법](#-yaml-기본-문법)
-2. [Kubernetes YAML 공통 구조](#️-kubernetes-yaml-공통-구조)
-3. [Pod](#-pod)
-4. [Deployment](#-deployment)
-5. [Service](#-service)
-6. [ConfigMap & Secret](#-configmap--secret)
-7. [PersistentVolume & PersistentVolumeClaim](#-persistentvolume--persistentvolumeclaim)
-8. [Ingress](#-ingress)
-9. [StatefulSet](#-statefulset)
-10. [DaemonSet](#-daemonset)
-11. [Job & CronJob](#️-job--cronjob)
-12. [Namespace](#-namespace)
-13. [ServiceAccount & RBAC](#-serviceaccount--rbac)
-14. [추가 학습 자료](#-추가-학습-자료)
-15. [베스트 프랙티스](#-베스트-프랙티스)
+1. [YAML 기본 문법](#yaml-기본-문법)
+2. [Kubernetes YAML 공통 구조](#kubernetes-yaml-공통-구조)
+3. [Pod](#pod)
+4. [Deployment](#deployment)
+5. [Service](#service)
+6. [ConfigMap & Secret](#configmap--secret)
+7. [PersistentVolume & PersistentVolumeClaim](#persistentvolume--persistentvolumeclaim)
+8. [Ingress](#ingress)
+9. [StatefulSet](#statefulset)
+10. [DaemonSet](#daemonset)
+11. [Job & CronJob](#job--cronjob)
+12. [Namespace](#namespace)
+13. [ResourceQuota & LimitRange](#resourcequota--limitrange)
+14. [NetworkPolicy](#networkpolicy)
+15. [ServiceAccount & RBAC](#serviceaccount--rbac)
 
 ---
 
