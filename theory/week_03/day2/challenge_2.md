@@ -207,9 +207,10 @@ nodeSelector:
 ## 📋 제출 방법
 
 ### 1. GitHub Repository 생성
-- **Repository 이름**: `w3d2-game-server-architecture`
+- **Repository 이름**: `kubernetes-challenge`
 - **Public Repository**로 설정
 - **README.md**에 프로젝트 개요 작성
+- 주/일 단위 폴더에 만들고 파일 추가 (week3/day2/...)
 
 ### 2. Discord 제출
 ```
