@@ -40,8 +40,9 @@
 **수동 실행 (학습용)**:
 ```bash
 # 작업 디렉토리 생성
-mkdir -p ~/k8s-lab1
-cd ~/k8s-lab1
+cd ./lab_scripts/lab1
+mkdir test
+cd test
 
 # 필요 도구 확인
 kubectl version --client
