@@ -151,13 +151,8 @@ sequenceDiagram
 **은행 비유**: "계좌 잔액이 바뀌면 모든 지점에 즉시 알림!"
 
 ```bash
-# 실제 ETCD Watch 체험
-kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- sh -c "
-  ETCDCTL_API=3 etcdctl watch /registry/pods/default/ --prefix \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
+# 실제 ETCD Watch 체험 (백그라운드 실행)
+kubectl exec -n kube-system etcd-challenge-cluster-control-plane -- sh -c "ETCDCTL_API=3 etcdctl watch /registry/pods/default/ --prefix --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key" &
 
 # 다른 터미널에서 Pod 생성
 kubectl run etcd-demo --image=nginx
