@@ -8,8 +8,8 @@
 
 1. **현재 상태 파악**
    ```bash
-   kubectl get pods -n challenge1
-   kubectl get svc -n challenge1
+   kubectl get pods -n day1-challenge
+   kubectl get svc -n day1-challenge
    ```
 
 2. **접근 테스트**
@@ -20,8 +20,8 @@
 
 3. **상세 정보 확인**
    ```bash
-   kubectl describe pod <pod-name> -n challenge1
-   kubectl describe svc <service-name> -n challenge1
+   kubectl describe pod <pod-name> -n day1-challenge
+   kubectl describe svc <service-name> -n day1-challenge
    ```
 
 ---
@@ -39,9 +39,9 @@
 
 **확인 명령어**:
 ```bash
-kubectl get pods -l app=frontend -n challenge1
-kubectl describe svc frontend-service -n challenge1
-kubectl describe pod <frontend-pod> -n challenge1
+kubectl get pods -l app=frontend -n day1-challenge
+kubectl describe svc frontend-service -n day1-challenge
+kubectl describe pod <frontend-pod> -n day1-challenge
 ```
 
 ### 시나리오 2: API 서버 응답 없음
@@ -55,9 +55,9 @@ kubectl describe pod <frontend-pod> -n challenge1
 
 **확인 명령어**:
 ```bash
-kubectl logs -l app=api-server -n challenge1
-kubectl describe pod <api-pod> -n challenge1
-kubectl get svc -n challenge1 | grep database
+kubectl logs -l app=api-server -n day1-challenge
+kubectl describe pod <api-pod> -n day1-challenge
+kubectl get svc -n day1-challenge | grep database
 ```
 
 ### 시나리오 3: Pod 시작 실패
@@ -71,8 +71,8 @@ kubectl get svc -n challenge1 | grep database
 
 **확인 명령어**:
 ```bash
-kubectl describe pod <pod-name> -n challenge1
-kubectl get pods -n challenge1 -o wide
+kubectl describe pod <pod-name> -n day1-challenge
+kubectl get pods -n day1-challenge -o wide
 ```
 
 ### 시나리오 4: 서비스 연결 실패
@@ -86,9 +86,9 @@ kubectl get pods -n challenge1 -o wide
 
 **확인 명령어**:
 ```bash
-kubectl get endpoints -n challenge1
-kubectl get pods --show-labels -n challenge1
-kubectl describe svc backend-service -n challenge1
+kubectl get endpoints -n day1-challenge
+kubectl get pods --show-labels -n day1-challenge
+kubectl describe svc backend-service -n day1-challenge
 ```
 
 ---
@@ -97,33 +97,33 @@ kubectl describe svc backend-service -n challenge1
 
 ### 전체 상태 한눈에 보기
 ```bash
-kubectl get all -n challenge1
+kubectl get all -n day1-challenge
 ```
 
 ### 특정 리소스 상세 정보
 ```bash
-kubectl describe <resource-type> <resource-name> -n challenge1
+kubectl describe <resource-type> <resource-name> -n day1-challenge
 ```
 
 ### 실시간 로그 확인
 ```bash
-kubectl logs -f <pod-name> -n challenge1
+kubectl logs -f <pod-name> -n day1-challenge
 ```
 
 ### 라벨로 리소스 필터링
 ```bash
-kubectl get pods -l app=frontend -n challenge1
-kubectl get pods --show-labels -n challenge1
+kubectl get pods -l app=frontend -n day1-challenge
+kubectl get pods --show-labels -n day1-challenge
 ```
 
 ### 포트 포워딩으로 직접 테스트
 ```bash
-kubectl port-forward <pod-name> 8080:80 -n challenge1
+kubectl port-forward <pod-name> 8080:80 -n day1-challenge
 ```
 
 ### 임시 테스트 Pod 생성
 ```bash
-kubectl run test --image=busybox -it --rm -n challenge1 -- /bin/sh
+kubectl run test --image=busybox -it --rm -n day1-challenge -- /bin/sh
 ```
 
 ---
