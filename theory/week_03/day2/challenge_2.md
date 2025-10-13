@@ -203,7 +203,7 @@ nodeSelector:
 - 
 ---
 ## 🚀 다음 단계 계획
-```
+
 ## 📋 제출 방법
 
 ### 1. GitHub Repository 생성
