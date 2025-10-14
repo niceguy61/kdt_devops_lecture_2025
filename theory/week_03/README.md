@@ -10,6 +10,55 @@
 
 ---
 
+## 🛠️ 사전 준비 사항
+
+### 📦 필수 도구 설치
+
+#### 1. kubectl (Kubernetes CLI)
+```bash
+# macOS
+brew install kubectl
+
+# Linux
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Windows (PowerShell)
+curl.exe -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```
+
+#### 2. Kind (Kubernetes in Docker)
+```bash
+# macOS/Linux
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+# Windows
+curl.exe -Lo kind-windows-amd64.exe https://kind.sigs.k8s.io/dl/v0.20.0/kind-windows-amd64
+```
+
+#### 3. k9s (Kubernetes TUI) - 강력 추천! 🌟
+```bash
+# macOS
+brew install k9s
+
+# Linux
+K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -sL https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz | tar xz
+sudo mv k9s /usr/local/bin/
+
+# Windows
+choco install k9s
+# 또는 scoop install k9s
+```
+
+### 📚 추가 도구 가이드
+- **상세 설치 가이드**: [Kubernetes 모니터링 도구 가이드](./k8s_monitoring_tools_guide.md)
+- **kubectl 명령어 레퍼런스**: [kubectl 명령어 참조](./kubectl_commands_reference.md)
+
+---
+
 ## 🎯 Week 3 전체 목표
 
 ### 📚 핵심 학습 목표

@@ -22,17 +22,63 @@
 
 ## 📋 준비 사항
 
-### ✅ 1. 환경 확인
+### ✅ 1. 멀티 노드 클러스터 생성
 ```bash
+# 기존 클러스터 삭제 (있는 경우)
+kind delete cluster --name lab-cluster 2>/dev/null || true
+
+# 멀티 노드 클러스터 설정 파일 생성
+cat <<EOF > kind-multi-node.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "node-type=control-plane"
+- role: worker
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "node-type=worker,storage-type=ssd"
+- role: worker
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "node-type=worker,storage-type=hdd"
+EOF
+
+# 멀티 노드 클러스터 생성
+echo "🚀 멀티 노드 클러스터 생성 중... (2-3분 소요)"
+kind create cluster --name lab-cluster --config kind-multi-node.yaml
+
 # 클러스터 상태 확인
 kubectl cluster-info
+kubectl get nodes -o wide --show-labels
+
+echo "✅ 멀티 노드 클러스터 준비 완료!"
+```
+
+### ✅ 2. 환경 확인
+```bash
+# 노드 개수 확인 (3개 노드 예상)
 kubectl get nodes
+
+# 노드별 라벨 확인
+kubectl get nodes --show-labels
 
 # k9s 실행 (선택사항 - 시각적 모니터링)
 k9s
 ```
 
-### ✅ 2. 작업 공간 준비
+### ✅ 3. 작업 공간 준비
 ```bash
 # 실습용 네임스페이스 생성
 kubectl create namespace handson-workloads
@@ -311,6 +357,9 @@ kubectl delete namespace handson-workloads
 
 # 컨텍스트 원복
 kubectl config set-context --current --namespace=default
+
+# 멀티 노드 클러스터 정리 (선택사항)
+# kind delete cluster --name lab-cluster
 
 echo "✅ Hands-On 완료!"
 ```
