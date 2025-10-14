@@ -93,13 +93,13 @@ cd theory/week_03/day3/lab_scripts/lab1
 **1-1. 수동 실행 (학습용)**
 ```bash
 # 네임스페이스 생성
-kubectl create -n day3-lab namespace day3-lab
+kubectl create namespace day3-lab
 
 # 기본 네임스페이스 설정
 kubectl config set-context --current --namespace=day3-lab
 
 # 확인
-kubectl get -n day3-lab namespace day3-lab
+kubectl get namespace day3-lab
 ```
 
 ---
@@ -119,7 +119,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **2-1. 수동 실행 (학습용)**
 ```bash
 # PVC 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -135,7 +135,7 @@ spec:
 EOF
 
 # PVC 상태 확인
-kubectl get -n day3-lab pvc postgres-data
+kubectl get pvc postgres-data
 ```
 
 ### Step 2-2: PostgreSQL 데이터베이스 배포 (15분)
@@ -151,7 +151,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **2-2. 수동 실행 (학습용)**
 ```bash
 # PostgreSQL Deployment 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -202,8 +202,8 @@ spec:
 EOF
 
 # 배포 상태 확인
-kubectl get -n day3-lab pods -l app=postgres
-kubectl get -n day3-lab svc database-service
+kubectl get pods -l app=postgres
+kubectl get svc database-service
 ```
 
 ---
@@ -223,7 +223,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **3-1. 수동 실행 (학습용)**
 ```bash
 # Backend Deployment 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -275,13 +275,13 @@ EOF
 **3-2. 연결 테스트**
 ```bash
 # 백엔드 Pod 상태 확인
-kubectl get -n day3-lab pods -l app=backend
+kubectl get pods -l app=backend
 
 # 서비스 Endpoint 확인
-kubectl get -n day3-lab endpoints backend-service
+kubectl get endpoints backend-service
 
 # 데이터베이스 연결 테스트 (Pod 내부에서)
-kubectl exec -n day3-lab -it deployment/backend -- nc -zv postgres-service 5432 || echo "Connection test completed"
+kubectl exec -it deployment/backend -- nc -zv database-service 5432 || echo "Connection test completed"
 ```
 
 ---
@@ -301,7 +301,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **4-1. 수동 실행 (학습용)**
 ```bash
 # Frontend Deployment 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -353,7 +353,7 @@ EOF
 **4-2. NodePort 서비스 생성**
 ```bash
 # NodePort 서비스 추가 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Service
 metadata:
@@ -370,7 +370,7 @@ spec:
 EOF
 
 # NodePort 접근 테스트
-kubectl get -n day3-lab svc frontend-nodeport
+kubectl get svc frontend-nodeport
 echo "브라우저에서 http://localhost:30080 접근 가능"
 ```
 
@@ -391,7 +391,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **5-1. 수동 실행 (학습용)**
 ```bash
 # Ingress 리소스 생성
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -421,7 +421,7 @@ spec:
 EOF
 
 # Ingress 상태 확인
-kubectl get -n day3-lab ingress shop-ingress
+kubectl get ingress shop-ingress
 
 # 로컬 hosts 파일 설정 (선택사항)
 echo "127.0.0.1 shop.local" | sudo tee -a /etc/hosts
@@ -445,25 +445,25 @@ cd theory/week_03/day3/lab_scripts/lab1
 ```bash
 # 전체 리소스 상태 확인
 echo "=== Pods 상태 ==="
-kubectl get -n day3-lab pods -o wide
+kubectl get pods -o wide
 
 echo "=== Services 상태 ==="
-kubectl get -n day3-lab svc
+kubectl get svc
 
 echo "=== PVC 상태 ==="
-kubectl get -n day3-lab pvc
+kubectl get pvc
 
 echo "=== Ingress 상태 ==="
-kubectl get -n day3-lab ingress
+kubectl get ingress
 
 # 네트워크 연결 테스트
 echo "=== 네트워크 연결 테스트 ==="
-kubectl exec -n day3-lab -it deployment/frontend -- wget -qO- http://backend-service:3000 || echo "Frontend → Backend 연결 테스트"
-kubectl exec -n day3-lab -it deployment/backend -- nc -zv database-service 5432 || echo "Backend → Database 연결 테스트"
+kubectl exec -it deployment/frontend -- wget -qO- http://backend-service:3000 || echo "Frontend → Backend 연결 테스트"
+kubectl exec -it deployment/backend -- nc -zv database-service 5432 || echo "Backend → Database 연결 테스트"
 
 # 데이터 영속성 테스트
 echo "=== 데이터 영속성 테스트 ==="
-kubectl delete -n day3-lab pod -l app=postgres
+kubectl delete pod -l app=postgres
 kubectl wait --for=condition=Ready pod -l app=postgres --timeout=60s
 echo "PostgreSQL Pod 재시작 후 데이터 확인 완료"
 ```
@@ -505,13 +505,13 @@ kubectl autoscale deployment frontend --cpu-percent=70 --min=2 --max=5
 kubectl autoscale deployment backend --cpu-percent=70 --min=2 --max=5
 
 # HPA 상태 확인
-kubectl get -n day3-lab hpa
+kubectl get hpa
 ```
 
 **Network Policy 적용**
 ```bash
 # 데이터베이스 접근 제한 정책
-kubectl apply -n day3-lab -f - <<EOF
+kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -549,7 +549,7 @@ cd theory/week_03/day3/lab_scripts/lab1
 **수동 정리**
 ```bash
 # 네임스페이스 삭제 (모든 리소스 함께 삭제)
-kubectl delete -n day3-lab namespace day3-lab
+kubectl delete namespace day3-lab
 
 # hosts 파일 정리 (선택사항)
 sudo sed -i '/shop.local/d' /etc/hosts

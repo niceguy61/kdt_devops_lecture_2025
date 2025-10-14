@@ -28,7 +28,7 @@ spec:
         - containerPort: 80
         env:
         - name: DATABASE_URL
-          value: "postgresql://shopuser:shoppass@postgres-service:5432/shopdb"
+          value: "postgresql://shopuser:shoppass@database-service:5432/shopdb"
         resources:
           requests:
             cpu: 100m

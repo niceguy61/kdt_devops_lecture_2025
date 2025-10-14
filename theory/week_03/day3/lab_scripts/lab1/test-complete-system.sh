@@ -33,7 +33,7 @@ kubectl exec -it deployment/frontend -- wget -qO- http://backend-service:3000 --
 # Backend → Database 연결 테스트
 echo ""
 echo "🔸 Backend → Database 연결 테스트:"
-kubectl exec -it deployment/backend -- nc -zv postgres-service 5432 2>/dev/null && echo "✅ 연결 성공" || echo "❌ 연결 실패"
+kubectl exec -it deployment/backend -- nc -zv database-service 5432 2>/dev/null && echo "✅ 연결 성공" || echo "❌ 연결 실패"
 
 echo ""
 echo "=== 💾 데이터 영속성 테스트 ==="

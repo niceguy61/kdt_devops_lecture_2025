@@ -51,7 +51,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-service
+  name: database-service
   namespace: day3-lab
 spec:
   type: ClusterIP
@@ -69,6 +69,6 @@ echo "✅ PostgreSQL 데이터베이스 배포 완료!"
 echo ""
 echo "📊 데이터베이스 상태:"
 kubectl get pods -l app=postgres
-kubectl get svc postgres-service
+kubectl get svc database-service
 echo ""
 echo "🎯 다음 단계: 백엔드 API 서버 배포"

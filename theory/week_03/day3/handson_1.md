@@ -37,10 +37,10 @@
 
 **목표**: 데이터베이스 접근을 백엔드에서만 허용
 
-**데이터베이스 보안 정책 생성**:
-
-#### 데이터베이스 보안 정책 파일 생성 : postgres-security-policy.yaml
-```yaml
+**🚀 인라인 스크립트 실행**
+```bash
+# PostgreSQL 보안 정책 생성
+kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -63,31 +63,27 @@ spec:
       port: 5432
   egress:
   - {}  # 모든 아웃바운드 허용 (DNS 등)
-```
+EOF
 
-```bash
-# 정책 적용
-kubectl apply -f postgres-security-policy.yaml
+# 정책 확인
+kubectl get networkpolicy postgres-security-policy
 ```
 
 **검증**:
 ```bash
-# 정책 확인
-kubectl get networkpolicy postgres-security-policy
-
 # 백엔드에서 데이터베이스 접근 테스트 (성공해야 함)
-kubectl exec -it deployment/backend -- nc -zv postgres-service 5432
+kubectl exec -it deployment/backend -- nc -zv database-service 5432
 
 # 프론트엔드에서 데이터베이스 접근 테스트 (실패해야 함)
-kubectl exec -it deployment/frontend -- nc -zv postgres-service 5432 || echo "✅ 정책 적용 성공 - 접근 차단됨"
+kubectl exec -it deployment/frontend -- nc -zv database-service 5432 || echo "✅ 정책 적용 성공 - 접근 차단됨"
 ```
 
 ### Step 1-2: 계층별 네트워크 분리 (10분)
 
-**프론트엔드 정책: frontend-policy.yaml**:
-
-```yaml
-# 프론트엔드 보안 정책 파일 생성
+**🚀 인라인 스크립트 실행**
+```bash
+# Frontend 보안 정책 생성
+kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -118,10 +114,10 @@ spec:
     ports:
     - protocol: UDP
       port: 53
-```
-```bash
-# 정책 적용
-kubectl apply -f frontend-policy.yaml
+EOF
+
+# 정책 적용 확인
+kubectl get networkpolicy
 ```
 
 ---
@@ -130,16 +126,14 @@ kubectl apply -f frontend-policy.yaml
 
 ### Step 2-1: 기존 Deployment를 StatefulSet으로 전환 (20분)
 
-**기존 PostgreSQL 삭제**:
+**🚀 인라인 스크립트 실행**
 ```bash
-kubectl delete deployment postgres
-kubectl delete svc postgres-service
-```
+# 기존 PostgreSQL Deployment 삭제
+kubectl delete deployment postgres --ignore-not-found=true
+kubectl delete svc database-service --ignore-not-found=true
 
-**PostgreSQL StatefulSet 생성: postgres-statefulset.yaml**:
-
-```yaml
-# PostgreSQL StatefulSet 파일 생성
+# PostgreSQL StatefulSet 생성
+kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Service
 metadata:
@@ -156,7 +150,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-service
+  name: database-service
   namespace: day3-lab
 spec:
   selector:
@@ -218,10 +212,10 @@ spec:
       resources:
         requests:
           storage: 2Gi
-```
-```bash
-# StatefulSet 배포
-kubectl apply -f postgres-statefulset.yaml
+EOF
+
+# StatefulSet 배포 대기
+kubectl wait --for=condition=Ready pod -l app=postgres-cluster --timeout=300s
 ```
 
 ### Step 2-2: StatefulSet 동작 확인 (10분)
@@ -235,10 +229,10 @@ kubectl get pods -l app=postgres-cluster
 kubectl get pvc
 
 # Headless Service DNS 테스트
-kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-headless.day3-lab.svc.cluster.local
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-headless
 
 # 개별 Pod DNS 확인
-kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless.day3-lab.svc.cluster.local
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup postgres-cluster-0.postgres-headless
 ```
 
 ---
@@ -247,15 +241,15 @@ kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup p
 
 ### Step 3-1: 다양한 StorageClass 생성 (10분)
 
-**고성능 SSD StorageClass: storage-classes.yaml**:
-
-```yaml
-# StorageClass 파일 생성
+**🚀 인라인 스크립트 실행**
+```bash
+# StorageClass 생성
+kubectl apply -f - <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: fast-ssd
-provisioner: kubernetes.io/no-provisioner  # 실제 환경에서는 클라우드 프로바이더 사용
+provisioner: kubernetes.io/no-provisioner
 parameters:
   type: "ssd"
   iops: "3000"
@@ -273,18 +267,18 @@ parameters:
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
-```
-```bash
-# StorageClass 적용
-kubectl apply -f storage-classes.yaml
+EOF
+
+# StorageClass 확인
+kubectl get storageclass
 ```
 
 ### Step 3-2: 캐시용 고성능 스토리지 추가 (10분)
 
-**Redis 캐시 서버 배포: redis-cache.yaml**:
-
-```yaml
-# Redis 캐시 서버 파일 생성
+**🚀 인라인 스크립트 실행**
+```bash
+# Redis 캐시 서버 배포
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -344,10 +338,10 @@ spec:
   ports:
   - port: 6379
     targetPort: 6379
-```
-```bash
-# Redis 배포
-kubectl apply -f redis-cache.yaml
+EOF
+
+# Redis Pod 시작 대기
+kubectl wait --for=condition=Ready pod -l app=redis-cache --timeout=120s
 ```
 
 ---
@@ -356,21 +350,41 @@ kubectl apply -f redis-cache.yaml
 
 ### Step 4-1: HPA (Horizontal Pod Autoscaler) 설정 (10분)
 
+**🚀 인라인 스크립트 실행**
 ```bash
 # 프론트엔드 HPA 생성
-kubectl autoscale deployment frontend --cpu-percent=70 --min=2 --max=10 --namespace=day3-lab
+kubectl autoscale deployment frontend --cpu-percent=70 --min=2 --max=10
 
 # 백엔드 HPA 생성
-kubectl autoscale deployment backend --cpu-percent=60 --min=2 --max=8 --namespace=day3-lab
+kubectl autoscale deployment backend --cpu-percent=60 --min=2 --max=8
 
 # HPA 상태 확인
-kubectl get hpa -n day3-lab
+kubectl get hpa
+
+# 부하 테스트 Pod 생성
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: load-generator
+  namespace: day3-lab
+spec:
+  containers:
+  - name: load-generator
+    image: busybox:1.36
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+EOF
 ```
 
 **부하 테스트**:
 ```bash
-# 부하 생성 Pod 실행
-kubectl run load-generator --image=busybox:1.36 --rm -it --restart=Never --namespace=day3-lab -- /bin/sh
+# 부하 생성 Pod 접속
+kubectl exec -it load-generator -- /bin/sh
 
 # Pod 내부에서 실행
 while true; do wget -q -O- http://frontend-service/; done
@@ -378,9 +392,10 @@ while true; do wget -q -O- http://frontend-service/; done
 
 ### Step 4-2: VPA (Vertical Pod Autoscaler) 설정 (5분)
 
-** redis-vpa.yaml **
-```yaml
-# VPA 설정 파일 생성 (VPA가 설치된 경우)
+**🚀 인라인 스크립트 실행**
+```bash
+# VPA 설정 (VPA가 설치된 경우)
+kubectl apply -f - <<EOF
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -402,10 +417,10 @@ spec:
       minAllowed:
         cpu: 50m
         memory: 64Mi
-```
-```bash
-# VPA 적용
-kubectl apply -f redis-vpa.yaml
+EOF
+
+# VPA 상태 확인
+kubectl get vpa 2>/dev/null || echo "VPA가 설치되지 않음"
 ```
 
 ---
@@ -415,17 +430,17 @@ kubectl apply -f redis-vpa.yaml
 ### 네트워크 정책 디버깅:
 ```bash
 # 네트워크 정책 확인
-kubectl describe networkpolicy -n day3-lab
+kubectl describe networkpolicy
 
 # Pod 간 연결 테스트
-kubectl exec -it deployment/backend -- nc -zv postgres-service 5432
+kubectl exec -it deployment/backend -- nc -zv database-service 5432
 kubectl exec -it deployment/frontend -- nc -zv backend-service 3000
 ```
 
 ### StatefulSet 상태 확인:
 ```bash
 # StatefulSet 상세 정보
-kubectl describe statefulset postgres-cluster -n day3-lab
+kubectl describe statefulset postgres-cluster
 
 # 각 Pod의 PVC 매핑 확인
 kubectl get pods -l app=postgres-cluster -o custom-columns=NAME:.metadata.name,PVC:.spec.volumes[0].persistentVolumeClaim.claimName
@@ -433,9 +448,10 @@ kubectl get pods -l app=postgres-cluster -o custom-columns=NAME:.metadata.name,P
 
 ### 스토리지 성능 테스트:
 
-** storage-test.yaml **
-```yaml
-# 스토리지 성능 테스트 Pod 파일 생성
+**🚀 인라인 스크립트 실행**
+```bash
+# 스토리지 성능 테스트 Pod 배포
+kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -463,17 +479,14 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: fast-ssd
+  storageClassName: standard
   resources:
     requests:
       storage: 1Gi
-```
-```bash
-# 테스트 Pod 배포
-kubectl apply -f storage-test.yaml
+EOF
 
 # 성능 테스트 실행
-kubectl exec -it storage-test -n day3-lab -- dd if=/dev/zero of=/test/testfile bs=1M count=100
+kubectl exec -it storage-test -- dd if=/dev/zero of=/test/testfile bs=1M count=100
 ```
 
 ---
@@ -513,9 +526,10 @@ kubectl label namespace day3-lab istio-injection=enabled
 
 ### 3. 백업 자동화
 
-** postgres-backup-cronjob.yaml **
-```yaml
-# CronJob으로 정기 데이터베이스 백업 파일 생성
+**🚀 인라인 스크립트 실행**
+```bash
+# CronJob으로 정기 데이터베이스 백업
+kubectl apply -f - <<EOF
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -531,7 +545,7 @@ spec:
           - name: backup
             image: postgres:16
             command: ["/bin/bash"]
-            args: ["-c", "pg_dump -h postgres-service -U shopuser shopdb > /backup/backup-$(date +%Y%m%d).sql"]
+            args: ["-c", "pg_dump -h database-service -U shopuser shopdb > /backup/backup-$(date +%Y%m%d).sql"]
             env:
             - name: PGPASSWORD
               value: shoppass
@@ -543,26 +557,25 @@ spec:
             persistentVolumeClaim:
               claimName: backup-pvc
           restartPolicy: OnFailure
-```
-```bash
-# 백업 CronJob 배포
-kubectl apply -f postgres-backup-cronjob.yaml
+EOF
 ```
 
 ---
 
 ## 🧹 실습 정리
 
+**🚀 자동화 정리**
 ```bash
 # 추가된 리소스 정리
-kubectl delete networkpolicy --all -n day3-lab
-kubectl delete statefulset postgres-cluster -n day3-lab
-kubectl delete svc postgres-headless -n day3-lab
-kubectl delete deployment redis-cache -n day3-lab
-kubectl delete pvc redis-cache-pvc storage-test-pvc -n day3-lab
-kubectl delete hpa --all -n day3-lab
-kubectl delete vpa --all -n day3-lab 2>/dev/null || true
+kubectl delete networkpolicy --all
+kubectl delete statefulset postgres-cluster
+kubectl delete svc postgres-headless
+kubectl delete deployment redis-cache
+kubectl delete pvc redis-cache-pvc storage-test-pvc
+kubectl delete hpa --all
+kubectl delete vpa --all 2>/dev/null || true
 kubectl delete storageclass fast-ssd slow-hdd 2>/dev/null || true
+kubectl delete pod load-generator storage-test --ignore-not-found=true
 
 # 전체 환경 정리 (Lab 1과 동일)
 kubectl delete namespace day3-lab
