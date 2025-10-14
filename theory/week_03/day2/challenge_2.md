@@ -68,26 +68,33 @@
 
 ### 필수 디렉토리 구조
 ```
-game-server-k8s/
-├── README.md                           # 프로젝트 개요
-├── k8s-manifests/                      # Kubernetes 매니페스트
-│   ├── namespaces/
-│   │   └── game-namespace.yaml
-│   ├── workloads/
-│   │   ├── lobby-deployment.yaml       # 게임 로비 서버
-│   │   ├── gameroom-deployment.yaml    # 게임 룸 서버
-│   │   ├── chat-deployment.yaml       # 채팅 서버
-│   │   ├── ranking-deployment.yaml     # 랭킹 서버
-│   │   └── monitoring-daemonset.yaml  # 모니터링 에이전트
-│   └── scheduling/
-│       ├── node-labels.yaml           # 노드 라벨링
-│       └── taints-tolerations.yaml    # Taint/Toleration 설정
-├── docs/                               # 분석 문서
-│   ├── architecture-analysis.md       # 아키텍처 분석 보고서
-│   └── screenshots/                   # 시각화 캡처 이미지
-│       ├── cluster-overview.png
-│       ├── workload-distribution.png
-│       └── resource-usage.png
+kubernetes-challenge/
+└── week3/
+    └── day2/
+        ├── README.md                           # Day 2 프로젝트 개요
+        ├── k8s-manifests/                      # Kubernetes 매니페스트
+        │   ├── namespaces/
+        │   │   └── game-namespace.yaml
+        │   ├── workloads/
+        │   │   ├── lobby-deployment.yaml       # 게임 로비 서버
+        │   │   ├── gameroom-deployment.yaml    # 게임 룸 서버
+        │   │   ├── chat-deployment.yaml       # 채팅 서버
+        │   │   ├── ranking-deployment.yaml     # 랭킹 서버
+        │   │   └── monitoring-daemonset.yaml  # 모니터링 에이전트
+        │   └── scheduling/
+        │       ├── node-labels.yaml           # 노드 라벨링
+        │       └── taints-tolerations.yaml    # Taint/Toleration 설정
+        ├── docs/                               # 분석 문서
+        │   ├── architecture-analysis.md       # 아키텍처 분석 보고서
+        │   └── screenshots/                   # 시각화 캡처 이미지
+        │       ├── cluster-overview.png
+        │       ├── workload-distribution.png
+        │       └── resource-usage.png
+        └── scripts/                           # 배포/관리 스크립트
+            ├── deploy-all.sh                  # 전체 배포
+            ├── setup-nodes.sh                 # 노드 설정
+            └── cleanup.sh                     # 환경 정리
+```
 └── scripts/                           # 배포/관리 스크립트
     ├── deploy-all.sh                  # 전체 배포
     ├── setup-nodes.sh                 # 노드 설정
