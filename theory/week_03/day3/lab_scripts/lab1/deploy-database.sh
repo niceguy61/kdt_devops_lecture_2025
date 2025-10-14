@@ -2,7 +2,7 @@
 
 # Lab 1 Step 2-2: PostgreSQL 데이터베이스 배포
 
-echo "🚀 Lab 1 Step 2-2: PostgreSQL 데이터베이스 배포 시작..."
+echo "🚀 Lab 1 Step 2-2: PostgreSQL 데이터베이스 배포 시작...."
 
 echo "🗄️ PostgreSQL Deployment 및 Service 생성 중..."
 kubectl apply -f - <<EOF
