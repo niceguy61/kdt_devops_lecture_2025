@@ -33,8 +33,8 @@ wait
 # 3. 중간 부하테스트 (50 동시 사용자, 60초)
 echo "3. 중간 부하테스트 실행 중..."
 kubectl run load-test-medium -n day3-lab --image=busybox --rm -it --restart=Never -- sh -c "
-for i in \$(seq 1 50); do
-  (for j in \$(seq 1 60); do
+for i in \$(seq 1 100); do
+  (for j in \$(seq 1 120); do
     wget -q -O- http://frontend-service || echo 'fail'
     sleep 1
   done) &
