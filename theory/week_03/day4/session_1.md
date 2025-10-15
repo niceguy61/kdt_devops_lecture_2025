@@ -83,6 +83,387 @@ graph TB
 | **Cluster** | Platform팀 | RBAC, Network Policy, Admission | OPA, Calico, PSP |
 | **Cloud** | 인프라팀 | 물리적 보안, 네트워크, IAM | VPC, Security Group, KMS |
 
+---
+
+### 🚨 4C 모델 계층별 대표 취약점 사례
+
+#### 1️⃣ Code 계층 취약점
+
+**🔴 사례 1: 하드코딩된 시크릿 (Critical)**
+```yaml
+# ❌ 잘못된 예시 - 코드에 직접 노출
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vulnerable-app
+spec:
+  containers:
+  - name: app
+    image: myapp:v1
+    env:
+    - name: DB_PASSWORD
+      value: "admin123"  # 평문 패스워드 노출
+    - name: API_KEY
+      value: "sk-1234567890abcdef"  # API 키 노출
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# Secret 사용
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+data:
+  db-password: YWRtaW4xMjM=  # Base64 인코딩
+  api-key: c2stMTIzNDU2Nzg5MGFiY2RlZg==
+---
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: app
+    envFrom:
+    - secretRef:
+        name: app-secrets
+```
+
+**실제 사고 사례**:
+- **Uber (2016)**: GitHub에 AWS 키 하드코딩 → 5,700만 사용자 정보 유출
+- **피해 규모**: $148M 벌금, 고객 신뢰 손실
+- **교훈**: 코드 저장소 스캔 도구(git-secrets, truffleHog) 필수
+
+**🔴 사례 2: 취약한 의존성 라이브러리**
+```dockerfile
+# ❌ 취약점이 있는 오래된 버전
+FROM node:14.15.0  # CVE-2021-22918 취약점 존재
+RUN npm install express@4.16.0  # CVE-2022-24999 취약점
+```
+
+**✅ 올바른 해결책**:
+```dockerfile
+# 최신 보안 패치 버전 사용
+FROM node:18-alpine  # 최신 LTS + 최소 이미지
+RUN npm install express@4.18.2  # 보안 패치 적용 버전
+RUN npm audit fix  # 자동 보안 패치
+```
+
+**실제 사고 사례**:
+- **Equifax (2017)**: Apache Struts 취약점(CVE-2017-5638) 미패치
+- **피해 규모**: 1억 4,700만 명 개인정보 유출, $700M 합의금
+- **교훈**: 의존성 스캔 자동화(Snyk, Dependabot) 필수
+
+---
+
+#### 2️⃣ Container 계층 취약점
+
+**🔴 사례 3: Root 권한 컨테이너 실행**
+```yaml
+# ❌ 위험한 설정 - root로 실행
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-pod
+spec:
+  containers:
+  - name: app
+    image: myapp:v1
+    securityContext:
+      privileged: true  # 호스트 커널 접근 가능
+      runAsUser: 0      # root 사용자
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# 최소 권한 원칙 적용
+apiVersion: v1
+kind: Pod
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 2000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+        add:
+        - NET_BIND_SERVICE  # 필요한 권한만 추가
+```
+
+**실제 사고 사례**:
+- **Tesla (2018)**: Kubernetes 대시보드 노출 + 권한 미설정
+- **피해 규모**: 크립토마이닝 악용, AWS 비용 폭증
+- **교훈**: 기본적으로 비특권 컨테이너 사용, Pod Security Standards 적용
+
+**🔴 사례 4: 취약한 베이스 이미지**
+```dockerfile
+# ❌ 취약점 많은 이미지
+FROM ubuntu:18.04  # EOL, 보안 패치 중단
+RUN apt-get update && apt-get install -y \
+    openssl=1.1.0  # 알려진 취약점 존재
+```
+
+**✅ 올바른 해결책**:
+```dockerfile
+# 최소 이미지 + 최신 패치
+FROM alpine:3.18  # 최소 이미지, 활발한 보안 패치
+RUN apk add --no-cache openssl=3.1.0  # 최신 보안 버전
+
+# 멀티스테이지 빌드로 공격 표면 최소화
+FROM golang:1.21-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN go build -o app
+
+FROM alpine:3.18
+COPY --from=builder /app/app /app
+RUN adduser -D appuser
+USER appuser
+CMD ["/app"]
+```
+
+**실제 사고 사례**:
+- **Docker Hub (2019)**: 공식 이미지에서 190,000개 취약점 발견
+- **영향**: 상위 1,000개 이미지 중 51%가 심각한 취약점 포함
+- **교훈**: 이미지 스캔 자동화(Trivy, Clair), 신뢰할 수 있는 레지스트리 사용
+
+---
+
+#### 3️⃣ Cluster 계층 취약점
+
+**🔴 사례 5: 과도한 RBAC 권한**
+```yaml
+# ❌ 위험한 권한 부여
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: developer-admin
+subjects:
+- kind: ServiceAccount
+  name: developer-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin  # 모든 권한 부여
+  apiGroup: rbac.authorization.k8s.io
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# 최소 권한 원칙
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-role
+  namespace: development
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services"]
+  verbs: ["get", "list", "create"]  # 필요한 권한만
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: development
+subjects:
+- kind: ServiceAccount
+  name: developer-sa
+roleRef:
+  kind: Role
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+**실제 사고 사례**:
+- **Capital One (2019)**: 과도한 IAM 권한 + SSRF 취약점
+- **피해 규모**: 1억 600만 고객 정보 유출, $80M 벌금
+- **교훈**: 최소 권한 원칙, 정기적인 권한 감사
+
+**🔴 사례 6: API Server 노출**
+```yaml
+# ❌ 위험한 설정 - 인증 없이 노출
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes
+spec:
+  type: LoadBalancer  # 인터넷에 직접 노출
+  ports:
+  - port: 6443
+    targetPort: 6443
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# VPN/Bastion을 통한 접근
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes
+spec:
+  type: ClusterIP  # 내부 접근만 허용
+  ports:
+  - port: 6443
+
+# Network Policy로 접근 제어
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-server-policy
+spec:
+  podSelector:
+    matchLabels:
+      component: kube-apiserver
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.0/8  # 내부 네트워크만
+```
+
+**실제 사고 사례**:
+- **Tesla (2018)**: Kubernetes 대시보드 인증 없이 노출
+- **Shopify (2020)**: API Server 6443 포트 인터넷 노출
+- **교훈**: API Server는 절대 인터넷에 직접 노출 금지, VPN/Bastion 필수
+
+---
+
+#### 4️⃣ Cloud 계층 취약점
+
+**🔴 사례 7: 잘못된 네트워크 설정**
+```yaml
+# ❌ AWS Security Group - 모든 포트 개방
+resource "aws_security_group" "vulnerable" {
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # 전 세계에 개방
+  }
+}
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# 최소 필요 포트만 개방
+resource "aws_security_group" "secure" {
+  # HTTPS만 허용
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]  # 내부 네트워크만
+  }
+  
+  # SSH는 Bastion에서만
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+}
+```
+
+**실제 사고 사례**:
+- **MongoDB (2017)**: 27,000개 데이터베이스 인터넷 노출
+- **Elasticsearch (2020)**: 2억 개 이상 레코드 노출
+- **교훈**: 기본 거부(Deny by Default), 필요한 포트만 개방
+
+**🔴 사례 8: 암호화되지 않은 스토리지**
+```yaml
+# ❌ 암호화 미적용
+resource "aws_ebs_volume" "vulnerable" {
+  availability_zone = "us-west-2a"
+  size              = 100
+  encrypted         = false  # 암호화 안 함
+}
+```
+
+**✅ 올바른 해결책**:
+```yaml
+# 저장 데이터 암호화
+resource "aws_ebs_volume" "secure" {
+  availability_zone = "us-west-2a"
+  size              = 100
+  encrypted         = true
+  kms_key_id        = aws_kms_key.ebs.arn  # KMS 키 사용
+}
+
+# Kubernetes에서 암호화된 StorageClass
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: encrypted-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  kmsKeyId: "arn:aws:kms:us-west-2:123456789012:key/..."
+```
+
+**실제 사고 사례**:
+- **Uber (2016)**: 암호화되지 않은 S3 버킷
+- **Facebook (2019)**: 암호화되지 않은 서버에 수억 개 패스워드 저장
+- **교훈**: 저장 데이터 암호화(Encryption at Rest) 필수, KMS 키 관리
+
+---
+
+### 📊 취약점 심각도 및 대응 우선순위
+
+```mermaid
+graph TB
+    subgraph "Critical - 즉시 대응"
+        C1[하드코딩된 시크릿]
+        C2[Root 권한 컨테이너]
+        C3[API Server 노출]
+        C4[암호화 미적용]
+    end
+    
+    subgraph "High - 24시간 내"
+        H1[취약한 의존성]
+        H2[취약한 베이스 이미지]
+        H3[과도한 RBAC 권한]
+    end
+    
+    subgraph "Medium - 1주일 내"
+        M1[네트워크 설정 오류]
+        M2[로깅 미흡]
+    end
+    
+    style C1 fill:#ffebee
+    style C2 fill:#ffebee
+    style C3 fill:#ffebee
+    style C4 fill:#ffebee
+    style H1 fill:#fff3e0
+    style H2 fill:#fff3e0
+    style H3 fill:#fff3e0
+    style M1 fill:#e8f5e8
+    style M2 fill:#e8f5e8
+```
+
+### 🛡️ 계층별 보안 체크리스트
+
+| 계층 | 필수 보안 조치 | 검증 도구 |
+|------|---------------|----------|
+| **Code** | ✅ 시크릿 외부화<br/>✅ 의존성 스캔<br/>✅ SAST 적용 | git-secrets, Snyk, SonarQube |
+| **Container** | ✅ 비특권 실행<br/>✅ 이미지 스캔<br/>✅ 최소 이미지 | Trivy, Falco, Distroless |
+| **Cluster** | ✅ RBAC 최소 권한<br/>✅ Network Policy<br/>✅ Admission Control | OPA, Calico, Kyverno |
+| **Cloud** | ✅ 네트워크 격리<br/>✅ 암호화 적용<br/>✅ IAM 최소 권한 | AWS Config, CloudTrail, GuardDuty |
+
 **실무 연결**:
 ```yaml
 # Code 계층: 애플리케이션 보안
