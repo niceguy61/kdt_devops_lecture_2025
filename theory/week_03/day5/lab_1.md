@@ -332,7 +332,7 @@ spec:
       - name: web-app
         image: nginxinc/nginx-unprivileged:1.25
         ports:
-        - containerPort: 80
+        - containerPort: 8080
           name: http
         resources:
           requests:
@@ -354,7 +354,7 @@ spec:
     app: web-app
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: 8080
     name: http
   type: ClusterIP
 ```

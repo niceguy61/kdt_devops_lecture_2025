@@ -8,8 +8,14 @@ set -e
 echo "=== Prometheus Stack 설치 시작 ==="
 echo ""
 
-# Namespace 생성
-echo "1. monitoring Namespace 생성 중..."
+# Helm Repository 추가
+echo "1. Helm Repository 추가 중..."
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+helm repo update
+echo "✅ Repository 추가 완료"
+
+echo ""
+echo "2. monitoring Namespace 생성 중..."
 
 # 기존 Namespace가 Terminating 상태인지 확인
 if kubectl get namespace monitoring 2>/dev/null | grep -q Terminating; then
@@ -34,7 +40,7 @@ kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f 
 echo "✅ Namespace 생성 완료"
 
 echo ""
-echo "2. kube-prometheus-stack 설치 중..."
+echo "3. kube-prometheus-stack 설치 중..."
 echo "   (약 2-3분 소요됩니다)"
 
 helm install prometheus prometheus-community/kube-prometheus-stack \
@@ -48,7 +54,7 @@ echo ""
 echo "✅ Prometheus Stack 설치 완료"
 
 echo ""
-echo "3. 설치된 컴포넌트 확인 중..."
+echo "4. 설치된 컴포넌트 확인 중..."
 echo ""
 
 # Helm Release 확인

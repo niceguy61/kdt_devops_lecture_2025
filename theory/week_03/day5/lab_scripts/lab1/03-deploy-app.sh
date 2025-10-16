@@ -44,7 +44,7 @@ spec:
       - name: web-app
         image: nginxinc/nginx-unprivileged:1.25
         ports:
-        - containerPort: 80
+        - containerPort: 8080
           name: http
         resources:
           requests:
@@ -72,7 +72,7 @@ spec:
     app: web-app
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: 8080
     name: http
   type: ClusterIP
 EOF
@@ -96,14 +96,18 @@ spec:
   endpoints:
   - port: http
     interval: 30s
-
 EOF
 
 echo "✅ ServiceMonitor 생성 완료"
 
+# Pod 준비 대기
+echo ""
+echo "4. Pod 준비 대기 중..."
+kubectl wait --for=condition=ready pod -l app=web-app -n $NAMESPACE --timeout=120s || true
+
 # 배포 확인
 echo ""
-echo "4. 배포 상태 확인 중..."
+echo "5. 배포 상태 확인 중..."
 echo ""
 
 echo "🔍 Pod 상태:"

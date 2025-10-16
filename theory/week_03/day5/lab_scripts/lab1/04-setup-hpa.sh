@@ -23,9 +23,17 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 
 echo "✅ Metrics Server 설치 완료"
 
+# Kind 클러스터용 패치
+echo ""
+echo "2. Metrics Server 설정 패치 중..."
+kubectl patch deployment metrics-server -n kube-system --type='json' \
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}]'
+
+echo "✅ 패치 완료"
+
 # Metrics Server 준비 대기
 echo ""
-echo "2. Metrics Server 준비 대기 중... (약 30초)"
+echo "3. Metrics Server 준비 대기 중... (약 30초)"
 sleep 30
 
 # Metrics Server 확인
@@ -35,7 +43,7 @@ kubectl get deployment metrics-server -n kube-system
 
 # 메트릭 수집 확인
 echo ""
-echo "3. 메트릭 수집 확인 중..."
+echo "4. 메트릭 수집 확인 중..."
 echo ""
 
 MAX_RETRIES=10
@@ -59,7 +67,7 @@ fi
 
 # HPA 생성
 echo ""
-echo "4. HPA 생성 중..."
+echo "5. HPA 생성 중..."
 cat <<EOF | kubectl apply -n $NAMESPACE -f -
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -108,7 +116,7 @@ echo "✅ HPA 생성 완료"
 
 # HPA 상태 확인
 echo ""
-echo "5. HPA 상태 확인 중..."
+echo "6. HPA 상태 확인 중..."
 echo ""
 
 sleep 5
