@@ -509,6 +509,12 @@ rules:
 
 > **정의**: "누구인가?"를 확인하는 신원 검증 프로세스
 
+<div align="center">
+<img src="../images/who.gif" alt="Who are you?" width="400"/>
+
+*"당신은 누구십니까?" - Kubernetes 인증의 핵심 질문*
+</div>
+
 **인증 방식 비교**:
 
 ```mermaid
