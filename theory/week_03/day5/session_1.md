@@ -280,7 +280,185 @@ graph LR
 - ✅ 타겟 추가/제거 자동 감지
 - ✅ 중앙에서 수집 주기 제어
 
-### 🔍 개념 3: Kubernetes 로깅 전략 (11분)
+### 🔍 개념 3: DORA 메트릭과 DevOps 성숙도 (8분)
+
+> **정의**: DevOps Research and Assessment에서 정의한 소프트웨어 전달 성능 측정 지표
+
+**💼 실무 중요성**: Google, Amazon, Microsoft 등 글로벌 기업들이 DevOps 성숙도 측정에 사용하는 표준 지표
+
+**DORA 4대 핵심 메트릭**:
+
+```mermaid
+graph TB
+    subgraph "DORA 4대 메트릭"
+        A[Deployment Frequency<br/>배포 빈도]
+        B[Lead Time for Changes<br/>변경 리드타임]
+        C[Change Failure Rate<br/>변경 실패율]
+        D[Time to Restore Service<br/>서비스 복구 시간]
+    end
+    
+    subgraph "성능 수준"
+        E[Elite<br/>최고 수준]
+        F[High<br/>높은 수준]
+        G[Medium<br/>보통 수준]
+        H[Low<br/>낮은 수준]
+    end
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    style A fill:#e8f5e8
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#ffebee
+    style E fill:#c8e6c9
+    style F fill:#dcedc8
+    style G fill:#fff9c4
+    style H fill:#ffcdd2
+```
+
+**1. Deployment Frequency (배포 빈도)**:
+```yaml
+# Prometheus 메트릭 예시
+deployment_total{environment="production", service="backend"} 156
+
+# 성능 수준별 기준
+Elite: 하루에 여러 번 (On-demand)
+High: 주 1회 ~ 월 1회
+Medium: 월 1회 ~ 6개월에 1회
+Low: 6개월에 1회 미만
+```
+
+**2. Lead Time for Changes (변경 리드타임)**:
+```
+측정 방법:
+코드 커밋 → 프로덕션 배포까지 소요 시간
+
+Elite: 1시간 미만
+High: 1일 ~ 1주
+Medium: 1주 ~ 1개월
+Low: 1개월 ~ 6개월
+```
+
+**3. Change Failure Rate (변경 실패율)**:
+```promql
+# Prometheus 쿼리 예시
+(
+  sum(deployment_failures_total{environment="production"})
+  /
+  sum(deployment_total{environment="production"})
+) * 100
+
+Elite: 0-15%
+High: 16-30%
+Medium: 31-45%
+Low: 46-60%
+```
+
+**4. Time to Restore Service (서비스 복구 시간)**:
+```
+측정 방법:
+장애 발생 → 서비스 정상화까지 소요 시간
+
+Elite: 1시간 미만
+High: 1시간 ~ 1일
+Medium: 1일 ~ 1주
+Low: 1주 ~ 1개월
+```
+
+**DORA 메트릭 수집 아키텍처**:
+
+```mermaid
+graph TB
+    subgraph "소스 시스템"
+        A1[Git Repository<br/>커밋 정보]
+        A2[CI/CD Pipeline<br/>배포 정보]
+        A3[Monitoring System<br/>장애 정보]
+        A4[Incident Management<br/>복구 정보]
+    end
+    
+    subgraph "데이터 수집"
+        B1[Git Webhook]
+        B2[Pipeline Events]
+        B3[Alert Events]
+        B4[Incident API]
+    end
+    
+    subgraph "메트릭 계산"
+        C1[DORA Calculator<br/>Service]
+    end
+    
+    subgraph "시각화"
+        D1[Grafana Dashboard<br/>DORA 메트릭]
+        D2[Weekly/Monthly<br/>Report]
+    end
+    
+    A1 --> B1
+    A2 --> B2
+    A3 --> B3
+    A4 --> B4
+    
+    B1 --> C1
+    B2 --> C1
+    B3 --> C1
+    B4 --> C1
+    
+    C1 --> D1
+    C1 --> D2
+    
+    style A1 fill:#e8f5e8
+    style A2 fill:#e3f2fd
+    style A3 fill:#fff3e0
+    style A4 fill:#ffebee
+    style C1 fill:#f3e5f5
+    style D1 fill:#e1f5fe
+    style D2 fill:#e1f5fe
+```
+
+**실무 구현 예시**:
+```yaml
+# GitLab CI/CD에서 DORA 메트릭 수집
+stages:
+  - build
+  - test
+  - deploy
+  - metrics
+
+deploy_production:
+  stage: deploy
+  script:
+    - deploy.sh
+    - |
+      # Deployment Frequency 메트릭 전송
+      curl -X POST http://prometheus-pushgateway:9091/metrics/job/dora \
+        -d "deployment_total{environment=\"production\",service=\"${CI_PROJECT_NAME}\"} 1"
+  only:
+    - main
+
+collect_dora_metrics:
+  stage: metrics
+  script:
+    - |
+      # Lead Time 계산 (커밋 시간 → 배포 시간)
+      COMMIT_TIME=$(git log -1 --format=%ct)
+      DEPLOY_TIME=$(date +%s)
+      LEAD_TIME=$((DEPLOY_TIME - COMMIT_TIME))
+      
+      curl -X POST http://prometheus-pushgateway:9091/metrics/job/dora \
+        -d "lead_time_seconds{environment=\"production\",service=\"${CI_PROJECT_NAME}\"} ${LEAD_TIME}"
+```
+
+**조직별 DORA 성숙도 비교**:
+| 조직 유형 | Deployment Frequency | Lead Time | Change Failure Rate | Recovery Time |
+|-----------|---------------------|-----------|-------------------|---------------|
+| **스타트업** | 하루 여러 번 | 1시간 | 10% | 30분 |
+| **중견기업** | 주 1회 | 1일 | 20% | 4시간 |
+| **대기업** | 월 1회 | 1주 | 30% | 1일 |
+| **레거시 조직** | 분기 1회 | 1개월 | 50% | 1주 |
+
+### 🔍 개념 4: Kubernetes 로깅 전략 (8분)
 
 > **정의**: 클러스터 전체의 로그를 중앙화하여 수집, 저장, 분석하는 시스템
 
@@ -448,8 +626,9 @@ sequenceDiagram
 
 **토론 주제**:
 1. **관측성 우선순위**: "Metrics, Logs, Traces 중 가장 먼저 구축해야 할 것은?"
-2. **모니터링 전략**: "우리 서비스에 필요한 핵심 메트릭은 무엇일까?"
-3. **로그 보관**: "로그를 얼마나 오래 보관해야 할까? (비용 vs 필요성)"
+2. **DORA 메트릭**: "우리 조직의 현재 DORA 성숙도는 어느 수준일까?"
+3. **모니터링 전략**: "우리 서비스에 필요한 핵심 메트릭은 무엇일까?"
+4. **로그 보관**: "로그를 얼마나 오래 보관해야 할까? (비용 vs 필요성)"
 
 **페어 활동 가이드**:
 - 👥 **자유 페어링**: 관심사가 비슷한 사람끼리
@@ -476,6 +655,11 @@ sequenceDiagram
 ### 🆕 새로운 용어
 - **Observability (관측성)**: 시스템 내부 상태를 외부 출력으로 추론하는 능력
 - **Metrics (메트릭)**: 시계열 숫자 데이터로 시스템 상태 측정
+- **DORA 메트릭**: DevOps Research and Assessment에서 정의한 소프트웨어 전달 성능 지표
+- **Deployment Frequency**: 프로덕션 환경으로의 배포 빈도
+- **Lead Time for Changes**: 코드 커밋부터 프로덕션 배포까지의 소요 시간
+- **Change Failure Rate**: 프로덕션 배포 중 실패하거나 롤백이 필요한 비율
+- **Time to Restore Service**: 서비스 장애 발생부터 복구까지의 소요 시간
 - **Prometheus**: Pull 기반 오픈소스 모니터링 시스템
 - **PromQL**: Prometheus Query Language, 시계열 데이터 쿼리 언어
 - **Time Series Database**: 시간 순서로 저장되는 데이터베이스

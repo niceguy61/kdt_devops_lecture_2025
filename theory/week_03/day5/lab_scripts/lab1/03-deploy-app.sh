@@ -96,7 +96,7 @@ spec:
   endpoints:
   - port: http
     interval: 30s
-    path: /metrics
+
 EOF
 
 echo "✅ ServiceMonitor 생성 완료"
