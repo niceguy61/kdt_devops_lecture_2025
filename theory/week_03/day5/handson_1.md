@@ -983,41 +983,6 @@ kubectl logs -f deployment/production-app -n production
 
 ---
 
-## ✅ 실습 체크포인트
-
-### ✅ 커스텀 메트릭 HPA
-- [ ] Prometheus Adapter 정상 동작
-- [ ] 커스텀 메트릭 수집 확인
-- [ ] HTTP 요청 수 기반 HPA 동작
-- [ ] 부하 테스트 시 자동 확장 확인
-
-### ✅ 고급 알림 시스템
-- [ ] AlertManager 설정 완료
-- [ ] 커스텀 알림 규칙 생성
-- [ ] 계층적 알림 라우팅 동작
-- [ ] 알림 테스트 성공
-
-### ✅ 멀티 클러스터 GitOps
-- [ ] 여러 클러스터 등록 완료
-- [ ] 환경별 Application 생성
-- [ ] App of Apps 패턴 구현
-- [ ] 자동 동기화 확인
-
-### ✅ 프로덕션급 Helm Chart
-- [ ] Chart 구조 완성
-- [ ] 의존성 관리 설정
-- [ ] 보안 설정 적용
-- [ ] Chart 배포 성공
-
-### ✅ GitHub 연동 GitOps
-- [ ] GitHub 저장소 생성 및 초기 설정
-- [ ] ArgoCD Application 등록
-- [ ] Git Push → 자동 배포 확인
-- [ ] Self-Heal 기능 테스트
-- [ ] 변경 이력 추적 및 롤백
-
----
-
 ## 🛠️ Step 5: GitHub 연동 GitOps 실습 (20분)
 
 ### 🎯 학습 목표
@@ -1827,6 +1792,41 @@ kind delete cluster --name challenge-cluster
 - 팀별 알림 채널 분리 및 에스컬레이션
 - 환경별 클러스터 분리 및 통합 관리
 - 표준화된 Helm Chart 템플릿 구축
+
+---
+
+## ✅ 실습 체크포인트
+
+### ✅ 커스텀 메트릭 HPA
+- [ ] Prometheus Adapter 정상 동작
+- [ ] 커스텀 메트릭 수집 확인
+- [ ] HTTP 요청 수 기반 HPA 동작
+- [ ] 부하 테스트 시 자동 확장 확인
+
+### ✅ 고급 알림 시스템
+- [ ] AlertManager 설정 완료
+- [ ] 커스텀 알림 규칙 생성
+- [ ] 계층적 알림 라우팅 동작
+- [ ] 알림 테스트 성공
+
+### ✅ 멀티 클러스터 GitOps
+- [ ] 여러 클러스터 등록 완료
+- [ ] 환경별 Application 생성
+- [ ] App of Apps 패턴 구현
+- [ ] 자동 동기화 확인
+
+### ✅ 프로덕션급 Helm Chart
+- [ ] Chart 구조 완성
+- [ ] 의존성 관리 설정
+- [ ] 보안 설정 적용
+- [ ] Chart 배포 성공
+
+### ✅ GitHub 연동 GitOps
+- [ ] GitHub 저장소 생성 및 초기 설정
+- [ ] ArgoCD Application 등록
+- [ ] Git Push → 자동 배포 확인
+- [ ] Self-Heal 기능 테스트
+- [ ] 변경 이력 추적 및 롤백
 
 ---
 
