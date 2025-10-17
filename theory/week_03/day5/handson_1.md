@@ -640,7 +640,7 @@ argocd account get-user-info
 **현재 클러스터 등록**:
 ```bash
 # 현재 클러스터를 ArgoCD에 등록
-argocd cluster add $(kubectl config current-context)
+argocd cluster add kind-challenge-cluster --in-cluster --name challenge-cluster
 
 # 등록된 클러스터 확인
 argocd cluster list
