@@ -181,6 +181,8 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 ```bash
 # Metrics Server 설치
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl edit deployment/metrics-server -n kube-system
+# args에 --kubelet-insecure-tls 추가
 
 # 준비 대기 (30초)
 sleep 30
