@@ -171,7 +171,7 @@ The Job "saga-orchestrator" is invalid: spec.template: Invalid value: ...: field
 
 **해결**: Job은 수정 불가, 반드시 삭제 후 재생성
 ```bash
-kubectl delete job saga-orchestrator -n ecommerce-microservices
+kubectl delete job saga-orchestrator -n microservices-challenge
 kubectl apply -f fixed-saga.yaml
 ```
 
@@ -180,7 +180,7 @@ kubectl apply -f fixed-saga.yaml
 
 **해결**: Pod 재시작 필요
 ```bash
-kubectl rollout restart deployment/<deployment-name> -n ecommerce-microservices
+kubectl rollout restart deployment/<deployment-name> -n microservices-challenge
 ```
 
 ### 스크립트 실행 권한 오류
@@ -202,7 +202,7 @@ lsof -i :8081-8086
 
 ### 리소스 정리 실패
 ```bash
-kubectl delete namespace ecommerce-microservices --force --grace-period=0
+kubectl delete namespace microservices-challenge --force --grace-period=0
 kubectl delete namespace testing --force --grace-period=0
 ```
 

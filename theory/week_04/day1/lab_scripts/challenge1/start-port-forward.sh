@@ -8,39 +8,39 @@ echo ""
 
 # 기존 포트 포워딩 프로세스 종료
 echo "1. 기존 포트 포워딩 종료 중..."
-pkill -f "kubectl port-forward.*ecommerce-microservices" 2>/dev/null
+pkill -f "kubectl port-forward.*microservices-challenge" 2>/dev/null
 sleep 2
 
 # 포트 포워딩 시작
 echo "2. 새로운 포트 포워딩 설정 중..."
 
 # User Service
-kubectl port-forward -n ecommerce-microservices svc/user-service 8081:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/user-service 8081:80 > /dev/null 2>&1 &
 USER_PID=$!
 sleep 1
 
 # Command Service
-kubectl port-forward -n ecommerce-microservices svc/command-service 8082:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/command-service 8082:80 > /dev/null 2>&1 &
 COMMAND_PID=$!
 sleep 1
 
 # Query Service
-kubectl port-forward -n ecommerce-microservices svc/query-service 8083:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/query-service 8083:80 > /dev/null 2>&1 &
 QUERY_PID=$!
 sleep 1
 
 # Event Store API
-kubectl port-forward -n ecommerce-microservices svc/event-store-api 8084:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/event-store-api 8084:80 > /dev/null 2>&1 &
 EVENT_PID=$!
 sleep 1
 
 # Order Service
-kubectl port-forward -n ecommerce-microservices svc/order-service 8085:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/order-service 8085:80 > /dev/null 2>&1 &
 ORDER_PID=$!
 sleep 1
 
 # Payment Service
-kubectl port-forward -n ecommerce-microservices svc/payment-service 8086:80 > /dev/null 2>&1 &
+kubectl port-forward -n microservices-challenge svc/payment-service 8086:80 > /dev/null 2>&1 &
 PAYMENT_PID=$!
 sleep 1
 

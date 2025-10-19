@@ -8,8 +8,8 @@
 
 ### 힌트 1-1: Job 상태 및 파일 확인
 ```bash
-kubectl get jobs saga-orchestrator -n ecommerce-microservices
-kubectl logs job/saga-orchestrator -n ecommerce-microservices
+kubectl get jobs saga-orchestrator -n microservices-challenge
+kubectl logs job/saga-orchestrator -n microservices-challenge
 ```
 
 **무엇을 찾아야 하나요?**
@@ -17,14 +17,14 @@ kubectl logs job/saga-orchestrator -n ecommerce-microservices
 - **broken-saga.yaml 파일을 열어보세요!**
 - `🔧 FIX ME` 주석이 표시된 4곳을 찾으세요:
   1. **FIX ME 1**: backoffLimit을 3으로 변경
-  2. **FIX ME 2**: URL을 FQDN으로 변경 (http://order-service.ecommerce-microservices.svc.cluster.local/api/orders)
+  2. **FIX ME 2**: URL을 FQDN으로 변경 (http://order-service.microservices-challenge.svc.cluster.local/api/orders)
   3. **FIX ME 3**: FAILED → SUCCESS, SKIPPED → SUCCESS, Failed → Completed
   4. **FIX ME 4**: exit 1 → exit 0
 - 수정 후 Job을 삭제하고 재배포하세요!
 
 ### 힌트 1-2: ConfigMap 확인
 ```bash
-kubectl get configmap order-service-config -n ecommerce-microservices -o yaml
+kubectl get configmap order-service-config -n microservices-challenge -o yaml
 ```
 
 **무엇을 찾아야 하나요?**
@@ -33,7 +33,7 @@ kubectl get configmap order-service-config -n ecommerce-microservices -o yaml
 
 ### 힌트 1-3: Job 설정 확인
 ```bash
-kubectl describe job saga-orchestrator -n ecommerce-microservices
+kubectl describe job saga-orchestrator -n microservices-challenge
 ```
 
 **무엇을 찾아야 하나요?**
@@ -46,7 +46,7 @@ kubectl describe job saga-orchestrator -n ecommerce-microservices
 kubectl edit job saga-orchestrator
 
 # ✅ 반드시 삭제 후 재생성
-kubectl delete job saga-orchestrator -n ecommerce-microservices
+kubectl delete job saga-orchestrator -n microservices-challenge
 kubectl apply -f fixed-job.yaml
 ```
 
@@ -56,7 +56,7 @@ kubectl apply -f fixed-job.yaml
 
 ### 힌트 2-1: Command Service 테스트
 ```bash
-kubectl exec -n ecommerce-microservices deployment/command-service -- curl -s localhost/api/commands/create-user
+kubectl exec -n microservices-challenge deployment/command-service -- curl -s localhost/api/commands/create-user
 ```
 
 **무엇을 찾아야 하나요?**
@@ -65,7 +65,7 @@ kubectl exec -n ecommerce-microservices deployment/command-service -- curl -s lo
 
 ### 힌트 2-2: Service 엔드포인트 확인
 ```bash
-kubectl get endpoints command-service query-service -n ecommerce-microservices
+kubectl get endpoints command-service query-service -n microservices-challenge
 ```
 
 **무엇을 찾아야 하나요?**
@@ -74,7 +74,7 @@ kubectl get endpoints command-service query-service -n ecommerce-microservices
 
 ### 힌트 2-3: Service Selector 확인
 ```bash
-kubectl get svc command-service query-service -n ecommerce-microservices -o yaml | grep -A3 selector
+kubectl get svc command-service query-service -n microservices-challenge -o yaml | grep -A3 selector
 ```
 
 **무엇을 찾아야 하나요?**
@@ -87,7 +87,7 @@ kubectl get svc command-service query-service -n ecommerce-microservices -o yaml
 
 ### 힌트 3-1: CronJob 스케줄 확인
 ```bash
-kubectl get cronjobs event-processor -n ecommerce-microservices -o yaml | grep schedule
+kubectl get cronjobs event-processor -n microservices-challenge -o yaml | grep schedule
 ```
 
 **무엇을 찾아야 하나요?**
@@ -99,7 +99,7 @@ kubectl get cronjobs event-processor -n ecommerce-microservices -o yaml | grep s
 
 ### 힌트 3-2: Event Store API 테스트
 ```bash
-kubectl exec -n ecommerce-microservices deployment/event-store-api -- curl -s localhost/api/events
+kubectl exec -n microservices-challenge deployment/event-store-api -- curl -s localhost/api/events
 ```
 
 **무엇을 찾아야 하나요?**
@@ -108,7 +108,7 @@ kubectl exec -n ecommerce-microservices deployment/event-store-api -- curl -s lo
 
 ### 힌트 3-3: 볼륨 마운트 확인
 ```bash
-kubectl describe deployment event-store-api -n ecommerce-microservices | grep -A5 "Mounts:"
+kubectl describe deployment event-store-api -n microservices-challenge | grep -A5 "Mounts:"
 ```
 
 **무엇을 찾아야 하나요?**
@@ -121,7 +121,7 @@ kubectl describe deployment event-store-api -n ecommerce-microservices | grep -A
 
 ### 힌트 4-1: User Service 엔드포인트
 ```bash
-kubectl get endpoints user-service -n ecommerce-microservices
+kubectl get endpoints user-service -n microservices-challenge
 ```
 
 **무엇을 찾아야 하나요?**
@@ -130,7 +130,7 @@ kubectl get endpoints user-service -n ecommerce-microservices
 
 ### 힌트 4-2: Ingress 설정 확인
 ```bash
-kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o yaml
+kubectl get ingress ecommerce-ingress -n microservices-challenge -o yaml
 ```
 
 **무엇을 찾아야 하나요?**
@@ -139,7 +139,7 @@ kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o yaml
 
 ### 힌트 4-3: DNS 테스트
 ```bash
-kubectl exec -n testing deployment/load-tester -- nslookup user-service.ecommerce-microservices.svc.cluster.local
+kubectl exec -n testing deployment/load-tester -- nslookup user-service.microservices-challenge.svc.cluster.local
 ```
 
 **무엇을 찾아야 하나요?**
@@ -152,33 +152,33 @@ kubectl exec -n testing deployment/load-tester -- nslookup user-service.ecommerc
 
 ### 1. Pod 상태 확인
 ```bash
-kubectl get pods -n ecommerce-microservices
-kubectl describe pod <pod-name> -n ecommerce-microservices
+kubectl get pods -n microservices-challenge
+kubectl describe pod <pod-name> -n microservices-challenge
 ```
 
 ### 2. 로그 확인
 ```bash
-kubectl logs <pod-name> -n ecommerce-microservices
-kubectl logs deployment/<deployment-name> -n ecommerce-microservices
+kubectl logs <pod-name> -n microservices-challenge
+kubectl logs deployment/<deployment-name> -n microservices-challenge
 ```
 
 ### 3. Service 연결 테스트
 ```bash
-kubectl exec -n testing deployment/load-tester -- curl -v http://<service-name>.ecommerce-microservices.svc.cluster.local
+kubectl exec -n testing deployment/load-tester -- curl -v http://<service-name>.microservices-challenge.svc.cluster.local
 ```
 
 ### 4. ConfigMap 내용 확인
 ```bash
-kubectl get configmap <configmap-name> -n ecommerce-microservices -o yaml
+kubectl get configmap <configmap-name> -n microservices-challenge -o yaml
 ```
 
 ### 5. 변경 사항 적용
 ```bash
 # ConfigMap 수정 후 Pod 재시작
-kubectl rollout restart deployment/<deployment-name> -n ecommerce-microservices
+kubectl rollout restart deployment/<deployment-name> -n microservices-challenge
 
 # Job 재생성
-kubectl delete job <job-name> -n ecommerce-microservices
+kubectl delete job <job-name> -n microservices-challenge
 kubectl apply -f <fixed-yaml-file>
 ```
 

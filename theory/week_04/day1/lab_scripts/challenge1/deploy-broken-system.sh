@@ -17,9 +17,9 @@ show_progress() {
 
 # 네임스페이스 확인
 show_progress "1/5 환경 준비"
-if ! kubectl get namespace ecommerce-microservices >/dev/null 2>&1; then
-    kubectl create namespace ecommerce-microservices
-    echo "✅ ecommerce-microservices 네임스페이스 생성"
+if ! kubectl get namespace microservices-challenge >/dev/null 2>&1; then
+    kubectl create namespace microservices-challenge
+    echo "✅ microservices-challenge 네임스페이스 생성"
 fi
 
 if ! kubectl get namespace testing >/dev/null 2>&1; then
@@ -83,7 +83,7 @@ echo ""
 echo "=== 🚨 장애 상황 확인 ==="
 echo ""
 echo "📦 배포된 리소스:"
-kubectl get all -n ecommerce-microservices
+kubectl get all -n microservices-challenge
 
 echo ""
 echo "🚨 예상 장애 상황:"

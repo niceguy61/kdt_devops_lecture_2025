@@ -43,66 +43,66 @@ show_progress() {
 show_progress "1/4 Saga 패턴 복구 검증"
 
 run_test "Saga Job 성공 실행" \
-    "kubectl get jobs saga-orchestrator -n ecommerce-microservices -o jsonpath='{.status.succeeded}' | grep -q '1'" \
+    "kubectl get jobs saga-orchestrator -n microservices-challenge -o jsonpath='{.status.succeeded}' | grep -q '1'" \
     "Job이 성공적으로 완료되어야 합니다"
 
 run_test "Order Service 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s http://order-service.ecommerce-microservices.svc.cluster.local/api/orders | grep -q 'saga-001'" \
+    "kubectl exec -n testing deployment/load-tester -- curl -s http://order-service.microservices-challenge.svc.cluster.local/api/orders | grep -q 'saga-001'" \
     "Order Service가 정상적인 JSON 응답을 반환해야 합니다"
 
 run_test "Payment Service 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s http://payment-service.ecommerce-microservices.svc.cluster.local/api/payments | grep -q 'completed' && kubectl get jobs saga-orchestrator -n ecommerce-microservices -o jsonpath='{.status.succeeded}' | grep -q '1'" \
+    "kubectl exec -n testing deployment/load-tester -- curl -s http://payment-service.microservices-challenge.svc.cluster.local/api/payments | grep -q 'completed' && kubectl get jobs saga-orchestrator -n microservices-challenge -o jsonpath='{.status.succeeded}' | grep -q '1'" \
     "Payment Service가 정상적으로 응답하고 Saga가 완료되어야 합니다"
 
 # 2. CQRS 패턴 검증
 show_progress "2/4 CQRS 패턴 복구 검증"
 
 run_test "Command Service 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service.ecommerce-microservices.svc.cluster.local/api/commands/create-user | grep -q 'cmd-001'" \
+    "kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service.microservices-challenge.svc.cluster.local/api/commands/create-user | grep -q 'cmd-001'" \
     "Command Service가 유효한 JSON으로 응답해야 합니다"
 
 run_test "Query Service 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s http://query-service.ecommerce-microservices.svc.cluster.local/api/queries/users | grep -q 'John Doe'" \
+    "kubectl exec -n testing deployment/load-tester -- curl -s http://query-service.microservices-challenge.svc.cluster.local/api/queries/users | grep -q 'John Doe'" \
     "Query Service가 사용자 데이터를 정상 반환해야 합니다"
 
 run_test "Command Service 엔드포인트 연결" \
-    "kubectl get endpoints command-service -n ecommerce-microservices -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]' && kubectl get svc command-service -n ecommerce-microservices -o jsonpath='{.spec.ports[0].targetPort}' | grep -q '^80$'" \
+    "kubectl get endpoints command-service -n microservices-challenge -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]' && kubectl get svc command-service -n microservices-challenge -o jsonpath='{.spec.ports[0].targetPort}' | grep -q '^80$'" \
     "Command Service의 엔드포인트가 정상 연결되고 포트가 올바르게 설정되어야 합니다"
 
 # 3. Event Sourcing 검증
 show_progress "3/4 Event Sourcing 복구 검증"
 
 run_test "Event Store API 정상 응답" \
-    "kubectl exec -n testing deployment/load-tester -- curl -s http://event-store-api.ecommerce-microservices.svc.cluster.local/api/events | grep -q 'evt-001'" \
+    "kubectl exec -n testing deployment/load-tester -- curl -s http://event-store-api.microservices-challenge.svc.cluster.local/api/events | grep -q 'evt-001'" \
     "Event Store API가 이벤트 데이터를 정상 반환해야 합니다"
 
 run_test "CronJob 정상 스케줄링" \
-    "kubectl get cronjobs event-processor -n ecommerce-microservices -o jsonpath='{.spec.schedule}' | grep -E '^\*/5 \* \* \* \*$'" \
+    "kubectl get cronjobs event-processor -n microservices-challenge -o jsonpath='{.spec.schedule}' | grep -E '^\*/5 \* \* \* \*$'" \
     "CronJob이 올바른 스케줄 표현식을 가져야 합니다 (매일 5분마다, 요일 필드 없음)"
 
 run_test "Event Processor 실행 가능" \
-    "kubectl create job event-processor-test --from=cronjob/event-processor -n ecommerce-microservices && sleep 10 && kubectl logs job/event-processor-test -n ecommerce-microservices | grep -q 'Processing'" \
+    "kubectl create job event-processor-test --from=cronjob/event-processor -n microservices-challenge && sleep 10 && kubectl logs job/event-processor-test -n microservices-challenge | grep -q 'Processing'" \
     "Event Processor가 정상적으로 실행되어야 합니다"
 
 # 4. 네트워킹 검증
 show_progress "4/4 네트워킹 복구 검증"
 
 run_test "User Service 엔드포인트 연결" \
-    "kubectl get endpoints user-service -n ecommerce-microservices -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]'" \
+    "kubectl get endpoints user-service -n microservices-challenge -o jsonpath='{.subsets[0].addresses[0].ip}' | grep -q '[0-9]'" \
     "User Service의 엔드포인트가 정상 연결되어야 합니다"
 
 run_test "Ingress 라우팅 정상" \
-    "kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o jsonpath='{.spec.rules[0].http.paths[0].backend.service.name}' | grep -q 'user-service' && kubectl get ingress ecommerce-ingress -n ecommerce-microservices -o jsonpath='{.spec.rules[0].http.paths[1].backend.service.port.number}' | grep -q '^80$'" \
+    "kubectl get ingress ecommerce-ingress -n microservices-challenge -o jsonpath='{.spec.rules[0].http.paths[0].backend.service.name}' | grep -q 'user-service' && kubectl get ingress ecommerce-ingress -n microservices-challenge -o jsonpath='{.spec.rules[0].http.paths[1].backend.service.port.number}' | grep -q '^80$'" \
     "Ingress가 올바른 서비스와 포트로 라우팅해야 합니다"
 
 run_test "DNS 해결 정상" \
-    "kubectl exec -n testing deployment/load-tester -- nslookup user-service.ecommerce-microservices.svc.cluster.local | grep -q 'Address:'" \
+    "kubectl exec -n testing deployment/load-tester -- nslookup user-service.microservices-challenge.svc.cluster.local | grep -q 'Address:'" \
     "DNS가 서비스 이름을 정상적으로 해결해야 합니다"
 
 # 정리 작업
 echo ""
 echo "🧹 테스트 정리 중..."
-kubectl delete job event-processor-test -n ecommerce-microservices 2>/dev/null || true
+kubectl delete job event-processor-test -n microservices-challenge 2>/dev/null || true
 
 # 최종 결과
 show_progress "검증 결과 요약"

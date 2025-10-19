@@ -32,35 +32,35 @@ echo "🧹 Challenge 1 리소스 정리 중..."
 
 # Jobs 정리
 echo "🗑️  Jobs 정리 중..."
-kubectl delete jobs --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete jobs --all -n microservices-challenge 2>/dev/null || true
 
 # CronJobs 정리
 echo "🗑️  CronJobs 정리 중..."
-kubectl delete cronjobs --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete cronjobs --all -n microservices-challenge 2>/dev/null || true
 
 # Deployments 정리
 echo "🗑️  Deployments 정리 중..."
-kubectl delete deployments --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete deployments --all -n microservices-challenge 2>/dev/null || true
 
 # Services 정리
 echo "🗑️  Services 정리 중..."
-kubectl delete services --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete services --all -n microservices-challenge 2>/dev/null || true
 
 # ConfigMaps 정리
 echo "🗑️  ConfigMaps 정리 중..."
-kubectl delete configmaps --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete configmaps --all -n microservices-challenge 2>/dev/null || true
 
 # Ingress 정리
 echo "🗑️  Ingress 정리 중..."
-kubectl delete ingress --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete ingress --all -n microservices-challenge 2>/dev/null || true
 
 # 네임스페이스 정리 (선택사항)
 echo ""
-read -p "ecommerce-microservices 네임스페이스도 삭제하시겠습니까? (y/N): " -n 1 -r
+read -p "microservices-challenge 네임스페이스도 삭제하시겠습니까? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🗑️  ecommerce-microservices 네임스페이스 삭제 중..."
-    kubectl delete namespace ecommerce-microservices
+    echo "🗑️  microservices-challenge 네임스페이스 삭제 중..."
+    kubectl delete namespace microservices-challenge
     echo "✅ 네임스페이스 삭제 완료"
 else
     echo "ℹ️  네임스페이스는 유지됩니다"
@@ -69,11 +69,11 @@ fi
 # 최종 확인
 echo ""
 echo "🔍 정리 결과 확인:"
-if kubectl get namespace ecommerce-microservices >/dev/null 2>&1; then
-    echo "📦 ecommerce-microservices 네임스페이스 리소스:"
-    kubectl get all -n ecommerce-microservices 2>/dev/null || echo "   (리소스 없음)"
+if kubectl get namespace microservices-challenge >/dev/null 2>&1; then
+    echo "📦 microservices-challenge 네임스페이스 리소스:"
+    kubectl get all -n microservices-challenge 2>/dev/null || echo "   (리소스 없음)"
 else
-    echo "📦 ecommerce-microservices 네임스페이스: 삭제됨"
+    echo "📦 microservices-challenge 네임스페이스: 삭제됨"
 fi
 
 echo ""
