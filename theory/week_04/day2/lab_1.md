@@ -549,9 +549,23 @@ Order Service Response
 
 ## 🔌 Step 5: 플러그인 적용 (10분)
 
-### Step 5-1: Rate Limiting 플러그인
+### Step 5-1: 플러그인 자동 적용
 
-**User Service에 Rate Limiting 적용**:
+**🚀 자동화 스크립트 사용**
+```bash
+./apply-plugins.sh
+```
+
+**📋 스크립트 내용**: [apply-plugins.sh](./lab_scripts/lab1/apply-plugins.sh)
+
+이 스크립트는 다음 플러그인을 자동으로 적용합니다:
+- Rate Limiting (User Service)
+- Key Authentication (Product Service)
+- CORS (Order Service)
+
+### Step 5-2: 수동 플러그인 적용 (학습용)
+
+**Rate Limiting 플러그인 (User Service)**:
 ```bash
 curl -i -X POST http://localhost:8001/services/user-service/plugins \
   --data name=rate-limiting \
@@ -559,19 +573,7 @@ curl -i -X POST http://localhost:8001/services/user-service/plugins \
   --data config.policy=local
 ```
 
-**테스트**:
-```bash
-# 10번 이상 호출하면 429 에러
-for i in {1..15}; do
-  echo "Request $i:"
-  curl -i http://localhost:8000/users
-  sleep 1
-done
-```
-
-### Step 5-2: Key Authentication 플러그인
-
-**Product Service에 Key Auth 적용**:
+**Key Authentication 플러그인 (Product Service)**:
 ```bash
 # Key Auth 플러그인 활성화
 curl -i -X POST http://localhost:8001/services/product-service/plugins \
@@ -586,18 +588,7 @@ curl -i -X POST http://localhost:8001/consumers/testuser/key-auth \
   --data key=my-secret-key
 ```
 
-**테스트**:
-```bash
-# 인증 없이 호출 (실패)
-curl http://localhost:8000/products
-
-# API Key로 호출 (성공)
-curl -H "apikey: my-secret-key" http://localhost:8000/products
-```
-
-### Step 5-3: CORS 플러그인
-
-**Order Service에 CORS 적용**:
+**CORS 플러그인 (Order Service)**:
 ```bash
 curl -i -X POST http://localhost:8001/services/order-service/plugins \
   --data name=cors \
@@ -606,7 +597,28 @@ curl -i -X POST http://localhost:8001/services/order-service/plugins \
   --data config.headers=Accept,Content-Type,Authorization
 ```
 
-**테스트**:
+### Step 5-3: 플러그인 테스트
+
+**Rate Limiting 테스트**:
+```bash
+# 10번 이상 호출하면 429 에러
+for i in {1..15}; do
+  echo "Request $i:"
+  curl -i http://localhost:8000/users
+  sleep 1
+done
+```
+
+**Key Authentication 테스트**:
+```bash
+# 인증 없이 호출 (401 에러)
+curl http://localhost:8000/products
+
+# API Key로 호출 (성공)
+curl -H "apikey: my-secret-key" http://localhost:8000/products
+```
+
+**CORS 테스트**:
 ```bash
 # CORS 헤더 확인
 curl -i -X OPTIONS http://localhost:8000/orders \

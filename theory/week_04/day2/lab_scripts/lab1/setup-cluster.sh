@@ -39,9 +39,36 @@ echo "3. kubectl 컨텍스트 설정 중..."
 kubectl config use-context kind-lab-cluster
 echo "   ✅ 컨텍스트 설정 완료"
 
-# 4. 클러스터 상태 확인
+# 4. Metrics Server 설치 (non-TLS 모드)
 echo ""
-echo "4. 클러스터 상태 확인 중..."
+echo "4. Metrics Server 설치 중 (non-TLS 모드)..."
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Metrics Server non-TLS 설정
+kubectl patch deployment metrics-server -n kube-system --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/args/-",
+    "value": "--kubelet-insecure-tls"
+  }
+]'
+
+echo "   ⏳ Metrics Server 준비 대기 중..."
+kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=120s
+echo "   ✅ Metrics Server 설치 완료"
+
+# 5. Kubernetes Dashboard 설치
+echo ""
+echo "5. Kubernetes Dashboard 설치 중..."
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+echo "   ⏳ Dashboard 준비 대기 중..."
+kubectl wait --for=condition=ready pod -l k8s-app=kubernetes-dashboard -n kubernetes-dashboard --timeout=120s
+echo "   ✅ Kubernetes Dashboard 설치 완료"
+
+# 6. 클러스터 상태 확인
+echo ""
+echo "6. 클러스터 상태 확인 중..."
 kubectl cluster-info
 kubectl get nodes
 
@@ -51,5 +78,13 @@ echo ""
 echo "📍 포트 매핑:"
 echo "   - Kong Proxy: localhost:8000 → NodePort 30080"
 echo "   - Kong Admin: localhost:8001 → NodePort 30081"
+echo ""
+echo "📊 설치된 컴포넌트:"
+echo "   - Metrics Server (non-TLS 모드)"
+echo "   - Kubernetes Dashboard"
+echo ""
+echo "💡 Dashboard 접근:"
+echo "   kubectl proxy"
+echo "   http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/"
 echo ""
 echo "다음 단계: ./install-kong.sh"
