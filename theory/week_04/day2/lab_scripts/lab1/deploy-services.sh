@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Step 4: 마이크로서비스 배포
+# Lab 1: Kong API Gateway - 백엔드 서비스 배포
 
-echo "=== Step 4: 마이크로서비스 배포 시작 ==="
+echo "=== 백엔드 마이크로서비스 배포 시작 ==="
 echo ""
 
-# User Service 배포
+# 1. User Service 배포
 echo "1. User Service 배포 중..."
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,18 +17,16 @@ spec:
   selector:
     matchLabels:
       app: user-service
-      version: v1
   template:
     metadata:
       labels:
         app: user-service
-        version: v1
     spec:
       containers:
       - name: user-service
         image: hashicorp/http-echo:latest
         args:
-        - "-text=User Service v1"
+        - "-text=User Service Response"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
@@ -44,11 +42,12 @@ spec:
   - port: 80
     targetPort: 8080
 EOF
+echo "   ✅ User Service 배포 완료"
 
-# Product Service 배포
+# 2. Product Service 배포
 echo ""
 echo "2. Product Service 배포 중..."
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,18 +57,16 @@ spec:
   selector:
     matchLabels:
       app: product-service
-      version: v1
   template:
     metadata:
       labels:
         app: product-service
-        version: v1
     spec:
       containers:
       - name: product-service
         image: hashicorp/http-echo:latest
         args:
-        - "-text=Product Service v1"
+        - "-text=Product Service Response"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
@@ -85,11 +82,12 @@ spec:
   - port: 80
     targetPort: 8080
 EOF
+echo "   ✅ Product Service 배포 완료"
 
-# Order Service 배포
+# 3. Order Service 배포
 echo ""
 echo "3. Order Service 배포 중..."
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -99,18 +97,16 @@ spec:
   selector:
     matchLabels:
       app: order-service
-      version: v1
   template:
     metadata:
       labels:
         app: order-service
-        version: v1
     spec:
       containers:
       - name: order-service
         image: hashicorp/http-echo:latest
         args:
-        - "-text=Order Service v1"
+        - "-text=Order Service Response"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
@@ -126,22 +122,28 @@ spec:
   - port: 80
     targetPort: 8080
 EOF
+echo "   ✅ Order Service 배포 완료"
 
-# Pod 시작 대기
+# 4. Pod 준비 대기
 echo ""
-echo "4. Pod 시작 대기 중..."
+echo "4. Pod 준비 대기 중..."
 kubectl wait --for=condition=ready pod -l app=user-service --timeout=60s
 kubectl wait --for=condition=ready pod -l app=product-service --timeout=60s
 kubectl wait --for=condition=ready pod -l app=order-service --timeout=60s
 
-# 배포 확인
+# 5. 서비스 상태 확인
 echo ""
-echo "5. 배포 확인..."
-kubectl get deployments
-echo ""
+echo "5. 서비스 상태 확인 중..."
 kubectl get pods
 echo ""
 kubectl get svc
 
 echo ""
-echo "=== Step 4: 마이크로서비스 배포 완료 ==="
+echo "=== 백엔드 서비스 배포 완료 ==="
+echo ""
+echo "배포된 서비스:"
+echo "   - user-service (2 replicas)"
+echo "   - product-service (2 replicas)"
+echo "   - order-service (2 replicas)"
+echo ""
+echo "다음 단계: ./configure-kong.sh"
