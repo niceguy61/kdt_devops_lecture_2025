@@ -152,3 +152,13 @@ spec:
           # 🔧 FIX ME 4: Job이 항상 실패합니다
           exit 1
       restartPolicy: Never
+---
+# 🚨 문제 3: Saga Orchestrator ConfigMap (잘못된 URL)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saga-config
+  namespace: microservices-challenge
+data:
+  ORDER_SERVICE_URL: "http://order-service/api/orders"  # 🚨 FQDN 누락
+  PAYMENT_SERVICE_URL: "http://payment-service.microservices-challenge.svc.cluster.local/api/payments"
