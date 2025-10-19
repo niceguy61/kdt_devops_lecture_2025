@@ -173,12 +173,18 @@ graph LR
     C[Next.js]
     D[Angular]
     E[Svelte]
+    F[Solid.js]
+    G[Qwik]
+    H[Astro]
     
     style A fill:#4caf50
     style B fill:#4caf50
     style C fill:#4caf50
     style D fill:#ff9800
     style E fill:#2196f3
+    style F fill:#2196f3
+    style G fill:#2196f3
+    style H fill:#2196f3
 ```
 
 ### ⚙️ Backend
@@ -190,12 +196,22 @@ graph LR
     C[Go]
     D[Java Spring]
     E[Rust]
+    F[.NET Core]
+    G[PHP Laravel]
+    H[Ruby Rails]
+    I[Elixir]
+    J[Scala]
     
     style A fill:#4caf50
     style B fill:#4caf50
     style C fill:#4caf50
     style D fill:#ff9800
     style E fill:#f44336
+    style F fill:#ff9800
+    style G fill:#4caf50
+    style H fill:#ff9800
+    style I fill:#f44336
+    style J fill:#f44336
 ```
 
 ### 💾 Database
@@ -207,12 +223,20 @@ graph LR
     C[MongoDB]
     D[Cassandra]
     E[DynamoDB]
+    F[CockroachDB]
+    G[Redis]
+    H[Neo4j]
+    I[InfluxDB]
     
     style A fill:#4caf50
     style B fill:#4caf50
     style C fill:#4caf50
     style D fill:#f44336
     style E fill:#ff9800
+    style F fill:#2196f3
+    style G fill:#4caf50
+    style H fill:#2196f3
+    style I fill:#2196f3
 ```
 
 ### ⚡ Cache
@@ -221,9 +245,15 @@ graph LR
 graph LR
     A[Redis]
     B[Memcached]
+    C[Hazelcast]
+    D[Varnish]
+    E[Apache Ignite]
     
     style A fill:#4caf50
     style B fill:#4caf50
+    style C fill:#ff9800
+    style D fill:#2196f3
+    style E fill:#f44336
 ```
 
 ### 📨 Message Queue
@@ -233,10 +263,18 @@ graph LR
     A[RabbitMQ]
     B[Kafka]
     C[AWS SQS]
+    D[Redis Streams]
+    E[NATS]
+    F[ActiveMQ]
+    G[Pulsar]
     
     style A fill:#4caf50
     style B fill:#ff9800
     style C fill:#2196f3
+    style D fill:#4caf50
+    style E fill:#4caf50
+    style F fill:#ff9800
+    style G fill:#2196f3
 ```
 
 ### 📊 Monitoring
@@ -246,10 +284,52 @@ graph LR
     A[Prometheus<br/>+ Grafana]
     B[Datadog]
     C[ELK Stack]
+    D[New Relic]
+    E[Dynatrace]
+    F[AppDynamics]
     
     style A fill:#4caf50
     style B fill:#ff9800
     style C fill:#ff9800
+    style D fill:#ff9800
+    style E fill:#f44336
+    style F fill:#f44336
+```
+
+### 🔍 Search Engine
+
+```mermaid
+graph LR
+    A[Elasticsearch]
+    B[OpenSearch]
+    C[Algolia]
+    D[Meilisearch]
+    E[Typesense]
+    
+    style A fill:#4caf50
+    style B fill:#4caf50
+    style C fill:#ff9800
+    style D fill:#2196f3
+    style E fill:#2196f3
+```
+
+### 🔐 API Gateway
+
+```mermaid
+graph LR
+    A[AWS API Gateway]
+    B[Kong]
+    C[Nginx]
+    D[Traefik]
+    E[Envoy]
+    F[Tyk]
+    
+    style A fill:#4caf50
+    style B fill:#ff9800
+    style C fill:#4caf50
+    style D fill:#4caf50
+    style E fill:#2196f3
+    style F fill:#ff9800
 ```
 
 **색상 가이드:**
