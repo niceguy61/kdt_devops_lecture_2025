@@ -412,10 +412,10 @@ curl http://localhost:30080/
 **🚀 자동화 스크립트 사용**
 ```bash
 cd theory/week_04/day1/lab_scripts/lab1
-./deploy-user-service-simple.sh
+./deploy-user-service.sh
 ```
 
-**📋 스크립트 내용**: [deploy-user-service-simple.sh](./lab_scripts/lab1/deploy-user-service-simple.sh)
+**📋 스크립트 내용**: [deploy-user-service.sh](./lab_scripts/lab1/deploy-user-service.sh)
 
 **2-1. 수동 실행 (학습용)**
 ```bash
