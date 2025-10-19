@@ -36,6 +36,37 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: user-service  # 기본 라우팅
+            name: user-service
+            port:
+              number: 80
+  - host: localhost
+    http:
+      paths:
+      - path: /api/users
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 80
+      - path: /api/products
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 80
+      - path: /api/orders
+        pathType: Prefix
+        backend:
+          service:
+            name: order-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
             port:
               number: 80
