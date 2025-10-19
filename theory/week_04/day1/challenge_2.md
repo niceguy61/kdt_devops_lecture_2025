@@ -260,469 +260,69 @@ graph LR
 
 ---
 
-## 📝 제출 형식
 
-### 1. 문제점 분석 보고서 (필수)
+## 📝 제출 양식
+
+### 1. 문제점 분석 (필수)
 
 ```markdown
 ## 🚨 기존 아키텍처 문제점 분석
 
-### 1. 과도한 기술 스택
+### 1. [문제 카테고리]
 **문제:**
-- 10개 이상의 프로그래밍 언어 사용
-- Scala, Haskell, Elixir, Rust, C++, Erlang, Ruby 등
-- 각 언어별 전문가 필요
+- [구체적인 문제점]
 
 **영향:**
-- 신입 개발자 온보딩 6개월 이상
-- 유지보수 비용 증가
-- 버그 수정 지연
+- [비즈니스/기술적 영향]
 
 **개선 방안:**
-- 2-3개 언어로 통일 (예: Node.js + Python)
-- 팀 전체가 사용 가능한 기술 선택
-- 러닝커브 최소화
-
-### 2. 중복된 인프라
-**문제:**
-- API Gateway 2개 (Kong + AWS API Gateway)
-- 캐시 3개 (Redis + Memcached + Hazelcast)
-- 메시지 큐 3개 (RabbitMQ + Kafka + SQS)
-
-**비용 영향:**
-- Kong Enterprise: $3,000/월
-- 중복 인프라 운영: $5,000/월
-- 총 낭비: $8,000/월
-
-**개선 방안:**
-- API Gateway 1개로 통합
-- 캐시 1개로 통합 (Redis)
-- 메시지 큐 1개로 통합 (RabbitMQ 또는 SQS)
-
-### 3. 과도한 데이터베이스 설정
-**문제:**
-- PostgreSQL 6개 인스턴스 (트래픽 대비 과다)
-- Cassandra 9 노드 ($15,000/월)
-- MongoDB 샤딩 (불필요)
-
-**개선 방안:**
-- PostgreSQL 2개 (Primary + Replica)
-- Cassandra 제거 → PostgreSQL로 통합
-- MongoDB 샤딩 제거 → 단일 인스턴스
-
-### 4. 모니터링 중복
-**문제:**
-- 5개 모니터링 도구 ($8,000/월)
-- Prometheus + Grafana + ELK + Datadog + New Relic
-
-**개선 방안:**
-- Prometheus + Grafana (무료)
-- 또는 Datadog 하나만 ($500/월)
+- [해결 방법]
 ```
 
-### 2. 개선된 아키텍처 다이어그램 (필수)
-
-**Mermaid 차트로 작성**
+### 2. 개선 아키텍처 (필수)
 
 ```mermaid
 graph TB
-    subgraph "CDN - $200/월"
-        CDN[Cloudflare]
+    subgraph "Layer 1"
+        A[Service A]
     end
     
-    subgraph "Load Balancer - $50/월"
-        LB[AWS ALB]
-    end
-    
-    subgraph "API Gateway - $100/월"
-        GW[AWS API Gateway]
-    end
-    
-    subgraph "Frontend - 1개 프레임워크"
-        F1[React SPA<br/>사용자/관리자/드라이버]
-    end
-    
-    subgraph "Backend - Node.js"
-        B1[User Service]
-        B2[Ride Service]
-        B3[Payment Service]
-        B4[Location Service]
-        B5[Notification Service]
-        B6[Rating Service]
-    end
-    
-    subgraph "Data Layer"
-        D1[PostgreSQL<br/>Primary + Replica<br/>$200/월]
-        C1[Redis<br/>Cache<br/>$50/월]
-        Q1[RabbitMQ<br/>Queue<br/>$100/월]
-    end
-    
-    subgraph "Monitoring - 무료"
-        M1[Prometheus<br/>+ Grafana]
-    end
-    
-    CDN --> LB
-    LB --> F1
-    F1 --> GW
-    GW --> B1
-    GW --> B2
-    GW --> B3
-    GW --> B4
-    GW --> B5
-    GW --> B6
-    
-    B1 --> D1
-    B2 --> D1
-    B3 --> D1
-    B4 --> D1
-    B5 --> D1
-    B6 --> D1
-    
-    B1 --> C1
-    B2 --> C1
-    B3 --> C1
-    
-    B2 --> Q1
-    B3 --> Q1
-    B5 --> Q1
-    
-    B1 -.-> M1
-    B2 -.-> M1
-    B3 -.-> M1
-    
-    style CDN fill:#4caf50
-    style LB fill:#4caf50
-    style GW fill:#4caf50
-    style F1 fill:#4caf50
-    style B1 fill:#2196f3
-    style B2 fill:#2196f3
-    style B3 fill:#2196f3
-    style B4 fill:#2196f3
-    style B5 fill:#2196f3
-    style B6 fill:#2196f3
-    style D1 fill:#4caf50
-    style C1 fill:#4caf50
-    style Q1 fill:#4caf50
-    style M1 fill:#4caf50
+    A --> B[Service B]
 ```
 
-**총 비용: $2,700/월 (94.6% 절감)**
+**총 비용: $X,XXX/월**
 
-### 3. 기술 선택 정당화 (필수)
+### 3. 기술 선택 이유 (필수)
 
 ```markdown
-## 🎯 기술 스택 선택 이유
-
-### Frontend: React.js (단일 프레임워크)
+### [기술명]: [선택한 것]
 **선택 이유:**
-- 기존 3개 프론트엔드(Angular, React, Vue)를 1개로 통합
-- 가장 큰 생태계와 인력 풀
-- React Native로 모바일 앱 개발 가능
+- [이유]
 
 **비교:**
-| 항목 | React | Vue | Angular |
-|------|-------|-----|---------|
-| 생태계 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 러닝커브 | 중 | 하 | 상 |
-| 모바일 확장 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| 인력 채용 | 쉬움 | 보통 | 어려움 |
+| 항목 | 선택 | 대안 |
+|------|------|------|
+| 항목 | 값 | 값 |
 
 **트레이드오프:**
-- Vue가 더 쉽지만, React의 생태계가 더 중요
-- Angular는 엔터프라이즈급이지만, 과도하게 무거움
-
-**비용 절감:**
-- 3개 프론트엔드 유지보수 → 1개로 통합
-- 개발자 3명 → 2명으로 감소 가능
-
-### Backend: Node.js (Express)
-**선택 이유:**
-- 기존 10개 언어를 1개로 통합
-- 비동기 I/O로 실시간 위치 추적에 적합
-- 프론트엔드와 같은 언어 (JavaScript/TypeScript)
-- 빠른 개발 속도
-
-**비교:**
-| 항목 | Node.js | Go | Python | Java |
-|------|---------|----|----|------|
-| 개발 속도 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| 성능 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| 러닝커브 | 하 | 중 | 하 | 상 |
-| 생태계 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-
-**트레이드오프:**
-- Go가 더 빠르지만, 개발 속도와 생태계 우선
-- Python도 좋지만, 비동기 처리는 Node.js가 더 자연스러움
-
-**비용 절감:**
-- 10개 언어 전문가 → 1개 언어 팀으로 통합
-- 온보딩 6개월 → 2주로 단축
-
-### Database: PostgreSQL (Primary + Replica)
-**선택 이유:**
-- 관계형 데이터 + JSON 지원으로 범용성
-- 기존 PostgreSQL + MongoDB + Cassandra를 통합
-- 트랜잭션 보장
-- 무료 오픈소스
-
-**비교:**
-| 항목 | PostgreSQL | MySQL | MongoDB | Cassandra |
-|------|------------|-------|---------|-----------|
-| 기능 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 트랜잭션 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| JSON 지원 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| 운영 복잡도 | 중 | 하 | 중 | 극상 |
-
-**트레이드오프:**
-- Cassandra가 더 확장성 좋지만, 현재 트래픽에 과도
-- MongoDB가 더 유연하지만, 트랜잭션 약함
-
-**비용 절감:**
-- Cassandra 9 노드 ($15,000/월) → 제거
-- PostgreSQL 6개 → 2개로 감소
-- 총 $14,800/월 절감
-
-### Cache: Redis
-**선택 이유:**
-- 기존 3개 캐시(Redis, Memcached, Hazelcast)를 1개로 통합
-- 다양한 자료구조 지원
-- Pub/Sub으로 실시간 알림 구현
-- 세션 관리
-
-**비용 절감:**
-- 3개 캐시 운영 → 1개로 통합
-- 약 $200/월 절감
-
-### Message Queue: RabbitMQ
-**선택 이유:**
-- 기존 3개 큐(RabbitMQ, Kafka, SQS)를 1개로 통합
-- 범용적이고 안정적
-- 현재 트래픽에 충분
-
-**비교:**
-| 항목 | RabbitMQ | Kafka | SQS |
-|------|----------|-------|-----|
-| 범용성 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| 운영 복잡도 | 중 | 상 | 하 |
-| 비용 | 무료 | 무료 | 종량제 |
-| 대용량 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-
-**트레이드오프:**
-- Kafka가 더 고성능이지만, 현재 트래픽에 과도
-- SQS가 더 간단하지만, 벤더 종속
-
-**비용 절감:**
-- Kafka 9 브로커 운영 비용 제거
-- 약 $1,000/월 절감
-
-### Monitoring: Prometheus + Grafana
-**선택 이유:**
-- 기존 5개 도구($8,000/월)를 1개로 통합
-- 무료 오픈소스
-- Kubernetes 네이티브 통합
-- 충분한 기능
-
-**비교:**
-| 항목 | Prometheus | Datadog | New Relic |
-|------|------------|---------|-----------|
-| 비용 | 무료 | $15/host | $100/월~ |
-| 기능 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| 운영 | 필요 | 불필요 | 불필요 |
-| 커스터마이징 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
-
-**트레이드오프:**
-- Datadog이 더 편하지만, 비용 대비 효과 낮음
-- 자체 운영 필요하지만, 비용 절감 효과 큼
-
-**비용 절감:**
-- $8,000/월 → $0/월 (자체 호스팅)
+- [장단점]
 ```
 
 ### 4. 마이크로서비스 설계 (필수)
 
 ```markdown
-## 🔧 마이크로서비스 분할 전략
-
-### 서비스 목록 (6개로 단순화)
-
-1. **User Service** - 사용자 관리
-2. **Ride Service** - 차량 매칭
-3. **Payment Service** - 결제 처리
-4. **Location Service** - 위치 추적
-5. **Notification Service** - 알림 발송
-6. **Rating Service** - 평점 관리
-
-### 1. User Service
-**책임:**
-- 사용자 인증/인가 (JWT)
-- 프로필 관리
-- 권한 관리
-
-**기술 스택:**
-- Runtime: Node.js (Express)
-- Database: PostgreSQL
-- Cache: Redis (세션)
-
-**API 엔드포인트:**
-```
-POST   /api/users/register
-POST   /api/users/login
-GET    /api/users/profile
-PUT    /api/users/profile
-DELETE /api/users/account
-```
-
-**데이터 모델:**
-```sql
-users (
-  id UUID PRIMARY KEY,
-  email VARCHAR(255) UNIQUE,
-  password_hash VARCHAR(255),
-  name VARCHAR(100),
-  phone VARCHAR(20),
-  role VARCHAR(20),
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP
-)
-```
-
-### 2. Ride Service
-**책임:**
-- 차량 매칭 알고리즘
-- 예약 관리
-- 실시간 상태 업데이트
-
-**기술 스택:**
-- Runtime: Node.js (Express)
-- Database: PostgreSQL
-- Cache: Redis (실시간 위치)
-- Queue: RabbitMQ (매칭 이벤트)
-
-**API 엔드포인트:**
-```
-POST   /api/rides/request
-GET    /api/rides/{id}
-PUT    /api/rides/{id}/status
-GET    /api/rides/history
-POST   /api/rides/{id}/cancel
-```
-
-### 3. Payment Service
-**책임:**
-- 결제 처리 (Stripe/Toss 연동)
-- 환불 관리
-- 결제 이력
-
-**기술 스택:**
-- Runtime: Node.js (Express)
-- Database: PostgreSQL (트랜잭션)
-- Queue: RabbitMQ (결제 이벤트)
-
-**API 엔드포인트:**
-```
-POST   /api/payments/charge
-POST   /api/payments/refund
-GET    /api/payments/history
-GET    /api/payments/{id}
-```
-
-### 서비스 간 통신
-
-**동기 통신 (REST API):**
-```
-User Service → Payment Service (결제 정보 조회)
-Ride Service → User Service (사용자 정보 조회)
-Ride Service → Location Service (위치 정보 조회)
-```
-
-**비동기 통신 (RabbitMQ):**
-```
-Ride Service → Notification Service (매칭 완료 알림)
-Payment Service → Notification Service (결제 완료 알림)
-Ride Service → Rating Service (라이드 완료 이벤트)
-```
-
-**실시간 통신 (WebSocket):**
-```
-Location Service → Frontend (실시간 위치 업데이트)
-Ride Service → Frontend (매칭 상태 업데이트)
-```
-
-### 데이터 일관성 전략
-
-**Saga 패턴 (분산 트랜잭션):**
-```
-1. Ride Service: 예약 생성
-2. Payment Service: 결제 처리
-3. 성공 → Notification Service: 알림 발송
-4. 실패 → Ride Service: 예약 취소 (보상 트랜잭션)
-```
-
-### 확장성 전략
-
-**Horizontal Scaling:**
-- Kubernetes HPA로 자동 스케일링
-- CPU 70% 이상 시 Pod 추가
-- 최소 2개, 최대 10개 Pod
-
-**Database Scaling:**
-- Read Replica로 읽기 부하 분산
-- Connection Pooling (pg-pool)
-- 쿼리 최적화 및 인덱싱
-
-**Caching Strategy:**
-- L1: Application Cache (Node.js memory)
-- L2: Redis Cache (분산 캐시)
-- TTL: 사용자 프로필 5분, 위치 정보 10초
+### [Service Name]
+**책임:** [역할]
+**기술:** [스택]
+**API:** [엔드포인트]
 ```
 
 ### 5. 비용 분석 (필수)
 
 ```markdown
-## 💰 비용 비교 분석
-
-### 기존 아키텍처 비용 (월)
-| 항목 | 비용 | 비고 |
-|------|------|------|
-| CDN (Cloudflare + AWS) | $5,000 | 과도한 계약 |
-| API Gateway (Kong + AWS) | $3,100 | 중복 |
-| Compute (EC2/ECS) | $8,000 | 과다 프로비저닝 |
-| Database (PostgreSQL 6개) | $3,000 | 불필요한 Replica |
-| Database (Cassandra 9 nodes) | $15,000 | 과도한 설정 |
-| Database (MongoDB Sharding) | $2,000 | 불필요 |
-| Cache (3개 시스템) | $1,500 | 중복 |
-| Message Queue (3개 시스템) | $2,000 | 중복 |
-| Monitoring (5개 도구) | $8,000 | 중복 |
-| 기타 (로드밸런서 등) | $2,400 | |
-| **총계** | **$50,000** | |
-
-### 개선된 아키텍처 비용 (월)
-| 항목 | 비용 | 비고 |
-|------|------|------|
-| CDN (Cloudflare) | $200 | 필요한 만큼만 |
-| Load Balancer (AWS ALB) | $50 | 단순화 |
-| API Gateway (AWS) | $100 | 1개로 통합 |
-| Compute (ECS Fargate) | $1,500 | 적정 크기 |
-| Database (PostgreSQL 2개) | $400 | Primary + Replica |
-| Cache (Redis 1개) | $100 | 1개로 통합 |
-| Message Queue (RabbitMQ) | $150 | 1개로 통합 |
-| Monitoring (Prometheus) | $0 | 자체 호스팅 |
-| 기타 | $200 | |
-| **총계** | **$2,700** | |
-
-### 비용 절감 효과
-- **절감액**: $47,300/월 ($567,600/년)
-- **절감률**: 94.6%
-- **ROI**: 첫 달부터 즉시 효과
-
-### 트래픽 증가 시 비용 예측
-| 트래픽 | 기존 | 개선 | 절감 |
-|--------|------|------|------|
-| 현재 (1x) | $50,000 | $2,700 | $47,300 |
-| 5배 증가 | $80,000 | $8,000 | $72,000 |
-| 10배 증가 | $120,000 | $15,000 | $105,000 |
-
-**결론**: 트래픽이 10배 증가해도 기존 비용의 1/8 수준
+| 항목 | 기존 | 개선 | 절감 |
+|------|------|------|------|
+| 총계 | $50,000 | $X,XXX | $XX,XXX |
 ```
 
 ---
