@@ -82,10 +82,18 @@ graph TB
     
     style KP fill:#4caf50
     style KA fill:#ff9800
-    style S1,S2,S3 fill:#2196f3
-    style R1,R2,R3 fill:#2196f3
-    style P1,P2,P3 fill:#ff5722
-    style US,PS,OS fill:#9c27b0
+    style S1 fill:#2196f3
+    style S2 fill:#2196f3
+    style S3 fill:#2196f3
+    style R1 fill:#2196f3
+    style R2 fill:#2196f3
+    style R3 fill:#2196f3
+    style P1 fill:#ff5722
+    style P2 fill:#ff5722
+    style P3 fill:#ff5722
+    style US fill:#9c27b0
+    style PS fill:#9c27b0
+    style OS fill:#9c27b0
 ```
 
 ---
