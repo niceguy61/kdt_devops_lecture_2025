@@ -1,203 +1,207 @@
-# Challenge 1 힌트 가이드
+# Challenge 1 Hints
 
-> ⚠️ **주의**: 이 힌트는 20분 이상 시도한 후에도 해결이 어려울 때만 참고하세요!
+## 💡 문제 해결 힌트
+
+막힐 때 참고하세요! 단계별로 힌트를 제공합니다.
 
 ---
 
-## 🚨 문제 1: Saga 패턴 트랜잭션 실패
+## 🚨 Issue 1: Query Service Endpoint 연결 문제
 
-### 힌트 1-1: Job 상태 및 파일 확인
+### 힌트 1: 증상 확인
 ```bash
-kubectl get jobs saga-orchestrator -n microservices-challenge
+# Endpoint가 비어있는지 확인
+kubectl get endpoints query-service -n microservices-challenge
+```
+
+### 힌트 2: Service 셀렉터 확인
+```bash
+# Service가 어떤 라벨을 찾고 있는지 확인
+kubectl get svc query-service -n microservices-challenge -o yaml | grep -A3 selector
+```
+
+### 힌트 3: Pod 라벨 확인
+```bash
+# 실제 Pod들이 어떤 라벨을 가지고 있는지 확인
+kubectl get pods -n microservices-challenge -l app=query-service --show-labels
+```
+
+### 힌트 4: 해결 방향
+- Service의 `selector`와 Pod의 `labels`가 일치해야 Endpoint가 생성됩니다
+- `broken-cqrs.yaml` 파일에서 Service 부분을 찾아보세요
+- `app: wrong-query-service` 같은 부분이 있나요?
+
+---
+
+## 🚨 Issue 2: Event Processor CronJob 스케줄 문제
+
+### 힌트 1: 현재 스케줄 확인
+```bash
+# CronJob의 현재 스케줄 확인
+kubectl get cronjob event-processor -n microservices-challenge -o jsonpath='{.spec.schedule}'
+```
+
+### 힌트 2: Cron 표현식 이해
+```
+Cron 표현식: 분 시 일 월 요일
+
+예시:
+- */5 * * * *  : 5분마다 실행
+- 0 */1 * * *  : 매시간 정각에 실행
+- */30 * * * * : 30분마다 실행
+```
+
+### 힌트 3: 해결 방향
+- 현재 스케줄이 너무 자주 실행되고 있나요?
+- `broken-eventsourcing.yaml` 파일에서 CronJob의 `schedule` 부분을 찾아보세요
+- 매시간 또는 30분마다 실행되도록 변경하세요
+
+---
+
+## 🚨 Issue 3: Saga Orchestrator 실행 실패
+
+### 힌트 1: Job 존재 확인
+```bash
+# Saga Job이 있는지 확인
+kubectl get jobs -n microservices-challenge
+```
+
+### 힌트 2: ConfigMap URL 확인
+```bash
+# ConfigMap의 URL 설정 확인
+kubectl get configmap saga-config -n microservices-challenge -o yaml | grep -A3 data
+```
+
+### 힌트 3: Kubernetes DNS 이해
+```
+Kubernetes 서비스 DNS 형식:
+- 같은 네임스페이스: <service-name>
+- 다른 네임스페이스: <service-name>.<namespace>.svc.cluster.local
+
+예시:
+- 짧은 형식: http://order-service/api/orders
+- FQDN 형식: http://order-service.microservices-challenge.svc.cluster.local/api/orders
+```
+
+### 힌트 4: Job 로그 확인 (Job이 있다면)
+```bash
+# Job 로그에서 오류 확인
 kubectl logs job/saga-orchestrator -n microservices-challenge
 ```
 
-**무엇을 찾아야 하나요?**
-- Job이 Failed 상태인가요?
-- **broken-saga.yaml 파일을 열어보세요!**
-- `🔧 FIX ME` 주석이 표시된 4곳을 찾으세요:
-  1. **FIX ME 1**: backoffLimit을 3으로 변경
-  2. **FIX ME 2**: URL을 FQDN으로 변경 (http://order-service.microservices-challenge.svc.cluster.local/api/orders)
-  3. **FIX ME 3**: FAILED → SUCCESS, SKIPPED → SUCCESS, Failed → Completed
-  4. **FIX ME 4**: exit 1 → exit 0
-- 수정 후 Job을 삭제하고 재배포하세요!
-
-### 힌트 1-2: ConfigMap 확인
-```bash
-kubectl get configmap order-service-config -n microservices-challenge -o yaml
-```
-
-**무엇을 찾아야 하나요?**
-- Nginx location 블록에 세미콜론(;)이 빠진 곳이 있나요?
-- JSON 응답 뒤에 세미콜론이 있어야 합니다!
-
-### 힌트 1-3: Job 설정 확인
-```bash
-kubectl describe job saga-orchestrator -n microservices-challenge
-```
-
-**무엇을 찾아야 하나요?**
-- `backoffLimit`이 0으로 설정되어 있나요?
-- 재시도가 불가능하면 한 번 실패하면 끝입니다!
-
-**⚠️ 중요**: Job은 수정할 수 없습니다 (immutable)!
-```bash
-# ❌ 이렇게 하면 오류 발생
-kubectl edit job saga-orchestrator
-
-# ✅ 반드시 삭제 후 재생성
-kubectl delete job saga-orchestrator -n microservices-challenge
-kubectl apply -f fixed-job.yaml
-```
+### 힌트 5: 해결 방향
+- `broken-saga.yaml` 파일에서 `saga-config` ConfigMap을 찾아보세요
+- `ORDER_SERVICE_URL`이 FQDN 형식인가요?
+- Job이 없다면 파일에 Job 정의가 있는지 확인하세요
+- Job을 수정했다면 기존 Job을 삭제하고 재생성해야 합니다:
+  ```bash
+  kubectl delete job saga-orchestrator -n microservices-challenge
+  kubectl apply -f broken-saga.yaml
+  ```
 
 ---
 
-## 🚨 문제 2: CQRS 패턴 읽기/쓰기 분리 오류
+## 🚨 Issue 4: Ingress User Service 라우팅 문제
 
-### 힌트 2-1: Command Service 테스트
+### 힌트 1: Ingress 백엔드 확인
 ```bash
-kubectl exec -n microservices-challenge deployment/command-service -- curl -s localhost/api/commands/create-user
+# Ingress가 어떤 서비스를 가리키는지 확인
+kubectl get ingress ecommerce-ingress -n microservices-challenge -o yaml | \
+  grep -A5 "/api/users"
 ```
 
-**무엇을 찾아야 하나요?**
-- JSON 형식이 올바른가요?
-- 키 이름에 따옴표가 있나요? (예: `"command_id"` vs `command_id`)
-
-### 힌트 2-2: Service 엔드포인트 확인
+### 힌트 2: 실제 서비스 확인
 ```bash
-kubectl get endpoints command-service query-service -n microservices-challenge
+# 실제 존재하는 서비스 목록
+kubectl get svc -n microservices-challenge
 ```
 
-**무엇을 찾아야 하나요?**
-- 엔드포인트가 비어있나요?
-- 포트 번호가 8080인데 실제 컨테이너는 80을 사용하나요?
-
-### 힌트 2-3: Service Selector 확인
+### 힌트 3: 서비스 테스트
 ```bash
-kubectl get svc command-service query-service -n microservices-challenge -o yaml | grep -A3 selector
+# 클러스터 내부에서 서비스 접근 테스트
+kubectl exec -n testing deployment/load-tester -- \
+  curl -s http://user-service.microservices-challenge.svc.cluster.local
 ```
 
-**무엇을 찾아야 하나요?**
-- selector의 app 라벨이 "wrong-"로 시작하나요?
-- Pod의 실제 라벨과 일치하나요?
+### 힌트 4: 해결 방향
+- `broken-networking.yaml` 파일에서 Ingress 부분을 찾아보세요
+- `/api/users` 경로의 백엔드 서비스 이름이 올바른가요?
+- `wrong-user-service` 같은 이름이 있나요?
+- 실제 서비스 이름은 `user-service`입니다
 
 ---
 
-## 🚨 문제 3: Event Sourcing 이벤트 처리 중단
+## 🔧 일반적인 디버깅 명령어
 
-### 힌트 3-1: CronJob 스케줄 확인
+### 리소스 상태 확인
 ```bash
-kubectl get cronjobs event-processor -n microservices-challenge -o yaml | grep schedule
+# 전체 리소스 확인
+kubectl get all -n microservices-challenge
+
+# 특정 리소스 상세 정보
+kubectl describe <resource-type> <resource-name> -n microservices-challenge
+
+# 리소스 YAML 확인
+kubectl get <resource-type> <resource-name> -n microservices-challenge -o yaml
 ```
 
-**무엇을 찾아야 하나요?**
-- 스케줄 표현식이 올바른가요?
-- Kubernetes CronJob은 5개 필드만 허용합니다!
-- 형식: `분 시 일 월 요일` (예: `*/5 * * * *`)
-- `*/5 * * * 0`은 "일요일에만 5분마다"라는 의미입니다!
-- 올바른 형식: `*/5 * * * *` (매일 5분마다)
-
-### 힌트 3-2: Event Store API 테스트
+### 로그 확인
 ```bash
-kubectl exec -n microservices-challenge deployment/event-store-api -- curl -s localhost/api/events
-```
-
-**무엇을 찾아야 하나요?**
-- 404 Not Found 오류가 나나요?
-- Nginx alias 경로가 실제 파일 위치와 일치하나요?
-
-### 힌트 3-3: 볼륨 마운트 확인
-```bash
-kubectl describe deployment event-store-api -n microservices-challenge | grep -A5 "Mounts:"
-```
-
-**무엇을 찾아야 하나요?**
-- event-data 볼륨이 `/usr/share/nginx/html/wrong-events`에 마운트되어 있나요?
-- 올바른 경로는 `/usr/share/nginx/html`입니다!
-
----
-
-## 🚨 문제 4: 네트워킹 및 서비스 디스커버리 장애
-
-### 힌트 4-1: User Service 엔드포인트
-```bash
-kubectl get endpoints user-service -n microservices-challenge
-```
-
-**무엇을 찾아야 하나요?**
-- 엔드포인트가 비어있나요?
-- Service의 selector가 Pod 라벨과 일치하나요?
-
-### 힌트 4-2: Ingress 설정 확인
-```bash
-kubectl get ingress ecommerce-ingress -n microservices-challenge -o yaml
-```
-
-**무엇을 찾아야 하나요?**
-- backend service 이름이 "nonexistent-"로 시작하나요?
-- 포트 번호가 8080인데 실제 서비스는 80을 사용하나요?
-
-### 힌트 4-3: DNS 테스트
-```bash
-kubectl exec -n testing deployment/load-tester -- nslookup user-service.microservices-challenge.svc.cluster.local
-```
-
-**무엇을 찾아야 하나요?**
-- DNS가 IP 주소를 반환하나요?
-- Service가 제대로 생성되었나요?
-
----
-
-## 💡 일반적인 디버깅 팁
-
-### 1. Pod 상태 확인
-```bash
-kubectl get pods -n microservices-challenge
-kubectl describe pod <pod-name> -n microservices-challenge
-```
-
-### 2. 로그 확인
-```bash
+# Pod 로그
 kubectl logs <pod-name> -n microservices-challenge
-kubectl logs deployment/<deployment-name> -n microservices-challenge
+
+# Job 로그
+kubectl logs job/<job-name> -n microservices-challenge
+
+# 이전 컨테이너 로그 (재시작된 경우)
+kubectl logs <pod-name> -n microservices-challenge --previous
 ```
 
-### 3. Service 연결 테스트
+### 네트워크 테스트
 ```bash
-kubectl exec -n testing deployment/load-tester -- curl -v http://<service-name>.microservices-challenge.svc.cluster.local
+# 클러스터 내부에서 서비스 테스트
+kubectl exec -n testing deployment/load-tester -- curl -s <service-url>
+
+# DNS 해석 테스트
+kubectl exec -n testing deployment/load-tester -- \
+  nslookup <service-name>.microservices-challenge.svc.cluster.local
 ```
 
-### 4. ConfigMap 내용 확인
+### YAML 파일 수정 후
 ```bash
-kubectl get configmap <configmap-name> -n microservices-challenge -o yaml
-```
+# 변경사항 적용
+kubectl apply -f broken-xxx.yaml
 
-### 5. 변경 사항 적용
-```bash
-# ConfigMap 수정 후 Pod 재시작
-kubectl rollout restart deployment/<deployment-name> -n microservices-challenge
-
-# Job 재생성
-kubectl delete job <job-name> -n microservices-challenge
-kubectl apply -f <fixed-yaml-file>
+# 적용이 안 되면 삭제 후 재생성
+kubectl delete -f broken-xxx.yaml
+kubectl apply -f broken-xxx.yaml
 ```
 
 ---
 
-## 🎯 체크리스트
+## 📚 추가 학습 자료
 
-해결하기 전에 다음을 확인하세요:
+### Kubernetes 공식 문서
+- Service: https://kubernetes.io/docs/concepts/services-networking/service/
+- Ingress: https://kubernetes.io/docs/concepts/services-networking/ingress/
+- CronJob: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- Job: https://kubernetes.io/docs/concepts/workloads/controllers/job/
 
-- [ ] 모든 Pod가 Running 상태인가요?
-- [ ] Service 엔드포인트가 비어있지 않나요?
-- [ ] ConfigMap의 JSON/Nginx 설정이 올바른가요?
-- [ ] Job의 backoffLimit이 0보다 큰가요?
-- [ ] CronJob 스케줄이 5개 필드인가요?
-- [ ] 볼륨 마운트 경로가 올바른가요?
-- [ ] Service selector와 Pod 라벨이 일치하나요?
+### 문제 해결 패턴
+1. **증상 확인**: 무엇이 작동하지 않는가?
+2. **로그 분석**: 오류 메시지는 무엇인가?
+3. **설정 검증**: 설정이 올바른가?
+4. **연결 테스트**: 네트워크 연결이 되는가?
+5. **수정 적용**: 변경사항을 적용하고 검증
 
 ---
 
-**💪 힌트를 봤다면 다시 도전해보세요!**
+## 💪 막힐 때 시도해볼 것들
 
-여전히 어렵다면 `solutions.md`를 참고하세요.
+1. **검증 스크립트 실행**: `./verify-challenge.sh`로 현재 상태 확인
+2. **리소스 상태 확인**: `kubectl get all -n microservices-challenge`
+3. **로그 확인**: 오류 메시지에서 힌트 찾기
+4. **YAML 파일 재확인**: 오타나 들여쓰기 오류 확인
+5. **solutions.md 참고**: 막히면 해결 방법 확인
+
+화이팅! 💪
