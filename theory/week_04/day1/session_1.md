@@ -32,7 +32,132 @@
 
 ---
 
-## 📊 정량적 의사결정 매트릭스 (15분)
+## 📖 이론적 기반과 핵심 개념 (25분)
+
+### 📐 소프트웨어 아키텍처 진화론 (8분)
+
+**소프트웨어 복잡도 이론 (Software Complexity Theory)**:
+```
+복잡도 = f(컴포넌트 수, 상호작용 수, 변경 빈도)
+
+Brooks의 법칙 (1975):
+- Essential Complexity: 문제 자체의 본질적 복잡도
+- Accidental Complexity: 해결 방법으로 인한 부수적 복잡도
+
+목표: Essential Complexity는 유지하되, Accidental Complexity 최소화
+```
+
+**Conway's Law (1968) - 조직과 아키텍처의 상관관계**:
+> "시스템을 설계하는 조직은 그 조직의 커뮤니케이션 구조를 복사한 설계를 만들어낸다"
+
+**수학적 표현**:
+```
+Architecture_Complexity ∝ Organization_Communication_Paths
+Communication_Paths = n(n-1)/2  (n = 팀 수)
+
+예시:
+- 4개 팀 → 6개 통신 경로 → 복잡한 아키텍처
+- 2개 팀 → 1개 통신 경로 → 단순한 아키텍처
+```
+
+**아키텍처 진화 단계**:
+```mermaid
+graph LR
+    A[단일체<br/>Monolith] --> B[모듈화<br/>Modular Monolith]
+    B --> C[서비스 지향<br/>SOA]
+    C --> D[마이크로서비스<br/>Microservices]
+    D --> E[서버리스<br/>Serverless]
+    
+    style A fill:#ffebee
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#e3f2fd
+    style E fill:#f3e5f5
+```
+
+### 🔍 모놀리스 vs 마이크로서비스 - 이론적 비교 (12분)
+
+**1. 응집도와 결합도 관점**:
+```
+모놀리스:
+- High Cohesion: 관련 기능들이 물리적으로 가까이 위치
+- High Coupling: 모든 컴포넌트가 같은 프로세스 공간
+- 함수 호출로 직접 통신 (낮은 통신 비용)
+
+마이크로서비스:
+- Bounded Cohesion: 도메인별 응집도
+- Low Coupling: 서비스 간 독립성
+- 네트워크 통신 (높은 통신 비용)
+```
+
+**2. CAP 정리 적용**:
+```
+모놀리스 (CA 선택):
+- Consistency: ACID 트랜잭션으로 강한 일관성
+- Availability: 단일 장애점으로 가용성 제한
+- Partition tolerance: 분산 환경 고려 안함
+
+마이크로서비스 (AP 선택):
+- Consistency: Eventual Consistency (최종 일관성)
+- Availability: 서비스별 독립적 가용성
+- Partition tolerance: 네트워크 분할 허용
+```
+
+**3. 확장성 이론**:
+```
+모놀리스 확장:
+- Vertical Scaling: CPU, Memory 증가 (비용 O(n²))
+- Horizontal Scaling: 전체 애플리케이션 복제
+
+마이크로서비스 확장:
+- Service-specific Scaling: 필요한 서비스만 확장
+- 비용 효율성: O(n log n)
+- 기술 다양성: 서비스별 최적 기술 선택
+```
+
+**4. 장애 전파 모델**:
+```
+모놀리스:
+- Blast Radius = 100% (전체 시스템)
+- 단일 장애점 (Single Point of Failure)
+- 복구 시간 = 전체 시스템 재시작
+
+마이크로서비스:
+- Blast Radius = 1/n (서비스 수에 반비례)
+- 장애 격리 (Fault Isolation)
+- 부분적 성능 저하 (Graceful Degradation)
+```
+
+### 🔍 의사결정 이론 적용 (5분)
+
+**Multi-Criteria Decision Analysis (MCDA)**:
+```
+아키텍처 선택 = f(비즈니스 요구사항, 기술적 제약, 조직 역량)
+
+평가 기준:
+1. 개발 속도 (Time to Market)
+2. 확장성 (Scalability)
+3. 운영 복잡도 (Operational Complexity)
+4. 팀 생산성 (Team Productivity)
+5. 기술 부채 (Technical Debt)
+```
+
+**임계점 이론 (Tipping Point Theory)**:
+```
+아키텍처 전환의 임계점:
+- 팀 크기: 8-12명 (Dunbar's Number)
+- 코드베이스: 100K-500K LOC
+- 배포 빈도: 주 1회 → 일 1회 요구
+- 장애 복구: 1시간 → 15분 요구
+
+Hysteresis Effect:
+전환 비용으로 인한 지연 현상
+임계점 도달 후에도 기존 아키텍처 유지 경향
+```
+
+---
+
+## 📊 정량적 의사결정 매트릭스 (12분)
 
 ### 🔢 핵심 판단 기준
 
@@ -180,9 +305,9 @@ graph LR
 
 ---
 
-## 🛠️ 실습: 의사결정 매트릭스 적용 (5분)
+## 🛠️ 실습: 의사결정 매트릭스 적용 + 간단한 분해 체험 (8분)
 
-### 📋 시나리오 기반 실습
+### 📋 시나리오 기반 실습 (5분)
 
 **시나리오 1: 핀테크 스타트업**
 - 팀 크기: 12명 (개발 8명, 운영 2명, 기획 2명)
@@ -198,10 +323,60 @@ graph LR
 - 배포 빈도: 월 1회
 - **결정**: ?
 
+### 🔍 간단한 분해 체험 (3분)
+
+**"만약 마이크로서비스를 선택한다면?"**
+
+**핀테크 스타트업 분해 예시**:
+```mermaid
+graph TB
+    subgraph "모놀리스 → 마이크로서비스 분해"
+        subgraph "Before: 통합 시스템"
+            M[FinTech App<br/>결제+대출+투자]
+        end
+        
+        subgraph "After: 도메인별 분해"
+            P[Payment Service<br/>결제 처리]
+            L[Loan Service<br/>대출 관리]
+            I[Investment Service<br/>투자 상품]
+            U[User Service<br/>사용자 관리]
+            N[Notification Service<br/>알림 발송]
+        end
+    end
+    
+    M --> P
+    M --> L
+    M --> I
+    M --> U
+    M --> N
+    
+    style M fill:#ffebee
+    style P fill:#e8f5e8
+    style L fill:#fff3e0
+    style I fill:#e3f2fd
+    style U fill:#f3e5f5
+    style N fill:#fce4ec
+```
+
+**분해 기준 (간단 버전)**:
+1. **비즈니스 기능**: 결제, 대출, 투자는 서로 다른 도메인
+2. **팀 구조**: 각 도메인별로 2-3명씩 담당 가능
+3. **변경 빈도**: 결제는 자주 변경, 투자는 상대적으로 안정적
+4. **데이터 특성**: 각각 다른 데이터베이스 기술 최적
+
+**💡 핵심 인사이트**:
+- **"완벽한 분해는 없다"**: 비즈니스 변화에 따라 지속적 조정
+- **"점진적 접근"**: 한 번에 모든 것을 나누지 말고 단계적 분해
+- **"팀 역량 고려"**: 운영할 수 있는 수준에서 시작
+
 ### 🤝 페어 토론 (5분)
 1. **각 시나리오의 최적 아키텍처는?**
-2. **판단 근거와 우선순위는?**
-3. **예상되는 리스크와 대응 방안은?**
+2. **만약 마이크로서비스로 간다면 어떻게 나눌 것인가?**
+3. **분해 시 가장 어려운 부분은 무엇일까?**
+4. **Session 2에서 더 자세히 배우고 싶은 것은?**
+
+**💭 Session 2 예고**:
+> "다음 시간에는 Domain-Driven Design으로 더 체계적이고 정확한 서비스 분해 방법을 배워보겠습니다!"
 
 ---
 
@@ -224,15 +399,18 @@ graph LR
 - [ ] **실무 사례** 학습: Netflix, Segment 등 실제 기업 경험
 
 ### 🎯 다음 세션 준비
-- **Domain-Driven Design**: 서비스 경계 설정의 핵심 원리
-- **Bounded Context**: 마이크로서비스 분해의 기준점
-- **실습 준비**: 실제 도메인 모델링 체험
+- **Domain-Driven Design**: 체계적인 서비스 분해 방법론
+- **Bounded Context**: 정확한 서비스 경계 설정 기법
+- **실습 준비**: 실제 E-Commerce 도메인 분해 체험
 
 ### 💡 실무 적용 팁
 1. **단계적 접근**: 모놀리스 → 하이브리드 → 마이크로서비스
 2. **비용 모니터링**: 전환 과정에서 지속적인 ROI 측정
 3. **팀 역량 고려**: 운영 능력에 맞는 아키텍처 선택
 4. **비즈니스 가치 우선**: 기술적 멋보다 비즈니스 목표 중심
+
+**🔮 Session 2 연결고리**:
+> "오늘은 '언제' 마이크로서비스를 선택할지 배웠다면, 다음 시간에는 '어떻게' 정확하게 나누는지 Domain-Driven Design으로 배워보겠습니다!"
 
 ---
 
