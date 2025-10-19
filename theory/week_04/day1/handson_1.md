@@ -300,6 +300,33 @@ spec:
 EOF
 ```
 
+**Ingress 동작 확인**
+```bash
+# Ingress 상태 확인
+kubectl get ingress -n ecommerce-advanced
+
+# Ingress Controller 서비스 확인
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+```
+
+**브라우저/curl로 접근 테스트**
+```bash
+# localhost를 통한 접근 (NodePort 30080 사용)
+curl http://localhost:30080/api/orders
+curl http://localhost:30080/api/queries/users
+curl http://localhost:30080/api/events
+
+# 브라우저에서 접근
+# http://localhost:30080/api/orders
+# http://localhost:30080/api/queries/users
+# http://localhost:30080/api/events
+```
+
+**💡 접근 방법 설명**:
+- Kind 클러스터에서는 Ingress Controller가 NodePort 30080으로 노출됨
+- `localhost:30080`으로 접근하면 Ingress를 통해 각 서비스로 라우팅됨
+- 브라우저에서 JSON 응답을 직접 확인 가능
+
 ---
 
 ## 🔄 Step 2: Saga 패턴 구현 (30분)
@@ -836,8 +863,13 @@ kubectl get jobs -n ecommerce-advanced | grep event-processor
 
 **Kubernetes Native 기능 테스트**
 ```bash
-# Ingress 라우팅 테스트
-kubectl exec -n testing deployment/load-tester -- curl -s -H "Host: api.local" http://nginx-ingress-controller/api/users
+# Ingress 라우팅 테스트 (클러스터 내부에서)
+kubectl exec -n testing deployment/load-tester -- curl -s -H "Host: localhost" http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/orders
+
+kubectl exec -n testing deployment/load-tester -- curl -s -H "Host: localhost" http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/queries/users
+
+# api.local 호스트 테스트
+kubectl exec -n testing deployment/load-tester -- curl -s -H "Host: api.local" http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/commands/create-user
 
 # 서비스 디스커버리 테스트
 kubectl exec -n testing deployment/load-tester -- nslookup command-service.ecommerce-advanced.svc.cluster.local
