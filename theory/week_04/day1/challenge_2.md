@@ -164,22 +164,23 @@ graph TB
 
 ## 🃏 기술 스택 선택 카드
 
-<table>
-<tr>
-<td width="50%">
-
 ### 🎨 Frontend
 
 ```mermaid
-graph LR
-    A[React.js]
-    B[Vue.js]
-    C[Next.js]
-    D[Angular]
-    E[Svelte]
-    F[Solid.js]
-    G[Qwik]
-    H[Astro]
+graph TB
+    subgraph col1[" "]
+        A[React.js]
+        B[Vue.js]
+        C[Next.js]
+        D[Angular]
+    end
+    
+    subgraph col2[" "]
+        E[Svelte]
+        F[Solid.js]
+        G[Qwik]
+        H[Astro]
+    end
     
     style A fill:#4caf50
     style B fill:#4caf50
@@ -191,23 +192,25 @@ graph LR
     style H fill:#2196f3
 ```
 
-</td>
-<td width="50%">
-
 ### ⚙️ Backend
 
 ```mermaid
-graph LR
-    A[Node.js]
-    B[Python]
-    C[Go]
-    D[Java Spring]
-    E[Rust]
-    F[.NET Core]
-    G[PHP Laravel]
-    H[Ruby Rails]
-    I[Elixir]
-    J[Scala]
+graph TB
+    subgraph col1[" "]
+        A[Node.js]
+        B[Python]
+        C[Go]
+        D[Java Spring]
+        E[Rust]
+    end
+    
+    subgraph col2[" "]
+        F[.NET Core]
+        G[PHP Laravel]
+        H[Ruby Rails]
+        I[Elixir]
+        J[Scala]
+    end
     
     style A fill:#4caf50
     style B fill:#4caf50
@@ -221,24 +224,24 @@ graph LR
     style J fill:#f44336
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
 ### 💾 Database
 
 ```mermaid
-graph LR
-    A[PostgreSQL]
-    B[MySQL]
-    C[MongoDB]
-    D[Cassandra]
-    E[DynamoDB]
-    F[CockroachDB]
-    G[Redis]
-    H[Neo4j]
-    I[InfluxDB]
+graph TB
+    subgraph col1[" "]
+        A[PostgreSQL]
+        B[MySQL]
+        C[MongoDB]
+        D[Cassandra]
+        E[DynamoDB]
+    end
+    
+    subgraph col2[" "]
+        F[CockroachDB]
+        G[Redis]
+        H[Neo4j]
+        I[InfluxDB]
+    end
     
     style A fill:#4caf50
     style B fill:#4caf50
@@ -251,18 +254,20 @@ graph LR
     style I fill:#2196f3
 ```
 
-</td>
-<td>
-
 ### ⚡ Cache
 
 ```mermaid
-graph LR
-    A[Redis]
-    B[Memcached]
-    C[Hazelcast]
-    D[Varnish]
-    E[Apache Ignite]
+graph TB
+    subgraph col1[" "]
+        A[Redis]
+        B[Memcached]
+        C[Hazelcast]
+    end
+    
+    subgraph col2[" "]
+        D[Varnish]
+        E[Apache Ignite]
+    end
     
     style A fill:#4caf50
     style B fill:#4caf50
@@ -271,22 +276,22 @@ graph LR
     style E fill:#f44336
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
 ### 📨 Message Queue
 
 ```mermaid
-graph LR
-    A[RabbitMQ]
-    B[Kafka]
-    C[AWS SQS]
-    D[Redis Streams]
-    E[NATS]
-    F[ActiveMQ]
-    G[Pulsar]
+graph TB
+    subgraph col1[" "]
+        A[RabbitMQ]
+        B[Kafka]
+        C[AWS SQS]
+        D[Redis Streams]
+    end
+    
+    subgraph col2[" "]
+        E[NATS]
+        F[ActiveMQ]
+        G[Pulsar]
+    end
     
     style A fill:#4caf50
     style B fill:#ff9800
@@ -297,19 +302,21 @@ graph LR
     style G fill:#2196f3
 ```
 
-</td>
-<td>
-
 ### 📊 Monitoring
 
 ```mermaid
-graph LR
-    A[Prometheus<br/>+ Grafana]
-    B[Datadog]
-    C[ELK Stack]
-    D[New Relic]
-    E[Dynatrace]
-    F[AppDynamics]
+graph TB
+    subgraph col1[" "]
+        A[Prometheus<br/>+ Grafana]
+        B[Datadog]
+        C[ELK Stack]
+    end
+    
+    subgraph col2[" "]
+        D[New Relic]
+        E[Dynatrace]
+        F[AppDynamics]
+    end
     
     style A fill:#4caf50
     style B fill:#ff9800
@@ -319,20 +326,20 @@ graph LR
     style F fill:#f44336
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
 ### 🔍 Search Engine
 
 ```mermaid
-graph LR
-    A[Elasticsearch]
-    B[OpenSearch]
-    C[Algolia]
-    D[Meilisearch]
-    E[Typesense]
+graph TB
+    subgraph col1[" "]
+        A[Elasticsearch]
+        B[OpenSearch]
+        C[Algolia]
+    end
+    
+    subgraph col2[" "]
+        D[Meilisearch]
+        E[Typesense]
+    end
     
     style A fill:#4caf50
     style B fill:#4caf50
@@ -341,19 +348,21 @@ graph LR
     style E fill:#2196f3
 ```
 
-</td>
-<td>
-
 ### 🔐 API Gateway
 
 ```mermaid
-graph LR
-    A[AWS API Gateway]
-    B[Kong]
-    C[Nginx]
-    D[Traefik]
-    E[Envoy]
-    F[Tyk]
+graph TB
+    subgraph col1[" "]
+        A[AWS API Gateway]
+        B[Kong]
+        C[Nginx]
+    end
+    
+    subgraph col2[" "]
+        D[Traefik]
+        E[Envoy]
+        F[Tyk]
+    end
     
     style A fill:#4caf50
     style B fill:#ff9800
@@ -362,10 +371,6 @@ graph LR
     style E fill:#2196f3
     style F fill:#ff9800
 ```
-
-</td>
-</tr>
-</table>
 
 **색상 가이드:**
 - 🟢 초록: 추천
