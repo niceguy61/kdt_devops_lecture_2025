@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: ecommerce-app
-        image: nginx:alpine
+        image: ecommerce-monolith:v1
+        imagePullPolicy: Never
         ports:
         - containerPort: 80
         env:

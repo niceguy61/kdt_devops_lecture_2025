@@ -174,6 +174,48 @@ nodes:
 ```
 **📋 스크립트 내용**: [setup-cluster.sh](./lab_scripts/lab1/setup-cluster.sh)
 
+### Step 0-3: 서비스별 Docker 이미지 빌드 (10분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+cd theory/week_04/day1/lab_scripts/lab1
+./build-and-load-images.sh
+```
+
+**📋 스크립트 내용**: [build-and-load-images.sh](./lab_scripts/lab1/build-and-load-images.sh)
+
+**0-3. 수동 실행 (학습용)**
+```bash
+cd docker-images
+
+# 1. 모놀리식 이미지 빌드
+docker build -t ecommerce-monolith:v1 monolith/
+
+# 2. 상품 서비스 이미지 빌드
+docker build -t product-service:v1 product-service/
+
+# 3. 주문 서비스 이미지 빌드
+docker build -t order-service:v1 order-service/
+
+# 4. Kind 클러스터에 이미지 로드
+kind load docker-image ecommerce-monolith:v1 --name lab-cluster
+kind load docker-image product-service:v1 --name lab-cluster
+kind load docker-image order-service:v1 --name lab-cluster
+```
+
+**📋 이미지 구조**:
+- **[monolith/](./lab_scripts/lab1/docker-images/monolith/)**: 모놀리식 애플리케이션
+  - `Dockerfile`: Nginx 기반 이미지
+  - `index.html`: 모놀리식 서비스 정보 페이지
+- **[product-service/](./lab_scripts/lab1/docker-images/product-service/)**: 상품 서비스
+  - `Dockerfile`: Nginx 기반 이미지
+  - `index.html`: 상품 서비스 정보 페이지
+- **[order-service/](./lab_scripts/lab1/docker-images/order-service/)**: 주문 서비스
+  - `Dockerfile`: Nginx 기반 이미지
+  - `index.html`: 주문 서비스 정보 페이지
+
+**💡 참고**: 각 서비스는 고유한 HTML 페이지를 가지고 있어 브라우저에서 쉽게 구분할 수 있습니다.
+
 #### Ingress Controller 설치
 ```bash
 # Nginx Ingress Controller 설치
@@ -306,6 +348,54 @@ curl -H "Host: ecommerce.local" http://localhost/
 
 # 또는 브라우저에서 http://ecommerce.local 접속
 ```
+
+### Step 1-4: NodePort로 외부 접근 설정 (5분)
+
+**🚀 자동화 스크립트 사용**
+```bash
+cd theory/week_04/day1/lab_scripts/lab1
+./setup-nodeport-services.sh
+```
+
+**📋 스크립트 내용**: [setup-nodeport-services.sh](./lab_scripts/lab1/setup-nodeport-services.sh)
+
+**1-4. 수동 실행 (학습용)**
+```bash
+# 모놀리식 애플리케이션 NodePort 서비스 생성
+kubectl apply -f manifests/monolith/monolith-nodeport.yaml
+```
+
+**📋 YAML 파일 구성**:
+- **[monolith-nodeport.yaml](./lab_scripts/lab1/manifests/monolith/monolith-nodeport.yaml)**: 모놀리식 NodePort 서비스
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-monolith-nodeport
+  namespace: ecommerce
+spec:
+  type: NodePort
+  selector:
+    app: ecommerce-monolith
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080  # 호스트에서 접근 가능한 포트
+    protocol: TCP
+```
+
+**외부 접근 테스트**:
+```bash
+# 호스트에서 직접 접근 (브라우저나 curl)
+curl http://localhost:30080/
+
+# 또는 브라우저에서 http://localhost:30080/ 접속
+```
+
+**💡 NodePort vs Ingress 비교**:
+- **Ingress**: 도메인 기반 라우팅 (ecommerce.local)
+- **NodePort**: 포트 기반 직접 접근 (localhost:30080)
+- **실습 환경**: NodePort가 더 간편하게 테스트 가능
 
 **🔄 Phase 1 완료 효과**:
 - ✅ **단일 애플리케이션**: 모든 기능이 하나의 Pod에서 실행
@@ -503,6 +593,63 @@ spec:
             name: user-service
 ```
 
+### Step 3-3: 마이크로서비스 NodePort 설정 (5분)
+
+**마이크로서비스 NodePort 서비스 생성**:
+```bash
+# 이미 setup-nodeport-services.sh를 실행했다면 생략 가능
+# 개별 적용 시:
+kubectl apply -f manifests/microservices/microservices-nodeport.yaml
+```
+
+**📋 YAML 파일 구성**:
+- **[microservices-nodeport.yaml](./lab_scripts/lab1/manifests/microservices/microservices-nodeport.yaml)**: 마이크로서비스 NodePort 서비스
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service-nodeport
+  namespace: ecommerce
+spec:
+  type: NodePort
+  selector:
+    app: product-service
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30081  # 상품 서비스 포트
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service-nodeport
+  namespace: ecommerce
+spec:
+  type: NodePort
+  selector:
+    app: order-service
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30082  # 주문 서비스 포트
+    protocol: TCP
+```
+
+**외부 접근 테스트**:
+```bash
+# 각 마이크로서비스 직접 접근
+curl http://localhost:30080/  # 모놀리식 (또는 사용자 서비스)
+curl http://localhost:30081/  # 상품 서비스
+curl http://localhost:30082/  # 주문 서비스
+
+# 브라우저에서도 접근 가능
+# http://localhost:30080/
+# http://localhost:30081/
+# http://localhost:30082/
+```
+
 **🔄 Phase 3 완료 효과**:
 - 🆕 **완전 분리**: 모든 기능이 독립적인 마이크로서비스로 분리
 - 🆕 **서비스별 라우팅**: `/api/users`, `/api/products`, `/api/orders` 각각 다른 서비스로
@@ -520,6 +667,7 @@ spec:
 - [ ] 모놀리스 애플리케이션 Pod 실행 중
 - [ ] Ingress를 통한 외부 접근 가능
 - [ ] http://ecommerce.local 접속 성공
+- [ ] NodePort로 http://localhost:30080/ 접근 성공
 
 ### ✅ Phase 2: 하이브리드 확인
 - [ ] 사용자 서비스 마이크로서비스 배포 완료
@@ -532,6 +680,10 @@ spec:
 - [ ] 각 서비스별 라우팅 규칙 적용
 - [ ] 서비스 간 독립적 확장 가능
 - [ ] 장애 격리 테스트 성공
+- [ ] NodePort로 각 서비스 직접 접근 가능:
+  - [ ] http://localhost:30080/ (모놀리식/사용자)
+  - [ ] http://localhost:30081/ (상품 서비스)
+  - [ ] http://localhost:30082/ (주문 서비스)
 
 ---
 
