@@ -546,8 +546,8 @@ EOF
 # Kiali 설치
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
 
-# Kiali 접근
-kubectl port-forward -n istio-system svc/kiali 20001:20001
+# Kiali 접근 (백그라운드)
+kubectl port-forward -n istio-system svc/kiali 20001:20001 &
 
 # 브라우저에서 접근
 # http://localhost:20001
@@ -559,8 +559,8 @@ kubectl port-forward -n istio-system svc/kiali 20001:20001
 # Jaeger 설치
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/jaeger.yaml
 
-# Jaeger 접근
-kubectl port-forward -n istio-system svc/tracing 16686:80
+# Jaeger 접근 (백그라운드)
+kubectl port-forward -n istio-system svc/tracing 16686:80 &
 
 # 브라우저에서 접근
 # http://localhost:16686
@@ -575,11 +575,21 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samp
 # Grafana 설치
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
 
-# Grafana 접근
-kubectl port-forward -n istio-system svc/grafana 3000:3000
+# Grafana 접근 (백그라운드)
+kubectl port-forward -n istio-system svc/grafana 3000:3000 &
 
 # 브라우저에서 접근
 # http://localhost:3000
+```
+
+**💡 Port Forward 종료**:
+```bash
+# 모든 port-forward 프로세스 종료
+pkill -f "port-forward"
+
+# 또는 개별 종료
+jobs  # 백그라운드 작업 확인
+kill %1  # 작업 번호로 종료
 ```
 
 ---
