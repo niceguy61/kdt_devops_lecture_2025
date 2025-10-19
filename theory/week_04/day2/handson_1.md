@@ -600,7 +600,34 @@ kubectl get virtualservice user-service -n backend -o yaml
 
 ## 📊 Step 4: 관측성 도구 활용 (선택사항)
 
-### Kiali 대시보드 (서비스 그래프)
+### Step 4-1: 관측성 도구 설치 확인
+
+**목표**: Istio demo 프로파일에 포함된 관측성 도구 확인
+
+```bash
+# 관측성 도구 Pod 확인
+kubectl get pods -n istio-system | grep -E "kiali|jaeger|prometheus|grafana"
+
+# 예상 출력:
+# grafana-xxx          1/1     Running
+# istio-tracing-xxx    1/1     Running  (Jaeger)
+# kiali-xxx            1/1     Running
+# prometheus-xxx       1/1     Running
+```
+
+**만약 설치되지 않았다면**:
+```bash
+# Istio 샘플 애드온 설치
+cd theory/week_04/day2/lab_scripts/handson1/istio-1.20.0
+kubectl apply -f samples/addons/
+
+# Pod 준비 대기
+kubectl wait --for=condition=ready pod -l app=kiali -n istio-system --timeout=120s
+kubectl wait --for=condition=ready pod -l app=jaeger -n istio-system --timeout=120s
+kubectl wait --for=condition=ready pod -l app=prometheus -n istio-system --timeout=120s
+```
+
+### Step 4-2: Kiali 대시보드 (서비스 그래프)
 
 ```bash
 # Kiali 포트 포워딩 (백그라운드)
@@ -611,7 +638,7 @@ kubectl port-forward -n istio-system svc/kiali 20001:20001 &
 # Graph 메뉴에서 backend 네임스페이스 선택
 ```
 
-### Jaeger 분산 추적
+### Step 4-3: Jaeger 분산 추적
 
 ```bash
 # Jaeger 포트 포워딩 (백그라운드)
@@ -621,7 +648,7 @@ kubectl port-forward -n istio-system svc/tracing 16686:80 &
 # http://localhost:16686
 ```
 
-### Prometheus 메트릭
+### Step 4-4: Prometheus 메트릭
 
 ```bash
 # Prometheus 포트 포워딩 (백그라운드)
