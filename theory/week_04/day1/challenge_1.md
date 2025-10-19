@@ -308,7 +308,7 @@ curl http://localhost:8080/api/commands/create-user
 ```bash
 # 전체 시스템 검증
 cd theory/week_04/day1/lab_scripts/challenge1
-./verify-success.sh
+./verify-solution.sh
 ```
 
 ### 수동 검증 체크리스트
