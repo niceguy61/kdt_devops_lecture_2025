@@ -444,7 +444,9 @@ graph TB
     end
     
     style LB fill:#ff9800
-    style GW1,GW2,GW3 fill:#4caf50
+    style GW1 fill:#4caf50
+    style GW2 fill:#4caf50
+    style GW3 fill:#4caf50
     style DB fill:#2196f3
 ```
 
