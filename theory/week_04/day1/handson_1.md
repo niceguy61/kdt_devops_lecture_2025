@@ -803,35 +803,35 @@ EOF
 **Saga 패턴 테스트**
 ```bash
 # Saga Job 실행 확인
-kubectl get jobs -n ecommerce-microservices
+kubectl get jobs -n ecommerce-advanced
 
 # Saga 로그 확인
-kubectl logs job/saga-orchestrator -n ecommerce-microservices
+kubectl logs job/saga-orchestrator -n ecommerce-advanced
 
 # 보상 트랜잭션 테스트 (수동 실행)
-kubectl create job compensation-test --from=job/saga-orchestrator -n ecommerce-microservices
+kubectl create job compensation-test --from=job/saga-orchestrator -n ecommerce-advanced
 ```
 
 **CQRS 패턴 테스트**
 ```bash
 # Command 실행
-kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service.ecommerce-microservices.svc.cluster.local/api/commands/create-user
+kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://command-service.ecommerce-advanced.svc.cluster.local/api/commands/create-user
 
 # Query 실행
-kubectl exec -n testing deployment/load-tester -- curl -s http://query-service.ecommerce-microservices.svc.cluster.local/api/queries/users
+kubectl exec -n testing deployment/load-tester -- curl -s http://query-service.ecommerce-advanced.svc.cluster.local/api/queries/users
 ```
 
 **Event Sourcing 테스트**
 ```bash
 # 이벤트 조회
-kubectl exec -n testing deployment/load-tester -- curl -s http://event-store-api.ecommerce-microservices.svc.cluster.local/api/events
+kubectl exec -n testing deployment/load-tester -- curl -s http://event-store-api.ecommerce-advanced.svc.cluster.local/api/events
 
 # 이벤트 재생
-kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://event-store-api.ecommerce-microservices.svc.cluster.local/api/events/replay
+kubectl exec -n testing deployment/load-tester -- curl -s -X POST http://event-store-api.ecommerce-advanced.svc.cluster.local/api/events/replay
 
 # Event Processor 실행 확인
-kubectl get cronjobs -n ecommerce-microservices
-kubectl get jobs -n ecommerce-microservices | grep event-processor
+kubectl get cronjobs -n ecommerce-advanced
+kubectl get jobs -n ecommerce-advanced | grep event-processor
 ```
 
 **Kubernetes Native 기능 테스트**
@@ -840,7 +840,7 @@ kubectl get jobs -n ecommerce-microservices | grep event-processor
 kubectl exec -n testing deployment/load-tester -- curl -s -H "Host: api.local" http://nginx-ingress-controller/api/users
 
 # 서비스 디스커버리 테스트
-kubectl exec -n testing deployment/load-tester -- nslookup command-service.ecommerce-microservices.svc.cluster.local
+kubectl exec -n testing deployment/load-tester -- nslookup command-service.ecommerce-advanced.svc.cluster.local
 ```
 
 ---
@@ -884,7 +884,7 @@ cd theory/week_04/day1/lab_scripts/handson1
 **추가 정리 (수동)**
 ```bash
 # 네임스페이스 정리
-kubectl delete namespace ecommerce-microservices
+kubectl delete namespace ecommerce-advanced
 
 # Ingress Controller 정리 (선택사항)
 kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
