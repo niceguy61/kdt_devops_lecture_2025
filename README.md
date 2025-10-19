@@ -115,45 +115,47 @@ graph TB
 - Day 3: Docker 이미지 & 네트워킹 & 스토리지
 - Day 4: Docker Compose & 멀티 컨테이너
 
-#### [Week 2: 컨테이너 오케스트레이션 기초](./theory/week_02/README.md)
-- Day 1: 오케스트레이션 개념과 필요성
-- Day 2: Kubernetes 아키텍처
-- Day 3: Kubernetes 핵심 오브젝트
-- Day 4: Kubernetes 네트워킹과 스토리지
-- Day 5: Kubernetes 보안과 모니터링
+#### [Week 2: Docker 심화 + Kubernetes 준비](./theory/week_02/README.md)
+- Day 1: Docker 네트워킹 & 보안 기초
+- Day 2: Docker 스토리지 & 데이터 관리
+- Day 3: Docker 운영 & 모니터링
+- Day 4: Kubernetes 준비 & 마이그레이션
 
-### Week 3-4: Kubernetes & 클라우드 네이티브
-**목표**: 실무 핵심 기술 습득 및 클라우드 네이티브 아키텍처 이해
+### Week 3: Kubernetes 마스터리
+**목표**: 실무 핵심 기술 습득 및 컨테이너 오케스트레이션 완성
 
-#### [Week 3: Kubernetes 운영과 관리](./theory/week_03/README.md)
-- Day 1: 클러스터 설치와 구성
-- Day 2: 워크로드 관리
-- Day 3: 서비스 메시 개념
-- Day 4: 모니터링과 로깅
-- Day 5: 트러블슈팅과 디버깅
+#### [Week 3: Kubernetes 마스터리 과정](./theory/week_03/README.md)
+- Day 1: Kubernetes 기초 & 클러스터 아키텍처
+- Day 2: 워크로드 관리 & 스케줄링
+- Day 3: 네트워킹 & 스토리지
+- Day 4: 보안 & 클러스터 관리
+- Day 5: 운영 & 고급 기능
+
+### Week 4: 클라우드 네이티브 아키텍처
+**목표**: 마이크로서비스 아키텍처 설계 및 구현
 
 #### [Week 4: 클라우드 네이티브 아키텍처](./theory/week_04/README.md)
 - Day 1: 마이크로서비스 아키텍처
-- Day 2: API Gateway와 서비스 디스커버리
-- Day 3: 데이터 관리와 상태 관리
-- Day 4: 보안과 컴플라이언스
+- Day 2: API Gateway와 Service Mesh
+- Day 3: 보안과 컴플라이언스
+- Day 4: GitOps와 배포 자동화
 - Day 5: FinOps와 클라우드 비용 최적화
 
 ### Week 5-6: CI/CD & 최신 DevOps 트렌드
 **목표**: 통합 시스템 이해 및 최신 트렌드 적용
 
-#### [Week 5: CI/CD 파이프라인](./theory/week_05/README.md)
-- Day 1: CI/CD 개념과 도구
-- Day 2: Git 워크플로우와 브랜치 전략
-- Day 3: 빌드와 테스트 자동화
-- Day 4: 컨테이너 기반 배포
+#### [Week 5: 클라우드 네이티브 & CI/CD](./theory/week_05/README.md)
+- Day 1: 마이크로서비스 아키텍처 & API Gateway
+- Day 2: 데이터 관리와 상태 관리
+- Day 3: 보안과 컴플라이언스
+- Day 4: CI/CD 파이프라인 구축
 - Day 5: GitOps와 선언적 배포
 
 #### [Week 6: 최신 DevOps 트렌드와 통합 운영](./theory/week_06/README.md)
-- Day 1: Infrastructure as Code
-- Day 2: 관측성과 AIOps
-- Day 3: 플랫폼 엔지니어링과 개발자 경험
-- Day 4: AI/MLOps와 최신 DevOps 트렌드
+- Day 1: Infrastructure as Code & 관측성
+- Day 2: 플랫폼 엔지니어링과 개발자 경험
+- Day 3: AI/MLOps와 최신 DevOps 트렌드
+- Day 4: Green DevOps와 지속가능성
 - Day 5: DevOps 미래 전망과 종합 정리
 
 ## 🤝 협업 학습 시스템
