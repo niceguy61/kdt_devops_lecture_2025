@@ -68,9 +68,18 @@ graph TB
     B3 --> C3
     B4 --> C4
     
-    style A1,A2,A3,A4 fill:#e8f5e8
-    style B1,B2,B3,B4 fill:#fff3e0
-    style C1,C2,C3,C4 fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style A3 fill:#e8f5e8
+    style A4 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+    style B4 fill:#fff3e0
+    style C1 fill:#ffebee
+    style C2 fill:#ffebee
+    style C3 fill:#ffebee
+    style C4 fill:#ffebee
 ```
 
 ## ⏰ 일일 8시간 교육 구조
