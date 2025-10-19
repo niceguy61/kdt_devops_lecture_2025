@@ -376,6 +376,322 @@ spec:
 
 ---
 
+## ❓ 자주 묻는 질문 (FAQ)
+
+### Q1: "Ingress만으로는 왜 부족한가요?"
+
+**A**: Ingress는 기본적인 L7 라우팅만 제공합니다.
+
+**Ingress의 한계**:
+```yaml
+# Ingress로 할 수 없는 것들
+❌ Rate Limiting (API 호출 제한)
+❌ Authentication (인증/인가)
+❌ Request/Response 변환
+❌ Circuit Breaker (장애 격리)
+❌ 고급 트래픽 분할 (카나리 배포)
+❌ 서비스 간 통신 제어 (East-West)
+```
+
+**실무 예시**:
+```
+상황: API 서비스에 DDoS 공격
+Ingress: 모든 요청 그대로 전달 → 서버 다운
+Gateway: Rate Limiting으로 차단 → 서비스 보호
+```
+
+### Q2: "Kong과 Istio 중 뭘 선택해야 하나요?"
+
+**A**: 사용 목적에 따라 다릅니다.
+
+**선택 가이드**:
+```mermaid
+graph TB
+    A{무엇이 필요한가?} --> B{외부 API 관리}
+    A --> C{서비스 간 통신 제어}
+    
+    B --> D[Kong 선택<br/>✅ API 관리 중심<br/>✅ 플러그인 생태계<br/>✅ 빠른 도입]
+    
+    C --> E[Istio 선택<br/>✅ Service Mesh<br/>✅ mTLS 자동화<br/>✅ 전체 관측성]
+    
+    style D fill:#4caf50
+    style E fill:#2196f3
+```
+
+**실무 조합**:
+```
+많은 기업이 둘 다 사용:
+- Kong: 외부 트래픽 (North-South)
+- Istio: 내부 트래픽 (East-West)
+```
+
+### Q3: "API Gateway가 SPOF(단일 장애점)가 되지 않나요?"
+
+**A**: 맞습니다. 하지만 고가용성 구성으로 해결합니다.
+
+**고가용성 구성**:
+```mermaid
+graph TB
+    subgraph "고가용성 API Gateway"
+        LB[Load Balancer<br/>AWS ALB/NLB]
+        LB --> GW1[Gateway 1]
+        LB --> GW2[Gateway 2]
+        LB --> GW3[Gateway 3]
+        
+        GW1 --> DB[(공유 DB<br/>PostgreSQL)]
+        GW2 --> DB
+        GW3 --> DB
+    end
+    
+    style LB fill:#ff9800
+    style GW1,GW2,GW3 fill:#4caf50
+    style DB fill:#2196f3
+```
+
+**실무 전략**:
+```yaml
+1. 다중 인스턴스 배포 (최소 3개)
+2. Health Check 설정
+3. Auto Scaling 구성
+4. 다중 AZ 배포 (AWS)
+5. 모니터링 및 알람
+```
+
+### Q4: "Gateway 추가하면 성능이 떨어지지 않나요?"
+
+**A**: 약간의 지연은 있지만, 얻는 이점이 훨씬 큽니다.
+
+**성능 영향**:
+```
+직접 연결: 10ms
+Gateway 경유: 11-12ms (1-2ms 추가)
+
+추가 지연 < 1-2ms
+얻는 이점:
+✅ 보안 강화
+✅ 모니터링
+✅ Rate Limiting
+✅ 장애 격리
+✅ 트래픽 제어
+```
+
+**성능 최적화 방법**:
+```yaml
+1. Gateway 캐싱 활용
+2. Connection Pooling
+3. 적절한 리소스 할당
+4. 불필요한 플러그인 제거
+5. 비동기 처리 활용
+```
+
+### Q5: "Nginx Ingress Controller도 플러그인 있지 않나요?"
+
+**A**: 있지만, 전문 Gateway에 비해 제한적입니다.
+
+**비교**:
+```yaml
+Nginx Ingress Controller:
+  장점:
+    - Kubernetes 네이티브
+    - 빠른 성능
+    - 간단한 설정
+  단점:
+    - 플러그인 생태계 작음
+    - API 관리 기능 부족
+    - 확장성 제한
+
+Kong/Istio:
+  장점:
+    - 풍부한 플러그인
+    - 전문 API 관리
+    - 엔터프라이즈 기능
+  단점:
+    - 복잡한 설정
+    - 학습 곡선
+    - 리소스 사용 많음
+```
+
+**실무 선택**:
+```
+소규모/간단한 서비스: Nginx Ingress
+대규모/복잡한 서비스: Kong/Istio
+```
+
+### Q6: "Service Mesh는 꼭 필요한가요?"
+
+**A**: 마이크로서비스가 많아지면 필수입니다.
+
+**Service Mesh 필요 시점**:
+```
+마이크로서비스 개수:
+- 5개 이하: 불필요 (오버엔지니어링)
+- 10-20개: 고려 시작
+- 20개 이상: 강력 권장
+- 50개 이상: 필수
+
+추가 고려사항:
+✅ 서비스 간 통신 복잡도
+✅ 보안 요구사항 (mTLS)
+✅ 관측성 필요성
+✅ 팀 규모 및 역량
+```
+
+**도입 전 체크리스트**:
+```yaml
+준비 사항:
+- [ ] Kubernetes 운영 경험 충분
+- [ ] 마이크로서비스 아키텍처 안정
+- [ ] 모니터링 시스템 구축
+- [ ] 팀 학습 시간 확보
+- [ ] 점진적 도입 계획 수립
+```
+
+### Q7: "Kong과 Istio를 함께 쓸 수 있나요?"
+
+**A**: 네, 많은 기업이 함께 사용합니다.
+
+**조합 패턴**:
+```mermaid
+graph TB
+    Internet[인터넷] --> Kong[Kong Gateway<br/>외부 트래픽]
+    Kong --> ING[Kubernetes Ingress]
+    ING --> Istio[Istio Service Mesh<br/>내부 트래픽]
+    
+    subgraph "Kubernetes Cluster"
+        Istio --> S1[Service A]
+        Istio --> S2[Service B]
+        Istio --> S3[Service C]
+        
+        S1 <--> S2
+        S2 <--> S3
+    end
+    
+    style Kong fill:#4caf50
+    style Istio fill:#2196f3
+```
+
+**역할 분담**:
+```yaml
+Kong (North-South):
+  - 외부 API 관리
+  - Rate Limiting
+  - API Key 인증
+  - 외부 트래픽 모니터링
+
+Istio (East-West):
+  - 서비스 간 통신
+  - mTLS 자동화
+  - 트래픽 분할
+  - 내부 관측성
+```
+
+### Q8: "Gateway API는 뭔가요? Ingress와 다른가요?"
+
+**A**: Kubernetes의 차세대 Ingress 표준입니다.
+
+**진화 과정**:
+```
+Ingress (2015)
+  ↓ (기능 부족)
+Ingress + Annotations (2018)
+  ↓ (표준화 필요)
+Gateway API (2023) ← 현재
+```
+
+**Gateway API 장점**:
+```yaml
+Ingress 문제점:
+  - Annotation 남용
+  - 벤더별 비표준
+  - 표현력 부족
+
+Gateway API 해결:
+  ✅ 표준화된 API
+  ✅ 역할 기반 분리
+  ✅ 풍부한 표현력
+  ✅ 확장 가능한 구조
+```
+
+**언제 사용?**:
+```
+현재 (2024-2025):
+- 새 프로젝트: Gateway API 권장
+- 기존 프로젝트: Ingress 유지 가능
+- 점진적 마이그레이션 가능
+
+미래 (2026+):
+- Gateway API가 표준
+- Ingress는 레거시
+```
+
+### Q9: "실무에서 가장 많이 쓰는 Gateway는?"
+
+**A**: 상황에 따라 다르지만, 통계를 보면:
+
+**시장 점유율 (2024)**:
+```
+API Gateway:
+1. Kong: 35%
+2. AWS API Gateway: 25%
+3. Nginx: 20%
+4. Traefik: 10%
+5. 기타: 10%
+
+Service Mesh:
+1. Istio: 60%
+2. Linkerd: 20%
+3. Consul: 15%
+4. 기타: 5%
+```
+
+**기업 규모별 선호도**:
+```yaml
+스타트업:
+  - Traefik (간단)
+  - Nginx Ingress
+
+중견기업:
+  - Kong (기능 풍부)
+  - AWS API Gateway (관리형)
+
+대기업:
+  - Kong + Istio (조합)
+  - 자체 개발 Gateway
+```
+
+### Q10: "Gateway 없이 Service만으로는 안 되나요?"
+
+**A**: 기술적으로는 가능하지만, 실무에서는 비추천입니다.
+
+**Service만 사용 시 문제점**:
+```yaml
+문제 1: 보안
+  - 모든 서비스가 외부 노출
+  - 인증/인가 각 서비스에서 중복 구현
+  - 보안 정책 일관성 없음
+
+문제 2: 관리
+  - 각 서비스마다 설정 필요
+  - 모니터링 분산
+  - 로그 수집 어려움
+
+문제 3: 확장성
+  - 서비스 추가 시마다 설정 변경
+  - 트래픽 제어 어려움
+  - 버전 관리 복잡
+```
+
+**Gateway 사용 시 해결**:
+```yaml
+✅ 단일 진입점으로 보안 강화
+✅ 중앙화된 정책 관리
+✅ 통합 모니터링 및 로깅
+✅ 유연한 트래픽 제어
+✅ 쉬운 서비스 추가/제거
+```
+
+---
+
 ## 🔑 핵심 키워드
 
 ### 🔤 기본 용어
