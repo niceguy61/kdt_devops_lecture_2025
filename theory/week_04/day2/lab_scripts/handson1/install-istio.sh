@@ -19,6 +19,18 @@ echo "2. Istio 설치 중 (demo 프로파일)..."
 istioctl install --set profile=demo -y
 echo "   ✅ Istio 설치 완료"
 
+# 2-1. Istio Ingress Gateway NodePort 고정 (30082)
+echo ""
+echo "2-1. Istio Ingress Gateway NodePort 고정 중..."
+kubectl patch svc istio-ingressgateway -n istio-system --type='json' -p='[
+  {
+    "op": "replace",
+    "path": "/spec/ports/1/nodePort",
+    "value": 30082
+  }
+]'
+echo "   ✅ Istio Ingress Gateway NodePort 30082로 고정 완료"
+
 # 3. Istio 컴포넌트 확인
 echo ""
 echo "3. Istio 컴포넌트 확인 중..."

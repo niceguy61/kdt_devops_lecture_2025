@@ -29,6 +29,9 @@ nodes:
   - containerPort: 30081
     hostPort: 8001
     protocol: TCP
+  - containerPort: 30082
+    hostPort: 8080
+    protocol: TCP
 YAML
 
 echo "   ✅ 클러스터 생성 완료"

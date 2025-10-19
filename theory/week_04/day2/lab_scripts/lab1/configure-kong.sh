@@ -7,9 +7,9 @@ echo ""
 
 # 백엔드 서비스 준비 확인
 echo "0. 백엔드 서비스 상태 확인 중..."
-kubectl wait --for=condition=ready pod -l app=user-service --timeout=60s 2>/dev/null
-kubectl wait --for=condition=ready pod -l app=product-service --timeout=60s 2>/dev/null
-kubectl wait --for=condition=ready pod -l app=order-service --timeout=60s 2>/dev/null
+kubectl wait --for=condition=ready pod -l app=user-service -n backend --timeout=60s 2>/dev/null
+kubectl wait --for=condition=ready pod -l app=product-service -n backend --timeout=60s 2>/dev/null
+kubectl wait --for=condition=ready pod -l app=order-service -n backend --timeout=60s 2>/dev/null
 echo "   ✅ 모든 백엔드 서비스 준비 완료"
 
 # 1. User Service 등록
@@ -17,7 +17,7 @@ echo ""
 echo "1. User Service 등록 중..."
 curl -s -X POST http://localhost:8001/services \
   --data name=user-service \
-  --data url='http://user-service.default.svc.cluster.local' > /dev/null
+  --data url='http://user-service.backend.svc.cluster.local' > /dev/null
 echo "   ✅ User Service 등록 완료"
 
 # User Route 생성
@@ -33,7 +33,7 @@ echo ""
 echo "2. Product Service 등록 중..."
 curl -s -X POST http://localhost:8001/services \
   --data name=product-service \
-  --data url='http://product-service.default.svc.cluster.local' > /dev/null
+  --data url='http://product-service.backend.svc.cluster.local' > /dev/null
 echo "   ✅ Product Service 등록 완료"
 
 # Product Route 생성
@@ -49,7 +49,7 @@ echo ""
 echo "3. Order Service 등록 중..."
 curl -s -X POST http://localhost:8001/services \
   --data name=order-service \
-  --data url='http://order-service.default.svc.cluster.local' > /dev/null
+  --data url='http://order-service.backend.svc.cluster.local' > /dev/null
 echo "   ✅ Order Service 등록 완료"
 
 # Order Route 생성

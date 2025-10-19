@@ -405,7 +405,7 @@ export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o js
 
 # 100번 호출하여 트래픽 분산 확인
 for i in {1..100}; do
-  curl -s http://localhost:8000/users
+  curl -s http://localhost:8080/users
 done | sort | uniq -c
 ```
 
@@ -446,7 +446,7 @@ EOF
 **테스트**:
 ```bash
 # 50% 확률로 5초 지연 발생
-time curl http://localhost:8000/products
+time curl http://localhost:8080/products
 ```
 
 **에러 주입 (Abort Injection)**:
@@ -475,7 +475,7 @@ EOF
 ```bash
 # 30% 확률로 500 에러 발생
 for i in {1..10}; do
-  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/orders
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/orders
 done
 ```
 
@@ -508,7 +508,7 @@ EOF
 ```bash
 # 동시 요청으로 Circuit Breaker 트리거
 for i in {1..20}; do
-  curl -s http://localhost:8000/products &
+  curl -s http://localhost:8080/products &
 done
 wait
 ```
