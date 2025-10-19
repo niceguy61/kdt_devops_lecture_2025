@@ -22,8 +22,8 @@ kubectl apply -f manifests/microservices/full-ingress.yaml
 # 기존 하이브리드 Ingress 삭제 (있는 경우에만)
 kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce --ignore-not-found=true
 
-# 모놀리스 애플리케이션 스케일 다운 (완전 제거하지 않고 보존)
-kubectl scale deployment ecommerce-monolith --replicas=0 -n ecommerce
+# 💡 모놀리스는 유지 (비교 목적)
+echo "💡 모놀리스 애플리케이션은 비교를 위해 유지됩니다"
 
 echo "배포 상태 확인 중..."
 kubectl wait --for=condition=ready pod -l app=product-service -n ecommerce --timeout=60s
@@ -36,7 +36,7 @@ echo "배포된 마이크로서비스:"
 echo "- 사용자 서비스: user-service (2 replicas)"
 echo "- 상품 서비스: product-service (2 replicas)"
 echo "- 주문 서비스: order-service (2 replicas)"
-echo "- 모놀리스: 스케일 다운됨 (0 replicas)"
+echo "- 모놀리스: 유지됨 (비교 목적)"
 echo ""
 echo "라우팅 규칙:"
 echo "- /api/users → user-service"

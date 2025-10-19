@@ -61,7 +61,8 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: nginx:alpine
+        image: user-service:v1
+        imagePullPolicy: Never
         ports:
         - containerPort: 80
         env:
