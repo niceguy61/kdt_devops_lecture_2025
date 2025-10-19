@@ -71,11 +71,80 @@ kubectl get svc kubernetes-dashboard -n kubernetes-dashboard
 ```
 
 #### Step 4: 접근 토큰 생성
-```bash
-# 토큰 생성 (1시간 유효)
-kubectl create token admin-user -n kubernetes-dashboard
 
-# 토큰 복사 (로그인 시 사용)
+**방법 1: 임시 토큰 생성 (24시간 유효)**
+```bash
+# 가장 간단한 방법
+kubectl -n kubernetes-dashboard create token admin-user
+```
+
+**방법 2: 영구 토큰 생성 (권장)**
+```bash
+# Secret 생성으로 영구 토큰 만들기
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-user-token
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/service-account.name: admin-user
+type: kubernetes.io/service-account-token
+EOF
+
+# 토큰 확인
+kubectl -n kubernetes-dashboard get secret admin-user-token -o jsonpath='{.data.token}' | base64 --decode && echo
+```
+
+**방법 3: 기존 토큰 조회**
+```bash
+# Secret 목록 확인
+kubectl -n kubernetes-dashboard get secret | grep admin-user
+
+# 토큰 추출
+kubectl -n kubernetes-dashboard get secret admin-user-token-xxxxx -o jsonpath='{.data.token}' | base64 --decode && echo
+```
+
+### 🔑 토큰 관리 팁
+
+**⚠️ 중요: Cleanup 시 토큰 소실 주의**
+```bash
+# namespace 삭제 시 모든 Secret도 함께 삭제됩니다
+kubectl delete namespace kubernetes-dashboard  # ❌ 토큰도 함께 삭제됨!
+
+# Dashboard 재설치 후 반드시 토큰 재생성 필요
+```
+
+**토큰이 사라진 경우:**
+```bash
+# Kubernetes 1.24+ 버전에서는 자동으로 토큰을 생성하지 않습니다
+# 위의 "방법 2: 영구 토큰 생성"을 사용하세요
+
+# 또는 빠르게 임시 토큰 생성
+kubectl -n kubernetes-dashboard create token admin-user
+```
+
+**토큰 재생성:**
+```bash
+# 기존 Secret 삭제 (있는 경우)
+kubectl -n kubernetes-dashboard delete secret admin-user-token
+
+# 새로운 영구 토큰 생성 (방법 2 참조)
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-user-token
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/service-account.name: admin-user
+type: kubernetes.io/service-account-token
+EOF
+```
+
+**한 줄 명령어로 토큰 확인:**
+```bash
+kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}') | grep token: | awk '{print $2}'
 ```
 
 ### 🌐 접근 방법
@@ -305,6 +374,27 @@ Prometheus + Grafana + Metrics Server
 kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 kubectl delete clusterrolebinding admin-user
 kubectl delete serviceaccount admin-user -n kubernetes-dashboard
+```
+
+**⚠️ 주의: Dashboard 재설치 시**
+```bash
+# Dashboard 재설치 후 토큰이 자동 생성되지 않습니다
+# Step 2 (Admin 사용자 생성)와 Step 4 (토큰 생성)를 다시 실행하세요
+
+# 빠른 토큰 생성
+kubectl -n kubernetes-dashboard create token admin-user
+
+# 또는 영구 토큰 생성 (권장)
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-user-token
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/service-account.name: admin-user
+type: kubernetes.io/service-account-token
+EOF
 ```
 
 ### Prometheus + Grafana 삭제
