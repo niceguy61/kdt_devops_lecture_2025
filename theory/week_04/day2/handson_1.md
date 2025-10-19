@@ -1,34 +1,34 @@
-# Week 4 Day 2 Hands-on 1: Istio 고급 트래픽 관리
+# Week 4 Day 2 Hands-on 1: Istio Service Mesh 구축
 
 <div align="center">
 
-**🔄 Traffic Splitting** • **💥 Fault Injection** • **🎯 Canary Deployment**
+**⛵ Istio** • **🔀 트래픽 관리** • **🔐 mTLS** • **📊 관측성**
 
-*Istio를 활용한 고급 트래픽 제어 및 장애 테스트*
+*Service Mesh로 마이크로서비스 통신 완전 제어*
 
 </div>
 
 ---
 
 ## 🕘 실습 정보
-**시간**: 14:00-14:50 (50분)
-**목표**: 카나리 배포와 장애 주입으로 실무 시나리오 체험
-**방식**: Lab 1 기반 심화 실습 (수동 실행)
+**시간**: 14:00-14:50 (50분)  
+**목표**: Istio Service Mesh 설치 및 고급 트래픽 관리  
+**방식**: Lab 1 클러스터 활용 + Istio 추가 설치  
 **작업 위치**: `theory/week_04/day2/lab_scripts/handson1`
 
 ## 🎯 실습 목표
 
 ### 📚 학습 목표
-- **Traffic Splitting**: 가중치 기반 트래픽 분할
-- **Canary Deployment**: 점진적 배포 전략
-- **Fault Injection**: 장애 상황 시뮬레이션
-- **Resilience Testing**: 시스템 복원력 테스트
+- **Istio 아키텍처**: Control Plane과 Data Plane 이해
+- **Sidecar 패턴**: Envoy Proxy 자동 주입 체험
+- **트래픽 관리**: VirtualService와 DestinationRule 활용
+- **관측성**: Kiali, Jaeger, Prometheus 통합
 
 ### 🛠️ 구현 목표
-- **v2 서비스 배포**: 새 버전 서비스 추가
-- **90/10 트래픽 분할**: v1 90%, v2 10%
-- **장애 주입**: 지연 및 오류 시뮬레이션
-- **실시간 테스트**: 브라우저로 결과 확인
+- **Istio 설치**: Control Plane 배포 및 Sidecar 주입
+- **카나리 배포**: 가중치 기반 트래픽 분할
+- **Fault Injection**: 장애 주입 테스트
+- **Circuit Breaker**: 장애 격리 및 복구
 
 ---
 
@@ -36,91 +36,189 @@
 
 ```mermaid
 graph TB
-    subgraph "External"
-        C[Client<br/>localhost:8080]
+    subgraph "Istio Control Plane"
+        Istiod[Istiod<br/>Pilot + Citadel + Galley]
     end
     
-    subgraph "Kubernetes Cluster"
-        subgraph "Istio Gateway"
-            IG[Istio Gateway]
+    subgraph "Istio Ingress"
+        IG[Istio Ingress Gateway<br/>NodePort 30080]
+    end
+    
+    subgraph "Application Pods"
+        subgraph "User Service v1"
+            U1A[User App v1]
+            U1E[Envoy Sidecar]
         end
         
-        subgraph "Traffic Management"
-            VS[VirtualService<br/>Traffic Splitting]
-            FI[Fault Injection<br/>지연/오류]
-        end
-        
-        subgraph "User Service"
-            US1[User Service v1<br/>90%]
-            US2[User Service v2<br/>10%]
+        subgraph "User Service v2"
+            U2A[User App v2]
+            U2E[Envoy Sidecar]
         end
         
         subgraph "Product Service"
-            PS[Product Service<br/>+ Fault Injection]
+            PA[Product App]
+            PE[Envoy Sidecar]
         end
         
         subgraph "Order Service"
-            OS[Order Service]
+            OA[Order App]
+            OE[Envoy Sidecar]
         end
     end
     
-    C --> IG
-    IG --> VS
-    VS --> FI
-    FI --> US1
-    FI --> US2
-    FI --> PS
-    FI --> OS
+    subgraph "Observability"
+        K[Kiali<br/>Service Graph]
+        J[Jaeger<br/>Tracing]
+        P[Prometheus<br/>Metrics]
+        G[Grafana<br/>Dashboard]
+    end
     
-    style IG fill:#ffebee
-    style VS fill:#fff3e0
-    style FI fill:#ffcdd2
-    style US1 fill:#e8f5e8
-    style US2 fill:#c8e6c9
-    style PS fill:#ffebee
-    style OS fill:#e8f5e8
+    C[Client] --> IG
+    IG --> U1E
+    IG --> U2E
+    
+    U1E <--> U1A
+    U2E <--> U2A
+    PE <--> PA
+    OE <--> OA
+    
+    U1E <--> PE
+    U2E <--> PE
+    PE <--> OE
+    
+    Istiod -.-> U1E
+    Istiod -.-> U2E
+    Istiod -.-> PE
+    Istiod -.-> OE
+    
+    U1E -.-> P
+    U2E -.-> P
+    PE -.-> P
+    OE -.-> P
+    
+    P --> G
+    U1E -.-> J
+    U2E -.-> J
+    
+    K -.-> Istiod
+    
+    style Istiod fill:#e3f2fd
+    style IG fill:#4caf50
+    style U1A,U2A,PA,OA fill:#2196f3
+    style U1E,U2E,PE,OE fill:#ff9800
+    style K,J,P,G fill:#9c27b0
 ```
 
 ---
 
-## 🛠️ Step 1: 환경 준비 (5분)
+## 🛠️ Step 1: Istio 설치 (10분)
 
-### Step 1-1: 작업 디렉토리 이동
+### Step 1-1: Istio 다운로드 및 설치
 
+**🚀 자동화 스크립트 사용**
 ```bash
 cd theory/week_04/day2/lab_scripts/handson1
+./install-istio.sh
 ```
 
-### Step 1-2: Lab 1 환경 확인
+**📋 스크립트 내용**: [install-istio.sh](./lab_scripts/handson1/install-istio.sh)
 
-**🚀 자동 확인 스크립트**
+**수동 실행 (학습용)**:
 ```bash
-./setup-environment.sh
+# Istio 다운로드
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
+cd istio-1.20.0
+export PATH=$PWD/bin:$PATH
+
+# Istio 설치 (demo 프로파일)
+istioctl install --set profile=demo -y
+
+# Istio 설치 확인
+kubectl get pods -n istio-system
+
+# Sidecar 자동 주입 활성화
+kubectl label namespace default istio-injection=enabled
 ```
 
-**📋 스크립트 내용**: [setup-environment.sh](./lab_scripts/handson1/setup-environment.sh)
+### Step 1-2: Istio 상태 확인
 
-**💡 빠른 전체 설정 (선택사항)**
 ```bash
-# 수동 실행을 건너뛰고 싶다면
-./setup-all.sh
-# 그리고 Step 5 테스트로 이동
+# Istio 컴포넌트 확인
+kubectl get all -n istio-system
+
+# Sidecar 주입 확인
+kubectl get namespace -L istio-injection
+```
+
+**예상 결과**:
+```
+NAME                ISTIO-INJECTION
+default             enabled
+istio-system        disabled
+kong                disabled
+kube-system         disabled
 ```
 
 ---
 
-## 🚀 Step 2: User Service v2 배포 (10분)
+## 🚀 Step 2: 애플리케이션 재배포 (10분)
 
-### Step 2-1: v2 Deployment 생성
+### Step 2-1: Sidecar 주입된 애플리케이션 배포
 
+**🚀 자동화 스크립트 사용**
 ```bash
+./deploy-with-istio.sh
+```
+
+**📋 스크립트 내용**: [deploy-with-istio.sh](./lab_scripts/handson1/deploy-with-istio.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# 기존 서비스 삭제 (Kong Lab에서 배포한 것)
+kubectl delete deployment user-service product-service order-service
+
+# User Service v1 배포
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-v1
+  labels:
+    app: user-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: user-service
+        version: v1
+    spec:
+      containers:
+      - name: user-service
+        image: hashicorp/http-echo:latest
+        args:
+        - "-text=User Service v1 Response"
+        - "-listen=:8080"
+        ports:
+        - containerPort: 8080
+EOF
+
+# User Service v2 배포 (카나리용)
 kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service-v2
+  labels:
+    app: user-service
+    version: v2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: user-service
@@ -133,33 +231,154 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: hashicorp/http-echo
+        image: hashicorp/http-echo:latest
         args:
-        - "-text=User Service v2 🚀"
+        - "-text=User Service v2 Response (NEW)"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
 EOF
+
+# Product Service 배포
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: product-service
+        version: v1
+    spec:
+      containers:
+      - name: product-service
+        image: hashicorp/http-echo:latest
+        args:
+        - "-text=Product Service Response"
+        - "-listen=:8080"
+        ports:
+        - containerPort: 8080
+EOF
+
+# Order Service 배포
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: order-service
+        version: v1
+    spec:
+      containers:
+      - name: order-service
+        image: hashicorp/http-echo:latest
+        args:
+        - "-text=Order Service Response"
+        - "-listen=:8080"
+        ports:
+        - containerPort: 8080
+EOF
+
+# Pod 준비 대기
+kubectl wait --for=condition=ready pod -l app=user-service --timeout=120s
+kubectl wait --for=condition=ready pod -l app=product-service --timeout=120s
+kubectl wait --for=condition=ready pod -l app=order-service --timeout=120s
 ```
 
-### Step 2-2: 배포 확인
+### Step 2-2: Sidecar 주입 확인
 
 ```bash
-# Pod 확인
+# Pod 상세 정보 확인 (2개 컨테이너 확인)
 kubectl get pods -l app=user-service
 
-# v1과 v2 모두 Running 상태 확인
-# user-service-xxx (v1) - 2개
-# user-service-v2-xxx (v2) - 2개
+# Sidecar 컨테이너 확인
+kubectl describe pod -l app=user-service | grep -A 5 "Containers:"
 ```
+
+**예상 결과**: 각 Pod에 2개 컨테이너 (app + istio-proxy)
 
 ---
 
-## 🔄 Step 3: Traffic Splitting 설정 (15분)
+## 🔀 Step 3: 트래픽 관리 (15분)
 
-### Step 3-1: DestinationRule 업데이트 (subset 정의)
+### Step 3-1: Istio Gateway 및 VirtualService 설정
 
+**🚀 자동화 스크립트 사용**
 ```bash
+./configure-istio.sh
+```
+
+**📋 스크립트 내용**: [configure-istio.sh](./lab_scripts/handson1/configure-istio.sh)
+
+**수동 실행 (학습용)**:
+```bash
+# Istio Gateway 생성
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: app-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+EOF
+
+# VirtualService 생성 (카나리 배포: v1 90%, v2 10%)
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-service
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - app-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /users
+    route:
+    - destination:
+        host: user-service
+        subset: v1
+      weight: 90
+    - destination:
+        host: user-service
+        subset: v2
+      weight: 10
+EOF
+
+# DestinationRule 생성 (버전별 subset 정의)
 kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -174,328 +393,248 @@ spec:
   - name: v2
     labels:
       version: v2
-  trafficPolicy:
-    loadBalancer:
-      simple: ROUND_ROBIN
 EOF
 ```
 
-### Step 3-2: VirtualService 업데이트 (90/10 분할)
+### Step 3-2: 카나리 배포 테스트
 
 ```bash
-kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: api-routes
-spec:
-  hosts:
-  - "*"
-  gateways:
-  - api-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /users
-    route:
-    - destination:
-        host: user-service
-        subset: v1
-      weight: 90
-    - destination:
-        host: user-service
-        subset: v2
-      weight: 10
-  - match:
-    - uri:
-        prefix: /products
-    route:
-    - destination:
-        host: product-service
-        port:
-          number: 80
-  - match:
-    - uri:
-        prefix: /orders
-    route:
-    - destination:
-        host: order-service
-        port:
-          number: 80
-EOF
-```
+# Istio Ingress Gateway 주소 확인
+export INGRESS_HOST=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
 
-### Step 3-3: Traffic Splitting 테스트
-
-```bash
-# 100번 호출하여 v1/v2 비율 확인
+# 100번 호출하여 트래픽 분산 확인
 for i in {1..100}; do
-  curl -s http://localhost:808080/users
+  curl -s http://localhost:8000/users
 done | sort | uniq -c
 ```
 
-**예상 결과:**
+**예상 결과**:
 ```
-  90 User Service v1
-  10 User Service v2 🚀
+  90 User Service v1 Response
+  10 User Service v2 Response (NEW)
 ```
-
-**브라우저 테스트:**
-- http://localhost:808080/users 를 10번 새로고침
-- 대부분 "User Service v1"
-- 가끔 "User Service v2 🚀" 표시
 
 ---
 
-## 💥 Step 4: Fault Injection 설정 (10분)
+## 🔧 Step 4: 고급 기능 (15분)
 
-### Step 4-1: VirtualService에 Fault Injection 추가
+### Step 4-1: Fault Injection (장애 주입)
 
+**지연 주입 (Delay Injection)**:
 ```bash
 kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: api-routes
+  name: product-service
 spec:
   hosts:
-  - "*"
-  gateways:
-  - api-gateway
+  - product-service
   http:
-  - match:
-    - uri:
-        prefix: /users
-    route:
-    - destination:
-        host: user-service
-        subset: v1
-      weight: 90
-    - destination:
-        host: user-service
-        subset: v2
-      weight: 10
-  - match:
-    - uri:
-        prefix: /products
-    fault:
+  - fault:
       delay:
         percentage:
           value: 50
-        fixedDelay: 3s
-      abort:
-        percentage:
-          value: 20
-        httpStatus: 503
+        fixedDelay: 5s
     route:
     - destination:
         host: product-service
-        port:
-          number: 80
-  - match:
-    - uri:
-        prefix: /orders
-    route:
-    - destination:
-        host: order-service
-        port:
-          number: 80
 EOF
 ```
 
-### Step 4-2: Fault Injection 테스트
-
-**지연 테스트:**
+**테스트**:
 ```bash
-# 응답 시간 측정
-time curl http://localhost:808080/products
-
-# 여러 번 실행하여 50% 확률로 3초 지연 확인
+# 50% 확률로 5초 지연 발생
+time curl http://localhost:8000/products
 ```
 
-**오류 테스트:**
+**에러 주입 (Abort Injection)**:
 ```bash
-# 20번 호출하여 오류율 확인
-for i in {1..20}; do
-  echo -n "요청 $i: "
-  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:808080/products
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: order-service
+spec:
+  hosts:
+  - order-service
+  http:
+  - fault:
+      abort:
+        percentage:
+          value: 30
+        httpStatus: 500
+    route:
+    - destination:
+        host: order-service
+EOF
+```
+
+**테스트**:
+```bash
+# 30% 확률로 500 에러 발생
+for i in {1..10}; do
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/orders
 done
 ```
 
-**예상 결과:**
-- 약 50%는 3초 후 200 응답
-- 약 20%는 즉시 503 오류
-- 나머지 30%는 즉시 200 응답
+### Step 4-2: Circuit Breaker 설정
 
-**브라우저 테스트:**
-- http://localhost:808080/products 를 여러 번 새로고침
-- 가끔 느린 응답 (3초 대기)
-- 가끔 "503 Service Unavailable" 오류
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: product-service
+spec:
+  host: product-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      consecutiveErrors: 1
+      interval: 1s
+      baseEjectionTime: 3m
+      maxEjectionPercent: 100
+EOF
+```
+
+**테스트**:
+```bash
+# 동시 요청으로 Circuit Breaker 트리거
+for i in {1..20}; do
+  curl -s http://localhost:8000/products &
+done
+wait
+```
+
+### Step 4-3: Retry & Timeout 정책
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-service
+spec:
+  hosts:
+  - user-service
+  http:
+  - route:
+    - destination:
+        host: user-service
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx
+    timeout: 10s
+EOF
+```
 
 ---
 
-## ✅ Step 5: 종합 테스트 (10분)
+## 📊 Step 5: 관측성 (선택사항)
 
-### Step 5-1: 전체 시스템 테스트
+### Step 5-1: Kiali 대시보드
 
 ```bash
-# 1. Traffic Splitting 확인
-echo "=== Traffic Splitting 테스트 ==="
-for i in {1..20}; do
-  curl -s http://localhost:808080/users
-done | sort | uniq -c
+# Kiali 설치
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
 
-# 2. Fault Injection 확인
-echo ""
-echo "=== Fault Injection 테스트 ==="
-for i in {1..10}; do
-  echo -n "요청 $i: "
-  time curl -s http://localhost:808080/products
-  echo ""
-done
+# Kiali 접근
+kubectl port-forward -n istio-system svc/kiali 20001:20001
 
-# 3. 정상 서비스 확인
-echo ""
-echo "=== Order Service (정상) ==="
-curl http://localhost:808080/orders
+# 브라우저에서 접근
+# http://localhost:20001
 ```
 
-### Step 5-2: 브라우저 종합 테스트
+### Step 5-2: Jaeger 분산 추적
 
-**테스트 시나리오:**
-1. **http://localhost:808080/users** - 10번 새로고침
-   - v1과 v2가 약 9:1 비율로 표시되는지 확인
+```bash
+# Jaeger 설치
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/jaeger.yaml
 
-2. **http://localhost:808080/products** - 10번 새로고침
-   - 느린 응답 (3초) 발생 확인
-   - 503 오류 발생 확인
+# Jaeger 접근
+kubectl port-forward -n istio-system svc/tracing 16686:80
 
-3. **http://localhost:808080/orders** - 정상 동작 확인
+# 브라우저에서 접근
+# http://localhost:16686
+```
+
+### Step 5-3: Prometheus & Grafana
+
+```bash
+# Prometheus 설치
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
+
+# Grafana 설치
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
+
+# Grafana 접근
+kubectl port-forward -n istio-system svc/grafana 3000:3000
+
+# 브라우저에서 접근
+# http://localhost:3000
+```
 
 ---
 
 ## ✅ 실습 체크포인트
 
-### ✅ Traffic Splitting 확인
-- [ ] User Service v2 배포 완료 (2개 Pod)
-- [ ] DestinationRule subset 정의 (v1, v2)
-- [ ] VirtualService weight 설정 (90/10)
-- [ ] curl 테스트로 비율 확인
-- [ ] 브라우저에서 v1/v2 번갈아 표시
+### ✅ Istio 설치 확인
+- [ ] Istiod 배포 완료
+- [ ] Istio Ingress Gateway 실행 중
+- [ ] default 네임스페이스 Sidecar 주입 활성화
+- [ ] 모든 Pod에 2개 컨테이너 (app + istio-proxy)
 
-### ✅ Fault Injection 확인
-- [ ] Product Service에 지연 주입 (50%, 3초)
-- [ ] Product Service에 오류 주입 (20%, 503)
-- [ ] curl 테스트로 지연/오류 확인
-- [ ] 브라우저에서 느린 응답 체험
-- [ ] 브라우저에서 503 오류 확인
+### ✅ 트래픽 관리 확인
+- [ ] Gateway 생성 완료
+- [ ] VirtualService 설정 완료
+- [ ] DestinationRule 설정 완료
+- [ ] 카나리 배포 동작 확인 (90:10 비율)
 
----
+### ✅ 고급 기능 확인
+- [ ] Fault Injection 동작 확인
+- [ ] Circuit Breaker 트리거 확인
+- [ ] Retry & Timeout 정책 적용
 
-## 🚀 추가 실험 (선택사항)
-
-### 실험 1: 트래픽 비율 변경
-
-**v2를 50%로 증가:**
-```bash
-kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: api-routes
-spec:
-  hosts:
-  - "*"
-  gateways:
-  - api-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /users
-    route:
-    - destination:
-        host: user-service
-        subset: v1
-      weight: 50
-    - destination:
-        host: user-service
-        subset: v2
-      weight: 50
-  # ... (나머지 동일)
-EOF
-```
-
-### 실험 2: 장애 비율 조정
-
-**지연을 100%, 5초로 변경:**
-```bash
-fault:
-  delay:
-    percentage:
-      value: 100
-    fixedDelay: 5s
-```
-
-### 실험 3: 헤더 기반 라우팅
-
-**특정 헤더가 있으면 v2로 라우팅:**
-```bash
-http:
-- match:
-  - headers:
-      version:
-        exact: v2
-    uri:
-      prefix: /users
-  route:
-  - destination:
-      host: user-service
-      subset: v2
-```
-
-**테스트:**
-```bash
-curl -H "version: v2" http://localhost:808080/users
-```
+### ✅ 관측성 확인 (선택)
+- [ ] Kiali 서비스 그래프 확인
+- [ ] Jaeger 분산 추적 확인
+- [ ] Grafana 대시보드 확인
 
 ---
 
 ## 🧹 실습 정리
 
-**🚀 자동 정리 스크립트**
+**🚀 자동화 스크립트 사용**
 ```bash
 ./cleanup.sh
 ```
 
-**📋 스크립트 내용**: [cleanup.sh](./lab_scripts/handson1/cleanup.sh)
-
-**수동 정리:**
+**수동 정리**:
 ```bash
-# v2 삭제
-kubectl delete deployment user-service-v2
+# Istio 리소스 삭제
+kubectl delete gateway app-gateway
+kubectl delete virtualservice --all
+kubectl delete destinationrule --all
 
-# VirtualService 복원 (Lab 1 상태)
-kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: api-routes
-spec:
-  hosts:
-  - "*"
-  gateways:
-  - api-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /users
-    route:
-    - destination:
-        host: user-service
-        port:
-          number: 80
-  # ... (나머지 서비스)
-EOF
+# 애플리케이션 삭제
+kubectl delete deployment user-service-v1 user-service-v2 product-service order-service
+
+# Istio 언인스톨
+istioctl uninstall --purge -y
+
+# Istio 네임스페이스 삭제
+kubectl delete namespace istio-system
+
+# Sidecar 주입 비활성화
+kubectl label namespace default istio-injection-
 ```
 
 ---
@@ -503,28 +642,96 @@ EOF
 ## 💡 실습 회고
 
 ### 🤝 페어 회고 (5분)
-1. **Canary Deployment**: 실무에서 어떤 상황에 유용할까요?
-2. **Fault Injection**: 장애 테스트가 왜 중요한가요?
-3. **Traffic Splitting**: 90/10 비율을 어떻게 결정하나요?
-4. **실무 적용**: 이 기능들을 어떤 프로젝트에 적용하고 싶나요?
+1. **Kong vs Istio**: 두 도구의 가장 큰 차이점은?
+2. **Sidecar 패턴**: Sidecar 주입의 장단점은?
+3. **트래픽 관리**: 가장 유용한 기능은?
+4. **실무 적용**: 어떤 상황에서 Istio를 선택하시겠어요?
 
 ### 📊 학습 성과
-- **Canary Deployment**: 점진적 배포 전략 이해 및 구현
-- **Traffic Splitting**: 가중치 기반 트래픽 제어 습득
-- **Fault Injection**: 장애 상황 시뮬레이션 및 테스트
-- **실무 패턴**: Netflix, Google 등에서 사용하는 배포 전략 체험
+- **Istio 아키텍처**: Control Plane과 Data Plane 이해
+- **Sidecar 패턴**: 자동 주입 및 투명한 프록시 체험
+- **고급 트래픽 관리**: 카나리, Fault Injection, Circuit Breaker
+- **관측성**: Kiali, Jaeger, Prometheus 통합 경험
 
-### 🌟 실무 인사이트
-- **Netflix**: 카나리 배포로 수천 개 마이크로서비스 안전하게 배포
-- **Google**: Chaos Engineering으로 시스템 복원력 지속 검증
-- **Uber**: 트래픽 분할로 A/B 테스트 및 점진적 기능 출시
+### 🎯 Kong vs Istio 비교 정리
+
+| 구분 | Kong | Istio |
+|------|------|-------|
+| **위치** | 클러스터 경계 (Edge) | 클러스터 내부 (Mesh) |
+| **역할** | 외부 트래픽 관리 | 서비스 간 통신 관리 |
+| **설치** | 간단 (단일 Gateway) | 복잡 (Control Plane + Sidecar) |
+| **학습 곡선** | 낮음 ⭐⭐ | 높음 ⭐⭐⭐⭐⭐ |
+| **기능** | API 관리 중심 | 전체 관측성 + 보안 |
+| **성능 영향** | 낮음 (단일 홉) | 중간 (Sidecar 오버헤드) |
+| **사용 시기** | API Gateway 필요 시 | 마이크로서비스 20개 이상 |
+
+---
+
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1. Sidecar가 자동 주입되지 않으면?
+**A**: 
+```bash
+# 네임스페이스 라벨 확인
+kubectl get namespace default -o yaml | grep istio-injection
+
+# 라벨 추가
+kubectl label namespace default istio-injection=enabled
+
+# Pod 재시작 (Deployment 재배포)
+kubectl rollout restart deployment user-service-v1
+```
+
+### Q2. Istio Ingress Gateway 포트가 충돌하면?
+**A**: 
+- Kong과 Istio가 모두 30080 포트 사용
+- Kong cleanup 후 Istio 설치 권장
+- 또는 Istio Ingress Gateway 포트 변경
+
+### Q3. VirtualService가 작동하지 않으면?
+**A**: 
+```bash
+# Gateway 확인
+kubectl get gateway
+
+# VirtualService 확인
+kubectl get virtualservice
+
+# DestinationRule 확인
+kubectl get destinationrule
+
+# Istio 설정 검증
+istioctl analyze
+```
+
+### Q4. Circuit Breaker가 트리거되지 않으면?
+**A**: 
+- `consecutiveErrors` 값 낮추기 (1로 설정)
+- `maxConnections` 값 낮추기 (1로 설정)
+- 충분한 동시 요청 생성 (20개 이상)
+
+### Q5. Kiali 대시보드가 비어있으면?
+**A**: 
+- 트래픽 생성 필요 (서비스 호출)
+- Prometheus 메트릭 수집 대기 (1-2분)
+- 네임스페이스 필터 확인 (default 선택)
+
+### Q6. Istio 제거 후에도 Sidecar가 남아있으면?
+**A**: 
+```bash
+# Deployment 재배포
+kubectl rollout restart deployment --all
+
+# 또는 Pod 삭제 (자동 재생성)
+kubectl delete pods --all
+```
 
 ---
 
 <div align="center">
 
-**🔄 Canary Deployment** • **💥 Chaos Engineering** • **🎯 Production Ready**
+**⛵ Istio Service Mesh** • **🔀 고급 트래픽 관리** • **📊 완전한 관측성**
 
-*실무 배포 전략과 장애 테스트 완벽 마스터*
+*Service Mesh로 마이크로서비스 통신을 완전히 제어했습니다!*
 
 </div>
