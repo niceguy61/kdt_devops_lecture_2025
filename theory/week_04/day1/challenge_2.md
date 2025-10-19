@@ -164,6 +164,10 @@ graph TB
 
 ## 🃏 기술 스택 선택 카드
 
+<table>
+<tr>
+<td width="50%">
+
 ### 🎨 Frontend
 
 ```mermaid
@@ -186,6 +190,9 @@ graph LR
     style G fill:#2196f3
     style H fill:#2196f3
 ```
+
+</td>
+<td width="50%">
 
 ### ⚙️ Backend
 
@@ -214,6 +221,11 @@ graph LR
     style J fill:#f44336
 ```
 
+</td>
+</tr>
+<tr>
+<td>
+
 ### 💾 Database
 
 ```mermaid
@@ -239,6 +251,9 @@ graph LR
     style I fill:#2196f3
 ```
 
+</td>
+<td>
+
 ### ⚡ Cache
 
 ```mermaid
@@ -255,6 +270,11 @@ graph LR
     style D fill:#2196f3
     style E fill:#f44336
 ```
+
+</td>
+</tr>
+<tr>
+<td>
 
 ### 📨 Message Queue
 
@@ -277,6 +297,9 @@ graph LR
     style G fill:#2196f3
 ```
 
+</td>
+<td>
+
 ### 📊 Monitoring
 
 ```mermaid
@@ -296,6 +319,11 @@ graph LR
     style F fill:#f44336
 ```
 
+</td>
+</tr>
+<tr>
+<td>
+
 ### 🔍 Search Engine
 
 ```mermaid
@@ -312,6 +340,9 @@ graph LR
     style D fill:#2196f3
     style E fill:#2196f3
 ```
+
+</td>
+<td>
 
 ### 🔐 API Gateway
 
@@ -331,6 +362,10 @@ graph LR
     style E fill:#2196f3
     style F fill:#ff9800
 ```
+
+</td>
+</tr>
+</table>
 
 **색상 가이드:**
 - 🟢 초록: 추천
