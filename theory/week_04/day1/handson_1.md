@@ -215,19 +215,26 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ecommerce-ingress
-  namespace: ecommerce-microservices
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  namespace: ecommerce-advanced
 spec:
+  ingressClassName: nginx
   rules:
-  - host: api.local
+  # localhost 지원 (브라우저에서 직접 접근)
+  - host: localhost
     http:
       paths:
-      - path: /api/users
+      - path: /api/orders
         pathType: Prefix
         backend:
           service:
-            name: user-service
+            name: order-service
+            port:
+              number: 80
+      - path: /api/payments
+        pathType: Prefix
+        backend:
+          service:
+            name: payment-service
             port:
               number: 80
       - path: /api/commands
@@ -242,6 +249,52 @@ spec:
         backend:
           service:
             name: query-service
+            port:
+              number: 80
+      - path: /api/events
+        pathType: Prefix
+        backend:
+          service:
+            name: event-store-api
+            port:
+              number: 80
+  # api.local 지원 (Host 헤더 사용)
+  - host: api.local
+    http:
+      paths:
+      - path: /api/orders
+        pathType: Prefix
+        backend:
+          service:
+            name: order-service
+            port:
+              number: 80
+      - path: /api/payments
+        pathType: Prefix
+        backend:
+          service:
+            name: payment-service
+            port:
+              number: 80
+      - path: /api/commands
+        pathType: Prefix
+        backend:
+          service:
+            name: command-service
+            port:
+              number: 80
+      - path: /api/queries
+        pathType: Prefix
+        backend:
+          service:
+            name: query-service
+            port:
+              number: 80
+      - path: /api/events
+        pathType: Prefix
+        backend:
+          service:
+            name: event-store-api
             port:
               number: 80
 EOF
@@ -260,7 +313,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -288,18 +341,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: order-service-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
         listen 80;
+        default_type application/json;
         location /api/orders {
             return 200 '{"service": "order-service", "action": "create_order", "saga_id": "saga-001", "status": "initiated"}';
-            add_header Content-Type application/json;
         }
         location /api/orders/compensate {
             return 200 '{"service": "order-service", "action": "cancel_order", "saga_id": "saga-001", "status": "compensated"}';
-            add_header Content-Type application/json;
         }
     }
 ---
@@ -307,7 +359,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: order-service
@@ -326,7 +378,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -354,18 +406,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: payment-service-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
         listen 80;
+        default_type application/json;
         location /api/payments {
             return 200 '{"service": "payment-service", "action": "process_payment", "saga_id": "saga-001", "status": "completed", "amount": 100.00}';
-            add_header Content-Type application/json;
         }
         location /api/payments/compensate {
             return 200 '{"service": "payment-service", "action": "refund_payment", "saga_id": "saga-001", "status": "refunded", "amount": 100.00}';
-            add_header Content-Type application/json;
         }
     }
 ---
@@ -373,7 +424,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: payment-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: payment-service
@@ -392,7 +443,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: saga-orchestrator
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   template:
     spec:
@@ -440,7 +491,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: command-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -468,11 +519,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: command-service-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
         listen 80;
+        default_type application/json;
         location /api/commands/create-user {
             return 200 '{
                 "command_id": "cmd-001",
@@ -481,7 +533,6 @@ data:
                 "event_id": "evt-001",
                 "timestamp": "2024-01-01T10:00:00Z"
             }';
-            add_header Content-Type application/json;
         }
         location /api/commands/update-user {
             return 200 '{
@@ -491,7 +542,6 @@ data:
                 "event_id": "evt-002",
                 "timestamp": "2024-01-01T10:01:00Z"
             }';
-            add_header Content-Type application/json;
         }
     }
 ---
@@ -499,7 +549,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: command-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: command-service
@@ -518,7 +568,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: query-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 3
   selector:
@@ -546,11 +596,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: query-service-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
         listen 80;
+        default_type application/json;
         location /api/queries/users {
             return 200 '{
                 "users": [
@@ -561,7 +612,6 @@ data:
                 "source": "materialized_view",
                 "last_updated": "2024-01-01T10:01:00Z"
             }';
-            add_header Content-Type application/json;
         }
         location /api/queries/user-stats {
             return 200 '{
@@ -571,7 +621,6 @@ data:
                 "source": "aggregated_view",
                 "last_updated": "2024-01-01T10:00:00Z"
             }';
-            add_header Content-Type application/json;
         }
     }
 ---
@@ -579,7 +628,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: query-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: query-service
@@ -602,7 +651,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: event-store
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   events.json: |
     {
@@ -645,7 +694,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: event-processor
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   schedule: "*/5 * * * *"  # 5분마다 실행
   jobTemplate:
@@ -679,7 +728,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: event-store-api
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 1
   selector:
@@ -712,14 +761,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: event-store-api-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
         listen 80;
+        default_type application/json;
         location /api/events {
             alias /usr/share/nginx/html/events/events.json;
-            add_header Content-Type application/json;
         }
         location /api/events/replay {
             return 200 '{
@@ -728,7 +777,6 @@ data:
                 "events_count": 1000,
                 "estimated_time": "30s"
             }';
-            add_header Content-Type application/json;
         }
     }
 ---
@@ -736,7 +784,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: event-store-api
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: event-store-api
