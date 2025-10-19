@@ -146,32 +146,33 @@ chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 
 # 실습용 클러스터 생성
-kind create cluster --name lab-cluster --config - <<EOF
+cd theory/week_04/day1/lab_scripts/lab1
+kind create cluster --name lab-cluster --config manifests/cluster/kind-config.yaml
+```
+
+**📋 클러스터 설정 파일**:
+- **[kind-config.yaml](./lab_scripts/lab1/manifests/cluster/kind-config.yaml)**: Kind 클러스터 구성
+```yaml
+# 3노드 클러스터 (1 control-plane + 2 worker)
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
-  kubeadmConfigPatches:
-  - |
-    kind: InitConfiguration
-    nodeRegistration:
-      kubeletExtraArgs:
-        node-labels: "ingress-ready=true"
   extraPortMappings:
-  - containerPort: 80
+  - containerPort: 80    # HTTP 포트 매핑
     hostPort: 80
-    protocol: TCP
-  - containerPort: 443
+  - containerPort: 443   # HTTPS 포트 매핑
     hostPort: 443
-    protocol: TCP
-- role: worker
-- role: worker
-EOF
-
-# 클러스터 확인
-kubectl cluster-info
-kubectl get nodes
+- role: worker           # 워커 노드 1
+- role: worker           # 워커 노드 2
 ```
+
+**🚀 자동화 스크립트 사용**:
+```bash
+# 클러스터 + Ingress Controller 한번에 설정
+./setup-cluster.sh
+```
+**📋 스크립트 내용**: [setup-cluster.sh](./lab_scripts/lab1/setup-cluster.sh)
 
 #### Ingress Controller 설치
 ```bash
@@ -184,6 +185,8 @@ kubectl wait --namespace ingress-nginx \
   --selector=app.kubernetes.io/component=controller \
   --timeout=90s
 ```
+
+**💡 참고**: `setup-cluster.sh` 스크립트를 사용하면 클러스터 생성과 Ingress Controller 설치가 자동으로 진행됩니다.
 
 ---
 
@@ -205,111 +208,75 @@ cd theory/week_04/day1/lab_scripts/lab1
 kubectl create namespace ecommerce
 
 # PostgreSQL 데이터베이스 배포
-kubectl apply -f - <<EOF
+kubectl apply -f manifests/monolith/postgres.yaml
+
+# 모놀리스 애플리케이션 배포
+kubectl apply -f manifests/monolith/ecommerce-app.yaml
+```
+
+**📋 YAML 파일 구성**:
+- **[postgres.yaml](./lab_scripts/lab1/manifests/monolith/postgres.yaml)**: PostgreSQL 데이터베이스
+```yaml
+# PostgreSQL Deployment + Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: ecommerce
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-      - name: postgres
-        image: postgres:13
-        env:
-        - name: POSTGRES_DB
-          value: ecommerce
-        - name: POSTGRES_USER
-          value: admin
-        - name: POSTGRES_PASSWORD
-          value: password123
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-      volumes:
-      - name: postgres-storage
-        emptyDir: {}
+  containers:
+  - name: postgres
+    image: postgres:13
+    env:
+    - name: POSTGRES_DB
+      value: ecommerce
+    # ... 환경변수 및 볼륨 설정
 ---
 apiVersion: v1
 kind: Service
-metadata:
-  name: postgres-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: postgres
-  ports:
-  - port: 5432
-    targetPort: 5432
-EOF
+# ... 5432 포트 노출
+```
 
-# 모놀리스 애플리케이션 배포
-kubectl apply -f - <<EOF
+- **[ecommerce-app.yaml](./lab_scripts/lab1/manifests/monolith/ecommerce-app.yaml)**: 모놀리스 애플리케이션
+```yaml
+# E-Commerce Monolith Deployment + Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ecommerce-monolith
-  namespace: ecommerce
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: ecommerce-monolith
-  template:
-    metadata:
-      labels:
-        app: ecommerce-monolith
-    spec:
-      containers:
-      - name: ecommerce-app
-        image: nginx:alpine  # 실습용 간단한 이미지
-        ports:
-        - containerPort: 80
-        env:
-        - name: DB_HOST
-          value: postgres-service
-        - name: DB_NAME
-          value: ecommerce
+  containers:
+  - name: ecommerce-app
+    image: nginx:alpine
+    env:
+    - name: DB_HOST
+      value: postgres-service
+    # ... 데이터베이스 연결 설정
 ---
 apiVersion: v1
 kind: Service
-metadata:
-  name: ecommerce-monolith-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: ecommerce-monolith
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
+# ... 80 포트 ClusterIP 서비스
 ```
 
 ### Step 1-2: Ingress 설정 (10분)
 
 ```bash
 # Ingress 리소스 생성
-kubectl apply -f - <<EOF
+kubectl apply -f manifests/monolith/ingress.yaml
+
+# /etc/hosts 파일 수정 (로컬 테스트용)
+echo "127.0.0.1 ecommerce.local" | sudo tee -a /etc/hosts
+```
+
+**📋 YAML 파일 구성**:
+- **[ingress.yaml](./lab_scripts/lab1/manifests/monolith/ingress.yaml)**: 모놀리스 Ingress
+```yaml
+# 기본 Ingress 설정
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ecommerce-ingress
-  namespace: ecommerce
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
   rules:
   - host: ecommerce.local
     http:
@@ -319,12 +286,7 @@ spec:
         backend:
           service:
             name: ecommerce-monolith-service
-            port:
-              number: 80
-EOF
-
-# /etc/hosts 파일 수정 (로컬 테스트용)
-echo "127.0.0.1 ecommerce.local" | sudo tee -a /etc/hosts
+            # ... 모든 트래픽을 모놀리스로
 ```
 
 ### Step 1-3: 모놀리스 동작 확인 (5분)
@@ -345,6 +307,12 @@ curl -H "Host: ecommerce.local" http://localhost/
 # 또는 브라우저에서 http://ecommerce.local 접속
 ```
 
+**🔄 Phase 1 완료 효과**:
+- ✅ **단일 애플리케이션**: 모든 기능이 하나의 Pod에서 실행
+- ✅ **단순한 구조**: 1개 Ingress → 1개 Service → 2개 Pod
+- ✅ **통합 데이터베이스**: 모든 데이터가 하나의 PostgreSQL에 저장
+- ✅ **빠른 배포**: 단일 배포 단위로 관리 용이
+
 ---
 
 ## 🛠️ Step 2: 사용자 서비스 마이크로서비스 분리 (30분)
@@ -354,153 +322,92 @@ curl -H "Host: ecommerce.local" http://localhost/
 **🚀 자동화 스크립트 사용**
 ```bash
 cd theory/week_04/day1/lab_scripts/lab1
-./deploy-user-service.sh
+./deploy-user-service-simple.sh
 ```
 
-**📋 스크립트 내용**: [deploy-user-service.sh](./lab_scripts/lab1/deploy-user-service.sh)
+**📋 스크립트 내용**: [deploy-user-service-simple.sh](./lab_scripts/lab1/deploy-user-service-simple.sh)
 
 **2-1. 수동 실행 (학습용)**
 ```bash
-# 사용자 서비스용 데이터베이스 배포
-kubectl apply -f - <<EOF
+# 사용자 서비스 및 데이터베이스 배포
+kubectl apply -f manifests/microservices/user-service.yaml
+```
+
+**📋 YAML 파일 구성**:
+- **[user-service.yaml](./lab_scripts/lab1/manifests/microservices/user-service.yaml)**: 사용자 마이크로서비스
+```yaml
+# User DB Deployment + Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-db
-  namespace: ecommerce
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: user-db
-  template:
-    metadata:
-      labels:
-        app: user-db
-    spec:
-      containers:
-      - name: postgres
-        image: postgres:13
-        env:
-        - name: POSTGRES_DB
-          value: userdb
-        - name: POSTGRES_USER
-          value: admin
-        - name: POSTGRES_PASSWORD
-          value: password123
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: user-db-storage
-          mountPath: /var/lib/postgresql/data
-      volumes:
-      - name: user-db-storage
-        emptyDir: {}
+  containers:
+  - name: postgres
+    image: postgres:13
+    env:
+    - name: POSTGRES_DB
+      value: userdb  # 분리된 사용자 DB
+    # ... 독립적인 데이터베이스
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-db-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: user-db
-  ports:
-  - port: 5432
-    targetPort: 5432
-EOF
-
-# 사용자 마이크로서비스 배포
-kubectl apply -f - <<EOF
+# User Service Deployment + Service  
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service
-  namespace: ecommerce
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: user-service
-  template:
-    metadata:
-      labels:
-        app: user-service
-    spec:
-      containers:
-      - name: user-service
-        image: nginx:alpine  # 실습용 간단한 이미지
-        ports:
-        - containerPort: 80
-        env:
-        - name: DB_HOST
-          value: user-db-service
-        - name: DB_NAME
-          value: userdb
-        - name: SERVICE_NAME
-          value: user-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: user-service
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
+  containers:
+  - name: user-service
+    image: nginx:alpine
+    env:
+    - name: DB_HOST
+      value: user-db-service  # 전용 DB 연결
+    # ... 사용자 전용 마이크로서비스
 ```
 
 ### Step 2-2: Ingress 라우팅 규칙 업데이트 (10분)
 
 ```bash
 # 하이브리드 아키텍처를 위한 Ingress 업데이트
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ecommerce-hybrid-ingress
-  namespace: ecommerce
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: ecommerce.local
-    http:
-      paths:
-      # 사용자 관련 요청은 마이크로서비스로
-      - path: /api/users
-        pathType: Prefix
-        backend:
-          service:
-            name: user-service
-            port:
-              number: 80
-      - path: /users
-        pathType: Prefix
-        backend:
-          service:
-            name: user-service
-            port:
-              number: 80
-      # 나머지 요청은 모놀리스로
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ecommerce-monolith-service
-            port:
-              number: 80
-EOF
+kubectl apply -f manifests/microservices/hybrid-ingress.yaml
 
 # 기존 Ingress 삭제
 kubectl delete ingress ecommerce-ingress -n ecommerce
 ```
+
+**📋 YAML 파일 구성**:
+- **[hybrid-ingress.yaml](./lab_scripts/lab1/manifests/microservices/hybrid-ingress.yaml)**: 하이브리드 라우팅
+```yaml
+# 하이브리드 라우팅 설정
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-hybrid-ingress
+spec:
+  rules:
+  - host: ecommerce.local
+    http:
+      paths:
+      - path: /api/users    # 마이크로서비스로
+        backend:
+          service:
+            name: user-service
+      - path: /users        # 마이크로서비스로
+        backend:
+          service:
+            name: user-service
+      - path: /             # 나머지는 모놀리스로
+        backend:
+          service:
+            name: ecommerce-monolith-service
+```
+
+**🔄 Phase 2 완료 효과**:
+- 🆕 **하이브리드 라우팅**: `/api/users`, `/users` → 마이크로서비스, 나머지 → 모놀리스
+- 🆕 **데이터베이스 분리**: 사용자 데이터가 독립적인 DB로 분리
+- 🆕 **독립적 확장**: 사용자 서비스만 별도로 스케일링 가능
+- ⚠️ **복잡도 증가**: 2개 데이터베이스, 4개 서비스 관리 필요
 
 ---
 
@@ -517,136 +424,92 @@ kubectl delete ingress ecommerce-ingress -n ecommerce
 
 **3-1. 수동 실행 (학습용)**
 ```bash
-# 상품 서비스 배포
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-service
-  namespace: ecommerce
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: product-service
-  template:
-    metadata:
-      labels:
-        app: product-service
-    spec:
-      containers:
-      - name: product-service
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        env:
-        - name: SERVICE_NAME
-          value: product-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: product-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: product-service
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
+# 상품 및 주문 서비스 배포
+kubectl apply -f manifests/microservices/all-services.yaml
+```
 
-# 주문 서비스 배포
-kubectl apply -f - <<EOF
+**📋 YAML 파일 구성**:
+- **[all-services.yaml](./lab_scripts/lab1/manifests/microservices/all-services.yaml)**: 상품/주문 서비스
+```yaml
+# Product Service Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+spec:
+  replicas: 2
+  containers:
+  - name: product-service
+    image: nginx:alpine
+    env:
+    - name: SERVICE_NAME
+      value: product-service
+    # ... 상품 전용 마이크로서비스
+---
+# Order Service Deployment + Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: ecommerce
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-    spec:
-      containers:
-      - name: order-service
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        env:
-        - name: SERVICE_NAME
-          value: order-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: order-service
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
+  containers:
+  - name: order-service
+    image: nginx:alpine
+    env:
+    - name: SERVICE_NAME
+      value: order-service
+    # ... 주문 전용 마이크로서비스
 ```
 
 ### Step 3-2: 최종 Ingress 설정 (10분)
 
 ```bash
 # 완전한 마이크로서비스 Ingress 설정
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ecommerce-microservices-ingress
-  namespace: ecommerce
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: ecommerce.local
-    http:
-      paths:
-      - path: /api/users
-        pathType: Prefix
-        backend:
-          service:
-            name: user-service
-            port:
-              number: 80
-      - path: /api/products
-        pathType: Prefix
-        backend:
-          service:
-            name: product-service
-            port:
-              number: 80
-      - path: /api/orders
-        pathType: Prefix
-        backend:
-          service:
-            name: order-service
-            port:
-              number: 80
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: user-service  # 기본 라우팅
-            port:
-              number: 80
-EOF
+kubectl apply -f manifests/microservices/full-ingress.yaml
 
 # 기존 하이브리드 Ingress 삭제
 kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce
 ```
+
+**📋 YAML 파일 구성**:
+- **[full-ingress.yaml](./lab_scripts/lab1/manifests/microservices/full-ingress.yaml)**: 완전한 마이크로서비스 라우팅
+```yaml
+# 완전한 마이크로서비스 라우팅
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-microservices-ingress
+spec:
+  rules:
+  - host: ecommerce.local
+    http:
+      paths:
+      - path: /api/users     # 사용자 서비스
+        backend:
+          service:
+            name: user-service
+      - path: /api/products  # 상품 서비스
+        backend:
+          service:
+            name: product-service
+      - path: /api/orders    # 주문 서비스
+        backend:
+          service:
+            name: order-service
+      - path: /              # 기본 라우팅
+        backend:
+          service:
+            name: user-service
+```
+
+**🔄 Phase 3 완료 효과**:
+- 🆕 **완전 분리**: 모든 기능이 독립적인 마이크로서비스로 분리
+- 🆕 **서비스별 라우팅**: `/api/users`, `/api/products`, `/api/orders` 각각 다른 서비스로
+- 🆕 **독립 배포**: 각 서비스를 개별적으로 배포/업데이트 가능
+- 🆕 **장애 격리**: 한 서비스 장애가 다른 서비스에 영향 없음
+- ⚠️ **운영 복잡도**: 8개 Pod, 6개 Service, 4개 라우팅 규칙 관리
+- ⚠️ **네트워크 오버헤드**: 서비스 간 HTTP 통신으로 지연시간 증가
 
 ---
 
@@ -696,14 +559,19 @@ kubectl top nodes
 
 ### 복잡도 분석
 
-| 측면 | 모놀리스 | 마이크로서비스 | 비교 |
-|------|----------|----------------|------|
-| **배포 복잡도** | 1개 Deployment | 3개 Deployment | 3배 증가 |
-| **네트워크 호출** | 함수 호출 | HTTP 호출 | 지연시간 증가 |
-| **데이터 일관성** | ACID 트랜잭션 | 분산 트랜잭션 | 복잡도 증가 |
-| **모니터링** | 1개 서비스 | 3개 서비스 | 모니터링 포인트 증가 |
-| **장애 격리** | 전체 영향 | 부분 영향 | 안정성 향상 |
-| **독립 배포** | 불가능 | 가능 | 개발 속도 향상 |
+| 측면 | 모놀리스 | 하이브리드 | 마이크로서비스 | 변화 |
+|------|----------|------------|----------------|------|
+| **배포 복잡도** | 1개 Deployment | 2개 Deployment | 3개 Deployment | 3배 증가 |
+| **네트워크 호출** | 함수 호출 | 혼합 (함수+HTTP) | HTTP 호출 | 지연시간 증가 |
+| **데이터 일관성** | ACID 트랜잭션 | 부분 분산 | 분산 트랜잭션 | 복잡도 증가 |
+| **모니터링** | 1개 서비스 | 2개 서비스 | 3개 서비스 | 모니터링 포인트 증가 |
+| **장애 격리** | 전체 영향 | 부분 격리 | 완전 격리 | 안정성 향상 |
+| **독립 배포** | 불가능 | 부분 가능 | 완전 가능 | 개발 속도 향상 |
+
+**🔄 단계별 전환 효과 요약**:
+- **Phase 1 → 2**: 사용자 기능 분리로 부분적 독립성 확보, 복잡도 2배 증가
+- **Phase 2 → 3**: 완전한 서비스 분리로 최대 유연성 확보, 운영 복잡도 3배 증가
+- **전체 효과**: 개발 유연성 ↑↑, 장애 격리 ↑↑, 운영 복잡도 ↑↑↑
 
 ---
 

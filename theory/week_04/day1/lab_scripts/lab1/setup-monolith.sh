@@ -13,119 +13,13 @@ echo "1/4 네임스페이스 생성 중..."
 kubectl create namespace ecommerce --dry-run=client -o yaml | kubectl apply -f -
 
 echo "2/4 PostgreSQL 데이터베이스 배포 중..."
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  namespace: ecommerce
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-      - name: postgres
-        image: postgres:13
-        env:
-        - name: POSTGRES_DB
-          value: ecommerce
-        - name: POSTGRES_USER
-          value: admin
-        - name: POSTGRES_PASSWORD
-          value: password123
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-      volumes:
-      - name: postgres-storage
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: postgres
-  ports:
-  - port: 5432
-    targetPort: 5432
-EOF
+kubectl apply -f manifests/monolith/postgres.yaml
 
 echo "3/4 모놀리스 애플리케이션 배포 중..."
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ecommerce-monolith
-  namespace: ecommerce
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ecommerce-monolith
-  template:
-    metadata:
-      labels:
-        app: ecommerce-monolith
-    spec:
-      containers:
-      - name: ecommerce-app
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        env:
-        - name: DB_HOST
-          value: postgres-service
-        - name: DB_NAME
-          value: ecommerce
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ecommerce-monolith-service
-  namespace: ecommerce
-spec:
-  selector:
-    app: ecommerce-monolith
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
+kubectl apply -f manifests/monolith/ecommerce-app.yaml
 
 echo "4/4 Ingress 설정 중..."
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ecommerce-ingress
-  namespace: ecommerce
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: ecommerce.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ecommerce-monolith-service
-            port:
-              number: 80
-EOF
+kubectl apply -f manifests/monolith/ingress.yaml
 
 # Pod 시작 대기
 echo "Pod 시작 대기 중..."
