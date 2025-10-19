@@ -701,3 +701,95 @@ kind delete cluster --name lab-cluster
 *Kong으로 API Gateway의 기본을 마스터했습니다!*
 
 </div>
+
+---
+
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1. Kong DB-less 모드와 PostgreSQL 모드의 차이는?
+**A**: 
+- **DB-less 모드**: 선언적 설정(YAML), Admin API 읽기 전용, 빠른 시작
+- **PostgreSQL 모드**: 동적 설정, Admin API 완전 지원, 프로덕션 권장
+- **실습 선택**: PostgreSQL 모드로 Admin API를 통한 동적 설정 학습
+
+### Q2. Kong이 백엔드 서비스를 찾지 못하면?
+**A**: 
+```bash
+# 1. 백엔드 서비스 확인
+kubectl get svc user-service
+
+# 2. Kong에서 DNS 확인
+kubectl exec -n kong -it $(kubectl get pod -n kong -l app=kong -o jsonpath='{.items[0].metadata.name}') -- curl http://user-service.default.svc.cluster.local
+
+# 3. Kong Service URL 확인
+curl http://localhost:8001/services/user-service
+```
+
+### Q3. Rate Limiting이 작동하지 않으면?
+**A**: 
+- **확인 1**: 플러그인 적용 확인 `curl http://localhost:8001/services/user-service/plugins`
+- **확인 2**: 응답 헤더 확인 `curl -i http://localhost:8000/users` (X-RateLimit-* 헤더)
+- **주의**: `config.policy=local`은 단일 Kong 인스턴스에서만 작동
+
+### Q4. Key Authentication 401 에러가 계속 나오면?
+**A**: 
+```bash
+# 1. Consumer 확인
+curl http://localhost:8001/consumers/testuser
+
+# 2. API Key 확인
+curl http://localhost:8001/consumers/testuser/key-auth
+
+# 3. 올바른 헤더 사용
+curl -H "apikey: my-secret-key" http://localhost:8000/products
+# 또는
+curl -H "Authorization: apikey my-secret-key" http://localhost:8000/products
+```
+
+### Q5. Metrics Server가 필요한 이유는?
+**A**: 
+- **HPA 지원**: Horizontal Pod Autoscaler가 CPU/메모리 메트릭 필요
+- **kubectl top**: `kubectl top nodes`, `kubectl top pods` 명령어 사용
+- **Hands-on 1 준비**: Istio 실습에서 리소스 모니터링 활용
+
+### Q6. 실습 환경을 완전히 초기화하려면?
+**A**: 
+```bash
+# Kong과 백엔드만 삭제 (클러스터 유지)
+./cleanup.sh
+
+# 클러스터까지 완전 삭제
+kind delete cluster --name lab-cluster
+
+# 처음부터 다시 시작
+./setup-cluster.sh
+./install-kong.sh
+./deploy-services.sh
+./configure-kong.sh
+./apply-plugins.sh
+```
+
+### Q7. Kong Admin API 포트가 충돌하면?
+**A**: 
+- **문제**: 8001 포트가 이미 사용 중
+- **해결**: setup-cluster.sh에서 다른 포트로 변경
+```yaml
+extraPortMappings:
+- containerPort: 30081
+  hostPort: 8002  # 8001 대신 8002 사용
+```
+
+### Q8. 플러그인을 삭제하려면?
+**A**: 
+```bash
+# 1. 플러그인 ID 확인
+curl http://localhost:8001/services/user-service/plugins
+
+# 2. 플러그인 삭제
+curl -X DELETE http://localhost:8001/plugins/{plugin-id}
+
+# 3. 모든 플러그인 확인
+curl http://localhost:8001/plugins
+```
+
+---
