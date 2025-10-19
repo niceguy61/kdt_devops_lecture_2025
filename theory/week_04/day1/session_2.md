@@ -223,7 +223,7 @@ graph TB
     end
     
     subgraph "👤 고객 Aggregate"
-        C[고객 (Root)]
+        C[고객 - Root]
         CA[고객 주소]
         CP[결제 정보]
         
