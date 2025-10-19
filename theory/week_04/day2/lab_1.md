@@ -22,10 +22,10 @@
 - **Kong 기초**: API Gateway의 핵심 개념 이해
 - **Service & Route**: Kong의 라우팅 구조 습득
 - **플러그인**: Rate Limiting, Authentication 적용
-- **실무 연계**: 간단하고 직관적인 API 관리 체험
+- **실무 연계**: 프로덕션급 API Gateway 구축 체험
 
 ### 🛠️ 구현 목표
-- **Kong 설치**: DB-less 모드로 빠른 설치
+- **Kong 설치**: PostgreSQL 기반 프로덕션 모드
 - **3개 서비스**: User, Product, Order 서비스 배포
 - **라우팅 설정**: 경로 기반 라우팅 구성
 - **플러그인 적용**: Rate Limiting, Key Auth, CORS
@@ -44,6 +44,7 @@ graph TB
         subgraph "Kong Gateway"
             KP[Kong Proxy<br/>NodePort 30080]
             KA[Kong Admin API<br/>NodePort 30081]
+            DB[(PostgreSQL<br/>Database)]
         end
         
         subgraph "Kong Resources"
@@ -71,6 +72,8 @@ graph TB
     
     C --> KP
     C -.-> KA
+    KP -.-> DB
+    KA -.-> DB
     
     KP --> R1 --> S1 --> US
     KP --> R2 --> S2 --> PS
@@ -82,6 +85,7 @@ graph TB
     
     style KP fill:#4caf50
     style KA fill:#ff9800
+    style DB fill:#2196f3
     style S1 fill:#2196f3
     style S2 fill:#2196f3
     style S3 fill:#2196f3
@@ -138,7 +142,7 @@ EOF
 
 ## 🦍 Step 2: Kong 설치 (10분)
 
-### Step 2-1: Kong Gateway 배포
+### Step 2-1: PostgreSQL 및 Kong Gateway 배포
 
 **🚀 자동화 스크립트 사용**
 ```bash
@@ -152,7 +156,82 @@ EOF
 # Kong 네임스페이스 생성
 kubectl create namespace kong
 
-# Kong Gateway 배포 (DB-less 모드)
+# PostgreSQL 배포
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: kong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        env:
+        - name: POSTGRES_USER
+          value: kong
+        - name: POSTGRES_PASSWORD
+          value: kong
+        - name: POSTGRES_DB
+          value: kong
+        ports:
+        - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: kong
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+EOF
+
+# PostgreSQL 준비 대기
+kubectl wait --for=condition=ready pod -l app=postgres -n kong --timeout=120s
+
+# Kong 데이터베이스 마이그레이션
+kubectl apply -f - <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-migration
+  namespace: kong
+spec:
+  template:
+    spec:
+      containers:
+      - name: kong-migration
+        image: kong:3.4
+        env:
+        - name: KONG_DATABASE
+          value: postgres
+        - name: KONG_PG_HOST
+          value: postgres
+        - name: KONG_PG_USER
+          value: kong
+        - name: KONG_PG_PASSWORD
+          value: kong
+        command: ["kong", "migrations", "bootstrap"]
+      restartPolicy: OnFailure
+EOF
+
+# 마이그레이션 완료 대기
+kubectl wait --for=condition=complete job/kong-migration -n kong --timeout=120s
+
+# Kong Gateway 배포
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Service
@@ -207,7 +286,13 @@ spec:
         image: kong:3.4
         env:
         - name: KONG_DATABASE
-          value: "off"
+          value: postgres
+        - name: KONG_PG_HOST
+          value: postgres
+        - name: KONG_PG_USER
+          value: kong
+        - name: KONG_PG_PASSWORD
+          value: kong
         - name: KONG_PROXY_ACCESS_LOG
           value: "/dev/stdout"
         - name: KONG_ADMIN_ACCESS_LOG
@@ -234,14 +319,32 @@ kubectl wait --for=condition=ready pod -l app=kong -n kong --timeout=120s
 ### Step 2-2: Kong 상태 확인
 
 ```bash
-# Kong Pod 확인
-kubectl get pods -n kong
-
-# Kong 서비스 확인
-kubectl get svc -n kong
+# Kong 네임스페이스의 모든 리소스 확인
+kubectl get all -n kong
 
 # Kong Admin API 테스트
 curl http://localhost:8001
+
+# 데이터베이스 연결 확인
+curl http://localhost:8001/status
+```
+
+**예상 결과**:
+```json
+{
+  "database": {
+    "reachable": true
+  },
+  "server": {
+    "connections_accepted": 1,
+    "connections_active": 1,
+    "connections_handled": 1,
+    "connections_reading": 0,
+    "connections_waiting": 0,
+    "connections_writing": 1,
+    "total_requests": 1
+  }
+}
 ```
 
 ---
@@ -517,9 +620,12 @@ curl -i -X OPTIONS http://localhost:8000/orders \
 
 ### ✅ 기본 구성 확인
 - [ ] Kind 클러스터 생성 (포트 8000, 8001 매핑)
+- [ ] PostgreSQL 배포 완료
+- [ ] Kong 데이터베이스 마이그레이션 완료
 - [ ] Kong Gateway 배포 완료
 - [ ] Kong Admin API 접근 가능 (localhost:8001)
 - [ ] Kong Proxy 접근 가능 (localhost:8000)
+- [ ] 데이터베이스 연결 확인 (reachable: true)
 
 ### ✅ 서비스 배포 확인
 - [ ] 3개 마이크로서비스 배포 완료
@@ -563,7 +669,8 @@ kind delete cluster --name lab-cluster
 
 ### 📊 학습 성과
 - **Kong 기초**: Service, Route, Plugin 개념 이해
-- **API 관리**: 간단하고 직관적인 API Gateway 체험
+- **프로덕션 모드**: PostgreSQL 기반 Kong 구축 경험
+- **API 관리**: Admin API를 통한 동적 설정 관리
 - **플러그인**: Rate Limiting, Authentication, CORS 적용
 - **실무 준비**: 프로덕션급 API Gateway 구축 경험
 
