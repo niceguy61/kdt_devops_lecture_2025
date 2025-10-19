@@ -597,6 +597,381 @@ graph TB
 
 ---
 
+## ❓ 자주 묻는 질문 (FAQ)
+
+### Q1: "카나리 배포 중 문제가 생기면 어떻게 롤백하나요?"
+
+**A**: 가중치를 즉시 0으로 변경하면 됩니다.
+
+**즉시 롤백 방법**:
+```yaml
+# 문제 발견 시
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+  - route:
+    - destination:
+        host: api-service
+        subset: v1
+      weight: 100  # 기존 버전으로 100%
+    - destination:
+        host: api-service
+        subset: v2
+      weight: 0    # 카나리 즉시 중단
+```
+
+**자동 롤백 (Flagger)**:
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+spec:
+  analysis:
+    threshold: 5  # 5번 실패 시 자동 롤백
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99  # 성공률 99% 미만 시 롤백
+    - name: request-duration
+      thresholdRange:
+        max: 500  # 응답시간 500ms 초과 시 롤백
+```
+
+**롤백 시간**:
+```
+수동 롤백: 1-2분 (YAML 수정 → 적용)
+자동 롤백: 즉시 (메트릭 기반)
+```
+
+### Q2: "A/B 테스팅과 카나리 배포의 차이가 뭔가요?"
+
+**A**: 목적과 트래픽 분배 방식이 다릅니다.
+
+**비교표**:
+```yaml
+카나리 배포:
+  목적: 안전한 배포
+  트래픽: 무작위 분배 (10% → 50% → 100%)
+  기준: 시간 경과 + 메트릭
+  대상: 모든 사용자
+  
+  예시:
+    - 10% 사용자에게 새 버전
+    - 문제 없으면 50%로 확대
+    - 최종 100% 전환
+
+A/B 테스팅:
+  목적: 기능 비교 실험
+  트래픽: 조건 기반 분배 (헤더, 쿠키, 지역)
+  기준: 비즈니스 메트릭
+  대상: 특정 사용자 그룹
+  
+  예시:
+    - 베타 사용자 → 새 UI
+    - 일반 사용자 → 기존 UI
+    - 전환율 비교 후 결정
+```
+
+**실무 조합**:
+```
+1. A/B 테스팅으로 기능 검증
+2. 승자 결정 후 카나리 배포로 전체 적용
+```
+
+### Q3: "서킷 브레이커는 언제 열리나요?"
+
+**A**: 연속 실패 횟수나 실패율이 임계값을 초과할 때입니다.
+
+**동작 조건**:
+```yaml
+# Istio 서킷 브레이커 설정
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+spec:
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 5        # 연속 5번 실패
+      interval: 30s               # 30초 동안
+      baseEjectionTime: 30s       # 30초간 차단
+      maxEjectionPercent: 50      # 최대 50% Pod 차단
+```
+
+**상태 전환**:
+```
+Closed (정상):
+  - 모든 요청 통과
+  - 실패 카운트 추적
+  
+  ↓ (연속 5번 실패)
+  
+Open (차단):
+  - 모든 요청 즉시 실패 반환
+  - 빠른 실패 (Fail Fast)
+  - 30초 대기
+  
+  ↓ (30초 후)
+  
+Half-Open (테스트):
+  - 일부 요청만 허용
+  - 성공 시 → Closed
+  - 실패 시 → Open
+```
+
+**실무 설정 예시**:
+```yaml
+# 보수적 설정 (안정성 우선)
+consecutiveErrors: 3
+interval: 10s
+baseEjectionTime: 60s
+
+# 공격적 설정 (가용성 우선)
+consecutiveErrors: 10
+interval: 60s
+baseEjectionTime: 30s
+```
+
+### Q4: "Retry를 너무 많이 하면 문제가 생기지 않나요?"
+
+**A**: 맞습니다. Retry Storm이 발생할 수 있습니다.
+
+**Retry Storm 문제**:
+```
+상황:
+  서비스 A → 서비스 B (장애)
+  
+Retry 설정: 3번 재시도
+
+결과:
+  원래 요청: 100 RPS
+  Retry 포함: 400 RPS (4배!)
+  
+  서비스 B가 더 과부하 → 복구 불가능
+```
+
+**안전한 Retry 설정**:
+```yaml
+# Istio Retry 정책
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+  - route:
+    - destination:
+        host: api-service
+    retries:
+      attempts: 2              # 최대 2번만
+      perTryTimeout: 2s        # 각 시도 2초 제한
+      retryOn: 5xx,reset,connect-failure
+    timeout: 10s               # 전체 10초 제한
+```
+
+**Retry 베스트 프랙티스**:
+```yaml
+1. 재시도 횟수 제한 (2-3번)
+2. Timeout 설정 필수
+3. Exponential Backoff 사용
+4. Circuit Breaker와 함께 사용
+5. Idempotent 요청만 재시도
+```
+
+**Exponential Backoff**:
+```
+1차 시도: 즉시
+2차 시도: 1초 후
+3차 시도: 2초 후
+4차 시도: 4초 후
+```
+
+### Q5: "Chaos Engineering은 프로덕션에서 해도 되나요?"
+
+**A**: 네, 하지만 점진적으로 시작해야 합니다.
+
+**단계별 접근**:
+```yaml
+Phase 1: 개발 환경
+  - 기본 장애 주입 테스트
+  - 팀 학습 및 경험 축적
+  - 안전한 실험
+
+Phase 2: 스테이징 환경
+  - 프로덕션 유사 환경
+  - 복잡한 장애 시나리오
+  - 모니터링 검증
+
+Phase 3: 프로덕션 (제한적)
+  - 비즈니스 시간 외
+  - 일부 트래픽만
+  - 즉시 중단 가능
+
+Phase 4: 프로덕션 (전체)
+  - 자동화된 실험
+  - 지속적 검증
+  - Netflix 수준
+```
+
+**안전한 Chaos Engineering**:
+```yaml
+# Istio Fault Injection (제한적)
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+  - fault:
+      delay:
+        percentage:
+          value: 1  # 1%만 영향
+        fixedDelay: 5s
+      abort:
+        percentage:
+          value: 0.1  # 0.1%만 실패
+        httpStatus: 500
+```
+
+**필수 준비사항**:
+```yaml
+✅ 모니터링 시스템 완비
+✅ 자동 롤백 메커니즘
+✅ 비즈니스 영향 최소화
+✅ 팀 합의 및 승인
+✅ 즉시 중단 가능한 구조
+```
+
+### Q6: "트래픽 분할 비율을 어떻게 결정하나요?"
+
+**A**: 위험도와 트래픽 규모에 따라 다릅니다.
+
+**카나리 배포 비율 가이드**:
+```yaml
+저위험 변경 (UI 수정, 로깅 추가):
+  10% → 50% → 100%
+  각 단계: 10-30분
+
+중위험 변경 (API 수정, 로직 변경):
+  5% → 10% → 25% → 50% → 100%
+  각 단계: 30분-1시간
+
+고위험 변경 (결제, 인증, 데이터베이스):
+  1% → 5% → 10% → 25% → 50% → 100%
+  각 단계: 1-2시간
+```
+
+**트래픽 규모별 전략**:
+```yaml
+소규모 (< 1,000 RPS):
+  - 빠른 전환 가능
+  - 10% → 50% → 100%
+  - 각 단계 10분
+
+중규모 (1,000-10,000 RPS):
+  - 신중한 접근
+  - 5% → 25% → 50% → 100%
+  - 각 단계 30분
+
+대규모 (> 10,000 RPS):
+  - 매우 신중
+  - 1% → 5% → 10% → 25% → 50% → 100%
+  - 각 단계 1시간
+```
+
+**자동 진행 조건**:
+```yaml
+# Flagger 자동 진행
+apiVersion: flagger.app/v1beta1
+kind: Canary
+spec:
+  analysis:
+    interval: 1m          # 1분마다 체크
+    threshold: 5          # 5번 성공 시 다음 단계
+    stepWeight: 10        # 10%씩 증가
+    maxWeight: 50         # 최대 50%까지
+    
+    # 진행 조건
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99           # 99% 이상
+    - name: request-duration
+      thresholdRange:
+        max: 500          # 500ms 이하
+```
+
+### Q7: "Fallback 응답은 어떻게 구현하나요?"
+
+**A**: 애플리케이션 레벨에서 구현해야 합니다.
+
+**Fallback 전략**:
+```yaml
+1. 캐시된 데이터 반환:
+   - Redis/Memcached 캐시
+   - 최근 성공 응답 저장
+   - Stale 데이터라도 반환
+
+2. 기본값 반환:
+   - 하드코딩된 기본값
+   - 빈 배열/객체
+   - 안전한 기본 상태
+
+3. 다른 서비스로 우회:
+   - 백업 서비스 호출
+   - 읽기 전용 복제본
+   - 다른 리전 서비스
+
+4. 친절한 오류 메시지:
+   - 사용자 친화적 메시지
+   - 재시도 안내
+   - 고객센터 연락처
+```
+
+**구현 예시 (Go)**:
+```go
+func GetUserData(userID string) (*User, error) {
+    // 1차 시도: 메인 서비스
+    user, err := mainService.GetUser(userID)
+    if err == nil {
+        return user, nil
+    }
+    
+    // 2차 시도: 캐시
+    cachedUser, err := cache.Get(userID)
+    if err == nil {
+        log.Warn("Using cached data")
+        return cachedUser, nil
+    }
+    
+    // 3차 시도: 백업 서비스
+    user, err = backupService.GetUser(userID)
+    if err == nil {
+        log.Warn("Using backup service")
+        return user, nil
+    }
+    
+    // 최종: 기본값
+    log.Error("All fallbacks failed")
+    return &User{
+        ID: userID,
+        Name: "Unknown",
+        Status: "unavailable",
+    }, nil
+}
+```
+
+**Istio는 Fallback 미지원**:
+```
+Istio가 할 수 있는 것:
+  ✅ Retry
+  ✅ Timeout
+  ✅ Circuit Breaker
+
+Istio가 할 수 없는 것:
+  ❌ 캐시 데이터 반환
+  ❌ 기본값 생성
+  ❌ 비즈니스 로직 처리
+
+→ 애플리케이션 코드에서 구현 필요
+```
+
+---
+
 ## 🔑 핵심 키워드
 
 ### 🔤 배포 전략
