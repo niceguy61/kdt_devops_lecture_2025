@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-service-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:
@@ -18,7 +18,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: product-service-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:
@@ -33,7 +33,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:

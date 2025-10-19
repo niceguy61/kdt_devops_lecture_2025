@@ -18,7 +18,7 @@ show_progress() {
 # 확인 함수
 confirm_cleanup() {
     echo "⚠️  다음 리소스들이 삭제됩니다:"
-    echo "   - ecommerce-microservices 네임스페이스 (모든 서비스 포함)"
+    echo "   - ecommerce-advanced 네임스페이스 (모든 서비스 포함)"
     echo "   - testing 네임스페이스 (Load Tester 포함)"
     echo "   - Nginx Ingress Controller (선택사항)"
     echo ""
@@ -37,33 +37,33 @@ confirm_cleanup
 show_progress "1/5 Hands-on 1 생성 리소스 정리"
 
 echo "🗑️  Jobs 정리 중..."
-kubectl delete jobs --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete jobs --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "🗑️  CronJobs 정리 중..."
-kubectl delete cronjobs --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete cronjobs --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "🗑️  Deployments 정리 중..."
-kubectl delete deployments --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete deployments --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "🗑️  Services 정리 중..."
-kubectl delete services --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete services --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "🗑️  ConfigMaps 정리 중..."
-kubectl delete configmaps --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete configmaps --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "🗑️  Ingress 정리 중..."
-kubectl delete ingress --all -n ecommerce-microservices 2>/dev/null || true
+kubectl delete ingress --all -n ecommerce-advanced 2>/dev/null || true
 
 echo "✅ Hands-on 1 리소스 정리 완료"
 
 # 네임스페이스 정리
 show_progress "2/5 네임스페이스 정리"
-if kubectl get namespace ecommerce-microservices >/dev/null 2>&1; then
-    echo "🗑️  ecommerce-microservices 네임스페이스 삭제 중..."
-    kubectl delete namespace ecommerce-microservices
-    echo "✅ ecommerce-microservices 네임스페이스 삭제 완료"
+if kubectl get namespace ecommerce-advanced >/dev/null 2>&1; then
+    echo "🗑️  ecommerce-advanced 네임스페이스 삭제 중..."
+    kubectl delete namespace ecommerce-advanced
+    echo "✅ ecommerce-advanced 네임스페이스 삭제 완료"
 else
-    echo "ℹ️  ecommerce-microservices 네임스페이스가 이미 없습니다"
+    echo "ℹ️  ecommerce-advanced 네임스페이스가 이미 없습니다"
 fi
 
 if kubectl get namespace testing >/dev/null 2>&1; then
@@ -102,9 +102,9 @@ show_progress "5/5 정리 결과 확인"
 echo "🔍 남은 리소스 확인:"
 echo ""
 
-echo "📦 ecommerce-microservices 네임스페이스:"
-if kubectl get namespace ecommerce-microservices >/dev/null 2>&1; then
-    kubectl get all -n ecommerce-microservices 2>/dev/null || echo "   (리소스 없음)"
+echo "📦 ecommerce-advanced 네임스페이스:"
+if kubectl get namespace ecommerce-advanced >/dev/null 2>&1; then
+    kubectl get all -n ecommerce-advanced 2>/dev/null || echo "   (리소스 없음)"
 else
     echo "   (네임스페이스 없음)"
 fi

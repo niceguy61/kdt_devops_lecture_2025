@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-db
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   replicas: 1
   selector:
@@ -36,7 +36,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-db-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: user-db
@@ -48,7 +48,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -77,7 +77,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: user-service

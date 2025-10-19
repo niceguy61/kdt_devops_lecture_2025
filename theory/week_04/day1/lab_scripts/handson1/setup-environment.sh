@@ -17,11 +17,11 @@ show_progress() {
 
 # 네임스페이스 확인 및 생성
 show_progress "1/6 네임스페이스 설정"
-if kubectl get namespace ecommerce-microservices >/dev/null 2>&1; then
-    echo "✅ ecommerce-microservices 네임스페이스 이미 존재"
+if kubectl get namespace ecommerce-advanced >/dev/null 2>&1; then
+    echo "✅ ecommerce-advanced 네임스페이스 이미 존재"
 else
-    kubectl create namespace ecommerce-microservices
-    echo "✅ ecommerce-microservices 네임스페이스 생성 완료"
+    kubectl create namespace ecommerce-advanced
+    echo "✅ ecommerce-advanced 네임스페이스 생성 완료"
 fi
 
 if kubectl get namespace testing >/dev/null 2>&1; then
@@ -88,7 +88,7 @@ fi
 
 # User Service 배포 (Lab 1에서 이미 있다면 스킵)
 show_progress "4/6 기본 User Service 확인"
-if kubectl get deployment user-service -n ecommerce-microservices >/dev/null 2>&1; then
+if kubectl get deployment user-service -n ecommerce-advanced >/dev/null 2>&1; then
     echo "✅ User Service 이미 배포됨"
 else
     echo "📦 기본 User Service 배포 중..."
@@ -97,7 +97,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -125,7 +125,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: user-service-config
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 data:
   default.conf: |
     server {
@@ -144,7 +144,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-service
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: user-service
@@ -157,7 +157,7 @@ fi
 
 # 기본 Ingress 설정
 show_progress "5/6 기본 Ingress 설정"
-if kubectl get ingress ecommerce-ingress -n ecommerce-microservices >/dev/null 2>&1; then
+if kubectl get ingress ecommerce-ingress -n ecommerce-advanced >/dev/null 2>&1; then
     echo "✅ Ingress 이미 설정됨"
 else
     cat <<EOF | kubectl apply -f -
@@ -165,7 +165,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ecommerce-ingress
-  namespace: ecommerce-microservices
+  namespace: ecommerce-advanced
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -189,18 +189,18 @@ show_progress "6/6 환경 검증"
 echo "🔍 배포된 리소스 확인:"
 echo ""
 echo "📦 Pods:"
-kubectl get pods -n ecommerce-microservices
+kubectl get pods -n ecommerce-advanced
 echo ""
 echo "🌐 Services:"
-kubectl get svc -n ecommerce-microservices
+kubectl get svc -n ecommerce-advanced
 echo ""
 echo "🚪 Ingress:"
-kubectl get ingress -n ecommerce-microservices
+kubectl get ingress -n ecommerce-advanced
 echo ""
 
 # 연결 테스트
 echo "🧪 연결 테스트:"
-if kubectl exec -n testing deployment/load-tester -- curl -s http://user-service.ecommerce-microservices.svc.cluster.local/health >/dev/null 2>&1; then
+if kubectl exec -n testing deployment/load-tester -- curl -s http://user-service.ecommerce-advanced.svc.cluster.local/health >/dev/null 2>&1; then
     echo "✅ 서비스 간 통신 정상"
 else
     echo "⚠️  서비스 간 통신 확인 필요"
@@ -213,7 +213,7 @@ echo "🎯 준비된 환경:"
 echo "- ✅ Kubernetes Native 네트워킹 (Nginx Ingress)"
 echo "- ✅ 기본 마이크로서비스 (User Service)"
 echo "- ✅ 테스트 환경 (Load Tester)"
-echo "- ✅ 네임스페이스 분리 (ecommerce-microservices, testing)"
+echo "- ✅ 네임스페이스 분리 (ecommerce-advanced, testing)"
 echo ""
 echo "🚀 이제 Hands-on 1 실습을 시작할 수 있습니다!"
 echo ""

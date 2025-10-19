@@ -7,17 +7,17 @@ echo ""
 
 # 1. 기존 클러스터 확인 및 삭제
 echo "1. 기존 클러스터 확인 중..."
-if kind get clusters | grep -q "w4d2-handson"; then
-    echo "   ⚠️  기존 w4d2-handson 클러스터 발견"
+if kind get clusters | grep -q "lab-cluster"; then
+    echo "   ⚠️  기존 lab-cluster 클러스터 발견"
     echo "   🗑️  기존 클러스터 삭제 중..."
-    kind delete cluster --name w4d2-handson
+    kind delete cluster --name lab-cluster
     echo "   ✅ 기존 클러스터 삭제 완료"
 fi
 
 # 2. Kind 클러스터 생성 (포트 8080 매핑)
 echo ""
 echo "2. Kind 클러스터 생성 중 (포트 8080 매핑)..."
-cat <<YAML | kind create cluster --name w4d2-handson --config=-
+cat <<YAML | kind create cluster --name lab-cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -33,7 +33,7 @@ echo "   ✅ 클러스터 생성 완료"
 # 3. kubectl 컨텍스트 설정
 echo ""
 echo "3. kubectl 컨텍스트 설정 중..."
-kubectl config use-context kind-w4d2-handson
+kubectl config use-context kind-lab-cluster
 echo "   ✅ 컨텍스트 설정 완료"
 
 # 4. 노드 Ready 대기

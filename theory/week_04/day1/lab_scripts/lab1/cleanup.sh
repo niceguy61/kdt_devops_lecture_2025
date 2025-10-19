@@ -15,7 +15,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo "1/3 ecommerce 네임스페이스 정리 중..."
-kubectl delete namespace ecommerce --ignore-not-found=true
+kubectl delete namespace ecommerce-advanced --ignore-not-found=true
 echo "✅ ecommerce 환경 정리 완료"
 
 echo ""
@@ -26,7 +26,7 @@ echo "✅ hosts 파일 정리 완료"
 echo ""
 echo "3/3 정리 상태 확인 중..."
 echo "남은 네임스페이스:"
-kubectl get namespaces | grep ecommerce || echo "ecommerce 네임스페이스가 정리되었습니다."
+kubectl get namespaces | grep ecommerce-advanced || echo "ecommerce-advanced 네임스페이스가 정리되었습니다."
 
 echo ""
 echo "=== 환경 정리 완료 ==="

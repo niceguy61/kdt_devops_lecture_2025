@@ -10,7 +10,7 @@ set -e
 trap 'echo "❌ 스크립트 실행 중 오류 발생"' ERR
 
 echo "1/4 네임스페이스 생성 중..."
-kubectl create namespace ecommerce --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace ecommerce-advanced --dry-run=client -o yaml | kubectl apply -f -
 
 echo "2/4 PostgreSQL 데이터베이스 배포 중..."
 kubectl apply -f manifests/monolith/postgres.yaml

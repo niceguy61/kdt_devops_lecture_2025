@@ -5,8 +5,8 @@
 echo "=== Challenge 1 정리 시작 ==="
 echo ""
 
-echo "1. w4d2-challenge 클러스터 삭제 중..."
-kind delete cluster --name w4d2-challenge
+echo "1. lab-cluster 클러스터 삭제 중..."
+kind delete cluster --name lab-cluster
 
 echo ""
 echo "2. Istio 다운로드 파일 정리 (선택사항)..."

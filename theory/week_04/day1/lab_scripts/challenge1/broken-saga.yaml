@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 spec:
   replicas: 2
   selector:
@@ -33,7 +33,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: order-service-config
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 data:
   default.conf: |
     server {
@@ -53,7 +53,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 spec:
   selector:
     app: order-service
@@ -65,7 +65,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 spec:
   replicas: 2
   selector:
@@ -93,7 +93,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: payment-service-config
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 data:
   default.conf: |
     server {
@@ -112,7 +112,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: payment-service
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 spec:
   selector:
     app: payment-service
@@ -125,7 +125,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: saga-orchestrator
-  namespace: ecommerce-microservices
+  namespace: microservices-challenge
 spec:
   # 🔧 FIX ME 1: Job이 재시도를 하지 않습니다
   backoffLimit: 0

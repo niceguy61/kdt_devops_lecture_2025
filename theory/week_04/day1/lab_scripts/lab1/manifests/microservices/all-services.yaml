@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: product-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -27,7 +27,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: product-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: product-service
@@ -39,7 +39,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -64,7 +64,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: order-service

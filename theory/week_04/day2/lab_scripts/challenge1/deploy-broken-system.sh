@@ -16,9 +16,9 @@ fi
 
 # 컨텍스트 확인
 CURRENT_CONTEXT=$(kubectl config current-context)
-if [[ "$CURRENT_CONTEXT" != "kind-w4d2-challenge" ]]; then
+if [[ "$CURRENT_CONTEXT" != "kind-lab-cluster" ]]; then
     echo "⚠️  현재 컨텍스트: $CURRENT_CONTEXT"
-    echo "⚠️  w4d2-challenge 클러스터가 아닙니다"
+    echo "⚠️  lab-cluster 클러스터가 아닙니다"
     echo ""
     read -p "계속 진행하시겠습니까? (y/N): " -n 1 -r
     echo

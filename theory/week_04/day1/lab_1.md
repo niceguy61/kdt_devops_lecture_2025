@@ -247,7 +247,7 @@ cd theory/week_04/day1/lab_scripts/lab1
 **1-1. 수동 실행 (학습용)**
 ```bash
 # 네임스페이스 생성
-kubectl create namespace ecommerce
+kubectl create namespace ecommerce-advanced
 
 # PostgreSQL 데이터베이스 배포
 kubectl apply -f manifests/monolith/postgres.yaml
@@ -372,7 +372,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-monolith-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:
@@ -610,7 +610,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: product-service-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:
@@ -625,7 +625,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service-nodeport
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   type: NodePort
   selector:

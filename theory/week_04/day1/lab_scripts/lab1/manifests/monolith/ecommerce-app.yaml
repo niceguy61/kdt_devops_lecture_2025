@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ecommerce-monolith
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   replicas: 2
   selector:
@@ -29,7 +29,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ecommerce-monolith-service
-  namespace: ecommerce
+  namespace: ecommerce-advanced
 spec:
   selector:
     app: ecommerce-monolith
