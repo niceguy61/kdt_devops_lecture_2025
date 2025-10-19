@@ -182,14 +182,14 @@ graph TB
         H[Astro]
     end
     
-    style A fill:#4caf50
-    style B fill:#4caf50
-    style C fill:#4caf50
-    style D fill:#ff9800
-    style E fill:#2196f3
-    style F fill:#2196f3
-    style G fill:#2196f3
-    style H fill:#2196f3
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
 ```
 
 ### ⚙️ Backend
@@ -212,16 +212,16 @@ graph TB
         J[Scala]
     end
     
-    style A fill:#4caf50
-    style B fill:#4caf50
-    style C fill:#4caf50
-    style D fill:#ff9800
-    style E fill:#f44336
-    style F fill:#ff9800
-    style G fill:#4caf50
-    style H fill:#ff9800
-    style I fill:#f44336
-    style J fill:#f44336
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#e8f5e8
+    style I fill:#e8f5e8
+    style J fill:#e8f5e8
 ```
 
 ### 💾 Database
@@ -243,15 +243,15 @@ graph TB
         I[InfluxDB]
     end
     
-    style A fill:#4caf50
-    style B fill:#4caf50
-    style C fill:#4caf50
-    style D fill:#f44336
-    style E fill:#ff9800
-    style F fill:#2196f3
-    style G fill:#4caf50
-    style H fill:#2196f3
-    style I fill:#2196f3
+    style A fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
 ```
 
 ### ⚡ Cache
@@ -269,11 +269,11 @@ graph TB
         E[Apache Ignite]
     end
     
-    style A fill:#4caf50
-    style B fill:#4caf50
-    style C fill:#ff9800
-    style D fill:#2196f3
-    style E fill:#f44336
+    style A fill:#f3e5f5
+    style B fill:#f3e5f5
+    style C fill:#f3e5f5
+    style D fill:#f3e5f5
+    style E fill:#f3e5f5
 ```
 
 ### 📨 Message Queue
@@ -293,13 +293,13 @@ graph TB
         G[Pulsar]
     end
     
-    style A fill:#4caf50
-    style B fill:#ff9800
-    style C fill:#2196f3
-    style D fill:#4caf50
-    style E fill:#4caf50
-    style F fill:#ff9800
-    style G fill:#2196f3
+    style A fill:#ffebee
+    style B fill:#ffebee
+    style C fill:#ffebee
+    style D fill:#ffebee
+    style E fill:#ffebee
+    style F fill:#ffebee
+    style G fill:#ffebee
 ```
 
 ### 📊 Monitoring
@@ -318,12 +318,12 @@ graph TB
         F[AppDynamics]
     end
     
-    style A fill:#4caf50
-    style B fill:#ff9800
-    style C fill:#ff9800
-    style D fill:#ff9800
-    style E fill:#f44336
-    style F fill:#f44336
+    style A fill:#e0f2f1
+    style B fill:#e0f2f1
+    style C fill:#e0f2f1
+    style D fill:#e0f2f1
+    style E fill:#e0f2f1
+    style F fill:#e0f2f1
 ```
 
 ### 🔍 Search Engine
@@ -341,11 +341,11 @@ graph TB
         E[Typesense]
     end
     
-    style A fill:#4caf50
-    style B fill:#4caf50
-    style C fill:#ff9800
-    style D fill:#2196f3
-    style E fill:#2196f3
+    style A fill:#fce4ec
+    style B fill:#fce4ec
+    style C fill:#fce4ec
+    style D fill:#fce4ec
+    style E fill:#fce4ec
 ```
 
 ### 🔐 API Gateway
@@ -364,19 +364,13 @@ graph TB
         F[Tyk]
     end
     
-    style A fill:#4caf50
-    style B fill:#ff9800
-    style C fill:#4caf50
-    style D fill:#4caf50
-    style E fill:#2196f3
-    style F fill:#ff9800
+    style A fill:#f1f8e9
+    style B fill:#f1f8e9
+    style C fill:#f1f8e9
+    style D fill:#f1f8e9
+    style E fill:#f1f8e9
+    style F fill:#f1f8e9
 ```
-
-**색상 가이드:**
-- 🟢 초록: 추천
-- 🟠 주황: 주의
-- 🔴 빨강: 비추천
-- 🔵 파랑: 상황별
 
 ---
 
