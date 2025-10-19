@@ -114,9 +114,17 @@ graph TB
     S2 --> D4
     
     style I fill:#ff6b6b
-    style F1,F2,F3 fill:#4ecdc4
-    style S1,S2,S3,S4 fill:#45b7d1
-    style D1,D2,D3,D4 fill:#96ceb4
+    style F1 fill:#4ecdc4
+    style F2 fill:#4ecdc4
+    style F3 fill:#4ecdc4
+    style S1 fill:#45b7d1
+    style S2 fill:#45b7d1
+    style S3 fill:#45b7d1
+    style S4 fill:#45b7d1
+    style D1 fill:#96ceb4
+    style D2 fill:#96ceb4
+    style D3 fill:#96ceb4
+    style D4 fill:#96ceb4
 ```
 
 ---
