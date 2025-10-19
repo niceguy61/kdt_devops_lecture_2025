@@ -212,7 +212,7 @@ graph TB
 ```mermaid
 graph TB
     subgraph "🛒 주문 Aggregate"
-        O[주문 (Root)]
+        O[주문 - Root]
         OI1[주문항목 1]
         OI2[주문항목 2]
         OI3[주문항목 3]
