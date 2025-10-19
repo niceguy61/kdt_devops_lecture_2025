@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**🏗️ 마이크로서비스** • **🌐 API Gateway** • **💰 FinOps** • **🔒 보안**
+**🏗️ 마이크로서비스** • **🌐 API Gateway** • **💾 데이터 관리** • **🔒 보안** • **💰 FinOps**
 
 *Kubernetes 기반 클라우드 네이티브 아키텍처 설계와 구현*
 
@@ -28,74 +28,59 @@
 ### [Day 1: 마이크로서비스 아키텍처](./day1/)
 **🎯 목표**: 마이크로서비스 설계 원칙과 패턴 완전 이해
 
-#### 📚 이론 세션 (2.5시간)
-- **Session 1**: 마이크로서비스 vs 모놀리스 - 언제, 왜 선택하는가?
-- **Session 2**: 서비스 분해 전략 - Domain-Driven Design 적용
-- **Session 3**: 마이크로서비스 패턴 - Saga, CQRS, Event Sourcing
+#### 📚 이론 세션 (2.3시간)
+- **Session 1**: 마이크로서비스 vs 모놀리스 - 정량적 의사결정 프레임워크 (45분)
+- **Session 2**: 서비스 분해 전략 - DDD 핵심 + 실습 (45분)
+- **Session 3**: 마이크로서비스 패턴 - 실무 검증된 핵심 패턴 (50분)
 
-#### 🛠️ 실습 세션 (2.5시간)
-- **Lab 1**: 모놀리스 애플리케이션 분해 실습 (90분)
-- **Hands-on 1**: 마이크로서비스 통신 패턴 구현 (90분)
+#### 🛠️ 실습 세션 (3.7시간)
+- **Lab 1**: 모놀리스 분해 실습 + 비용 최적화 (115분)
+- **Hands-on 1**: 통신 패턴 구현 + 성능 비교 (105분)
+- **Challenge 1**: 아키텍처 설계 챌린지 (90분)
+
+#### 🎤 발표 및 회고 (0.8시간)
+- **팀별 발표**: 아키텍처 설계 결과 발표 (30분)
+- **일일 회고**: 학습 성찰 및 내일 준비 (20분)
 
 #### 🎯 학습 성과
-- [ ] 마이크로서비스 설계 원칙 이해
-- [ ] 서비스 경계 식별 및 분해 능력
-- [ ] 마이크로서비스 간 통신 패턴 구현
-- [ ] DDD 기반 도메인 모델링
+- [ ] 정량적 기준으로 아키텍처 선택 가능
+- [ ] DDD 기반 서비스 경계 설정 능력
+- [ ] 비용을 고려한 마이크로서비스 설계
+- [ ] 실무적 통신 패턴 구현 및 성능 비교
 
 ---
 
-### [Day 2: API Gateway와 서비스 디스커버리](./day2/)
-**🎯 목표**: 마이크로서비스 간 통신과 외부 접근 관리 전문성 확보
+### [Day 2: API Gateway와 Service Mesh](./day2/)
+**🎯 목표**: Kong과 Istio를 통한 전문적 트래픽 관리 역량 확보
 
 #### 📚 이론 세션 (2.5시간)
-- **Session 1**: API Gateway 패턴 - 단일 진입점의 힘
-- **Session 2**: 서비스 디스커버리 - 동적 서비스 찾기
-- **Session 3**: 로드밸런싱과 라우팅 - 트래픽 분산 전략
+- **Session 1**: API Gateway 기초 - Ingress에서 전문 Gateway로 (50분)
+- **Session 2**: Kong vs Istio 비교 - 올바른 선택 기준 (50분)
+- **Session 3**: 고급 트래픽 관리 - 카나리, A/B, 서킷 브레이커 (50분)
 
-#### 🛠️ 실습 세션 (2.5시간)
-- **Lab 2**: Kong/Istio Gateway 구축 실습 (90분)
-- **Hands-on 2**: 서비스 메시 구성과 트래픽 관리 (90분)
+#### 🛠️ 실습 세션 (2시간)
+- **Lab 1**: Kong API Gateway 구축 - 플러그인 기반 확장 (50분)
+- **Hands-on 1**: Istio Service Mesh 구축 - Sidecar 패턴 체험 (50분)
 
 #### 🎯 학습 성과
-- [ ] API Gateway 아키텍처 설계
-- [ ] 서비스 디스커버리 메커니즘 구현
-- [ ] 트래픽 라우팅 및 로드밸런싱 설정
-- [ ] 서비스 메시 기본 구성
+- [ ] Ingress → Kong/Istio 진화 과정 이해
+- [ ] Kong과 Istio의 핵심 차이점 파악
+- [ ] 카나리 배포, A/B 테스팅 구현 능력
+- [ ] 상황별 적절한 Gateway/Mesh 선택 능력
 
 ---
 
-### [Day 3: 데이터 관리와 상태 관리](./day3/)
-**🎯 목표**: 분산 시스템에서의 데이터 일관성과 상태 관리 마스터
-
-#### 📚 이론 세션 (2.5시간)
-- **Session 1**: 분산 데이터 관리 - Database per Service 패턴
-- **Session 2**: 이벤트 소싱과 CQRS - 읽기/쓰기 분리
-- **Session 3**: 분산 트랜잭션 - Saga 패턴 구현
-
-#### 🛠️ 실습 세션 (2.5시간)
-- **Lab 3**: 마이크로서비스별 데이터베이스 구성 (90분)
-- **Hands-on 3**: 이벤트 기반 아키텍처 구현 (90분)
-
-#### 🎯 학습 성과
-- [ ] Database per Service 패턴 구현
-- [ ] 이벤트 소싱 시스템 구축
-- [ ] CQRS 패턴 적용
-- [ ] 분산 트랜잭션 처리
-
----
-
-### [Day 4: 보안과 컴플라이언스](./day4/)
+### [Day 3: 보안과 컴플라이언스](./day3/)
 **🎯 목표**: 마이크로서비스 환경의 보안 아키텍처와 컴플라이언스 자동화
 
 #### 📚 이론 세션 (2.5시간)
-- **Session 1**: 마이크로서비스 보안 모델 - Zero Trust Architecture
-- **Session 2**: 인증/인가 패턴 - OAuth2, JWT, mTLS
-- **Session 3**: 컴플라이언스 자동화 - Policy as Code
+- **Session 1**: Zero Trust 아키텍처 - 마이크로서비스 보안 모델 (50분)
+- **Session 2**: 인증/인가 패턴 - OAuth2, JWT, mTLS 통합 (50분)
+- **Session 3**: 컴플라이언스 자동화 - Policy as Code와 거버넌스 (50분)
 
 #### 🛠️ 실습 세션 (2.5시간)
-- **Lab 4**: 서비스 간 mTLS 통신 구현 (90분)
-- **Hands-on 4**: OPA Gatekeeper 정책 엔진 구축 (90분)
+- **Lab 3**: 서비스 간 mTLS 통신 구현 (75분)
+- **Hands-on 3**: OPA Gatekeeper 정책 엔진 구축 (75분)
 
 #### 🎯 학습 성과
 - [ ] Zero Trust 보안 모델 구현
@@ -105,17 +90,37 @@
 
 ---
 
+### [Day 4: GitOps와 배포 자동화](./day4/)
+**🎯 목표**: Git 기반 선언적 배포와 고급 CI/CD 파이프라인 구축
+
+#### 📚 이론 세션 (2.5시간)
+- **Session 1**: Git 기초와 브랜치 전략 - GitFlow, GitHub Flow 비교 (50분)
+- **Session 2**: GitHub Workflow와 Actions 기초 - 자동화 파이프라인 (50분)
+- **Session 3**: 고급 GitHub Actions - Cache, Self-hosted Runner, Matrix (50분)
+
+#### 🛠️ 실습 세션 (2.5시간)
+- **Lab 4**: GitOps 파이프라인 구축 - ArgoCD + GitHub 연동 (75분)
+- **Hands-on 4**: 고급 GitHub Actions 구현 - 최적화된 CI/CD (75분)
+
+#### 🎯 학습 성과
+- [ ] Git 브랜치 전략 수립 및 적용
+- [ ] GitHub Actions 기반 CI/CD 파이프라인 구축
+- [ ] ArgoCD를 통한 GitOps 구현
+- [ ] 고급 CI/CD 최적화 기법 적용
+
+---
+
 ### [Day 5: FinOps와 클라우드 비용 최적화](./day5/)
 **🎯 목표**: 클라우드 네이티브 환경의 비용 최적화와 FinOps 문화 구축
 
 #### 📚 이론 세션 (2.5시간)
-- **Session 1**: FinOps 문화와 프레임워크 - 비용 가시성 확보
-- **Session 2**: 클라우드 비용 모델 - 리소스 최적화 전략
-- **Session 3**: 비용 모니터링과 알림 - 예산 관리 자동화
+- **Session 1**: FinOps 문화와 프레임워크 - 비용 가시성 확보 (50분)
+- **Session 2**: 클라우드 비용 모델 - 리소스 최적화 전략 (50분)
+- **Session 3**: 비용 모니터링과 알림 - 예산 관리 자동화 (50분)
 
 #### 🛠️ 실습 세션 (2.5시간)
-- **Lab 5**: Kubecost 기반 비용 모니터링 구축 (90분)
-- **Challenge 5**: 비용 최적화 시나리오 해결 (90분)
+- **Lab 5**: Kubecost 기반 비용 모니터링 구축 (75분)
+- **Challenge 5**: 비용 최적화 시나리오 해결 (75분)
 
 #### 🎯 학습 성과
 - [ ] FinOps 프레임워크 이해 및 적용
@@ -142,7 +147,7 @@ graph TB
     subgraph "🌐 External Users"
         U1[👥 Web Users]
         U2[📱 Mobile Users]
-        U3[👨‍💼 Admin Users]
+        U3[👨💼 Admin Users]
     end
     
     subgraph "🚪 API Gateway Layer"
