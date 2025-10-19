@@ -17,6 +17,7 @@
 - **[개인용 AWS IAM Credential 설정](./aws-iam-setup.md)** - 팀 환경에서 개별 IAM 사용자 설정
 
 ### 🛠️ 도구 설정 (예정)
+- **[Kubernetes Dashboard 및 Observability 도구](./kubernetes-observability-tools.md)** - Dashboard, Prometheus, Grafana, Metrics Server 설치 가이드
 - **Docker 환경 설정** - Docker Desktop 설치 및 설정
 - **Kubernetes 로컬 환경** - Kind, Minikube 설정
 - **개발 도구 설정** - VS Code, Git, 필수 확장 프로그램
