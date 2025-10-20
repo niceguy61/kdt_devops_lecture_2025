@@ -17,7 +17,7 @@ echo ""
 
 # 서비스 상태 확인
 echo "📊 배포된 NodePort 서비스:"
-kubectl get svc -n ecommerce -o wide | grep NodePort
+kubectl get svc -n ecommerce-advanced -o wide | grep NodePort
 
 echo ""
 echo "✅ 외부 접근 정보:"
