@@ -23,8 +23,8 @@ kubectl apply -f manifests/monolith/ingress.yaml
 
 # Pod 시작 대기
 echo "Pod 시작 대기 중..."
-kubectl wait --for=condition=ready pod -l app=postgres -n ecommerce --timeout=60s
-kubectl wait --for=condition=ready pod -l app=ecommerce-monolith -n ecommerce --timeout=60s
+kubectl wait --for=condition=ready pod -l app=postgres -n ecommerce-advanced --timeout=60s
+kubectl wait --for=condition=ready pod -l app=ecommerce-monolith -n ecommerce-advanced --timeout=60s
 
 # /etc/hosts 설정 (sudo 권한 필요)
 if ! grep -q "ecommerce.local" /etc/hosts; then
