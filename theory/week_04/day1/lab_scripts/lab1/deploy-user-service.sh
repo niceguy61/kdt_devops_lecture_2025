@@ -13,11 +13,11 @@ echo "2/2 하이브리드 Ingress 설정 중..."
 kubectl apply -f manifests/microservices/hybrid-ingress.yaml
 
 # 기존 모놀리스 Ingress 삭제
-kubectl delete ingress ecommerce-ingress -n ecommerce 2>/dev/null || true
+kubectl delete ingress ecommerce-ingress -n ecommerce-advanced 2>/dev/null || true
 
 echo ""
 echo "배포 상태 확인 중..."
-kubectl wait --for=condition=ready pod -l app=user-service -n ecommerce --timeout=60s
+kubectl wait --for=condition=ready pod -l app=user-service -n ecommerce-advanced --timeout=60s
 
 echo ""
 echo "=== 사용자 서비스 마이크로서비스 분리 완료 ==="
@@ -35,7 +35,7 @@ echo "- 나머지 경로 → monolith (기존 모놀리스)"
 echo ""
 
 echo "상태 확인:"
-kubectl get pods -n ecommerce
+kubectl get pods -n ecommerce-advanced
 echo ""
 
 echo "✅ 하이브리드 아키텍처 구성 완료!"
