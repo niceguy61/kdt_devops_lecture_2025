@@ -141,22 +141,22 @@ graph TB
 - Day 4: GitOps와 배포 자동화
 - Day 5: FinOps와 클라우드 비용 최적화
 
-### Week 5-6: CI/CD & 최신 DevOps 트렌드
-**목표**: 통합 시스템 이해 및 최신 트렌드 적용
+### Week 5-6: Infrastructure as Code & 최신 DevOps 트렌드
+**목표**: IaC 기반 EKS 구축 및 최신 트렌드 적용
 
-#### [Week 5: 클라우드 네이티브 & CI/CD](./theory/week_05/README.md)
-- Day 1: 마이크로서비스 아키텍처 & API Gateway
-- Day 2: 데이터 관리와 상태 관리
-- Day 3: 보안과 컴플라이언스
-- Day 4: CI/CD 파이프라인 구축
-- Day 5: GitOps와 선언적 배포
+#### [Week 5: Infrastructure as Code & EKS 준비](./theory/week_05/README.md)
+- Day 1: Terraform 기초 & IaC 개념
+- Day 2: AWS 기본 서비스 & 네트워킹
+- Day 3: AWS 보안 & IAM 관리
+- Day 4: EKS 아키텍처 & 구성 요소
+- Day 5: Terraform으로 EKS 클러스터 구축
 
 #### [Week 6: 최신 DevOps 트렌드와 통합 운영](./theory/week_06/README.md)
-- Day 1: Infrastructure as Code & 관측성
-- Day 2: 플랫폼 엔지니어링과 개발자 경험
-- Day 3: AI/MLOps와 최신 DevOps 트렌드
-- Day 4: Green DevOps와 지속가능성
-- Day 5: DevOps 미래 전망과 종합 정리
+- Day 1: CI/CD 파이프라인 구축
+- Day 2: GitOps와 선언적 배포
+- Day 3: 플랫폼 엔지니어링과 개발자 경험
+- Day 4: AI/MLOps와 최신 DevOps 트렌드
+- Day 5: Green DevOps와 지속가능성 & 종합 정리
 
 ## 🤝 협업 학습 시스템
 
