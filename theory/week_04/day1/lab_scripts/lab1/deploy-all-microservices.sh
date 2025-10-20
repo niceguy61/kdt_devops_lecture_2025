@@ -45,9 +45,9 @@ echo "- /api/orders → order-service"
 echo "- / → user-service (기본)"
 echo ""
 echo "상태 확인:"
-kubectl get pods -n ecommerce
+kubectl get pods -n ecommerce-advanced
 echo ""
 echo "서비스 확인:"
-kubectl get svc -n ecommerce
+kubectl get svc -n ecommerce-advanced
 echo ""
 echo "✅ 완전한 마이크로서비스 아키텍처 배포 성공!"
