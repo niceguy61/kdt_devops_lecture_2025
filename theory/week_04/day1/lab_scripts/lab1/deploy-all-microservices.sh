@@ -15,19 +15,19 @@ kubectl apply -f manifests/microservices/all-services.yaml
 
 echo "3/3 완전한 마이크로서비스 Ingress 설정 중..."
 # 기존 하이브리드 Ingress 삭제 (있는 경우에만)
-kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce --ignore-not-found=true
+kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce-advanced --ignore-not-found=true
 
 kubectl apply -f manifests/microservices/full-ingress.yaml
 
 # 기존 하이브리드 Ingress 삭제 (있는 경우에만)
-kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce --ignore-not-found=true
+kubectl delete ingress ecommerce-hybrid-ingress -n ecommerce-advanced --ignore-not-found=true
 
 # 💡 모놀리스는 유지 (비교 목적)
 echo "💡 모놀리스 애플리케이션은 비교를 위해 유지됩니다"
 
 echo "배포 상태 확인 중..."
-kubectl wait --for=condition=ready pod -l app=product-service -n ecommerce --timeout=60s
-kubectl wait --for=condition=ready pod -l app=order-service -n ecommerce --timeout=60s
+kubectl wait --for=condition=ready pod -l app=product-service -n ecommerce-advanced --timeout=60s
+kubectl wait --for=condition=ready pod -l app=order-service -n ecommerce-advanced --timeout=60s
 
 echo ""
 echo "=== 완전한 마이크로서비스 아키텍처 배포 완료 ==="
