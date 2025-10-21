@@ -228,22 +228,145 @@ graph TB
 
 #### 실무 사례: Netflix의 Zero Trust 전환
 
-```yaml
-Before (전통적 보안):
-- VPN을 통한 내부 네트워크 접근
-- 내부 서비스 간 무제한 통신
-- 네트워크 기반 접근 제어
-
-After (Zero Trust):
-- 모든 서비스 간 mTLS 인증
-- 서비스별 세밀한 권한 관리
-- 지속적인 접근 검증
-
-결과:
-✅ 내부자 위협 90% 감소
-✅ 보안 사고 대응 시간 70% 단축
-✅ 클라우드 마이그레이션 가속화
+**Before: 전통적 VPN 기반 보안**
+```mermaid
+graph TB
+    subgraph "Netflix 기존 아키텍처 (2015년 이전)"
+        VPN[VPN Gateway<br/>단일 진입점]
+        
+        subgraph "신뢰 영역 (내부 네트워크)"
+            MS1[Streaming Service]
+            MS2[User Service]
+            MS3[Recommendation Service]
+            MS4[Billing Service]
+            DB[(Database)]
+        end
+        
+        EMP[직원] --> VPN
+        VPN --> MS1
+        VPN --> MS2
+        
+        MS1 --> MS2
+        MS1 --> MS3
+        MS2 --> MS4
+        MS3 --> DB
+        MS4 --> DB
+    end
+    
+    style VPN fill:#ffebee
+    style MS1 fill:#ffebee
+    style MS2 fill:#ffebee
+    style MS3 fill:#ffebee
+    style MS4 fill:#ffebee
+    style DB fill:#ffebee
 ```
+
+**문제점**:
+- ❌ VPN 통과 후 모든 서비스 접근 가능
+- ❌ 내부자 위협에 취약
+- ❌ 서비스 간 무제한 통신
+- ❌ 보안 사고 추적 어려움
+
+**After: Zero Trust 아키텍처**
+```mermaid
+graph TB
+    subgraph "Netflix Zero Trust 아키텍처 (2015년 이후)"
+        subgraph "Identity Layer"
+            IDP[Identity Provider<br/>Okta]
+            CERT[Certificate Authority<br/>자동 인증서 발급]
+        end
+        
+        subgraph "Policy Layer"
+            PE[Policy Engine<br/>접근 정책 관리]
+            LOG[Security Logging<br/>모든 접근 기록]
+        end
+        
+        subgraph "Service Layer"
+            MS1[Streaming Service<br/>🔒 mTLS]
+            MS2[User Service<br/>🔒 mTLS]
+            MS3[Recommendation Service<br/>🔒 mTLS]
+            MS4[Billing Service<br/>🔒 mTLS]
+            DB[(Database<br/>🔒 mTLS)]
+        end
+        
+        EMP[직원] --> IDP
+        IDP --> CERT
+        CERT --> MS1
+        CERT --> MS2
+        CERT --> MS3
+        CERT --> MS4
+        
+        MS1 -.검증.-> PE
+        MS2 -.검증.-> PE
+        MS3 -.검증.-> PE
+        MS4 -.검증.-> PE
+        
+        MS1 -.mTLS.-> MS2
+        MS1 -.mTLS.-> MS3
+        MS2 -.mTLS.-> MS4
+        MS3 -.mTLS.-> DB
+        MS4 -.mTLS.-> DB
+        
+        MS1 --> LOG
+        MS2 --> LOG
+        MS3 --> LOG
+        MS4 --> LOG
+    end
+    
+    style IDP fill:#e3f2fd
+    style CERT fill:#e3f2fd
+    style PE fill:#fff3e0
+    style LOG fill:#fff3e0
+    style MS1 fill:#e8f5e8
+    style MS2 fill:#e8f5e8
+    style MS3 fill:#e8f5e8
+    style MS4 fill:#e8f5e8
+    style DB fill:#e8f5e8
+```
+
+**개선 사항**:
+```yaml
+1. 인증 강화:
+   - 모든 서비스에 고유 인증서 발급
+   - 24시간마다 자동 갱신
+   - 인증서 기반 서비스 식별
+
+2. 세밀한 권한 관리:
+   - Streaming Service → User Service: GET /api/users/{id} 만 허용
+   - Recommendation Service → Database: READ 권한만
+   - Billing Service → Database: READ/WRITE 권한
+
+3. 지속적 검증:
+   - 모든 요청마다 인증서 검증
+   - 정책 엔진에서 실시간 권한 확인
+   - 이상 행동 자동 탐지
+
+4. 완전한 가시성:
+   - 모든 서비스 간 통신 로깅
+   - 실시간 보안 대시보드
+   - 자동 알림 및 차단
+```
+
+**측정 가능한 결과**:
+```mermaid
+graph LR
+    subgraph "보안 지표 개선"
+        A[내부자 위협<br/>90% 감소] --> B[보안 사고<br/>대응 시간<br/>70% 단축]
+        B --> C[컴플라이언스<br/>감사 시간<br/>80% 단축]
+        C --> D[클라우드<br/>마이그레이션<br/>2배 가속]
+    end
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+```
+
+**구체적 수치**:
+- **보안 사고 감지**: 평균 30일 → 3일
+- **권한 관리**: 수동 검토 → 자동 정책 적용
+- **감사 준비**: 3개월 → 1주일
+- **서비스 수**: 700개 이상 마이크로서비스에 적용
 
 ### 🔍 개념 3: 마이크로서비스 Zero Trust 구현 (11분)
 

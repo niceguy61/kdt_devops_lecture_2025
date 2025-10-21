@@ -202,25 +202,154 @@ sequenceDiagram
 
 #### 실무 OAuth 2.0 구현
 
+**실제 E-Commerce 시스템 예시**:
+```mermaid
+graph TB
+    subgraph "사용자 인증 흐름"
+        U[고객] --> WEB[웹 쇼핑몰]
+        U --> MOBILE[모바일 앱]
+        
+        WEB --> AUTH[Keycloak<br/>인증 서버]
+        MOBILE --> AUTH
+        
+        AUTH --> JWT[JWT 토큰 발급<br/>15분 유효]
+    end
+    
+    subgraph "서비스 간 인증 흐름"
+        ORDER[주문 서비스] --> AUTH2[Service Account<br/>Client Credentials]
+        PAYMENT[결제 서비스] --> AUTH2
+        SHIPPING[배송 서비스] --> AUTH2
+        
+        AUTH2 --> TOKEN[Service Token<br/>1시간 유효]
+    end
+    
+    subgraph "API 호출"
+        JWT --> API[API Gateway]
+        TOKEN --> API
+        
+        API --> ORDER
+        API --> PAYMENT
+        API --> SHIPPING
+        
+        ORDER -.mTLS.-> PAYMENT
+        PAYMENT -.mTLS.-> SHIPPING
+    end
+    
+    style U fill:#e3f2fd
+    style AUTH fill:#fff3e0
+    style AUTH2 fill:#fff3e0
+    style JWT fill:#e8f5e8
+    style TOKEN fill:#e8f5e8
+    style API fill:#ffebee
+```
+
+**구체적 설정 예시**:
 ```yaml
 # Keycloak 설정 예시
-Realm: microservices
+Realm: ecommerce-prod
+
+# 1. 웹 애플리케이션 클라이언트
 Clients:
-  - web-app:
+  - web-shop:
+      Client ID: web-shop
       Grant Type: Authorization Code
-      Redirect URI: https://app.example.com/callback
+      Valid Redirect URIs: 
+        - https://shop.example.com/callback
+        - https://shop.example.com/silent-check-sso.html
+      Web Origins: https://shop.example.com
+      Access Token Lifespan: 15 minutes
+      Refresh Token: enabled
       
+  # 2. 모바일 앱 클라이언트
   - mobile-app:
+      Client ID: mobile-app
       Grant Type: Authorization Code + PKCE
-      Redirect URI: myapp://callback
+      Valid Redirect URIs: 
+        - myapp://callback
+      Access Token Lifespan: 15 minutes
+      Refresh Token: enabled
+      Refresh Token Lifespan: 7 days
       
-  - service-a:
+  # 3. 주문 서비스 (서비스 간 통신)
+  - order-service:
+      Client ID: order-service
       Grant Type: Client Credentials
       Service Account: enabled
+      Service Account Roles:
+        - payment:create
+        - shipping:create
+      Access Token Lifespan: 1 hour
       
-  - service-b:
+  # 4. 결제 서비스
+  - payment-service:
+      Client ID: payment-service
       Grant Type: Client Credentials
       Service Account: enabled
+      Service Account Roles:
+        - payment:process
+        - order:update
+      Access Token Lifespan: 1 hour
+
+# 역할 및 권한 매핑
+Roles:
+  - customer:
+      Permissions:
+        - order:create
+        - order:read:own
+        - payment:read:own
+        
+  - admin:
+      Permissions:
+        - order:*
+        - payment:*
+        - shipping:*
+        - user:*
+```
+
+**실제 토큰 예시**:
+```json
+// 고객용 JWT 토큰
+{
+  "header": {
+    "alg": "RS256",
+    "typ": "JWT",
+    "kid": "ecommerce-key-2025"
+  },
+  "payload": {
+    "iss": "https://auth.example.com/realms/ecommerce-prod",
+    "sub": "customer-12345",
+    "aud": "web-shop",
+    "exp": 1735690500,  // 15분 후
+    "iat": 1735689600,
+    "auth_time": 1735689600,
+    "name": "홍길동",
+    "email": "hong@example.com",
+    "roles": ["customer"],
+    "permissions": [
+      "order:create",
+      "order:read:own",
+      "payment:read:own"
+    ]
+  }
+}
+
+// 서비스용 토큰 (Client Credentials)
+{
+  "header": {
+    "alg": "RS256",
+    "typ": "JWT"
+  },
+  "payload": {
+    "iss": "https://auth.example.com/realms/ecommerce-prod",
+    "sub": "service-account-order-service",
+    "aud": "payment-service",
+    "exp": 1735693200,  // 1시간 후
+    "iat": 1735689600,
+    "azp": "order-service",
+    "scope": "payment:create shipping:create",
+    "client_id": "order-service"
+  }
+}
 ```
 
 ### 🔍 개념 2: JWT (JSON Web Token) (12분)

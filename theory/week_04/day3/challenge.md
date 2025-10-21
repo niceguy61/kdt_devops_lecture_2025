@@ -39,14 +39,54 @@
 **"E-Commerce 플랫폼 보안 감사 중 다수의 취약점 발견"**
 
 ```
-긴급도: 🔴 Critical
-영향도: 💰 High - 고객 데이터 유출 위험
-제한시간: ⏰ 50분
+회사: CloudMart (온라인 쇼핑몰)
+규모: 일 10만 주문, 월 매출 100억원
+상황: 외부 보안 감사 중 Critical 등급 취약점 4건 발견
 
-상황:
-- 외부 보안 감사에서 4가지 주요 취약점 발견
-- 즉시 조치하지 않으면 서비스 중단 가능
-- 고객 데이터 보호를 위한 긴급 패치 필요
+긴급도: 🔴 Critical
+영향도: 💰 High - 고객 데이터 유출 위험, 서비스 중단 가능
+제한시간: ⏰ 50분
+```
+
+**발견된 취약점 요약**:
+```mermaid
+graph TB
+    subgraph "보안 감사 결과"
+        A[취약점 1<br/>🔴 Critical<br/>JWT 검증 누락]
+        B[취약점 2<br/>🔴 Critical<br/>Root 사용자 실행]
+        C[취약점 3<br/>🟠 High<br/>평문 통신]
+        D[취약점 4<br/>🟠 High<br/>정책 위반 다수]
+    end
+    
+    subgraph "영향 범위"
+        A --> A1[모든 API 무단 접근 가능<br/>고객 데이터 유출 위험]
+        B --> B1[컨테이너 탈출 가능<br/>호스트 시스템 위험]
+        C --> C1[네트워크 스니핑<br/>결제 정보 유출 가능]
+        D --> D1[컴플라이언스 위반<br/>PCI-DSS 인증 취소 위험]
+    end
+    
+    style A fill:#ff0000
+    style B fill:#ff0000
+    style C fill:#ff9800
+    style D fill:#ff9800
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#fff3e0
+    style D1 fill:#fff3e0
+```
+
+**비즈니스 영향**:
+```yaml
+즉시 영향:
+  - 고객 신뢰도 하락
+  - 결제 시스템 중단 가능
+  - 법적 책임 발생 가능
+
+장기 영향:
+  - PCI-DSS 인증 취소 → 신용카드 결제 불가
+  - GDPR 위반 → 최대 매출의 4% 벌금
+  - 브랜드 이미지 손상
+  - 고객 이탈 증가
 ```
 
 ---
