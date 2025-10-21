@@ -260,14 +260,58 @@ istiod-xxx                              1/1     Running   0          2m
 
 ---
 
-## 🛠️ Step 3: mTLS 설정 (10분)
+## 🛠️ Step 3: 인증 서비스 배포 (10분)
 
 ### 🚀 자동화 스크립트 사용
 ```bash
-./step3-configure-mtls.sh
+./step3-deploy-auth.sh
 ```
 
-**📋 스크립트 내용**: [step3-configure-mtls.sh](./lab_scripts/lab1/step3-configure-mtls.sh)
+**📋 스크립트 내용**: [step3-deploy-auth.sh](./lab_scripts/lab1/step3-deploy-auth.sh)
+
+**스크립트 핵심 부분**:
+```bash
+# Auth Service 배포
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: secure-app
+spec:
+  # JWT 발급 및 검증 서비스
+  # ... 중략 ...
+EOF
+```
+
+### 📊 예상 결과
+```
+configmap/auth-config created
+deployment.apps/auth-service created
+service/auth-service created
+```
+
+### ✅ 검증
+```bash
+kubectl get pods -n secure-app -l app=auth-service
+```
+
+**예상 출력**:
+```
+NAME                            READY   STATUS    RESTARTS   AGE
+auth-service-xxx                2/2     Running   0          1m
+```
+
+---
+
+## 🛠️ Step 4: mTLS 설정 (10분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+./step4-configure-mtls.sh
+```
+
+**📋 스크립트 내용**: [step4-configure-mtls.sh](./lab_scripts/lab1/step4-configure-mtls.sh)
 
 **스크립트 핵심 부분**:
 ```bash
@@ -302,35 +346,34 @@ default   STRICT   30s
 
 ---
 
-## 🛠️ Step 4: 애플리케이션 배포 (15분)
+## 🛠️ Step 5: 애플리케이션 배포 (10분)
 
 ### 🚀 자동화 스크립트 사용
 ```bash
-./step4-deploy-services.sh
+./step5-deploy-services.sh
 ```
 
-**📋 스크립트 내용**: [step4-deploy-services.sh](./lab_scripts/lab1/step4-deploy-services.sh)
+**📋 스크립트 내용**: [step5-deploy-services.sh](./lab_scripts/lab1/step5-deploy-services.sh)
 
 **스크립트 핵심 부분**:
 ```bash
-# Auth Service 배포
-kubectl apply -f auth-service.yaml
-
-# Frontend 배포
-kubectl apply -f frontend.yaml
-
-# Backend 배포
+# Database, Backend, Frontend 배포
+kubectl apply -f database.yaml
 kubectl apply -f backend.yaml
+kubectl apply -f frontend.yaml
 ```
 
 ### 📊 예상 결과
 ```
-deployment.apps/auth-service created
-service/auth-service created
-deployment.apps/frontend created
-service/frontend created
+serviceaccount/database created
+deployment.apps/database created
+service/database created
+serviceaccount/backend created
 deployment.apps/backend created
 service/backend created
+serviceaccount/frontend created
+deployment.apps/frontend created
+service/frontend created
 ```
 
 ### ✅ 검증
@@ -341,9 +384,10 @@ kubectl get pods -n secure-app
 **예상 출력**:
 ```
 NAME                            READY   STATUS    RESTARTS   AGE
-auth-service-xxx                2/2     Running   0          1m
-frontend-xxx                    2/2     Running   0          1m
+auth-service-xxx                2/2     Running   0          5m
+database-xxx                    2/2     Running   0          1m
 backend-xxx                     2/2     Running   0          1m
+frontend-xxx                    2/2     Running   0          1m
 ```
 
 **설명**:
@@ -352,14 +396,14 @@ backend-xxx                     2/2     Running   0          1m
 
 ---
 
-## 🛠️ Step 5: JWT 인증 설정 (10분)
+## 🛠️ Step 6: JWT 인증 설정 (10분)
 
 ### 🚀 자동화 스크립트 사용
 ```bash
-./step5-setup-jwt.sh
+./step6-setup-jwt.sh
 ```
 
-**📋 스크립트 내용**: [step5-setup-jwt.sh](./lab_scripts/lab1/step5-setup-jwt.sh)
+**📋 스크립트 내용**: [step6-setup-jwt.sh](./lab_scripts/lab1/step6-setup-jwt.sh)
 
 **스크립트 핵심 부분**:
 ```bash
@@ -392,6 +436,57 @@ authorizationpolicy.security.istio.io/backend-policy created
 
 ---
 
+## 🛠️ Step 7: 인증 시스템 테스트 (5분)
+
+### 🚀 자동화 스크립트 사용
+```bash
+./step7-test-auth.sh
+```
+
+**📋 스크립트 내용**: [step7-test-auth.sh](./lab_scripts/lab1/step7-test-auth.sh)
+
+**스크립트 핵심 부분**:
+```bash
+# JWT 토큰 발급
+TOKEN=$(kubectl exec -n secure-app $AUTH_POD -- curl -s -X POST \
+  http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}')
+
+# JWT 검증
+kubectl exec -n secure-app $AUTH_POD -- curl -s -X POST \
+  http://localhost:8080/verify \
+  -H "Authorization: Bearer $TOKEN"
+
+# mTLS 통신 확인
+kubectl exec -n secure-app $FRONTEND_POD -c istio-proxy -- \
+  curl -s http://backend.secure-app.svc.cluster.local:8080/api/data
+```
+
+### 📊 예상 결과
+```
+=== 인증 시스템 테스트 시작 ===
+
+1/4 JWT 토큰 발급 테스트...
+✅ JWT 토큰 발급 성공
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+2/4 JWT 검증 테스트...
+✅ JWT 검증 성공
+{"valid":true,"user":"admin"}
+
+3/4 잘못된 토큰 테스트...
+✅ 잘못된 토큰 차단 성공
+
+4/4 mTLS 통신 확인...
+✅ mTLS 통신 성공
+{"message":"Secure data from backend","timestamp":"2025-10-21T14:10:00.000Z"}
+
+=== 인증 시스템 테스트 완료 ===
+```
+
+---
+
 ## ✅ 실습 체크포인트
 
 ### ✅ Step 1: 클러스터 초기화
@@ -406,22 +501,33 @@ authorizationpolicy.security.istio.io/backend-policy created
 - [ ] Istiod, Ingress Gateway Pod 실행
 - [ ] secure-app 네임스페이스 생성 및 자동 주입 활성화
 
-### ✅ Step 3: mTLS 구성
-- [ ] PeerAuthentication STRICT 모드 적용
-- [ ] 서비스 간 mTLS 통신 확인
-- [ ] 인증서 자동 발급 확인
-
-### ✅ Step 4: 애플리케이션 배포
+### ✅ Step 3: 인증 서비스 배포
 - [ ] Auth Service 배포 완료
-- [ ] Frontend 배포 완료
+- [ ] JWT 발급 API 동작 확인
+- [ ] JWT 검증 API 동작 확인
+
+### ✅ Step 4: mTLS 구성
+- [ ] PeerAuthentication STRICT 모드 적용
+- [ ] DestinationRule 설정 완료
+- [ ] 서비스 간 mTLS 통신 확인
+
+### ✅ Step 5: 애플리케이션 배포
+- [ ] Database 배포 완료
 - [ ] Backend 배포 완료
+- [ ] Frontend 배포 완료
 - [ ] 모든 Pod에 Sidecar 주입 확인 (2/2 Ready)
 
-### ✅ Step 5: JWT 인증 설정
+### ✅ Step 6: JWT 인증 설정
 - [ ] RequestAuthentication 적용
 - [ ] Authorization Policy 적용
 - [ ] JWT 없는 요청 차단 확인
 - [ ] JWT 있는 요청 허용 확인
+
+### ✅ Step 7: 통합 테스트
+- [ ] JWT 토큰 발급 성공
+- [ ] JWT 토큰 검증 성공
+- [ ] 잘못된 토큰 차단 확인
+- [ ] mTLS 서비스 간 통신 확인
 
 ---
 
