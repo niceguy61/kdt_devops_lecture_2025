@@ -51,17 +51,226 @@
 - ❌ **측면 이동(Lateral Movement)**: 한 서버에서 다른 서버로 자유롭게 이동
 
 ### 🏠 실생활 비유
-**아파트 보안 vs 개별 집 보안**
+**배달의민족 & 쿠팡: 우리가 매일 쓰는 서비스의 보안**
 
+#### 사례 1: 배달의민족 보안 아키텍처
+
+```mermaid
+graph TB
+    subgraph "전통적 보안 (문제 상황)"
+        VPN1[VPN 접속] --> ALL1[모든 시스템 접근]
+        ALL1 --> C1[고객 정보<br/>이름, 주소, 전화번호]
+        ALL1 --> R1[라이더 정보<br/>위치, 수입]
+        ALL1 --> S1[가맹점 정보<br/>매출, 메뉴]
+        ALL1 --> P1[결제 정보<br/>카드번호, 계좌]
+        
+        style VPN1 fill:#ffebee
+        style ALL1 fill:#ffebee
+        style C1 fill:#ffebee
+        style R1 fill:#ffebee
+        style S1 fill:#ffebee
+        style P1 fill:#ffebee
+    end
+    
+    subgraph "Zero Trust (해결)"
+        subgraph "역할별 접근"
+            CS[고객센터<br/>직원]
+            DEV[개발자]
+            OPS[운영팀]
+            RIDER[라이더 앱]
+        end
+        
+        subgraph "서비스별 격리"
+            ORDER[주문 서비스]
+            DELIVERY[배달 서비스]
+            PAYMENT[결제 서비스]
+            STORE[가맹점 서비스]
+        end
+        
+        CS -.최소 권한.-> ORDER
+        DEV -.읽기 전용.-> ORDER
+        OPS -.모니터링만.-> ORDER
+        RIDER -.배달 정보만.-> DELIVERY
+        
+        ORDER -.mTLS.-> PAYMENT
+        ORDER -.mTLS.-> DELIVERY
+        ORDER -.mTLS.-> STORE
+        
+        style CS fill:#e8f5e8
+        style DEV fill:#e8f5e8
+        style OPS fill:#e8f5e8
+        style RIDER fill:#e8f5e8
+        style ORDER fill:#fff3e0
+        style DELIVERY fill:#fff3e0
+        style PAYMENT fill:#fff3e0
+        style STORE fill:#fff3e0
+    end
 ```
-전통적 보안 = 아파트 정문 경비
-- 정문만 통과하면 모든 집 접근 가능
-- 한 집이 뚫리면 전체 위험
 
-Zero Trust = 각 집마다 개별 보안
-- 매번 신분 확인
-- 집마다 독립적 보안
-- 한 집 침입이 다른 집에 영향 없음
+**실제 보안 시나리오**:
+```yaml
+고객 주문 과정의 보안:
+1. 고객이 치킨 주문 (앱)
+   - JWT 토큰으로 사용자 인증
+   - HTTPS 암호화 통신
+
+2. 주문 서비스 → 결제 서비스
+   - mTLS 상호 인증
+   - 결제 정보는 토큰화 (실제 카드번호 저장 안함)
+   - PCI-DSS 준수
+
+3. 주문 서비스 → 배달 서비스
+   - 라이더에게 필요한 정보만 전달
+   - 고객 전화번호: 마스킹 (010-****-1234)
+   - 상세 주소: 배달 시작 시에만 공개
+
+4. 라이더 앱
+   - 현재 배달 중인 주문만 접근
+   - 배달 완료 후 정보 자동 삭제
+   - 위치 추적은 배달 중에만
+
+5. 가맹점 시스템
+   - 본인 가게 주문만 조회
+   - 고객 개인정보 최소화 (이름 일부만)
+   - 매출 정보만 상세 접근
+```
+
+**Zero Trust 적용 효과**:
+```yaml
+Before (문제):
+❌ 내부 직원이 유명인 주문 내역 조회
+❌ 라이더 앱 해킹 시 수백만 고객 정보 유출
+❌ 가맹점 시스템 침투 시 결제 정보 노출
+
+After (해결):
+✅ 업무 목적 외 접근 즉시 차단
+✅ 라이더는 배달 정보만 (전화번호 마스킹)
+✅ 결제 정보 완전 격리 (PCI-DSS)
+✅ 모든 접근 로깅 + 이상 탐지
+```
+
+#### 사례 2: 쿠팡 로켓배송 보안 아키텍처
+
+```mermaid
+graph TB
+    subgraph "쿠팡 Zero Trust 아키텍처"
+        subgraph "고객 영역"
+            CUST[고객 앱/웹]
+        end
+        
+        subgraph "Frontend 서비스"
+            PRODUCT[상품 서비스]
+            CART[장바구니 서비스]
+            ORDER[주문 서비스]
+        end
+        
+        subgraph "Backend 서비스"
+            INVENTORY[재고 서비스<br/>100개 물류센터]
+            PAYMENT[결제 서비스<br/>PCI-DSS]
+            SHIPPING[배송 서비스<br/>실시간 추적]
+            RECOMMEND[추천 서비스<br/>AI/ML]
+        end
+        
+        subgraph "물류 시스템"
+            WMS[창고 관리<br/>WMS]
+            TMS[배송 관리<br/>TMS]
+            DRIVER[배송 기사 앱]
+        end
+        
+        CUST --> PRODUCT
+        CUST --> CART
+        CUST --> ORDER
+        
+        ORDER -.mTLS.-> INVENTORY
+        ORDER -.mTLS.-> PAYMENT
+        ORDER -.mTLS.-> SHIPPING
+        
+        SHIPPING -.mTLS.-> WMS
+        SHIPPING -.mTLS.-> TMS
+        TMS -.최소 권한.-> DRIVER
+        
+        PRODUCT -.mTLS.-> RECOMMEND
+        
+        style CUST fill:#e3f2fd
+        style PRODUCT fill:#e8f5e8
+        style CART fill:#e8f5e8
+        style ORDER fill:#e8f5e8
+        style INVENTORY fill:#fff3e0
+        style PAYMENT fill:#ff6b6b
+        style SHIPPING fill:#fff3e0
+        style RECOMMEND fill:#fff3e0
+        style WMS fill:#f3e5f5
+        style TMS fill:#f3e5f5
+        style DRIVER fill:#f3e5f5
+    end
+```
+
+**실제 보안 시나리오**:
+```yaml
+로켓배송 과정의 보안:
+1. 고객이 상품 주문
+   - 상품 서비스: 상품 정보만 접근
+   - 장바구니 서비스: 임시 저장 (암호화)
+   - 주문 서비스: 결제 + 배송 조율
+
+2. 재고 확인 (100개 물류센터)
+   - 각 물류센터는 본인 재고만 관리
+   - 중앙 시스템은 집계만 (상세 정보 없음)
+   - 물류센터 간 격리 (한 곳 침투해도 다른 곳 안전)
+
+3. 결제 처리
+   - 결제 서비스 완전 격리
+   - HSM (Hardware Security Module) 사용
+   - 카드 정보 토큰화
+   - PCI-DSS Level 1 인증
+
+4. 배송 시작
+   - 배송 기사: 현재 배송 건만 접근
+   - 고객 전화번호 마스킹
+   - 배송 완료 후 정보 자동 삭제
+   - 실시간 위치는 배송 중에만
+
+5. 추천 시스템
+   - 개인화 추천 (AI/ML)
+   - 개인정보는 익명화 처리
+   - 구매 패턴만 분석 (개인 식별 불가)
+```
+
+**측정 가능한 보안 효과**:
+```yaml
+쿠팡 Zero Trust 도입 결과:
+- 물류센터 보안 사고: 95% 감소
+- 고객 정보 무단 접근: 0건 (자동 차단)
+- 결제 정보 유출: 0건 (완전 격리)
+- 배송 기사 정보 노출: 최소화 (마스킹)
+- 컴플라이언스 감사: 자동화 (실시간 보고)
+
+일일 처리량:
+- 주문: 300만건+
+- 배송: 200만건+
+- 물류센터: 100개+
+- 배송 기사: 수만명
+→ 모두 Zero Trust로 안전하게 관리
+```
+
+**학생들이 체감하는 보안**:
+```yaml
+"어제 쿠팡에서 노트북 샀는데..."
+
+✅ 내 결제 정보는 어떻게 보호될까?
+   → 토큰화 + HSM + PCI-DSS
+
+✅ 배송 기사님이 내 정보를 얼마나 볼까?
+   → 주소만 (전화번호 마스킹)
+
+✅ 물류센터 직원이 내 주문을 볼 수 있을까?
+   → 본인 센터 물건만 (고객 정보 없음)
+
+✅ 쿠팡 직원이 내 구매 내역을 볼까?
+   → 업무 목적만 + 모든 접근 로깅
+
+✅ 해커가 한 물류센터를 뚫으면?
+   → 다른 센터는 격리되어 안전
 ```
 
 ### ☁️ 마이크로서비스 환경의 보안 과제
