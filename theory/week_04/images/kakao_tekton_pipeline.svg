@@ -1,0 +1,130 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="kakao" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEE500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFCD00;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tekton" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4285F4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="k8s" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#326CE5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4285F4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">카카오 Tekton 파이프라인</text>
+  <text x="400" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">카카오톡 서비스 Kubernetes 네이티브 CI/CD</text>
+  
+  <!-- Pipeline Stages -->
+  <rect x="50" y="100" width="120" height="80" rx="10" fill="url(#kakao)" stroke="#333" stroke-width="2"/>
+  <text x="110" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Git Clone</text>
+  <text x="110" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">소스코드</text>
+  <text x="110" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">다운로드</text>
+  
+  <rect x="200" y="100" width="120" height="80" rx="10" fill="url(#tekton)" stroke="#333" stroke-width="2"/>
+  <text x="260" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Build & Test</text>
+  <text x="260" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Gradle 빌드</text>
+  <text x="260" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">JUnit 테스트</text>
+  
+  <rect x="350" y="100" width="120" height="80" rx="10" fill="#FF6B6B" stroke="#333" stroke-width="2"/>
+  <text x="410" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Security Scan</text>
+  <text x="410" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">취약점 검사</text>
+  <text x="410" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">SAST/DAST</text>
+  
+  <rect x="500" y="100" width="120" height="80" rx="10" fill="#4ECDC4" stroke="#333" stroke-width="2"/>
+  <text x="560" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Image Build</text>
+  <text x="560" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Docker 이미지</text>
+  <text x="560" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Harbor 푸시</text>
+  
+  <rect x="650" y="100" width="120" height="80" rx="10" fill="url(#k8s)" stroke="#333" stroke-width="2"/>
+  <text x="710" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Deploy</text>
+  <text x="710" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">K8s 배포</text>
+  <text x="710" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">ArgoCD 연동</text>
+  
+  <!-- Tekton Resources -->
+  <rect x="50" y="220" width="700" height="120" rx="10" fill="#f0f8ff" stroke="#0066CC" stroke-width="2"/>
+  <text x="400" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">Tekton 리소스 구조</text>
+  
+  <!-- Tasks -->
+  <rect x="80" y="260" width="100" height="60" rx="5" fill="#E3F2FD" stroke="#1976D2" stroke-width="1"/>
+  <text x="130" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1976D2">Task</text>
+  <text x="130" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">단일 작업</text>
+  <text x="130" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">재사용 가능</text>
+  
+  <rect x="200" y="260" width="100" height="60" rx="5" fill="#FFF3E0" stroke="#F57C00" stroke-width="1"/>
+  <text x="250" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#F57C00">Pipeline</text>
+  <text x="250" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">Task 조합</text>
+  <text x="250" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">워크플로우</text>
+  
+  <rect x="320" y="260" width="100" height="60" rx="5" fill="#E8F5E8" stroke="#388E3C" stroke-width="1"/>
+  <text x="370" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#388E3C">TaskRun</text>
+  <text x="370" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">실행 인스턴스</text>
+  <text x="370" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">Pod 생성</text>
+  
+  <rect x="440" y="260" width="100" height="60" rx="5" fill="#FCE4EC" stroke="#C2185B" stroke-width="1"/>
+  <text x="490" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#C2185B">PipelineRun</text>
+  <text x="490" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">파이프라인 실행</text>
+  <text x="490" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">전체 워크플로우</text>
+  
+  <rect x="560" y="260" width="100" height="60" rx="5" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1"/>
+  <text x="610" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#7B1FA2">Workspace</text>
+  <text x="610" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">공유 저장소</text>
+  <text x="610" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#333">PVC 마운트</text>
+  
+  <!-- Performance Stats -->
+  <rect x="50" y="380" width="700" height="180" rx="10" fill="#f8f9fa" stroke="#ddd" stroke-width="2"/>
+  <text x="400" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">카카오 Tekton 도입 성과</text>
+  
+  <rect x="80" y="430" width="150" height="100" rx="8" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+  <text x="155" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#F57F17">빌드 시간</text>
+  <text x="155" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">50% 단축</text>
+  <text x="155" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Jenkins: 20분</text>
+  <text x="155" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Tekton: 10분</text>
+  <text x="155" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">병렬 처리</text>
+  
+  <rect x="250" y="430" width="150" height="100" rx="8" fill="#E1F5FE" stroke="#0277BD" stroke-width="2"/>
+  <text x="325" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#01579B">리소스 효율</text>
+  <text x="325" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">70% 절약</text>
+  <text x="325" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">동적 할당</text>
+  <text x="325" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">필요시에만 Pod</text>
+  <text x="325" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">비용 최적화</text>
+  
+  <rect x="420" y="430" width="150" height="100" rx="8" fill="#E8F5E8" stroke="#2E7D32" stroke-width="2"/>
+  <text x="495" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1B5E20">확장성</text>
+  <text x="495" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">10배 증가</text>
+  <text x="495" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">동시 빌드</text>
+  <text x="495" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">100개 → 1000개</text>
+  <text x="495" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">K8s 네이티브</text>
+  
+  <rect x="590" y="430" width="150" height="100" rx="8" fill="#FCE4EC" stroke="#AD1457" stroke-width="2"/>
+  <text x="665" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#880E4F">개발자 만족도</text>
+  <text x="665" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">95%</text>
+  <text x="665" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">YAML 기반</text>
+  <text x="665" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">선언적 정의</text>
+  <text x="665" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">사용 편의성</text>
+  
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- Pipeline flow arrows -->
+  <line x1="170" y1="140" x2="190" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="320" y1="140" x2="340" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="470" y1="140" x2="490" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="620" y1="140" x2="640" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Resource relationship arrows -->
+  <line x1="180" y1="290" x2="200" y2="290" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <line x1="300" y1="290" x2="320" y2="290" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <line x1="420" y1="290" x2="440" y2="290" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <line x1="540" y1="290" x2="560" y2="290" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+</svg>

@@ -1,0 +1,114 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coupang" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="stable" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8BC34A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="canary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#03DAC6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">쿠팡 카나리 배포 전략</text>
+  <text x="400" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">로켓배송 시스템 무중단 업데이트</text>
+  
+  <!-- Load Balancer -->
+  <rect x="350" y="80" width="100" height="50" rx="8" fill="url(#coupang)" stroke="#333" stroke-width="2"/>
+  <text x="400" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">ALB</text>
+  <text x="400" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">로드밸런서</text>
+  
+  <!-- Traffic Distribution -->
+  <text x="200" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#4CAF50">90% 트래픽</text>
+  <text x="600" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2196F3">10% 트래픽</text>
+  
+  <!-- Stable Version -->
+  <rect x="50" y="200" width="300" height="120" rx="10" fill="url(#stable)" stroke="#333" stroke-width="2"/>
+  <text x="200" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">안정 버전 (v2.1)</text>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">로켓배송 기존 시스템</text>
+  
+  <!-- Stable Pods -->
+  <rect x="70" y="270" width="60" height="40" rx="5" fill="#66BB6A" stroke="white" stroke-width="1"/>
+  <text x="100" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">Pod 1</text>
+  <text x="100" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">배송관리</text>
+  
+  <rect x="140" y="270" width="60" height="40" rx="5" fill="#66BB6A" stroke="white" stroke-width="1"/>
+  <text x="170" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">Pod 2</text>
+  <text x="170" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">주문처리</text>
+  
+  <rect x="210" y="270" width="60" height="40" rx="5" fill="#66BB6A" stroke="white" stroke-width="1"/>
+  <text x="240" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">Pod 3</text>
+  <text x="240" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">재고관리</text>
+  
+  <rect x="280" y="270" width="60" height="40" rx="5" fill="#66BB6A" stroke="white" stroke-width="1"/>
+  <text x="310" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">Pod 4</text>
+  <text x="310" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">알림서비스</text>
+  
+  <!-- Canary Version -->
+  <rect x="450" y="200" width="300" height="120" rx="10" fill="url(#canary)" stroke="#333" stroke-width="2"/>
+  <text x="600" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">카나리 버전 (v2.2)</text>
+  <text x="600" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">AI 기반 배송 최적화</text>
+  
+  <!-- Canary Pod -->
+  <rect x="570" y="270" width="60" height="40" rx="5" fill="#42A5F5" stroke="white" stroke-width="1"/>
+  <text x="600" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">Pod 1</text>
+  <text x="600" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">AI배송</text>
+  
+  <!-- Monitoring -->
+  <rect x="50" y="380" width="700" height="180" rx="10" fill="#f8f9fa" stroke="#ddd" stroke-width="2"/>
+  <text x="400" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">실시간 모니터링 지표</text>
+  
+  <!-- Metrics -->
+  <rect x="80" y="430" width="150" height="100" rx="8" fill="#E8F5E8" stroke="#4CAF50" stroke-width="2"/>
+  <text x="155" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2E7D32">응답 시간</text>
+  <text x="155" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">< 200ms</text>
+  <text x="155" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">안정: 180ms</text>
+  <text x="155" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">카나리: 195ms</text>
+  <text x="155" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">✓ 정상</text>
+  
+  <rect x="250" y="430" width="150" height="100" rx="8" fill="#E3F2FD" stroke="#2196F3" stroke-width="2"/>
+  <text x="325" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1565C0">에러율</text>
+  <text x="325" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">< 0.1%</text>
+  <text x="325" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">안정: 0.05%</text>
+  <text x="325" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">카나리: 0.08%</text>
+  <text x="325" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">✓ 정상</text>
+  
+  <rect x="420" y="430" width="150" height="100" rx="8" fill="#FFF3E0" stroke="#FF9800" stroke-width="2"/>
+  <text x="495" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E65100">CPU 사용률</text>
+  <text x="495" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">< 70%</text>
+  <text x="495" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">안정: 45%</text>
+  <text x="495" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">카나리: 52%</text>
+  <text x="495" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">✓ 정상</text>
+  
+  <rect x="590" y="430" width="150" height="100" rx="8" fill="#F3E5F5" stroke="#9C27B0" stroke-width="2"/>
+  <text x="665" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#6A1B9A">배송 성공률</text>
+  <text x="665" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF6B35">99.8%</text>
+  <text x="665" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">안정: 99.7%</text>
+  <text x="665" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">카나리: 99.9%</text>
+  <text x="665" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#4CAF50">✓ 개선됨</text>
+  
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- Traffic flow arrows -->
+  <line x1="350" y1="130" x2="200" y2="190" stroke="#4CAF50" stroke-width="4" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="130" x2="600" y2="190" stroke="#2196F3" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Decision Box -->
+  <rect x="320" y="350" width="160" height="60" rx="8" fill="#FFEB3B" stroke="#F57F17" stroke-width="2"/>
+  <text x="400" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">자동 판단</text>
+  <text x="400" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">모든 지표 정상</text>
+  <text x="400" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2E7D32">→ 30%로 확장</text>
+</svg>

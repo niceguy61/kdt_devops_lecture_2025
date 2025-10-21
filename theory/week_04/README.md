@@ -91,22 +91,22 @@
 ---
 
 ### [Day 4: GitOps와 배포 자동화](./day4/)
-**🎯 목표**: Git 기반 선언적 배포와 고급 CI/CD 파이프라인 구축
+**🎯 목표**: 클라우드 네이티브 환경에서의 선언적 배포와 고급 CI/CD 파이프라인 구축
 
 #### 📚 이론 세션 (2.5시간)
-- **Session 1**: Git 기초와 브랜치 전략 - GitFlow, GitHub Flow 비교 (50분)
-- **Session 2**: GitHub Workflow와 Actions 기초 - 자동화 파이프라인 (50분)
-- **Session 3**: 고급 GitHub Actions - Cache, Self-hosted Runner, Matrix (50분)
+- **Session 1**: GitOps 철학과 ArgoCD - 선언적 배포의 진화 (50분)
+- **Session 2**: 고급 배포 전략 - 카나리, 블루-그린, 롤링 배포 비교 (50분)
+- **Session 3**: 클라우드 네이티브 CI/CD - Tekton, Flux, GitHub Actions 고급 (50분)
 
 #### 🛠️ 실습 세션 (2.5시간)
-- **Lab 4**: GitOps 파이프라인 구축 - ArgoCD + GitHub 연동 (75분)
-- **Hands-on 4**: 고급 GitHub Actions 구현 - 최적화된 CI/CD (75분)
+- **Lab 4**: ArgoCD 기반 GitOps 파이프라인 구축 - 마이크로서비스 배포 (75분)
+- **Hands-on 4**: 멀티 환경 배포 자동화 - Dev/Staging/Prod 파이프라인 (75분)
 
 #### 🎯 학습 성과
-- [ ] Git 브랜치 전략 수립 및 적용
-- [ ] GitHub Actions 기반 CI/CD 파이프라인 구축
-- [ ] ArgoCD를 통한 GitOps 구현
-- [ ] 고급 CI/CD 최적화 기법 적용
+- [ ] GitOps 철학과 선언적 배포 원칙 이해
+- [ ] ArgoCD를 통한 Kubernetes 애플리케이션 배포 자동화
+- [ ] 카나리, 블루-그린 등 고급 배포 전략 구현
+- [ ] 멀티 환경 CI/CD 파이프라인 구축 및 운영
 
 ---
 
@@ -245,10 +245,10 @@ graph TB
 - [ ] 보안 스캔 및 컴플라이언스
 
 #### **Day 4 결과물**: GitOps 파이프라인
-- [ ] ArgoCD 기반 GitOps 구축
-- [ ] GitHub Actions CI/CD 파이프라인
-- [ ] 브랜치 전략 및 워크플로우 적용
-- [ ] 자동화된 배포 및 롤백
+- [ ] ArgoCD 기반 GitOps 구축 및 운영
+- [ ] 선언적 배포 파이프라인 구현
+- [ ] 카나리/블루-그린 배포 전략 적용
+- [ ] 멀티 환경 자동화된 배포 및 롤백
 
 #### **Day 5 결과물**: 비용 최적화
 - [ ] Kubecost 모니터링 구축
