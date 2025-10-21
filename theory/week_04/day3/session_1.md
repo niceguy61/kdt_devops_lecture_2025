@@ -41,7 +41,7 @@
 **"내부 네트워크는 안전하다"는 신화의 붕괴**
 
 <div align="center">
-  <img src="../../images/perimeter-security-myth.svg" alt="전통적 보안 모델의 문제점" width="100%"/>
+  <img src="../images/perimeter-security-myth.svg" alt="전통적 보안 모델의 문제점" width="100%"/>
 </div>
 
 **핵심 문제점**:
