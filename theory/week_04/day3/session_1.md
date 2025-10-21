@@ -319,9 +319,9 @@ graph TB
     style IDP fill:#ff9900
     style CERT fill:#ff9900
     style MFA fill:#ff9900
-    style PE fill:#232f3e
-    style LOG fill:#232f3e
-    style SIEM fill:#232f3e
+    style PE fill:#90EE90
+    style LOG fill:#90EE90
+    style SIEM fill:#90EE90
     style MS1 fill:#e8f5e8
     style MS2 fill:#e8f5e8
     style MS3 fill:#e74c3c
