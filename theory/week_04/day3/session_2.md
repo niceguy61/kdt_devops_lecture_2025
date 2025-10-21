@@ -63,7 +63,7 @@
 ### 🏠 실생활 비유
 
 <div align="center">
-  <img src="../../images/authentication-analogy.svg" alt="신분증 vs 출입증 vs 지문 인식" width="100%"/>
+  <img src="../images/authentication-analogy.svg" alt="신분증 vs 출입증 vs 지문 인식" width="100%"/>
 </div>
 
 **실생활 매핑**:
