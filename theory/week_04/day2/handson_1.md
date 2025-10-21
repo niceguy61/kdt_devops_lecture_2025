@@ -31,6 +31,33 @@
 
 ---
 
+## 🚀 Step 0: 환경 초기화 (5분)
+
+### Step 0-1: 클러스터 정리 및 재구성
+
+```bash
+# 기존 클러스터 완전 삭제
+kind delete cluster --name lab-cluster
+
+# Lab 1 기반 클러스터 재생성
+../lab1/setup-cluster.sh
+
+# 클러스터 상태 확인
+kubectl get nodes
+kubectl get namespaces
+```
+
+### Step 0-2: 기본 서비스 배포 (Lab 1 기반)
+
+```bash
+
+# 배포 상태 확인
+kubectl get pods -n backend
+kubectl get services -n backend
+```
+
+---
+
 ## 🏗️ 전체 아키텍처
 
 ```mermaid
@@ -119,11 +146,36 @@ graph TB
 
 ---
 
-## 🛠️ Step 1: 환경 준비 및 Istio 설치 (15분)
+## 🛠️ Step 1: Istio 설치 (15분)
 
-### Step 1-1: 환경 준비 (5분)
+### Step 1-1: Istio 다운로드 및 설치
 
-**목표**: Lab 1 정리 확인 및 backend 서비스 준비
+```bash
+# Istio 다운로드 (1.20.0 버전)
+cd /tmp
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
+
+# PATH 설정
+cd istio-1.20.0
+export PATH=$PWD/bin:$PATH
+
+# Istio 설치 (demo 프로필)
+istioctl install --set values.defaultRevision=default -y
+
+# 설치 확인
+kubectl get pods -n istio-system
+kubectl get svc -n istio-system
+```
+
+### Step 1-2: 네임스페이스 Sidecar 주입 설정
+
+```bash
+# backend 네임스페이스에 Istio 주입 활성화  
+kubectl label namespace backend istio-injection=enabled
+
+# 라벨 확인
+kubectl get namespace -L istio-injection
+```
 
 ```bash
 # 1. Lab 1 Kong 정리 확인
@@ -242,107 +294,34 @@ kubectl wait --for=condition=ready pod -l app=user-service -n backend --timeout=
 kubectl wait --for=condition=ready pod -l app=product-service -n backend --timeout=60s
 kubectl wait --for=condition=ready pod -l app=order-service -n backend --timeout=60s
 
-# 5. 상태 확인
+---
+
+## 🔄 Step 2: 애플리케이션 재배포 (Sidecar 주입) (10분)
+
+### Step 2-1: 기존 Pod 재시작 (Sidecar 주입)
+
+```bash
+# 기존 Deployment 재시작 (Sidecar 주입을 위해)
+kubectl rollout restart deployment -n backend
+
+# Pod 재시작 대기
+kubectl rollout status deployment/user-service -n backend
+kubectl rollout status deployment/product-service -n backend  
+kubectl rollout status deployment/order-service -n backend
+
+# Sidecar 주입 확인 (각 Pod에 2개 컨테이너 있어야 함)
 kubectl get pods -n backend
 ```
 
-### Step 1-2: Istio 설치 (10분)
-
-**목표**: Istio Control Plane 및 Ingress Gateway 설치
+### Step 2-2: Sidecar 주입 검증
 
 ```bash
-# 1. Istio 다운로드 (이미 있으면 스킵)
-cd theory/week_04/day2/lab_scripts/handson1
-if [ ! -d "istio-1.20.0" ]; then
-    curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
-fi
+# Pod 상세 정보 확인 (2개 컨테이너: app + istio-proxy)
+kubectl describe pod -l app=user-service -n backend | grep -A 5 "Containers:"
 
-# 2. istioctl PATH 추가
-cd istio-1.20.0
-export PATH=$PWD/bin:$PATH
-
-# 3. Istio 설치 (demo 프로파일)
-istioctl install --set profile=demo -y
-
-# 4. Istio Ingress Gateway NodePort 설정
-kubectl patch svc istio-ingressgateway -n istio-system --type='json' \
-  -p='[{"op":"replace","path":"/spec/ports/1/nodePort","value":30082}]'
-
-# 5. Istio 설치 확인
-kubectl get pods -n istio-system
-kubectl get svc istio-ingressgateway -n istio-system
+# Envoy 설정 확인
+kubectl exec -n backend deployment/user-service -c istio-proxy -- pilot-agent request GET config_dump | head -20
 ```
-
-**검증**:
-```bash
-# Istiod 실행 확인
-kubectl get pods -n istio-system -l app=istiod
-
-# Ingress Gateway 포트 확인 (30082여야 함)
-kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}'
-```
-
----
-
-## 🔄 Step 2: Sidecar 주입 및 버전별 배포 (15분)
-
-### Step 2-1: Sidecar 자동 주입 활성화 (2분)
-
-**목표**: backend 네임스페이스에 Envoy Sidecar 자동 주입
-
-```bash
-# backend 네임스페이스에 Sidecar 주입 라벨 추가
-kubectl label namespace backend istio-injection=enabled --overwrite
-
-# 라벨 확인
-kubectl get namespace backend --show-labels
-```
-
-### Step 2-2: 기존 Deployment 삭제 및 버전별 재배포 (13분)
-
-**목표**: version 라벨을 포함한 Deployment 재생성 (Selector 불변성 때문에 삭제 필요)
-
-```bash
-# 1. 기존 Deployment 삭제
-kubectl delete deployment user-service product-service order-service -n backend
-
-# 2. User Service v1 배포 (version 라벨 포함)
-kubectl apply -n backend -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: user-service-v1
-  labels:
-    app: user-service
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: user-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: user-service
-        version: v1
-    spec:
-      containers:
-      - name: user-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=User Service v1 Response"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
-EOF
-
-# 3. User Service v2 배포 (카나리용)
-kubectl apply -n backend -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: user-service-v2
   labels:
     app: user-service
     version: v2
@@ -670,111 +649,12 @@ kill %1  # job 번호에 따라
 
 ---
 
-## ✅ 실습 체크포인트
+## 🚀 Step 5: 고급 Service Mesh 설정 (15분)
 
-### 🔐 Istio 설치 확인
-- [ ] **Istiod 실행**: Control Plane Pod Running
-- [ ] **Ingress Gateway**: NodePort 30082 설정 완료
-- [ ] **Sidecar 주입**: backend 네임스페이스 라벨 활성화
-
-### 🔀 트래픽 관리 확인
-- [ ] **Gateway 생성**: app-gateway 정상 생성
-- [ ] **VirtualService**: user-service 카나리 배포 설정
-- [ ] **DestinationRule**: v1, v2 subset 정의
-- [ ] **트래픽 분할**: 90:10 비율 확인
-
-### 📊 관측성 확인
-- [ ] **Kiali**: 서비스 그래프 확인
-- [ ] **Jaeger**: 분산 추적 확인
-- [ ] **Prometheus**: 메트릭 수집 확인
-
----
-
-## 🧹 실습 정리
-
+### Step 5-1: 프로덕션급 애플리케이션 배포
 ```bash
-# 1. Istio 리소스 삭제
-kubectl delete gateway app-gateway -n backend
-kubectl delete virtualservice --all -n backend
-kubectl delete destinationrule --all -n backend
-
-# 2. 버전별 Deployment 삭제
-kubectl delete deployment user-service-v1 user-service-v2 -n backend
-kubectl delete deployment product-service order-service -n backend
-
-# 3. Istio 언인스톨 (선택사항)
-cd theory/week_04/day2/lab_scripts/handson1/istio-1.20.0
-export PATH=$PWD/bin:$PATH
-istioctl uninstall --purge -y
-
-# 4. Istio 네임스페이스 삭제
-kubectl delete namespace istio-system
-
-# 5. backend 네임스페이스 유지 (다른 실습에서 사용)
-# kubectl delete namespace backend  # 필요시에만 실행
-```
-
----
-
-## 💡 실습 회고
-
-### 🤝 팀 회고 (10분)
-1. **Istio 아키텍처 이해**: Control Plane과 Data Plane의 역할 분담
-2. **Sidecar 패턴 체험**: Envoy Proxy 자동 주입의 편리함
-3. **카나리 배포 경험**: 가중치 기반 트래픽 분할의 실용성
-4. **관측성 도구**: Kiali, Jaeger를 통한 시각화의 중요성
-
-### 📊 학습 성과
-- **Istio 설치**: Control Plane 및 Ingress Gateway 구성 완료
-- **트래픽 관리**: VirtualService와 DestinationRule 활용
-- **카나리 배포**: 안전한 신규 버전 배포 전략 습득
-- **관측성**: 서비스 메시 모니터링 도구 활용
-
-### 🚀 다음 단계
-- **고급 트래픽 관리**: Fault Injection, Circuit Breaker
-- **보안 강화**: mTLS, Authorization Policy
-- **성능 최적화**: Retry, Timeout 설정
-- **멀티 클러스터**: Istio Multi-Cluster 구성
-
----
-
-<div align="center">
-
-**⛵ Istio Service Mesh** • **🔀 트래픽 제어** • **📊 완전한 관측성**
-
-*마이크로서비스 통신의 새로운 패러다임*
-
-</div>
-
-**예상 결과**:
-```
-NAME                ISTIO-INJECTION
-default             enabled
-istio-system        disabled
-kong                disabled
-kube-system         disabled
-```
-
----
-
-## 🚀 Step 2: 애플리케이션 재배포 (10분)
-
-### Step 2-1: Sidecar 주입된 애플리케이션 배포
-
-**🚀 자동화 스크립트 사용**
-```bash
-./deploy-with-istio.sh
-```
-
-**📋 스크립트 내용**: [deploy-with-istio.sh](./lab_scripts/handson1/deploy-with-istio.sh)
-
-**수동 실행 (학습용)**:
-```bash
-# 기존 서비스 삭제 (Kong Lab에서 배포한 것)
-kubectl delete deployment user-service product-service order-service
-
-# User Service v1 배포
-kubectl apply -f - <<EOF
+# 고급 User Service 배포 (리소스 제한, 헬스체크 포함)
+kubectl apply -n backend -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -783,7 +663,7 @@ metadata:
     app: user-service
     version: v1
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: user-service
@@ -798,14 +678,33 @@ spec:
       - name: user-service
         image: hashicorp/http-echo:latest
         args:
-        - "-text=User Service v1 Response"
+        - "-text=User Service v1 - Production Ready"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
 EOF
 
-# User Service v2 배포 (카나리용)
-kubectl apply -f - <<EOF
+# User Service v2 (카나리 배포용)
+kubectl apply -n backend -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -829,113 +728,118 @@ spec:
       - name: user-service
         image: hashicorp/http-echo:latest
         args:
-        - "-text=User Service v2 Response (NEW)"
+        - "-text=User Service v2 - New Features"
         - "-listen=:8080"
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
 EOF
-
-# Product Service 배포
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-service
-  labels:
-    app: product-service
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: product-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: product-service
-        version: v1
-    spec:
-      containers:
-      - name: product-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=Product Service Response"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
-EOF
-
-# Order Service 배포
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-service
-  labels:
-    app: order-service
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: order-service
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: order-service
-        version: v1
-    spec:
-      containers:
-      - name: order-service
-        image: hashicorp/http-echo:latest
-        args:
-        - "-text=Order Service Response"
-        - "-listen=:8080"
-        ports:
-        - containerPort: 8080
-EOF
-
-# Pod 준비 대기
-kubectl wait --for=condition=ready pod -l app=user-service --timeout=120s
-kubectl wait --for=condition=ready pod -l app=product-service --timeout=120s
-kubectl wait --for=condition=ready pod -l app=order-service --timeout=120s
 ```
 
-### Step 2-2: Sidecar 주입 확인
+### Step 5-2: 고급 Service Mesh 정책 설정
+```bash
+# 서킷 브레이커 설정
+kubectl apply -n backend -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: user-service-circuit-breaker
+spec:
+  host: user-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 10
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+EOF
+
+# 재시도 정책 설정
+kubectl apply -n backend -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-service-retry
+spec:
+  hosts:
+  - user-service
+  http:
+  - route:
+    - destination:
+        host: user-service
+        subset: v1
+      weight: 90
+    - destination:
+        host: user-service
+        subset: v2
+      weight: 10
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+    timeout: 10s
+EOF
+```
+
+### Step 2-3: mTLS 보안 설정
 
 ```bash
-# Pod 상세 정보 확인 (2개 컨테이너 확인)
-kubectl get pods -l app=user-service
+# Strict mTLS 정책 적용
+kubectl apply -n backend -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+spec:
+  mtls:
+    mode: STRICT
+EOF
 
-# Sidecar 컨테이너 확인
-kubectl describe pod -l app=user-service | grep -A 5 "Containers:"
+# 인증 정책 확인
+kubectl get peerauthentication
 ```
-
-**예상 결과**: 각 Pod에 2개 컨테이너 (app + istio-proxy)
 
 ---
 
-## 🔀 Step 3: 트래픽 관리 (15분)
+## 🔀 Step 3: 고급 트래픽 관리 & 카나리 배포 (20분)
 
-### Step 3-1: Istio Gateway 및 VirtualService 설정
-
-**🚀 자동화 스크립트 사용**
+### Step 3-1: 지능형 트래픽 라우팅
 ```bash
-./configure-istio.sh
-```
-
-**📋 스크립트 내용**: [configure-istio.sh](./lab_scripts/handson1/configure-istio.sh)
-
-**수동 실행 (학습용)**:
-```bash
-# Istio Gateway 생성
-kubectl apply -f - <<EOF
+# 고급 Gateway 설정 (HTTPS 지원)
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: app-gateway
+  name: advanced-gateway
 spec:
   selector:
     istio: ingressgateway
@@ -945,21 +849,41 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "*"
+    - "api.example.com"
+    - "admin.example.com"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: api-cert
+    hosts:
+    - "api.example.com"
 EOF
 
-# VirtualService 생성 (카나리 배포: v1 90%, v2 10%)
-kubectl apply -f - <<EOF
+# 헤더 기반 라우팅 (A/B 테스트)
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: user-service
+  name: user-service-ab-test
 spec:
   hosts:
-  - "*"
+  - "api.example.com"
   gateways:
-  - app-gateway
+  - advanced-gateway
   http:
+  # Beta 사용자는 v2로 라우팅
+  - match:
+    - headers:
+        x-user-type:
+          exact: beta
+    route:
+    - destination:
+        host: user-service
+        subset: v2
+  # 일반 사용자는 90% v1, 10% v2
   - match:
     - uri:
         prefix: /users
@@ -972,32 +896,175 @@ spec:
         host: user-service
         subset: v2
       weight: 10
-EOF
-
-# DestinationRule 생성 (버전별 subset 정의)
-kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: user-service
-spec:
-  host: user-service
-  subsets:
-  - name: v1
-    labels:
-      version: v1
-  - name: v2
-    labels:
-      version: v2
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 5s
 EOF
 ```
 
-### Step 3-2: 카나리 배포 테스트
+### Step 3-2: 카나리 배포 자동화 테스트
+```bash
+# 트래픽 분산 테스트 (100회 요청)
+for i in {1..100}; do
+  curl -s -H "Host: api.example.com" http://localhost/users | grep -o "v[12]" || echo "error"
+done | sort | uniq -c
+
+# Beta 사용자 테스트
+for i in {1..10}; do
+  curl -s -H "Host: api.example.com" -H "x-user-type: beta" http://localhost/users
+done
+
+# 장애 주입 테스트
+curl -w "@curl-format.txt" -H "Host: api.example.com" http://localhost/users
+```
+
+### Step 3-3: 실시간 메트릭 모니터링
 
 ```bash
-# Istio Ingress Gateway 주소 확인
-export INGRESS_HOST=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+# Istio 메트릭 확인
+kubectl exec -n istio-system deployment/prometheus -- \
+  promtool query instant 'istio_requests_total{destination_service_name="user-service"}'
+
+# 성공률 확인
+kubectl exec -n istio-system deployment/prometheus -- \
+  promtool query instant 'rate(istio_requests_total{destination_service_name="user-service",response_code="200"}[1m])'
+```
+
+---
+
+## 📊 Step 4: 관측성 및 보안 강화 (15분)
+
+### Step 4-1: 분산 추적 설정
+```bash
+# Jaeger 추적 활성화
+kubectl apply -n backend -f - <<EOF
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: control-plane
+spec:
+  values:
+    pilot:
+      traceSampling: 100.0
+  meshConfig:
+    defaultConfig:
+      tracing:
+        sampling: 100.0
+EOF
+
+# 추적 데이터 생성
+for i in {1..50}; do
+  curl -H "Host: api.example.com" http://localhost/users
+  sleep 0.1
+done
+```
+
+### Step 4-2: 보안 정책 강화
+
+```bash
+# 네임스페이스별 접근 제어
+kubectl apply -n backend -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: user-service-policy
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/frontend/sa/frontend-sa"]
+  - to:
+    - operation:
+        methods: ["GET", "POST"]
+  - when:
+    - key: request.headers[x-user-role]
+      values: ["admin", "user"]
+EOF
+
+# Rate Limiting 설정
+kubectl apply -n backend -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: EnvoyFilter
+metadata:
+  name: rate-limit-filter
+spec:
+  workloadSelector:
+    labels:
+      app: user-service
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: rate_limiter
+            token_bucket:
+              max_tokens: 100
+              tokens_per_fill: 100
+              fill_interval: 60s
+EOF
+```
+
+---
+
+## ✅ 고급 기능 검증 및 테스트 (10분)
+
+### 종합 테스트 스크립트
+```bash
+# 1. 서킷 브레이커 테스트
+echo "=== Circuit Breaker Test ==="
+for i in {1..20}; do
+  curl -s -w "%{http_code}\n" -H "Host: api.example.com" http://localhost/users -m 1
+done
+
+# 2. mTLS 검증
+echo "=== mTLS Verification ==="
+kubectl exec -n istio-system deployment/istiod -- \
+  pilot-discovery proxy-config cluster user-service-v1-xxx.backend | grep tls
+
+# 3. 메트릭 수집 확인
+echo "=== Metrics Collection ==="
+kubectl port-forward -n istio-system svc/prometheus 9090:9090 &
+sleep 5
+curl -s "http://localhost:9090/api/v1/query?query=istio_requests_total" | jq '.data.result[0].metric'
+
+# 4. 분산 추적 확인
+echo "=== Distributed Tracing ==="
+kubectl port-forward -n istio-system svc/jaeger-query 16686:16686 &
+sleep 5
+echo "Jaeger UI: http://localhost:16686"
+
+# 5. 보안 정책 테스트
+echo "=== Security Policy Test ==="
+kubectl exec -it deployment/user-service-v1 -- \
+  curl -s user-service.backend.svc.cluster.local
+```
+
+### 성능 벤치마크
+
+```bash
+# Apache Bench를 이용한 성능 테스트
+kubectl run ab-test --image=httpd:alpine --rm -it -- \
+  ab -n 1000 -c 10 -H "Host: api.example.com" http://istio-ingressgateway.istio-system/users
+
+# 결과 분석
+kubectl logs ab-test | grep -E "(Requests per second|Time per request)"
+```
 
 # 100번 호출하여 트래픽 분산 확인
 for i in {1..100}; do
@@ -1019,7 +1086,7 @@ done | sort | uniq -c
 
 **지연 주입 (Delay Injection)**:
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -1047,7 +1114,7 @@ time curl http://localhost:8080/products
 
 **에러 주입 (Abort Injection)**:
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -1078,7 +1145,7 @@ done
 ### Step 4-2: Circuit Breaker 설정
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
@@ -1112,7 +1179,7 @@ wait
 ### Step 4-3: Retry & Timeout 정책
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -n backend -f - <<EOF
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -1285,7 +1352,7 @@ kubectl get namespace default -o yaml | grep istio-injection
 kubectl label namespace default istio-injection=enabled
 
 # Pod 재시작 (Deployment 재배포)
-kubectl rollout restart deployment user-service-v1
+kubectl rollout restart deployment user-service-v1 -n backend
 ```
 
 ### Q2. Istio Ingress Gateway 포트가 충돌하면?
@@ -1301,10 +1368,10 @@ kubectl rollout restart deployment user-service-v1
 kubectl get gateway
 
 # VirtualService 확인
-kubectl get virtualservice
+kubectl get virtualservice -n backend
 
 # DestinationRule 확인
-kubectl get destinationrule
+kubectl get destinationrule -n backend
 
 # Istio 설정 검증
 istioctl analyze
@@ -1326,17 +1393,345 @@ istioctl analyze
 **A**: 
 ```bash
 # Deployment 재배포
-kubectl rollout restart deployment --all
+kubectl rollout restart deployment --all -n backend
 
 # 또는 Pod 삭제 (자동 재생성)
-kubectl delete pods --all
+kubectl delete pods --all -n backend
 ```
+
+---
+
+## 🌐 External Services 통합 (15분)
+
+### Step 5-1: 외부 서비스 등록
+
+```bash
+# 외부 HTTP 서비스 등록 (httpbin.org)
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: httpbin-external
+spec:
+  hosts:
+  - httpbin.org
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+EOF
+
+# 외부 데이터베이스 서비스 등록 (시뮬레이션)
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-database
+spec:
+  hosts:
+  - external-db.company.com
+  ports:
+  - number: 5432
+    name: postgres
+    protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+EOF
+
+# 외부 서비스용 DestinationRule
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: httpbin-external
+spec:
+  host: httpbin.org
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 5
+      http:
+        http1MaxPendingRequests: 5
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+EOF
+```
+
+### Step 5-2: 외부 서비스 접근 테스트
+
+```bash
+# 테스트용 Pod 생성
+kubectl run test-client --image=curlimages/curl --rm -it -- sh
+
+# Pod 내에서 실행
+curl -I httpbin.org/get
+curl -I https://httpbin.org/get
+
+# 외부 서비스 메트릭 확인
+exit
+```
+
+### Step 5-3: Egress Gateway 설정
+
+```bash
+# Egress Gateway 설정
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-egressgateway
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - httpbin.org
+EOF
+
+# Egress VirtualService
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: direct-httpbin-through-egress-gateway
+spec:
+  hosts:
+  - httpbin.org
+  gateways:
+  - istio-egressgateway
+  - mesh
+  http:
+  - match:
+    - gateways:
+      - mesh
+      port: 80
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 80
+      weight: 100
+  - match:
+    - gateways:
+      - istio-egressgateway
+      port: 80
+    route:
+    - destination:
+        host: httpbin.org
+        port:
+          number: 80
+      weight: 100
+EOF
+```
+
+---
+
+## 🔐 고급 보안 정책 (10분)
+
+### Step 6-1: JWT 인증 설정
+
+```bash
+# JWT 인증 정책 설정
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-auth
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  jwtRules:
+  - issuer: "testing@secure.istio.io"
+    jwksUri: "https://raw.githubusercontent.com/istio/istio/release-1.20/security/tools/jwt/samples/jwks.json"
+EOF
+
+# JWT 기반 인가 정책
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["testing@secure.istio.io/testing@secure.istio.io"]
+EOF
+```
+
+### Step 6-2: JWT 토큰 테스트
+
+```bash
+# 유효한 JWT 토큰 생성 (테스트용)
+TOKEN="eyJhbGciOiJSUzI1NiIsImtpZCI6IkRIRmJwb0lVcXJZOHQyenBBMnFYZkNtcjVWTzVaRXI0UnpIVV8tZW52dlEiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjQ2ODU5ODk3MDAsImZvbyI6ImJhciIsImlhdCI6MTUzMjM4OTcwMCwiaXNzIjoidGVzdGluZ0BzZWN1cmUuaXN0aW8uaW8iLCJzdWIiOiJ0ZXN0aW5nQHNlY3VyZS5pc3Rpby5pbyJ9.CfNnxWP2tcnR9q0vxyxweaF3ovQYHYZl82hAUsn21bwQd9zP7c-LS9qd_vpdLG4Tn1A15NxfCjp5f7QNBUo-KC9PJqYpgGbaXhaGx7bEdFWjcwv3nZzvc7M__ZpaCERdwU7igUmJqYGBYQ51vr2njU9ZimyKkfDe3axcyiBZde7G6dabliUosJvvKOPcKIWPccCgefSj_GNfwIip3-SsFdlR7BtbVUcqR-yv-XOxJ3Ry4c5p_-jpmHcMiKFyZnPczOavs2uSTyGiuFBfABRHZ9GhizOsgEGGCCgtfMpHjgJqiCOHdAhcHuWw"
+
+# JWT 없이 요청 (실패해야 함)
+kubectl port-forward -n istio-system svc/istio-ingressgateway 8080:80 &
+PF_PID=$!
+sleep 5
+
+curl -H "Host: api.example.com" http://localhost:8080/users
+
+# JWT와 함께 요청 (성공해야 함)
+curl -H "Host: api.example.com" -H "Authorization: Bearer $TOKEN" http://localhost:8080/users
+
+kill $PF_PID
+```
+
+---
+
+## 📈 성능 최적화 및 모니터링 (10분)
+
+### Step 7-1: 고급 메트릭 설정
+
+```bash
+# 커스텀 메트릭 설정
+kubectl apply -f - <<EOF
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: custom-metrics
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  - overrides:
+    - match:
+        metric: ALL_METRICS
+      tagOverrides:
+        request_id:
+          value: "%{REQUEST_ID}"
+        user_agent:
+          value: "%{REQUEST_HEADERS['user-agent']}"
+EOF
+
+# 분산 추적 샘플링 조정
+kubectl apply -f - <<EOF
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: tracing-config
+spec:
+  tracing:
+  - providers:
+    - name: jaeger
+  - randomSamplingPercentage: 100.0
+EOF
+```
+
+### Step 7-2: 성능 대시보드 설정
+
+```bash
+# Grafana 대시보드 접속
+kubectl port-forward -n istio-system svc/grafana 3000:3000 &
+GRAFANA_PID=$!
+
+echo "Grafana 접속: http://localhost:3000"
+echo "기본 계정: admin/admin"
+echo ""
+echo "추천 대시보드:"
+echo "- Istio Service Dashboard"
+echo "- Istio Workload Dashboard"
+echo "- Istio Performance Dashboard"
+
+# 성능 테스트 실행
+kubectl run performance-test --image=fortio/fortio --rm -it -- \
+  load -c 8 -qps 100 -t 60s -loglevel Warning \
+  http://user-service.default.svc.cluster.local/
+
+kill $GRAFANA_PID
+```
+
+---
+
+## 🧹 실습 정리
+
+### 완전한 환경 정리
+
+```bash
+# Istio 리소스 정리
+kubectl delete virtualservice --all
+kubectl delete destinationrule --all
+kubectl delete gateway --all
+kubectl delete serviceentry --all
+kubectl delete authorizationpolicy --all
+kubectl delete requestauthentication --all
+kubectl delete peerauthentication --all
+kubectl delete telemetry --all
+
+# 애플리케이션 정리
+kubectl delete deployment user-service-v1 user-service-v2 --ignore-not-found=true
+kubectl delete service user-service --ignore-not-found=true
+
+# 네임스페이스 라벨 제거
+kubectl label namespace default istio-injection-
+
+# Istio 제거 (선택사항)
+istioctl uninstall --purge -y
+
+# 포트 포워딩 정리
+pkill -f "kubectl port-forward"
+
+echo "✅ 모든 리소스 정리 완료"
+```
+
+---
+
+## 💡 실습 회고
+
+### 🤝 팀 회고 (15분)
+
+**토론 주제**:
+1. **Service Mesh의 가치**: Kong API Gateway와 비교했을 때 Istio의 장단점은?
+2. **복잡성 vs 기능**: Service Mesh 도입 시 고려해야 할 트레이드오프는?
+3. **실무 적용**: 어떤 상황에서 Service Mesh 도입을 권장하겠는가?
+4. **운영 관점**: Service Mesh 운영 시 가장 중요한 모니터링 지표는?
+
+### 📊 학습 성과
+
+**기술적 성취**:
+- ✅ **Istio 아키텍처**: Control Plane과 Data Plane 완전 이해
+- ✅ **트래픽 관리**: 카나리 배포, A/B 테스트, 장애 주입
+- ✅ **보안 강화**: mTLS, JWT 인증, 세밀한 접근 제어
+- ✅ **관측성**: 분산 추적, 메트릭 수집, 시각화
+- ✅ **외부 통합**: ServiceEntry, Egress Gateway 활용
+
+**실무 역량**:
+- 🎯 **아키텍처 설계**: 마이크로서비스 통신 패턴 설계
+- 🔧 **운영 자동화**: Service Mesh 기반 배포 파이프라인
+- 📊 **성능 최적화**: 트래픽 패턴 분석 및 최적화
+- 🔐 **보안 강화**: Zero Trust 네트워크 구현
+- 🚀 **확장성**: 대규모 마이크로서비스 환경 관리
+
+### 🔮 다음 단계
+
+**심화 학습 방향**:
+- **Multi-Cluster Mesh**: 여러 클러스터 간 Service Mesh 연결
+- **GitOps 통합**: ArgoCD와 Istio 통합 배포
+- **Custom Envoy Filter**: 고급 트래픽 제어 로직 구현
+- **Service Mesh Interface (SMI)**: 표준 인터페이스 활용
 
 ---
 
 <div align="center">
 
-**⛵ Istio Service Mesh** • **🔀 고급 트래픽 관리** • **📊 완전한 관측성**
+**⛵ Istio Service Mesh** • **🔀 고급 트래픽 관리** • **📊 완전한 관측성** • **🌐 외부 서비스 통합**
 
 *Service Mesh로 마이크로서비스 통신을 완전히 제어했습니다!*
 
