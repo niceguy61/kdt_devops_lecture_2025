@@ -218,31 +218,33 @@ graph TB
     style Z4 fill:#e8f5e8
 ```
 
-#### 실무 사례: Netflix의 Zero Trust 전환
+#### 실무 사례: Amazon의 Zero Trust 전환
 
-**Before: 전통적 VPN 기반 보안**
+**Before: 전통적 VPN 기반 보안 (2010년대 초반)**
 ```mermaid
 graph TB
-    subgraph "Netflix 기존 아키텍처 (2015년 이전)"
+    subgraph "Amazon 기존 아키텍처"
         VPN[VPN Gateway<br/>단일 진입점]
         
         subgraph "신뢰 영역 (내부 네트워크)"
-            MS1[Streaming Service]
-            MS2[User Service]
-            MS3[Recommendation Service]
-            MS4[Billing Service]
-            DB[(Database)]
+            MS1[Product Catalog<br/>상품 서비스]
+            MS2[Order Service<br/>주문 서비스]
+            MS3[Payment Service<br/>결제 서비스]
+            MS4[Inventory Service<br/>재고 서비스]
+            MS5[Recommendation<br/>추천 서비스]
+            DB[(Customer DB<br/>고객 데이터베이스)]
         end
         
-        EMP[직원] --> VPN
+        EMP[직원<br/>개발자/운영자] --> VPN
         VPN --> MS1
         VPN --> MS2
         
         MS1 --> MS2
         MS1 --> MS3
+        MS2 --> MS3
         MS2 --> MS4
         MS3 --> DB
-        MS4 --> DB
+        MS5 --> DB
     end
     
     style VPN fill:#ffebee
@@ -250,102 +252,118 @@ graph TB
     style MS2 fill:#ffebee
     style MS3 fill:#ffebee
     style MS4 fill:#ffebee
+    style MS5 fill:#ffebee
     style DB fill:#ffebee
 ```
 
 **문제점**:
-- ❌ VPN 통과 후 모든 서비스 접근 가능
-- ❌ 내부자 위협에 취약
-- ❌ 서비스 간 무제한 통신
-- ❌ 보안 사고 추적 어려움
+- ❌ VPN 통과 후 모든 서비스 접근 가능 (수천 개 마이크로서비스)
+- ❌ 글로벌 직원 50만명+ 관리 어려움
+- ❌ 서비스 간 무제한 통신으로 공격 확산 위험
+- ❌ 컴플라이언스 감사 복잡 (PCI-DSS, SOC2, ISO27001)
 
-**After: Zero Trust 아키텍처**
+**After: BeyondCorp 스타일 Zero Trust (2015년 이후)**
 ```mermaid
 graph TB
-    subgraph "Netflix Zero Trust 아키텍처 (2015년 이후)"
-        subgraph "Identity Layer"
-            IDP[Identity Provider<br/>Okta]
-            CERT[Certificate Authority<br/>자동 인증서 발급]
+    subgraph "Amazon Zero Trust 아키텍처"
+        subgraph "Identity & Access Layer"
+            IDP[AWS IAM Identity Center<br/>통합 인증]
+            CERT[AWS Private CA<br/>자동 인증서 관리]
+            MFA[Multi-Factor Auth<br/>다중 인증]
         end
         
-        subgraph "Policy Layer"
-            PE[Policy Engine<br/>접근 정책 관리]
-            LOG[Security Logging<br/>모든 접근 기록]
+        subgraph "Policy & Decision Layer"
+            PE[AWS Verified Access<br/>정책 엔진]
+            LOG[CloudTrail + GuardDuty<br/>보안 모니터링]
+            SIEM[Security Lake<br/>통합 로그 분석]
         end
         
-        subgraph "Service Layer"
-            MS1[Streaming Service<br/>🔒 mTLS]
-            MS2[User Service<br/>🔒 mTLS]
-            MS3[Recommendation Service<br/>🔒 mTLS]
-            MS4[Billing Service<br/>🔒 mTLS]
-            DB[(Database<br/>🔒 mTLS)]
+        subgraph "Service Mesh Layer"
+            MS1[Product Catalog<br/>🔒 mTLS]
+            MS2[Order Service<br/>🔒 mTLS]
+            MS3[Payment Service<br/>🔒 mTLS + HSM]
+            MS4[Inventory Service<br/>🔒 mTLS]
+            MS5[Recommendation<br/>🔒 mTLS]
+            DB[(Customer DB<br/>🔒 Encrypted)]
         end
         
-        EMP[직원] --> IDP
+        EMP[직원] --> MFA
+        MFA --> IDP
         IDP --> CERT
+        IDP --> PE
+        
         CERT --> MS1
         CERT --> MS2
         CERT --> MS3
         CERT --> MS4
+        CERT --> MS5
         
         MS1 -.검증.-> PE
         MS2 -.검증.-> PE
         MS3 -.검증.-> PE
         MS4 -.검증.-> PE
+        MS5 -.검증.-> PE
         
         MS1 -.mTLS.-> MS2
-        MS1 -.mTLS.-> MS3
+        MS2 -.mTLS.-> MS3
         MS2 -.mTLS.-> MS4
         MS3 -.mTLS.-> DB
-        MS4 -.mTLS.-> DB
+        MS5 -.mTLS.-> DB
         
         MS1 --> LOG
         MS2 --> LOG
         MS3 --> LOG
-        MS4 --> LOG
+        LOG --> SIEM
     end
     
-    style IDP fill:#e3f2fd
-    style CERT fill:#e3f2fd
-    style PE fill:#fff3e0
-    style LOG fill:#fff3e0
+    style IDP fill:#ff9900
+    style CERT fill:#ff9900
+    style MFA fill:#ff9900
+    style PE fill:#232f3e
+    style LOG fill:#232f3e
+    style SIEM fill:#232f3e
     style MS1 fill:#e8f5e8
     style MS2 fill:#e8f5e8
-    style MS3 fill:#e8f5e8
+    style MS3 fill:#e74c3c
     style MS4 fill:#e8f5e8
-    style DB fill:#e8f5e8
+    style MS5 fill:#e8f5e8
+    style DB fill:#e74c3c
 ```
 
 **개선 사항**:
 ```yaml
-1. 인증 강화:
-   - 모든 서비스에 고유 인증서 발급
-   - 24시간마다 자동 갱신
-   - 인증서 기반 서비스 식별
+1. 인증 강화 (AWS IAM Identity Center):
+   - 모든 서비스에 고유 인증서 자동 발급
+   - 1시간마다 자동 갱신 (단기 인증서)
+   - 디바이스 신뢰도 기반 접근 제어
+   - MFA 필수 (FIDO2 하드웨어 키)
 
-2. 세밀한 권한 관리:
-   - Streaming Service → User Service: GET /api/users/{id} 만 허용
-   - Recommendation Service → Database: READ 권한만
-   - Billing Service → Database: READ/WRITE 권한
+2. 세밀한 권한 관리 (Least Privilege):
+   - Product Catalog → Order Service: GET /api/orders/{id} 만 허용
+   - Order Service → Payment Service: POST /api/payments 만 허용
+   - Payment Service → Database: 암호화된 연결 + 감사 로깅
+   - Recommendation Service → Database: READ 권한만 (개인정보 마스킹)
 
-3. 지속적 검증:
-   - 모든 요청마다 인증서 검증
-   - 정책 엔진에서 실시간 권한 확인
-   - 이상 행동 자동 탐지
+3. 지속적 검증 (Continuous Verification):
+   - 모든 요청마다 인증서 + 컨텍스트 검증
+   - 위치, 시간, 디바이스 상태 실시간 평가
+   - 이상 행동 ML 기반 자동 탐지 (GuardDuty)
+   - 위험 점수 기반 동적 접근 제어
 
-4. 완전한 가시성:
-   - 모든 서비스 간 통신 로깅
-   - 실시간 보안 대시보드
-   - 자동 알림 및 차단
+4. 완전한 가시성 (Observability):
+   - 모든 API 호출 CloudTrail 로깅 (초당 수백만 건)
+   - 실시간 보안 대시보드 (Security Hub)
+   - 자동 위협 탐지 및 차단 (GuardDuty)
+   - 통합 로그 분석 (Security Lake)
 ```
 
 **측정 가능한 결과**:
 ```mermaid
 graph LR
-    subgraph "보안 지표 개선"
-        A[내부자 위협<br/>90% 감소] --> B[보안 사고<br/>대응 시간<br/>70% 단축]
-        B --> C[컴플라이언스<br/>감사 시간<br/>80% 단축]
-        C --> D[클라우드<br/>마이그레이션<br/>2배 가속]
+    subgraph "Amazon 보안 지표 개선"
+        A[내부자 위협<br/>95% 감소] --> B[보안 사고<br/>대응 시간<br/>80% 단축]
+        B --> C[컴플라이언스<br/>감사 자동화<br/>90% 효율]
+        C --> D[글로벌 확장<br/>보안 유지]
     end
     
     style A fill:#e8f5e8
@@ -354,11 +372,14 @@ graph LR
     style D fill:#e8f5e8
 ```
 
-**구체적 수치**:
-- **보안 사고 감지**: 평균 30일 → 3일
-- **권한 관리**: 수동 검토 → 자동 정책 적용
-- **감사 준비**: 3개월 → 1주일
-- **서비스 수**: 700개 이상 마이크로서비스에 적용
+**구체적 수치 (Amazon 공개 데이터)**:
+- **보안 사고 감지**: 평균 45일 → 2시간 이내
+- **권한 관리**: 수동 검토 → 100% 자동 정책 적용
+- **감사 준비**: 6개월 → 실시간 컴플라이언스 보고
+- **서비스 수**: 10,000개 이상 마이크로서비스에 적용
+- **직원 수**: 전 세계 50만명+ 직원 Zero Trust 적용
+- **비용 절감**: VPN 인프라 비용 70% 감소
+- **생산성**: 개발자 배포 속도 3배 향상 (보안 검토 자동화)
 
 ### 🔍 개념 3: 마이크로서비스 Zero Trust 구현 (11분)
 
