@@ -14,7 +14,7 @@
 **시간**: 15:00-15:50 (50분)  
 **목표**: OPA Gatekeeper를 통한 정책 기반 보안 강화  
 **방식**: 직접 코드 작성 및 실행  
-**전제조건**: Lab 1 완료 (mTLS + JWT 환경)
+**전제조건**: 없음 (독립 실습)
 
 ---
 
@@ -76,8 +76,73 @@ graph TB
     style GK fill:#4ecdc4
     style CT fill:#45b7d1
     style C fill:#96ceb4
-    style P1,P2,P3 fill:#fff3e0
+    style P1 fill:#fff3e0
+    style P2 fill:#fff3e0
+    style P3 fill:#fff3e0
 ```
+
+---
+
+## 🛠️ Step 0: 클러스터 초기화 (5분)
+
+### 📝 직접 작성하기
+
+**0-1. 기존 클러스터 삭제**
+```bash
+kind delete cluster --name lab-cluster
+```
+
+**0-2. 새 클러스터 생성**
+```bash
+cat <<EOF | kind create cluster --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab-cluster
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30080
+    hostPort: 30080
+    protocol: TCP
+  - containerPort: 30081
+    hostPort: 30081
+    protocol: TCP
+  - containerPort: 30082
+    hostPort: 30082
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+- role: worker
+- role: worker
+EOF
+```
+
+**0-3. 클러스터 확인**
+```bash
+kubectl get nodes
+```
+
+### 📊 예상 결과
+```
+NAME                        STATUS   ROLES           AGE   VERSION
+lab-cluster-control-plane   Ready    control-plane   1m    v1.27.3
+lab-cluster-worker          Ready    <none>          1m    v1.27.3
+lab-cluster-worker2         Ready    <none>          1m    v1.27.3
+```
+
+**0-4. secure-app 네임스페이스 생성**
+```bash
+kubectl create namespace secure-app
+```
+
+### 💡 설명
+- **3-node 클러스터**: 1 control-plane + 2 worker
+- **포트 매핑**: 30080-30082, 443, 80
+- **secure-app**: Lab 1과 동일한 네임스페이스 사용
 
 ---
 
@@ -88,7 +153,7 @@ graph TB
 **1-1. Gatekeeper 설치**
 ```bash
 # Gatekeeper 최신 버전 설치
-kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 ```
 
 **1-2. 설치 확인**
@@ -510,6 +575,12 @@ require-resource-limits                deny                  0
 
 ## ✅ 실습 체크포인트
 
+### ✅ Step 0: 클러스터 초기화
+- [ ] 기존 클러스터 삭제 완료
+- [ ] 새 클러스터 생성 (1 control-plane + 2 worker)
+- [ ] 포트 매핑 확인 (30080-30082, 443, 80)
+- [ ] secure-app 네임스페이스 생성
+
 ### ✅ Step 1: Gatekeeper 설치
 - [ ] Gatekeeper Pod 3개 Running 상태
 - [ ] ValidatingWebhookConfiguration 생성 확인
@@ -574,22 +645,28 @@ kubectl describe constrainttemplate k8scontainernoprivilegeescalation
 ## 🧹 실습 정리
 
 ```bash
-# 생성한 리소스 삭제
-kubectl delete pod good-pod -n secure-app
-kubectl delete deployment good-deployment -n secure-app
+# 1. 생성한 리소스 삭제
+kubectl delete pod good-pod -n secure-app 2>/dev/null
+kubectl delete deployment good-deployment -n secure-app 2>/dev/null
 
-# Constraint 삭제
+# 2. Constraint 삭제
 kubectl delete k8scontainernoprivilegeescalation --all
 kubectl delete k8scontainerresourcelimits --all
 
-# ConstraintTemplate 삭제
+# 3. ConstraintTemplate 삭제
 kubectl delete constrainttemplate k8scontainernoprivilegeescalation
 kubectl delete constrainttemplate k8scontainerresourcelimits
 
-# Gatekeeper 삭제 (선택사항)
-kubectl delete -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+# 4. Gatekeeper 삭제
+kubectl delete -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 
-# 생성한 파일 정리
+# 5. 네임스페이스 삭제
+kubectl delete namespace secure-app
+
+# 6. 클러스터 삭제
+kind delete cluster --name lab-cluster
+
+# 7. 생성한 파일 정리
 rm -f *.yaml *.sh
 ```
 
