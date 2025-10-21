@@ -77,28 +77,25 @@ kubectl describe deployment delivery-service-broken -n delivery-platform
 
 ---
 
-## 🚨 시나리오 4: Service 연결 실패
+## 🚨 시나리오 4: Authorization Policy 오류
 
 ### 힌트 1 (방향성)
-- Service와 Deployment의 연결을 확인하세요
-- Label Selector가 올바른지 확인하세요
+- Istio AuthorizationPolicy를 확인하세요
+- ServiceAccount principal 설정을 살펴보세요
 
 ### 힌트 2 (구체적 위치)
 ```bash
-kubectl get svc -n delivery-platform
-kubectl get endpoints -n delivery-platform
+kubectl get authorizationpolicy -n delivery-platform
+kubectl describe authorizationpolicy merchant-policy -n delivery-platform
 ```
-- 어떤 Service의 Endpoints가 비어있나요?
-```bash
-kubectl describe svc payment-service -n delivery-platform
-kubectl get pods -n delivery-platform -l app=payment-service
-```
+- `principals` 필드를 확인하세요
+- 현재 어떤 ServiceAccount가 허용되어 있나요?
+- order-service의 ServiceAccount 이름은 무엇인가요?
 
 ### 힌트 3 (해결 방향)
-- Service의 selector와 Pod의 labels를 비교해보세요
-- 두 값이 정확히 일치해야 연결됩니다
-- Service를 수정할 수도 있고, Pod의 labels를 수정할 수도 있습니다
-- 어느 쪽을 수정하는 것이 더 합리적일까요?
+- AuthorizationPolicy의 principal에 잘못된 ServiceAccount 이름이 있습니다
+- order-service가 merchant-service에 접근해야 합니다
+- principal을 올바른 ServiceAccount 이름으로 변경하세요
 
 ---
 
