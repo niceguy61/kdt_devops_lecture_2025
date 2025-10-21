@@ -177,6 +177,8 @@ gatekeeper-controller-manager-1              1/1     Running   0          30s
 gatekeeper-controller-manager-2              1/1     Running   0          30s
 ```
 
+**💡 참고**: gatekeeper-audit Pod가 초기에 1-2번 재시작될 수 있으나, 1-2분 후 정상화됩니다.
+
 ### 💡 개념 설명
 - **Gatekeeper**: Kubernetes Admission Controller로 동작
 - **Audit**: 기존 리소스의 정책 위반 검사
@@ -376,8 +378,8 @@ metadata:
 spec:
   match:
     kinds:
-      - apiGroups: ["apps"]
-        kinds: ["Deployment", "StatefulSet"]
+      - apiGroups: [""]
+        kinds: ["Pod"]
     namespaces:
       - "secure-app"
   parameters:
@@ -390,75 +392,61 @@ kubectl apply -f require-resource-limits.yaml
 
 **3-3. 정책 테스트**
 ```bash
-# 리소스 제한 없는 Deployment (실패)
-cat <<EOF > bad-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
+# 리소스 제한 없는 Pod (실패)
+cat <<EOF > bad-pod-no-resources.yaml
+apiVersion: v1
+kind: Pod
 metadata:
-  name: bad-deployment
+  name: bad-pod-no-resources
   namespace: secure-app
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: test
-  template:
-    metadata:
-      labels:
-        app: test
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    securityContext:
+      allowPrivilegeEscalation: false
 EOF
 
-kubectl apply -f bad-deployment.yaml
+kubectl apply -f bad-pod-no-resources.yaml
 ```
 
 ### 📊 예상 결과
 ```
-Error from server (Forbidden): error when creating "bad-deployment.yaml": 
+Error from server (Forbidden): error when creating "bad-pod-no-resources.yaml": 
 admission webhook "validation.gatekeeper.sh" denied the request: 
+[require-resource-limits] 컨테이너 'nginx'에 CPU 요청이 없습니다
 [require-resource-limits] 컨테이너 'nginx'에 CPU 제한이 없습니다
+[require-resource-limits] 컨테이너 'nginx'에 메모리 요청이 없습니다
 [require-resource-limits] 컨테이너 'nginx'에 메모리 제한이 없습니다
 ```
 
-**3-4. 올바른 Deployment**
+**3-4. 올바른 Pod**
 ```bash
-cat <<EOF > good-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
+cat <<EOF > good-pod-with-resources.yaml
+apiVersion: v1
+kind: Pod
 metadata:
-  name: good-deployment
+  name: good-pod-with-resources
   namespace: secure-app
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: test
-  template:
-    metadata:
-      labels:
-        app: test
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1000
 EOF
 
-kubectl apply -f good-deployment.yaml
-kubectl get deployment good-deployment -n secure-app
+kubectl apply -f good-pod-with-resources.yaml
+kubectl get pod good-pod-with-resources -n secure-app
 ```
 
 ### 💡 코드 설명
@@ -595,8 +583,8 @@ require-resource-limits                deny                  0
 ### ✅ Step 3: 리소스 제한 정책
 - [ ] 리소스 제한 ConstraintTemplate 생성
 - [ ] Constraint 적용 완료
-- [ ] 리소스 제한 없는 Deployment 차단
-- [ ] 올바른 Deployment 생성 성공
+- [ ] 리소스 제한 없는 Pod 차단
+- [ ] 올바른 Pod 생성 성공
 
 ### ✅ Step 4: 정책 감사
 - [ ] Audit 리포트 생성 성공
@@ -647,7 +635,7 @@ kubectl describe constrainttemplate k8scontainernoprivilegeescalation
 ```bash
 # 1. 생성한 리소스 삭제
 kubectl delete pod good-pod -n secure-app 2>/dev/null
-kubectl delete deployment good-deployment -n secure-app 2>/dev/null
+kubectl delete pod good-pod-with-resources -n secure-app 2>/dev/null
 
 # 2. Constraint 삭제
 kubectl delete k8scontainernoprivilegeescalation --all
