@@ -20,7 +20,7 @@
 ```
 theory/week_XX/dayX/
 ├── lab_1.md                    # 기본 Lab (스크립트 제공)
-├── hands_on_1.md               # 심화 Hands-on (inline 코드)
+├── handson_1.md               # 심화 Hands-on (inline 코드)
 └── lab_scripts/
     └── lab1/                   # Lab 1 스크립트만 존재
         ├── step1-xxx.sh
