@@ -19,6 +19,12 @@ kubectl apply -f broken-scenario2.yaml
 echo "3/4 시나리오 3 배포 중 (리소스 제한 오류)..."
 kubectl apply -f broken-scenario3.yaml
 
+# ConstraintTemplate CRD 등록 대기
+echo "   ConstraintTemplate CRD 등록 대기 중..."
+sleep 5
+kubectl wait --for condition=established --timeout=60s crd/k8scontainerresourcelimits.constraints.gatekeeper.sh 2>/dev/null || true
+sleep 3
+
 # 4. 시나리오 4: Service 연결 오류
 echo "4/4 시나리오 4 배포 중 (네트워크 오류)..."
 kubectl apply -f broken-scenario4.yaml

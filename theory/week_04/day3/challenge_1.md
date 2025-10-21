@@ -406,6 +406,16 @@ kubectl exec -it deployment/order-service -n delivery-platform -c order -- \
 
 ## 💡 문제 해결 가이드
 
+### 🆘 도움이 필요하신가요?
+**막힐 때 참고하세요**:
+- **힌트 파일**: [hints.md](./lab_scripts/challenge1/hints.md) - 각 시나리오별 단계별 힌트 제공
+- **정답 파일**: solutions.md (강사에게 요청)
+
+💡 **힌트 사용 팁**:
+- 먼저 스스로 해결을 시도해보세요
+- 막힐 때 hints.md의 1단계 힌트부터 확인하세요
+- 각 단계별로 충분히 고민한 후 다음 힌트를 보세요
+
 ### 🔍 체계적 진단 방법
 1. **증상 파악**: 에러 메시지 및 로그 수집
 2. **범위 축소**: 문제 발생 지점 특정

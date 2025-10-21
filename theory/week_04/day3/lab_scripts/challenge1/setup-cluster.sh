@@ -55,6 +55,12 @@ kubectl label namespace delivery-platform istio-injection=enabled
 echo "6/7 OPA Gatekeeper 설치 중..."
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 
+# Gatekeeper webhook 준비 대기
+echo "   Gatekeeper webhook 준비 대기 중..."
+kubectl wait --for=condition=ready pod -l control-plane=controller-manager -n gatekeeper-system --timeout=120s
+kubectl wait --for=condition=ready pod -l control-plane=audit-controller -n gatekeeper-system --timeout=120s
+sleep 10  # webhook 등록 완료 대기
+
 # 7. Prometheus & Grafana 설치 (간소화)
 echo "7/7 모니터링 스택 설치 중..."
 kubectl create namespace monitoring

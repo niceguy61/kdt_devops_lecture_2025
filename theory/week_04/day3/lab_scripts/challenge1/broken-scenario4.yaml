@@ -14,4 +14,4 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/delivery-platform/sa/wrong-service-account"]  # 의도적 오류: order-service여야 함
+        principals: ["cluster.local/ns/delivery-platform/sa/wrong-service-account"]  # 확인 필요

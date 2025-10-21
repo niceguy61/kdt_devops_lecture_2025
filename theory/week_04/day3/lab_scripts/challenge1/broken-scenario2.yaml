@@ -11,7 +11,7 @@ spec:
     matchLabels:
       app: order-service
   jwtRules:
-  - issuer: "wrong-issuer"  # 의도적 오류: auth-service.delivery-platform.svc.cluster.local이어야 함
+  - issuer: "wrong-issuer"  # FQDN 수정 필요
     jwksUri: "http://auth-service.delivery-platform.svc.cluster.local:8080/.well-known/jwks.json"
     forwardOriginalToken: true
 ---

@@ -42,7 +42,7 @@ spec:
     namespaces:
       - "delivery-platform"
 ---
-# 의도적 오류: 리소스 제한 없는 Deployment
+# 의도적 오류: 리소스 제한 없음
 apiVersion: apps/v1
 kind: Deployment
 metadata:
