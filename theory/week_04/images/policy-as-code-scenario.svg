@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500">
+  <!-- 배경 -->
+  <rect width="900" height="500" fill="#f8f9fa"/>
+  
+  <!-- 제목 -->
+  <text x="450" y="40" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    수동 보안 검토 vs Policy as Code
+  </text>
+  
+  <!-- 수동 검토 (왼쪽) -->
+  <g id="manual">
+    <rect x="30" y="70" width="400" height="400" fill="#ffebee" stroke="#e74c3c" stroke-width="3" rx="10"/>
+    
+    <text x="230" y="100" font-size="18" font-weight="bold" text-anchor="middle" fill="#c0392b">
+      ❌ 수동 보안 검토 (Before)
+    </text>
+    
+    <!-- 프로세스 -->
+    <g id="manual-process">
+      <!-- 1단계 -->
+      <rect x="60" y="120" width="340" height="60" fill="#fff" stroke="#e74c3c" stroke-width="2" rx="5"/>
+      <text x="80" y="145" font-size="14" font-weight="bold" fill="#c0392b">1. 개발자 배포 요청</text>
+      <text x="80" y="165" font-size="12" fill="#666">📝 배포 신청서 작성 + 문서 제출</text>
+      
+      <!-- 화살표 -->
+      <path d="M 230 180 L 230 200" stroke="#e74c3c" stroke-width="3" fill="none" marker-end="url(#arrowred)"/>
+      
+      <!-- 2단계 -->
+      <rect x="60" y="200" width="340" height="60" fill="#fff" stroke="#e74c3c" stroke-width="2" rx="5"/>
+      <text x="80" y="225" font-size="14" font-weight="bold" fill="#c0392b">2. 보안팀 수동 검토</text>
+      <text x="80" y="245" font-size="12" fill="#666">👨‍💼 2-3일 소요 (사람이 직접 확인)</text>
+      
+      <!-- 화살표 -->
+      <path d="M 230 260 L 230 280" stroke="#e74c3c" stroke-width="3" fill="none" marker-end="url(#arrowred)"/>
+      
+      <!-- 3단계 -->
+      <rect x="60" y="280" width="340" height="60" fill="#fff" stroke="#e74c3c" stroke-width="2" rx="5"/>
+      <text x="80" y="305" font-size="14" font-weight="bold" fill="#c0392b">3. 승인 / 거부</text>
+      <text x="80" y="325" font-size="12" fill="#666">✋ 거부 시 수정 후 재검토 (반복)</text>
+      
+      <!-- 화살표 -->
+      <path d="M 230 340 L 230 360" stroke="#e74c3c" stroke-width="3" fill="none" marker-end="url(#arrowred)"/>
+      
+      <!-- 4단계 -->
+      <rect x="60" y="360" width="340" height="60" fill="#fff" stroke="#e74c3c" stroke-width="2" rx="5"/>
+      <text x="80" y="385" font-size="14" font-weight="bold" fill="#c0392b">4. 배포 (승인 시)</text>
+      <text x="80" y="405" font-size="12" fill="#666">🚀 총 소요 시간: 2-5일</text>
+    </g>
+    
+    <!-- 문제점 -->
+    <rect x="60" y="435" width="340" height="25" fill="#c0392b" rx="5"/>
+    <text x="230" y="453" font-size="12" font-weight="bold" text-anchor="middle" fill="white">
+      느림 😢 | 실수 가능 😰 | 일관성 없음 😵 | 확장 불가 😱
+    </text>
+  </g>
+  
+  <!-- 화살표 (변화) -->
+  <g id="transformation">
+    <path d="M 440 270 L 460 270" stroke="#3498db" stroke-width="5" fill="none" marker-end="url(#arrowblue)"/>
+    <text x="450" y="260" font-size="16" font-weight="bold" text-anchor="middle" fill="#3498db">
+      자동화
+    </text>
+  </g>
+  
+  <!-- Policy as Code (오른쪽) -->
+  <g id="automated">
+    <rect x="470" y="70" width="400" height="400" fill="#e8f5e8" stroke="#27ae60" stroke-width="3" rx="10"/>
+    
+    <text x="670" y="100" font-size="18" font-weight="bold" text-anchor="middle" fill="#27ae60">
+      ✅ Policy as Code (After)
+    </text>
+    
+    <!-- 프로세스 -->
+    <g id="auto-process">
+      <!-- 1단계 -->
+      <rect x="500" y="120" width="340" height="60" fill="#fff" stroke="#27ae60" stroke-width="2" rx="5"/>
+      <text x="520" y="145" font-size="14" font-weight="bold" fill="#27ae60">1. 개발자 배포 요청</text>
+      <text x="520" y="165" font-size="12" fill="#666">📝 kubectl apply -f deployment.yaml</text>
+      
+      <!-- 화살표 -->
+      <path d="M 670 180 L 670 200" stroke="#27ae60" stroke-width="3" fill="none" marker-end="url(#arrowgreen)"/>
+      
+      <!-- 2단계 -->
+      <rect x="500" y="200" width="340" height="60" fill="#fff" stroke="#27ae60" stroke-width="2" rx="5"/>
+      <text x="520" y="225" font-size="14" font-weight="bold" fill="#27ae60">2. Gatekeeper 자동 검증</text>
+      <text x="520" y="245" font-size="12" fill="#666">🤖 &lt; 1초 (정책 엔진이 자동 확인)</text>
+      
+      <!-- 화살표 -->
+      <path d="M 670 260 L 670 280" stroke="#27ae60" stroke-width="3" fill="none" marker-end="url(#arrowgreen)"/>
+      
+      <!-- 3단계 (분기) -->
+      <rect x="500" y="280" width="340" height="60" fill="#fff" stroke="#27ae60" stroke-width="2" rx="5"/>
+      <text x="520" y="305" font-size="14" font-weight="bold" fill="#27ae60">3. 즉시 허용 / 거부</text>
+      <text x="520" y="325" font-size="12" fill="#666">⚡ 거부 시 상세 이유 즉시 제공</text>
+      
+      <!-- 화살표 -->
+      <path d="M 670 340 L 670 360" stroke="#27ae60" stroke-width="3" fill="none" marker-end="url(#arrowgreen)"/>
+      
+      <!-- 4단계 -->
+      <rect x="500" y="360" width="340" height="60" fill="#fff" stroke="#27ae60" stroke-width="2" rx="5"/>
+      <text x="520" y="385" font-size="14" font-weight="bold" fill="#27ae60">4. 즉시 배포 (허용 시)</text>
+      <text x="520" y="405" font-size="12" fill="#666">🚀 총 소요 시간: &lt; 1초</text>
+    </g>
+    
+    <!-- 장점 -->
+    <rect x="500" y="435" width="340" height="25" fill="#27ae60" rx="5"/>
+    <text x="670" y="453" font-size="12" font-weight="bold" text-anchor="middle" fill="white">
+      빠름 🚀 | 정확함 ✅ | 일관성 💯 | 확장 가능 📈
+    </text>
+  </g>
+  
+  <!-- 화살표 마커 정의 -->
+  <defs>
+    <marker id="arrowred" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#e74c3c"/>
+    </marker>
+    <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#27ae60"/>
+    </marker>
+    <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#3498db"/>
+    </marker>
+  </defs>
+</svg>

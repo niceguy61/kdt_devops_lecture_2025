@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400">
+  <!-- 배경 -->
+  <rect width="900" height="400" fill="#f8f9fa"/>
+  
+  <!-- 제목 -->
+  <text x="450" y="40" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    실생활 비유: 교통 경찰 vs 교통 신호등
+  </text>
+  
+  <!-- 교통 경찰 (수동) -->
+  <g id="police">
+    <rect x="50" y="80" width="380" height="280" fill="#ffebee" stroke="#e74c3c" stroke-width="3" rx="10"/>
+    
+    <text x="240" y="115" font-size="18" font-weight="bold" text-anchor="middle" fill="#c0392b">
+      👮 교통 경찰 (수동 검토)
+    </text>
+    
+    <!-- 경찰 아이콘 -->
+    <circle cx="240" cy="170" r="40" fill="#e74c3c" opacity="0.2"/>
+    <text x="240" y="185" font-size="50" text-anchor="middle">👮</text>
+    
+    <!-- 특징 -->
+    <rect x="80" y="230" width="320" height="110" fill="#fff" stroke="#e74c3c" stroke-width="2" rx="5"/>
+    
+    <text x="240" y="255" font-size="14" font-weight="bold" text-anchor="middle" fill="#c0392b">
+      사람이 직접 통제
+    </text>
+    
+    <text x="100" y="280" font-size="12" fill="#333">❌ 피곤하면 실수</text>
+    <text x="100" y="300" font-size="12" fill="#333">❌ 24시간 불가능</text>
+    <text x="100" y="320" font-size="12" fill="#333">❌ 비용 높음 (인건비)</text>
+  </g>
+  
+  <!-- 화살표 -->
+  <g id="arrow">
+    <path d="M 440 220 L 470 220" stroke="#3498db" stroke-width="5" fill="none" marker-end="url(#arrowblue)"/>
+    <text x="455" y="210" font-size="14" font-weight="bold" text-anchor="middle" fill="#3498db">
+      자동화
+    </text>
+  </g>
+  
+  <!-- 교통 신호등 (자동) -->
+  <g id="traffic-light">
+    <rect x="470" y="80" width="380" height="280" fill="#e8f5e8" stroke="#27ae60" stroke-width="3" rx="10"/>
+    
+    <text x="660" y="115" font-size="18" font-weight="bold" text-anchor="middle" fill="#27ae60">
+      🚦 교통 신호등 (자동화)
+    </text>
+    
+    <!-- 신호등 아이콘 -->
+    <g id="signal">
+      <rect x="630" y="140" width="60" height="80" fill="#2c3e50" rx="5"/>
+      <circle cx="660" cy="160" r="12" fill="#e74c3c"/>
+      <circle cx="660" cy="185" r="12" fill="#f39c12"/>
+      <circle cx="660" cy="210" r="12" fill="#27ae60" opacity="0.8"/>
+    </g>
+    
+    <!-- 특징 -->
+    <rect x="500" y="230" width="320" height="110" fill="#fff" stroke="#27ae60" stroke-width="2" rx="5"/>
+    
+    <text x="660" y="255" font-size="14" font-weight="bold" text-anchor="middle" fill="#27ae60">
+      규칙 기반 자동 제어
+    </text>
+    
+    <text x="520" y="280" font-size="12" fill="#333">✅ 일관된 적용</text>
+    <text x="520" y="300" font-size="12" fill="#333">✅ 24시간 작동</text>
+    <text x="520" y="320" font-size="12" fill="#333">✅ 확장 가능 (여러 교차로)</text>
+  </g>
+  
+  <!-- 하단 매핑 -->
+  <rect x="50" y="370" width="800" height="20" fill="#ecf0f1" rx="5"/>
+  <text x="450" y="384" font-size="12" text-anchor="middle" fill="#2c3e50">
+    💡 Policy as Code = 교통 신호등처럼 규칙을 코드로 정의하고 자동으로 적용
+  </text>
+  
+  <!-- 화살표 마커 -->
+  <defs>
+    <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#3498db"/>
+    </marker>
+  </defs>
+</svg>
