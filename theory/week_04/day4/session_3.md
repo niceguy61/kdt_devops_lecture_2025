@@ -217,12 +217,52 @@ graph TB
 
 **실무 Tekton 활용 사례**:
 
-**카카오 Tekton 파이프라인**:
+**카카오 CI/CD 현대화 프로젝트**:
 
-![카카오 Tekton 파이프라인](../images/kakao_tekton_simple.svg)
+```mermaid
+graph TB
+    subgraph "Before: Jenkins 중심"
+        J1[Jenkins Master<br/>무겁고 복잡]
+        J2[플러그인 관리 어려움]
+        J3[리소스 과다 사용]
+    end
+    
+    subgraph "After: Cloud Native"
+        A1[GitHub Actions<br/>빌드 & 테스트]
+        A2[Tekton<br/>K8s 파이프라인]
+        A3[ArgoCD<br/>GitOps 배포]
+    end
+    
+    subgraph "성과"
+        R1[빌드 시간 50% 단축]
+        R2[리소스 50% 절감]
+        R3[동시 빌드 10배 증가]
+    end
+    
+    J1 -.전환.-> A1
+    J2 -.전환.-> A2
+    J3 -.전환.-> A3
+    
+    A1 --> R1
+    A2 --> R2
+    A3 --> R3
+    
+    style J1 fill:#ffebee
+    style J2 fill:#ffebee
+    style J3 fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e3f2fd
+    style A3 fill:#f3e5f5
+    style R1 fill:#c8e6c9
+    style R2 fill:#c8e6c9
+    style R3 fill:#c8e6c9
+```
 
-- **카카오 사례**: 카카오톡 서비스의 Kubernetes 네이티브 CI/CD
+- **카카오 사례**: Jenkins에서 Kubernetes 네이티브 도구로 전환
+  - **Before**: Jenkins 중심, 리소스 과다 사용, 관리 복잡
+  - **After**: GitHub Actions + Tekton + ArgoCD 조합
   - Jenkins 대비 빌드 시간 50% 단축 (20분 → 10분)
+  - 리소스 사용량 50% 절감
   - 동적 리소스 할당으로 70% 비용 절약
   - 동시 빌드 처리량 10배 증가 (100개 → 1000개)
 - **네이버 클라우드 사례**: NAVER Cloud Platform에서 Tekton 기반 CI/CD 제공

@@ -156,9 +156,11 @@ spec:
 
 **실무 카나리 배포 시나리오**:
 
-**쿠팡 로켓배송 카나리 배포**:
+**쿠팡 로켓배송 카나리 배포 전략**:
 
-![쿠팡 로켓배송 카나리 배포](../images/coupang_canary_simple.svg)
+![쿠팡 로켓배송 카나리 배포](../images/coupang-canary-case.svg)
+
+**배포 단계별 프로세스**:
 
 ```mermaid
 sequenceDiagram
