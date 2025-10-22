@@ -684,6 +684,21 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Update Kubernetes manifests
+      run: |
+        # SHA 태그 추출
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep sha- | head -1)
+        
+        # deployment.yaml 업데이트
+        sed -i "s|image: ghcr.io/.*/sample-app:.*|image: ${IMAGE_TAG}|g" k8s/deployment.yaml
+        
+        # 변경사항 커밋
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add k8s/deployment.yaml
+        git commit -m "Update image to ${IMAGE_TAG}" || exit 0
+        git push
 EOF
 ```
 
