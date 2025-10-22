@@ -621,6 +621,79 @@ graph TB
 
 ---
 
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1: Tekton과 Jenkins의 가장 큰 차이는?
+**A**: 
+- **Jenkins**: 독립 실행형 서버, 플러그인 기반, 무겁고 관리 복잡
+- **Tekton**: Kubernetes 네이티브, CRD 기반, 가볍고 확장성 높음
+- **리소스**: Jenkins는 항상 실행, Tekton은 필요 시에만 Pod 생성 (비용 70% 절감)
+
+### Q2: GitHub Actions만으로 충분하지 않나요?
+**A**: 
+- **GitHub Actions**: CI에 최적화, 간단한 배포 가능
+- **Tekton + ArgoCD**: CD에 최적화, 복잡한 멀티 클러스터 배포
+- **권장 조합**: GitHub Actions(빌드/테스트) + Tekton(K8s 배포) + ArgoCD(GitOps)
+
+### Q3: Flux와 ArgoCD 중 어떤 것을 선택해야 하나요?
+**A**: 
+- **Flux**: 경량, CLI 중심, 자동화 우선
+- **ArgoCD**: 강력한 UI, 멀티 클러스터, 엔터프라이즈 기능
+- **선택 기준**: 
+  - 소규모/자동화 중심 → Flux
+  - 대규모/UI 필요/멀티 클러스터 → ArgoCD
+
+### Q4: Kubernetes 네이티브 CI/CD의 단점은?
+**A**: 
+1. **학습 곡선**: Kubernetes와 YAML 이해 필요
+2. **초기 설정**: Jenkins보다 초기 구축 복잡
+3. **디버깅**: 분산 환경에서 문제 추적 어려움
+4. **생태계**: Jenkins보다 플러그인/통합 적음
+
+### Q5: Tekton Task와 Pipeline의 차이는?
+**A**: 
+- **Task**: 단일 작업 단위 (예: 빌드, 테스트, 배포)
+- **Pipeline**: 여러 Task를 순서대로 연결한 워크플로우
+- 예: Pipeline = [빌드 Task] → [테스트 Task] → [배포 Task]
+
+### Q6: Tekton에서 시크릿은 어떻게 관리하나요?
+**A**: 
+1. **Kubernetes Secret**: 기본 시크릿 리소스 사용
+2. **Workspace**: Task 간 데이터 공유 (시크릿 포함)
+3. **External Secrets**: Vault, AWS Secrets Manager 연동
+4. **ServiceAccount**: 권한 관리 및 인증
+
+### Q7: 모든 프로젝트에 Kubernetes 네이티브 CI/CD가 필요한가요?
+**A**: 아닙니다. 선택 기준:
+- **필요**: Kubernetes 사용, 마이크로서비스, 멀티 클러스터
+- **불필요**: 단순 앱, VM 배포, 소규모 팀
+- **대안**: GitHub Actions, GitLab CI, CircleCI 등 관리형 서비스
+
+### Q8: CI/CD 도구 선택 시 가장 중요한 기준은?
+**A**: 
+1. **인프라**: Kubernetes 사용 여부
+2. **팀 규모**: 소규모(GitHub Actions), 대규모(Tekton+ArgoCD)
+3. **복잡도**: 단순(관리형), 복잡(자체 구축)
+4. **비용**: 관리형(편리하지만 비쌈), 오픈소스(저렴하지만 관리 필요)
+
+### Q9: Tekton Pipeline 실행 실패 시 어떻게 디버깅하나요?
+**A**: 
+1. **로그 확인**: `tkn pipelinerun logs <name>`
+2. **상태 확인**: `kubectl describe pipelinerun <name>`
+3. **Task 로그**: 실패한 Task의 Pod 로그 확인
+4. **재실행**: `tkn pipeline start <name> --last`
+
+### Q10: ArgoCD와 Tekton을 함께 사용하는 이유는?
+**A**: 
+- **Tekton**: CI 파이프라인 (빌드, 테스트, 이미지 푸시)
+- **ArgoCD**: CD 파이프라인 (Git 기반 배포, 동기화)
+- **분리 이유**: 
+  - CI는 코드 변경 시 실행
+  - CD는 Git 변경 시 자동 동기화
+  - 각 도구가 전문 분야에 집중
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과

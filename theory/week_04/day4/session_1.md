@@ -462,6 +462,49 @@ graph LR
 
 ---
 
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1: GitOps와 기존 CI/CD의 차이점은?
+**A**: 기존 CI/CD는 "Push" 방식 (파이프라인이 클러스터에 배포), GitOps는 "Pull" 방식 (ArgoCD가 Git을 감시하고 자동 동기화). GitOps는 Git을 단일 진실 소스로 사용하여 더 안전하고 추적 가능합니다.
+
+### Q2: ArgoCD 없이 kubectl로 배포하면 안 되나요?
+**A**: 가능하지만 권장하지 않습니다. kubectl은 수동 배포로 실수 가능성이 높고, 배포 이력 추적이 어렵습니다. ArgoCD는 자동 동기화, 롤백, 멀티 클러스터 관리 등 프로덕션 운영에 필수적인 기능을 제공합니다.
+
+### Q3: 모든 환경(dev/staging/prod)을 하나의 Git 저장소에서 관리해야 하나요?
+**A**: 아닙니다. 보안과 권한 관리를 위해 환경별로 저장소를 분리하는 것이 일반적입니다. 예: `app-dev-config`, `app-staging-config`, `app-prod-config`
+
+### Q4: ArgoCD가 Git을 얼마나 자주 확인하나요?
+**A**: 기본 3분마다 확인합니다. 설정으로 변경 가능하며, Webhook을 사용하면 Git 푸시 즉시 동기화할 수 있습니다.
+
+### Q5: GitOps 도입 시 가장 큰 어려움은?
+**A**: 
+1. **문화적 변화**: 개발자들이 Git 중심 사고로 전환 필요
+2. **초기 학습 곡선**: YAML 작성과 Kubernetes 리소스 이해 필요
+3. **시크릿 관리**: Git에 민감 정보를 저장할 수 없어 별도 솔루션(Sealed Secrets, External Secrets) 필요
+
+### Q6: GitOps에서 시크릿(Secret)은 어떻게 관리하나요?
+**A**: Git에 평문 저장은 불가능합니다. 해결 방법:
+1. **Sealed Secrets**: 암호화된 시크릿을 Git에 저장
+2. **External Secrets Operator**: Vault, AWS Secrets Manager 연동
+3. **SOPS**: 파일 단위 암호화 도구
+
+### Q7: ArgoCD Application과 ApplicationSet의 차이는?
+**A**: 
+- **Application**: 단일 애플리케이션 배포 정의
+- **ApplicationSet**: 여러 Application을 템플릿으로 생성 (멀티 클러스터, 멀티 환경)
+- 예: 10개 마이크로서비스를 각각 Application으로 만들지 않고 ApplicationSet 하나로 관리
+
+### Q8: GitOps에서 롤백은 어떻게 하나요?
+**A**: Git 커밋을 이전 버전으로 되돌리면 ArgoCD가 자동으로 클러스터 상태를 롤백합니다. 또는 ArgoCD UI에서 이전 버전을 선택하여 즉시 롤백 가능합니다.
+
+### Q9: 여러 클러스터를 하나의 ArgoCD로 관리할 수 있나요?
+**A**: 네, 가능합니다. ArgoCD는 멀티 클러스터 관리를 지원합니다. 하나의 ArgoCD 인스턴스에서 dev/staging/prod 클러스터를 모두 관리할 수 있습니다.
+
+### Q10: GitOps는 Kubernetes에만 사용할 수 있나요?
+**A**: 주로 Kubernetes에서 사용되지만, Terraform, Ansible 등 다른 IaC 도구와도 결합 가능합니다. 핵심은 "Git을 단일 진실 소스로 사용"하는 철학입니다.
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
