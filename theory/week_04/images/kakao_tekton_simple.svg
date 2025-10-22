@@ -1,0 +1,47 @@
+<svg width="900" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pipeline Steps -->
+  <rect x="50" y="100" width="120" height="80" fill="#fff9c4" stroke="#fbc02d" stroke-width="2" rx="5"/>
+  <text x="110" y="130" text-anchor="middle" font-size="13" font-weight="bold">Git Clone</text>
+  <text x="110" y="150" text-anchor="middle" font-size="10">Source Code</text>
+  <text x="110" y="165" text-anchor="middle" font-size="10">Download</text>
+  
+  <rect x="200" y="100" width="120" height="80" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5"/>
+  <text x="260" y="130" text-anchor="middle" font-size="13" font-weight="bold">Build &amp; Test</text>
+  <text x="260" y="150" text-anchor="middle" font-size="10">Gradle Build</text>
+  <text x="260" y="165" text-anchor="middle" font-size="10">JUnit Test</text>
+  
+  <rect x="350" y="100" width="120" height="80" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+  <text x="410" y="130" text-anchor="middle" font-size="13" font-weight="bold">Security Scan</text>
+  <text x="410" y="150" text-anchor="middle" font-size="10">Vulnerability</text>
+  <text x="410" y="165" text-anchor="middle" font-size="10">SAST/DAST</text>
+  
+  <rect x="500" y="100" width="120" height="80" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+  <text x="560" y="130" text-anchor="middle" font-size="13" font-weight="bold">Image Build</text>
+  <text x="560" y="150" text-anchor="middle" font-size="10">Docker Image</text>
+  <text x="560" y="165" text-anchor="middle" font-size="10">Harbor Push</text>
+  
+  <rect x="650" y="100" width="120" height="80" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+  <text x="710" y="130" text-anchor="middle" font-size="13" font-weight="bold">Deploy</text>
+  <text x="710" y="150" text-anchor="middle" font-size="10">K8s Deploy</text>
+  <text x="710" y="165" text-anchor="middle" font-size="10">ArgoCD</text>
+  
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+    </marker>
+  </defs>
+  
+  <line x1="170" y1="140" x2="200" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="320" y1="140" x2="350" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="470" y1="140" x2="500" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="620" y1="140" x2="650" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" font-size="18" font-weight="bold">Kakao Tekton Pipeline</text>
+  
+  <!-- Stats -->
+  <rect x="50" y="220" width="800" height="60" fill="#f5f5f5" stroke="#ccc" stroke-width="1" rx="3"/>
+  <text x="450" y="240" text-anchor="middle" font-size="11" font-weight="bold">Performance Improvements</text>
+  <text x="450" y="260" text-anchor="middle" font-size="10">Build Time: 50% faster (20min to 10min) | Resource: 70% saved | Scale: 10x (100 to 1000) | Satisfaction: 95%</text>
+</svg>
