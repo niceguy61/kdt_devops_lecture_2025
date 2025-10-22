@@ -60,17 +60,50 @@ graph TB
 
 ## 🛠️ Step 1: 저장소 준비 (15분)
 
-### 1-1. GitHub Personal Access Token 생성
+### 1-1. SSH 키 생성 (GitHub 연동용)
+
+**macOS/Linux**:
+```bash
+# SSH 키 생성
+ssh-keygen -t ed25519 -C "your-email@example.com"
+
+# SSH 에이전트에 키 추가
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+# 공개키 복사
+cat ~/.ssh/id_ed25519.pub
+```
+
+**Windows (Git Bash)**:
+```bash
+# SSH 키 생성
+ssh-keygen -t ed25519 -C "your-email@example.com"
+
+# SSH 에이전트 시작
+eval $(ssh-agent -s)
+ssh-add ~/.ssh/id_ed25519
+
+# 공개키 복사
+cat ~/.ssh/id_ed25519.pub
+```
+
+### 1-2. GitHub SSH 키 등록
+1. GitHub → Settings → SSH and GPG keys
+2. "New SSH key" 클릭
+3. 복사한 공개키 붙여넣기
+
+### 1-3. GitHub Personal Access Token 생성
 1. GitHub → Settings → Developer settings → Personal access tokens
 2. **"Tokens (classic)"** 선택 ⚠️
 3. 권한: `repo`, `workflow`, `write:packages`
 
-### 1-2. 저장소 클론 및 설정
+### 1-4. 저장소 클론 및 설정
 ⚠️ **중요**: Repository를 **Public**으로 설정해야 GHCR이 동작합니다!
 
 ```bash
-# 데모 앱 클론
-git clone https://github.com/niceguy61/cicd-demo-app.git
+# SSH로 데모 앱 클론
+git clone git@github.com:niceguy61/cicd-demo-app.git
 cd cicd-demo-app
 
 # 본인 GitHub으로 Fork 후 origin 변경
@@ -140,8 +173,8 @@ services:
     command: --interval 60 --cleanup
     environment:
       - WATCHTOWER_TRACE=true
-      - WATCHTOWER_ROLLING_RESTART=true
-      - WATCHTOWER_TIMEOUT=30s
+      - WATCHTOWER_ROLLING_RESTART=true  # 순차 재시작
+      - WATCHTOWER_TIMEOUT=30s          # 충분한 대기시간
 
 volumes:
   db-data:
