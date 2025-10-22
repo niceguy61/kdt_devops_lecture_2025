@@ -271,22 +271,50 @@ sequenceDiagram
 
 **환경별 브랜치 전략**:
 ```mermaid
-graph TB
-    A[main branch<br/>Production] --> B[staging branch<br/>Staging Deploy]
-    B --> C[develop branch<br/>Feature A + B]
+gitGraph
+    commit id: "Initial"
+    branch develop
+    checkout develop
+    commit id: "Setup dev"
     
-    D[hotfix branch<br/>Critical Fix] --> A
+    branch feature-a
+    checkout feature-a
+    commit id: "Feature A: 주문 기능"
+    commit id: "Feature A: 테스트"
     
-    C --> E[Feature A]
-    C --> F[Feature B]
+    checkout develop
+    branch feature-b
+    commit id: "Feature B: 결제 기능"
+    commit id: "Feature B: 테스트"
     
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#ffebee
-    style D fill:#f3e5f5
-    style E fill:#e3f2fd
-    style F fill:#e3f2fd
+    checkout develop
+    merge feature-a tag: "v1.1-dev"
+    merge feature-b tag: "v1.2-dev"
+    
+    branch staging
+    checkout staging
+    commit id: "Staging 배포"
+    
+    checkout main
+    branch hotfix
+    commit id: "Hotfix: 긴급 버그 수정"
+    
+    checkout main
+    merge hotfix tag: "v1.0.1"
+    
+    checkout staging
+    merge develop tag: "v1.2-staging"
+    
+    checkout main
+    merge staging tag: "v1.2-prod"
 ```
+
+**브랜치별 역할**:
+- **main**: Production 환경 (안정 버전)
+- **staging**: Staging 환경 (배포 전 검증)
+- **develop**: Development 환경 (기능 통합)
+- **feature-a/b**: 기능 개발 브랜치
+- **hotfix**: 긴급 수정 브랜치
 
 **ArgoCD Application 구조**:
 ```yaml
