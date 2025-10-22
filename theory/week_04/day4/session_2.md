@@ -157,74 +157,8 @@ spec:
 **실무 카나리 배포 시나리오**:
 
 **쿠팡 로켓배송 카나리 배포**:
-```mermaid
-graph TB
-    subgraph "쿠팡 로켓배송 카나리 배포"
-        subgraph "로드밸런서"
-            ALB[ALB<br/>로드밸런서]
-        end
-        
-        subgraph "안정 버전 (90% 트래픽)"
-            STABLE[안정 버전 v2.1<br/>로켓배송 기존 시스템]
-            SP1[Pod 1<br/>배송관리]
-            SP2[Pod 2<br/>주문처리]
-            SP3[Pod 3<br/>재고관리]
-            SP4[Pod 4<br/>알림서비스]
-        end
-        
-        subgraph "카나리 버전 (10% 트래픽)"
-            CANARY[카나리 버전 v2.2<br/>AI 기반 배송 최적화]
-            CP1[Pod 1<br/>AI배송]
-        end
-        
-        subgraph "실시간 모니터링"
-            M1[응답시간: 200ms<br/>안정: 180ms, 카나리: 195ms<br/>정상]
-            M2[에러율: 0.1%<br/>안정: 0.05%, 카나리: 0.08%<br/>정상]
-            M3[CPU: 70%<br/>안정: 45%, 카나리: 52%<br/>정상]
-            M4[배송성공률: 99.8%<br/>안정: 99.7%, 카나리: 99.9%<br/>개선됨]
-        end
-        
-        subgraph "자동 판단"
-            DECISION[모든 지표 정상<br/>30%로 확장]
-        end
-    end
-    
-    ALB --> STABLE
-    ALB --> CANARY
-    STABLE --> SP1
-    STABLE --> SP2
-    STABLE --> SP3
-    STABLE --> SP4
-    CANARY --> CP1
-    
-    SP1 -.-> M1
-    SP2 -.-> M2
-    SP3 -.-> M3
-    SP4 -.-> M4
-    CP1 -.-> M1
-    CP1 -.-> M2
-    CP1 -.-> M3
-    CP1 -.-> M4
-    
-    M1 --> DECISION
-    M2 --> DECISION
-    M3 --> DECISION
-    M4 --> DECISION
-    
-    style ALB fill:#fff3e0
-    style STABLE fill:#e8f5e8
-    style CANARY fill:#e3f2fd
-    style SP1 fill:#e8f5e8
-    style SP2 fill:#e8f5e8
-    style SP3 fill:#e8f5e8
-    style SP4 fill:#e8f5e8
-    style CP1 fill:#e3f2fd
-    style M1 fill:#f3e5f5
-    style M2 fill:#f3e5f5
-    style M3 fill:#f3e5f5
-    style M4 fill:#f3e5f5
-    style DECISION fill:#fff9c4
-```
+
+![쿠팡 로켓배송 카나리 배포](/theory/week_04/images/coupang_canary_deployment.svg)
 
 ```mermaid
 sequenceDiagram

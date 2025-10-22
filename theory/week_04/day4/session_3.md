@@ -218,59 +218,8 @@ graph TB
 **실무 Tekton 활용 사례**:
 
 **카카오 Tekton 파이프라인**:
-```mermaid
-graph TB
-    subgraph "카카오톡 서비스 Tekton 파이프라인"
-        subgraph "파이프라인 단계"
-            S1[Git Clone<br/>소스코드 다운로드]
-            S2[Build & Test<br/>Gradle 빌드<br/>JUnit 테스트]
-            S3[Security Scan<br/>취약점 검사<br/>SAST/DAST]
-            S4[Image Build<br/>Docker 이미지<br/>Harbor 푸시]
-            S5[Deploy<br/>K8s 배포<br/>ArgoCD 연동]
-        end
-        
-        subgraph "Tekton 리소스"
-            T1[Task<br/>단일 작업<br/>재사용 가능]
-            T2[Pipeline<br/>Task 조합<br/>워크플로우]
-            T3[TaskRun<br/>실행 인스턴스<br/>Pod 생성]
-            T4[PipelineRun<br/>파이프라인 실행<br/>전체 워크플로우]
-            T5[Workspace<br/>공유 저장소<br/>PVC 마운트]
-        end
-        
-        subgraph "도입 성과"
-            P1[빌드 시간<br/>50% 단축<br/>Jenkins: 20분<br/>Tekton: 10분<br/>병렬 처리]
-            P2[리소스 효율<br/>70% 절약<br/>동적 할당<br/>필요시에만 Pod<br/>비용 최적화]
-            P3[확장성<br/>10배 증가<br/>동시 빌드<br/>100개 1000개<br/>K8s 네이티브]
-            P4[개발자 만족도<br/>95%<br/>YAML 기반<br/>선언적 정의<br/>사용 편의성]
-        end
-    end
-    
-    S1 --> S2 --> S3 --> S4 --> S5
-    
-    T1 --> T2 --> T4
-    T3 --> T4
-    T5 --> T4
-    
-    S2 -.-> P1
-    S3 -.-> P2
-    S4 -.-> P3
-    S5 -.-> P4
-    
-    style S1 fill:#fff9c4
-    style S2 fill:#e3f2fd
-    style S3 fill:#ffebee
-    style S4 fill:#e0f2f1
-    style S5 fill:#f3e5f5
-    style T1 fill:#e3f2fd
-    style T2 fill:#fff3e0
-    style T3 fill:#e8f5e8
-    style T4 fill:#fce4ec
-    style T5 fill:#f3e5f5
-    style P1 fill:#fff9c4
-    style P2 fill:#e1f5fe
-    style P3 fill:#e8f5e8
-    style P4 fill:#fce4ec
-```
+
+![카카오 Tekton 파이프라인](/theory/week_04/images/kakao_tekton_pipeline.svg)
 
 - **카카오 사례**: 카카오톡 서비스의 Kubernetes 네이티브 CI/CD
   - Jenkins 대비 빌드 시간 50% 단축 (20분 → 10분)
