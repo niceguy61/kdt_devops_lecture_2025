@@ -1,0 +1,84 @@
+.App {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.App-header {
+  padding: 2rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.version {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.App-main {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.status-section,
+.users-section {
+  background: white;
+  color: #333;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-section h2,
+.users-section h2 {
+  margin-top: 0;
+  color: #667eea;
+}
+
+.success {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.users-list {
+  list-style: none;
+  padding: 0;
+}
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 5px;
+}
+
+.user-item strong {
+  color: #667eea;
+}
+
+.user-item small {
+  color: #6b7280;
+}
+
+.App-footer {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.8;
+}
