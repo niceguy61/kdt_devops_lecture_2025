@@ -690,13 +690,13 @@ jobs:
         # SHA 태그 추출
         IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep sha- | head -1)
         
-        # deployment.yaml 업데이트
-        sed -i "s|image: ghcr.io/.*/sample-app:.*|image: ${IMAGE_TAG}|g" k8s/deployment.yaml
+        # app.yaml 업데이트
+        sed -i "s|image: ghcr.io/.*/sample-app:.*|image: ${IMAGE_TAG}|g" lab_scripts/sample-app/k8s/app.yaml
         
         # 변경사항 커밋
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add k8s/deployment.yaml
+        git add lab_scripts/sample-app/k8s/app.yaml
         git commit -m "Update image to ${IMAGE_TAG}" || exit 0
         git push
 EOF
