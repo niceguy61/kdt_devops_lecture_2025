@@ -654,7 +654,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # push 권한 추가
       packages: write
 
     steps:
@@ -674,7 +674,7 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
         tags: |
           type=raw,value=latest
-          type=sha,prefix={{branch}}-
+          type=sha,prefix={{branch}}-,format=short
 
     - name: Build and push
       uses: docker/build-push-action@v4
@@ -687,18 +687,22 @@ jobs:
 
     - name: Update Kubernetes manifests
       run: |
-        # SHA 태그 추출
-        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep sha- | head -1)
+        # metadata action에서 생성된 짧은 SHA 태그 사용
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep "main-" | head -1)
+        echo "Updating image to: ${IMAGE_TAG}"
         
-        # app.yaml 업데이트
-        sed -i "s|image: ghcr.io/.*/sample-app:.*|image: ${IMAGE_TAG}|g" lab_scripts/sample-app/k8s/app.yaml
+        # app.yaml 업데이트 (정확한 패턴 매칭)
+        sed -i "s|image: ghcr.io/[^/]*/[^/]*/sample-app:.*|image: ${IMAGE_TAG}|g" lab_scripts/sample-app/k8s/app.yaml
+        
+        # 변경사항 확인
+        grep "image:" lab_scripts/sample-app/k8s/app.yaml
         
         # 변경사항 커밋
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add lab_scripts/sample-app/k8s/app.yaml
         git commit -m "Update image to ${IMAGE_TAG}" || exit 0
-        git push
+        git push origin main
 EOF
 ```
 
