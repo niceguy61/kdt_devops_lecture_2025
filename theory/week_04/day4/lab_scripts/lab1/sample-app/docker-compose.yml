@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: ghcr.io/${GITHUB_USERNAME}/${GITHUB_REPO}/frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  backend:
+    image: ghcr.io/${GITHUB_USERNAME}/${GITHUB_REPO}/backend:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=database
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=myapp
+    depends_on:
+      - database
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=myapp
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup
+    environment:
+      - WATCHTOWER_TRACE=true
+    # 5분마다 GHCR에서 새 이미지 체크
+
+volumes:
+  db-data:
