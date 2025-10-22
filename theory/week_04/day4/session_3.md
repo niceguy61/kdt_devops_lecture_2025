@@ -219,7 +219,7 @@ graph TB
 
 **카카오 Tekton 파이프라인**:
 
-![카카오 Tekton 파이프라인](/theory/week_04/images/kakao_tekton_pipeline.svg)
+<img src="../images/kakao_tekton_pipeline.svg" alt="카카오 Tekton 파이프라인" />
 
 - **카카오 사례**: 카카오톡 서비스의 Kubernetes 네이티브 CI/CD
   - Jenkins 대비 빌드 시간 50% 단축 (20분 → 10분)

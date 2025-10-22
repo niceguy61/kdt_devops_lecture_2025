@@ -158,7 +158,7 @@ spec:
 
 **쿠팡 로켓배송 카나리 배포**:
 
-![쿠팡 로켓배송 카나리 배포](/theory/week_04/images/coupang_canary_deployment.svg)
+<img src="../images/coupang_canary_deployment.svg" alt="쿠팡 로켓배송 카나리 배포" />
 
 ```mermaid
 sequenceDiagram

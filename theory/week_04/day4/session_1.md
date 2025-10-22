@@ -250,7 +250,7 @@ sequenceDiagram
 
 **배달의민족 GitOps 아키텍처**:
 
-![배달의민족 GitOps 아키텍처](/theory/week_04/images/baemin_gitops_architecture.svg)
+<img src="../images/baemin_gitops_architecture.svg" alt="배달의민족 GitOps 아키텍처" />
 
 - **배달의민족 사례**: 50+ 마이크로서비스를 ArgoCD로 관리, 일일 배포 50회 이상
   - 주문/결제/배송/알림 서비스의 독립적 배포
