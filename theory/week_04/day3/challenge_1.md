@@ -139,7 +139,18 @@ cd theory/week_04/day3/lab_scripts/challenge1
 
 **예상 시간**: 5-7분
 
-### Step 2: 문제 시스템 배포
+### Step 2: 모니터링 접근 (포트 포워딩)
+```bash
+./port-forward.sh
+```
+
+**접속 정보**:
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+
+**참고**: 포트 포워딩은 백그라운드로 실행됩니다. 종료하려면 `Ctrl+C`를 누르세요.
+
+### Step 3: 문제 시스템 배포
 ```bash
 ./deploy-broken-services.sh
 ```
