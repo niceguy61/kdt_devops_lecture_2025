@@ -60,19 +60,51 @@ graph TB
 
 ### 📝 직접 작성하기
 
-**1-1. 새 GitHub 저장소 생성**
-```bash
-# 1. GitHub에서 새 저장소 생성
-# - Repository name: gitops-k8s-demo
-# - Public으로 설정 (GHCR 사용을 위해 필수!)
-# - README.md 체크
+**1-1. 새 GitHub 저장소 생성 (상세 가이드)**
 
-# 2. 저장소 클론
+**GitHub 웹사이트에서 저장소 생성**:
+1. https://github.com 접속 후 로그인
+2. 우측 상단 `+` 버튼 → `New repository` 클릭
+3. 저장소 설정:
+   - **Repository name**: `gitops-k8s-demo`
+   - **Description**: "Kubernetes GitOps Demo with ArgoCD"
+   - **Public** 선택 (⚠️ GHCR 사용을 위해 필수!)
+   - ✅ **Add a README file** 체크
+   - ✅ **Add .gitignore** → Node 선택
+   - **Create repository** 클릭
+
+**로컬에 저장소 클론**:
+```bash
+# SSH 방식 (권장)
 git clone git@github.com:YOUR_USERNAME/gitops-k8s-demo.git
+
+# HTTPS 방식 (SSH 설정 안 된 경우)
+git clone https://github.com/YOUR_USERNAME/gitops-k8s-demo.git
+
+# 저장소 이동
 cd gitops-k8s-demo
 
-# 3. 기본 구조 생성
-mkdir -p {lab_scripts/sample-app/{src,k8s,docker},.github/workflows}
+# 기본 구조 생성
+mkdir -p lab_scripts/sample-app/src
+mkdir -p lab_scripts/sample-app/k8s
+mkdir -p lab_scripts/sample-app/docker
+mkdir -p .github/workflows
+
+# 구조 확인
+tree -L 3
+```
+
+**📊 예상 결과**:
+```
+gitops-k8s-demo/
+├── .github/
+│   └── workflows/
+├── lab_scripts/
+│   └── sample-app/
+│       ├── docker/
+│       ├── k8s/
+│       └── src/
+└── README.md
 ```
 
 **1-2. Kind Cluster 생성**
@@ -347,7 +379,7 @@ spec:
 EOF
 ```
 
-**1-7. ArgoCD 설치**
+**1-7. ArgoCD 설치 및 초기 설정**
 ```bash
 # ArgoCD 네임스페이스 생성
 kubectl create namespace argocd
@@ -355,14 +387,44 @@ kubectl create namespace argocd
 # ArgoCD 설치
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# ArgoCD 서버 대기
+# ArgoCD 서버 대기 (최대 5분)
+echo "ArgoCD 서버 시작 대기 중..."
 kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
 
 # ArgoCD 초기 비밀번호 확인
+echo ""
+echo "=== ArgoCD 접속 정보 ==="
+echo "URL: https://localhost:8080"
+echo "Username: admin"
+echo -n "Password: "
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+echo ""
+echo ""
 
 # 포트 포워딩 (백그라운드)
-kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+echo "ArgoCD 포트 포워딩 시작 (PID: $!)"
+echo "브라우저에서 https://localhost:8080 접속"
+echo ""
+```
+
+**ArgoCD CLI 설치 (선택사항)**:
+```bash
+# macOS
+brew install argocd
+
+# Linux
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+
+# Windows (PowerShell)
+# https://github.com/argoproj/argo-cd/releases/latest 에서 다운로드
+
+# CLI 로그인
+argocd login localhost:8080 --insecure
+# Username: admin
+# Password: [위에서 확인한 비밀번호]
 ```
 
 ### 📊 예상 결과
@@ -464,7 +526,7 @@ EOF
 
 **3-1. Deployment 및 Service**
 ```bash
-cat <<EOF > lab_scripts/sample-app/k8s/app.yaml
+cat <<'EOF' > lab_scripts/sample-app/k8s/app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -523,7 +585,18 @@ spec:
     nodePort: 30080
   selector:
     app: sample-app
----
+EOF
+
+# ⚠️ YOUR_USERNAME을 실제 GitHub 사용자명으로 변경
+sed -i 's/YOUR_USERNAME/실제사용자명/g' lab_scripts/sample-app/k8s/app.yaml
+
+# 또는 수동으로 편집
+# vi lab_scripts/sample-app/k8s/app.yaml
+```
+
+**3-2. ArgoCD Application 매니페스트 (별도 파일)**
+```bash
+cat <<'EOF' > lab_scripts/sample-app/k8s/argocd-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -542,17 +615,30 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
 EOF
+
+# ⚠️ YOUR_USERNAME을 실제 GitHub 사용자명으로 변경
+sed -i 's/YOUR_USERNAME/실제사용자명/g' lab_scripts/sample-app/k8s/argocd-app.yaml
 ```
+
+### 💡 코드 설명
+- **Deployment**: 3개 복제본으로 고가용성 확보
+- **Prometheus 어노테이션**: 자동 메트릭 수집 설정
+- **리소스 제한**: CPU/메모리 요청 및 제한 설정
+- **헬스체크**: Liveness/Readiness Probe로 자동 복구
+- **ArgoCD Application**: GitOps 자동 동기화 설정
 
 ---
 
-## 🛠️ Step 4: GitHub Actions 워크플로우 (5분)
+## 🛠️ Step 4: GitHub Actions 워크플로우 및 배포 (10분)
 
 ### 📝 직접 작성하기
 
+**4-1. GitHub Actions 워크플로우 생성**
 ```bash
-cat <<EOF > .github/workflows/gitops.yml
+cat <<'EOF' > .github/workflows/gitops.yml
 name: GitOps Pipeline
 
 on:
@@ -577,9 +663,18 @@ jobs:
     - name: Log in to GHCR
       uses: docker/login-action@v2
       with:
-        registry: \${{ env.REGISTRY }}
-        username: \${{ github.actor }}
-        password: \${{ secrets.GITHUB_TOKEN }}
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=latest
+          type=sha,prefix={{branch}}-
 
     - name: Build and push
       uses: docker/build-push-action@v4
@@ -587,8 +682,57 @@ jobs:
         context: lab_scripts/sample-app
         file: lab_scripts/sample-app/docker/Dockerfile
         push: true
-        tags: \${{ env.REGISTRY }}/\${{ github.repository }}/\${{ env.IMAGE_NAME }}:latest
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
 EOF
+```
+
+**4-2. Git 커밋 및 푸시**
+```bash
+# 모든 파일 추가
+git add .
+
+# 커밋
+git commit -m "feat: Add GitOps sample app with ArgoCD"
+
+# GitHub에 푸시
+git push origin main
+
+# GitHub Actions 실행 확인
+echo ""
+echo "=== GitHub Actions 확인 ==="
+echo "1. https://github.com/YOUR_USERNAME/gitops-k8s-demo/actions 접속"
+echo "2. 'GitOps Pipeline' 워크플로우 실행 확인"
+echo "3. 빌드 완료까지 약 2-3분 소요"
+echo ""
+```
+
+**4-3. GHCR 패키지 공개 설정 (중요!)**
+```bash
+echo "=== GHCR 패키지 공개 설정 ==="
+echo "1. https://github.com/YOUR_USERNAME?tab=packages 접속"
+echo "2. 'gitops-k8s-demo/sample-app' 패키지 클릭"
+echo "3. 우측 'Package settings' 클릭"
+echo "4. 'Change visibility' → 'Public' 선택"
+echo "5. 패키지 이름 입력 후 확인"
+echo ""
+```
+
+### 📊 예상 결과
+```
+GitHub Actions 실행 로그:
+✅ Checkout code
+✅ Log in to GHCR
+✅ Extract metadata
+✅ Build and push Docker image
+   - ghcr.io/YOUR_USERNAME/gitops-k8s-demo/sample-app:latest
+   - ghcr.io/YOUR_USERNAME/gitops-k8s-demo/sample-app:main-abc1234
+
+GHCR 패키지 생성:
+- 이름: sample-app
+- 태그: latest, main-abc1234
+- 크기: ~50MB
+- 가시성: Public
 ```
 
 ---
