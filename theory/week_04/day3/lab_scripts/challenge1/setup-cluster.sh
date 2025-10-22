@@ -62,10 +62,18 @@ kubectl wait --for=condition=ready pod -l control-plane=audit-controller -n gate
 sleep 10  # webhook 등록 완료 대기
 
 # 7. Prometheus & Grafana 설치 (간소화)
-echo "7/7 모니터링 스택 설치 중..."
+echo "7/8 모니터링 스택 설치 중..."
 kubectl create namespace monitoring
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
+
+# Prometheus 준비 대기
+echo "   Prometheus 준비 대기 중..."
+kubectl wait --for=condition=ready pod -l app=prometheus -n istio-system --timeout=120s
+
+# 8. Gatekeeper 메트릭 설정
+echo "8/8 Gatekeeper 메트릭 설정 중..."
+./setup-gatekeeper-metrics.sh
 
 echo ""
 echo "=== Challenge 환경 설치 완료 ==="
