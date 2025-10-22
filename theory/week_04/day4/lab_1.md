@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**🔄 GitOps** • **🚀 ArgoCD** • **📦 자동 배포**
+**🔄 GitOps** • **🐳 Docker Compose** • **👁️ Watchtower**
 
-*Git을 단일 진실 소스로 하는 선언적 배포 파이프라인 구축*
+*Docker Compose와 Watchtower를 활용한 자동 배포 파이프라인 구축*
 
 </div>
 
@@ -12,19 +12,19 @@
 
 ## 🕘 실습 정보
 **시간**: 12:00-13:50 (110분)
-**목표**: GitOps 기반 CI/CD 파이프라인 구축 및 자동 배포 체험
-**방식**: GitHub Actions + ArgoCD 통합 실습
+**목표**: Docker Compose + Watchtower 기반 GitOps 파이프라인 구축
+**방식**: GitHub Actions + Watchtower 자동 업데이트 실습
 
 ## 🎯 실습 목표
 ### 📚 학습 목표
-- **GitOps 워크플로우**: Git 기반 선언적 배포 이해
-- **ArgoCD 운영**: Kubernetes 네이티브 CD 도구 활용
-- **자동화 파이프라인**: 코드 변경부터 배포까지 완전 자동화
+- **GitOps 워크플로우**: Git 기반 자동 배포 이해
+- **Watchtower 활용**: 컨테이너 이미지 자동 업데이트
+- **Docker Compose 운영**: 프로덕션급 컨테이너 오케스트레이션
 
 ### 🛠️ 구현 목표
-- **CI/CD 파이프라인**: GitHub Actions + ArgoCD 통합
-- **자동 배포**: 코드 푸시 시 자동 이미지 빌드 및 배포
-- **GitOps 실습**: 선언적 배포와 드리프트 감지
+- **CI/CD 파이프라인**: GitHub Actions + Docker Hub + Watchtower
+- **자동 재시작**: 이미지 업데이트 시 컨테이너 자동 재시작
+- **무중단 배포**: 서비스 중단 없는 업데이트
 
 ---
 
@@ -41,31 +41,28 @@ graph TB
         C --> D[GitHub Repository]
         D --> E[GitHub Actions]
         E --> F[Docker Build & Push]
-        F --> G[Manifest 업데이트]
     end
     
     subgraph "Container Registry"
-        F --> H[Docker Hub]
+        F --> G[Docker Hub]
     end
     
-    subgraph "Kubernetes Cluster"
-        I[ArgoCD] --> J[Application Sync]
-        J --> K[Pod 배포]
-        K --> L[Service 노출]
+    subgraph "Production Server"
+        H[Docker Compose<br/>애플리케이션 스택]
+        I[Watchtower<br/>이미지 모니터링]
+        J[App Container<br/>실제 서비스]
     end
     
-    subgraph "GitOps Repository"
-        G --> M[K8s Manifests]
-        M --> I
-    end
-    
-    D -.-> I
-    H -.-> K
+    G --> I
+    I --> J
+    J --> H
+    I -.-> |이미지 업데이트 감지| J
+    J -.-> |컨테이너 재시작| H
     
     style A fill:#e8f5e8
     style E fill:#fff3e0
     style I fill:#ffebee
-    style K fill:#e3f2fd
+    style J fill:#e3f2fd
 ```
 
 ---
