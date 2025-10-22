@@ -173,14 +173,14 @@ graph TB
         end
         
         subgraph "실시간 모니터링"
-            M1[응답시간: < 200ms<br/>안정: 180ms, 카나리: 195ms<br/>✓ 정상]
-            M2[에러율: < 0.1%<br/>안정: 0.05%, 카나리: 0.08%<br/>✓ 정상]
-            M3[CPU: < 70%<br/>안정: 45%, 카나리: 52%<br/>✓ 정상]
-            M4[배송성공률: 99.8%<br/>안정: 99.7%, 카나리: 99.9%<br/>✓ 개선됨]
+            M1[응답시간: 200ms<br/>안정: 180ms, 카나리: 195ms<br/>정상]
+            M2[에러율: 0.1%<br/>안정: 0.05%, 카나리: 0.08%<br/>정상]
+            M3[CPU: 70%<br/>안정: 45%, 카나리: 52%<br/>정상]
+            M4[배송성공률: 99.8%<br/>안정: 99.7%, 카나리: 99.9%<br/>개선됨]
         end
         
         subgraph "자동 판단"
-            DECISION[모든 지표 정상<br/>→ 30%로 확장]
+            DECISION[모든 지표 정상<br/>30%로 확장]
         end
     end
     
@@ -206,13 +206,19 @@ graph TB
     M3 --> DECISION
     M4 --> DECISION
     
-    style ALB fill:#F7931E
-    style STABLE fill:#4CAF50
-    style CANARY fill:#2196F3
-    style SP1,SP2,SP3,SP4 fill:#66BB6A
-    style CP1 fill:#42A5F5
-    style M1,M2,M3,M4 fill:#E8F5E8
-    style DECISION fill:#FFEB3B
+    style ALB fill:#fff3e0
+    style STABLE fill:#e8f5e8
+    style CANARY fill:#e3f2fd
+    style SP1 fill:#e8f5e8
+    style SP2 fill:#e8f5e8
+    style SP3 fill:#e8f5e8
+    style SP4 fill:#e8f5e8
+    style CP1 fill:#e3f2fd
+    style M1 fill:#f3e5f5
+    style M2 fill:#f3e5f5
+    style M3 fill:#f3e5f5
+    style M4 fill:#f3e5f5
+    style DECISION fill:#fff9c4
 ```
 
 ```mermaid

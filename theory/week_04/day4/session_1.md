@@ -266,7 +266,7 @@ graph TB
         end
         
         subgraph "성과 지표"
-            STATS[일일 배포: 50+회<br/>배포 실패율: < 1%<br/>롤백 시간: < 5분]
+            STATS[일일 배포: 50+회<br/>배포 실패율: 1%<br/>롤백 시간: 5분]
         end
     end
     
@@ -277,14 +277,14 @@ graph TB
     K8S --> DELIVERY
     K8S --> NOTI
     
-    style GIT fill:#F05032
-    style ARGOCD fill:#2AC1BC
-    style K8S fill:#326CE5
-    style ORDER fill:#FF6B6B
-    style PAYMENT fill:#4ECDC4
-    style DELIVERY fill:#45B7D1
-    style NOTI fill:#96CEB4
-    style STATS fill:#FEE500
+    style GIT fill:#e8f5e8
+    style ARGOCD fill:#fff3e0
+    style K8S fill:#ffebee
+    style ORDER fill:#f3e5f5
+    style PAYMENT fill:#e3f2fd
+    style DELIVERY fill:#fce4ec
+    style NOTI fill:#e0f2f1
+    style STATS fill:#fff9c4
 ```
 
 - **배달의민족 사례**: 50+ 마이크로서비스를 ArgoCD로 관리, 일일 배포 50회 이상

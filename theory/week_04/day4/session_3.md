@@ -234,7 +234,7 @@ graph TB
         subgraph "도입 성과"
             P1[빌드 시간<br/>50% 단축<br/>Jenkins: 20분<br/>Tekton: 10분<br/>병렬 처리]
             P2[리소스 효율<br/>70% 절약<br/>동적 할당<br/>필요시에만 Pod<br/>비용 최적화]
-            P3[확장성<br/>10배 증가<br/>동시 빌드<br/>100개 → 1000개<br/>K8s 네이티브]
+            P3[확장성<br/>10배 증가<br/>동시 빌드<br/>100개 1000개<br/>K8s 네이티브]
             P4[개발자 만족도<br/>95%<br/>YAML 기반<br/>선언적 정의<br/>사용 편의성]
         end
     end
@@ -250,20 +250,20 @@ graph TB
     S4 -.-> P3
     S5 -.-> P4
     
-    style S1 fill:#FEE500
-    style S2 fill:#0066CC
-    style S3 fill:#FF6B6B
-    style S4 fill:#4ECDC4
-    style S5 fill:#326CE5
-    style T1 fill:#E3F2FD
-    style T2 fill:#FFF3E0
-    style T3 fill:#E8F5E8
-    style T4 fill:#FCE4EC
-    style T5 fill:#F3E5F5
-    style P1 fill:#FFF9C4
-    style P2 fill:#E1F5FE
-    style P3 fill:#E8F5E8
-    style P4 fill:#FCE4EC
+    style S1 fill:#fff9c4
+    style S2 fill:#e3f2fd
+    style S3 fill:#ffebee
+    style S4 fill:#e0f2f1
+    style S5 fill:#f3e5f5
+    style T1 fill:#e3f2fd
+    style T2 fill:#fff3e0
+    style T3 fill:#e8f5e8
+    style T4 fill:#fce4ec
+    style T5 fill:#f3e5f5
+    style P1 fill:#fff9c4
+    style P2 fill:#e1f5fe
+    style P3 fill:#e8f5e8
+    style P4 fill:#fce4ec
 ```
 
 - **카카오 사례**: 카카오톡 서비스의 Kubernetes 네이티브 CI/CD
