@@ -66,7 +66,7 @@ graph TB
 1. https://github.com 접속 후 로그인
 2. 우측 상단 `+` 버튼 → `New repository` 클릭
 3. 저장소 설정:
-   - **Repository name**: `gitops-k8s-demo`
+   - **Repository name**: `k8s-gitops-demo`
    - **Description**: "Kubernetes GitOps Demo with ArgoCD"
    - **Public** 선택 (⚠️ GHCR 사용을 위해 필수!)
    - ✅ **Add a README file** 체크
@@ -76,13 +76,13 @@ graph TB
 **로컬에 저장소 클론**:
 ```bash
 # SSH 방식 (권장)
-git clone git@github.com:YOUR_USERNAME/gitops-k8s-demo.git
+git clone git@github.com:YOUR_USERNAME/k8s-gitops-demo.git
 
 # HTTPS 방식 (SSH 설정 안 된 경우)
-git clone https://github.com/YOUR_USERNAME/gitops-k8s-demo.git
+git clone https://github.com/YOUR_USERNAME/k8s-gitops-demo.git
 
 # 저장소 이동
-cd gitops-k8s-demo
+cd k8s-gitops-demo
 
 # 기본 구조 생성
 mkdir -p lab_scripts/sample-app/src
@@ -96,7 +96,7 @@ tree -L 3
 
 **📊 예상 결과**:
 ```
-gitops-k8s-demo/
+k8s-gitops-demo/
 ├── .github/
 │   └── workflows/
 ├── lab_scripts/
@@ -548,7 +548,7 @@ spec:
     spec:
       containers:
       - name: app
-        image: ghcr.io/YOUR_USERNAME/gitops-k8s-demo/sample-app:latest
+        image: ghcr.io/YOUR_USERNAME/k8s-gitops-demo/sample-app:latest
         ports:
         - containerPort: 3000
         env:
@@ -605,7 +605,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR_USERNAME/gitops-k8s-demo.git
+    repoURL: https://github.com/YOUR_USERNAME/k8s-gitops-demo.git
     targetRevision: HEAD
     path: lab_scripts/sample-app/k8s
   destination:
@@ -665,7 +665,7 @@ jobs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GH_TOKEN }}
 
     - name: Extract metadata
       id: meta
@@ -701,7 +701,7 @@ git push origin main
 # GitHub Actions 실행 확인
 echo ""
 echo "=== GitHub Actions 확인 ==="
-echo "1. https://github.com/YOUR_USERNAME/gitops-k8s-demo/actions 접속"
+echo "1. https://github.com/YOUR_USERNAME/k8s-gitops-demo/actions 접속"
 echo "2. 'GitOps Pipeline' 워크플로우 실행 확인"
 echo "3. 빌드 완료까지 약 2-3분 소요"
 echo ""
@@ -711,7 +711,7 @@ echo ""
 ```bash
 echo "=== GHCR 패키지 공개 설정 ==="
 echo "1. https://github.com/YOUR_USERNAME?tab=packages 접속"
-echo "2. 'gitops-k8s-demo/sample-app' 패키지 클릭"
+echo "2. 'k8s-gitops-demo/sample-app' 패키지 클릭"
 echo "3. 우측 'Package settings' 클릭"
 echo "4. 'Change visibility' → 'Public' 선택"
 echo "5. 패키지 이름 입력 후 확인"
@@ -725,8 +725,8 @@ GitHub Actions 실행 로그:
 ✅ Log in to GHCR
 ✅ Extract metadata
 ✅ Build and push Docker image
-   - ghcr.io/YOUR_USERNAME/gitops-k8s-demo/sample-app:latest
-   - ghcr.io/YOUR_USERNAME/gitops-k8s-demo/sample-app:main-abc1234
+   - ghcr.io/YOUR_USERNAME/k8s-gitops-demo/sample-app:latest
+   - ghcr.io/YOUR_USERNAME/k8s-gitops-demo/sample-app:main-abc1234
 
 GHCR 패키지 생성:
 - 이름: sample-app
@@ -776,7 +776,7 @@ echo ""
      - ✅ **SELF HEAL** 체크
 
 4. **Source 섹션 설정**
-   - **Repository URL**: `https://github.com/YOUR_USERNAME/gitops-k8s-demo.git`
+   - **Repository URL**: `https://github.com/YOUR_USERNAME/k8s-gitops-demo.git`
      - ⚠️ YOUR_USERNAME을 실제 사용자명으로 변경
    - **Revision**: `HEAD` (기본값)
    - **Path**: `lab_scripts/sample-app/k8s`
@@ -796,7 +796,7 @@ argocd login localhost:8080 --insecure
 
 # Application 생성
 argocd app create sample-app \
-  --repo https://github.com/YOUR_USERNAME/gitops-k8s-demo.git \
+  --repo https://github.com/YOUR_USERNAME/k8s-gitops-demo.git \
   --path lab_scripts/sample-app/k8s \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace default \
@@ -933,7 +933,7 @@ git push origin main
 
 echo ""
 echo "=== GitOps 워크플로우 확인 ==="
-echo "1. GitHub Actions: https://github.com/YOUR_USERNAME/gitops-k8s-demo/actions"
+echo "1. GitHub Actions: https://github.com/YOUR_USERNAME/k8s-gitops-demo/actions"
 echo "   → 새 이미지 빌드 및 푸시 (2-3분)"
 echo ""
 echo "2. ArgoCD UI: https://localhost:8080"
@@ -1022,7 +1022,7 @@ sequenceDiagram
 ## ✅ 실습 체크포인트
 
 ### ✅ Step 1: 저장소 및 모니터링 스택
-- [ ] GitHub 저장소 `gitops-k8s-demo` 생성 (Public)
+- [ ] GitHub 저장소 `k8s-gitops-demo` 생성 (Public)
 - [ ] 로컬에 저장소 클론 완료
 - [ ] 폴더 구조 생성 완료
 - [ ] Kind 클러스터 생성 완료
@@ -1055,23 +1055,100 @@ sequenceDiagram
 
 ## 🔍 트러블슈팅
 
-### 문제 1: Metrics Server 시작 실패
-```bash
-# TLS 설정 확인
-kubectl describe deployment metrics-server -n kube-system
+### 문제 1: GitHub Actions 빌드 실패
+**증상**: "Error: buildx failed with: ERROR: failed to solve"
 
-# 로그 확인
-kubectl logs -n kube-system deployment/metrics-server
+**원인**: Dockerfile 경로 또는 컨텍스트 문제
+
+**해결**:
+```bash
+# Dockerfile 경로 확인
+ls -la lab_scripts/sample-app/docker/Dockerfile
+
+# 워크플로우 파일 확인
+cat .github/workflows/gitops.yml | grep -A 5 "context:"
+
+# 수정 후 다시 푸시
+git add .
+git commit -m "fix: Correct Dockerfile path"
+git push origin main
 ```
 
-### 문제 2: 모니터링 도구 접속 불가
-```bash
-# NodePort 서비스 확인
-kubectl get svc -n monitoring
+### 문제 2: GHCR 이미지 Pull 실패
+**증상**: "Error: ErrImagePull" 또는 "ImagePullBackOff"
 
-# 포트 포워딩으로 대체
-kubectl port-forward -n monitoring svc/prometheus-service 9090:9090 &
-kubectl port-forward -n monitoring svc/grafana-service 3000:3000 &
+**원인**: GHCR 패키지가 Private 상태
+
+**해결**:
+```bash
+# 1. GHCR 패키지 Public으로 변경
+echo "https://github.com/YOUR_USERNAME?tab=packages 접속"
+echo "패키지 설정에서 Visibility를 Public으로 변경"
+
+# 2. 이미지 이름 확인
+kubectl describe pod -l app=sample-app | grep -A 5 "Events:"
+
+# 3. 수동으로 이미지 Pull 테스트
+docker pull ghcr.io/YOUR_USERNAME/k8s-gitops-demo/sample-app:latest
+```
+
+### 문제 3: ArgoCD 동기화 실패
+**증상**: "ComparisonError" 또는 "OutOfSync"
+
+**원인**: 매니페스트 문법 오류 또는 저장소 접근 문제
+
+**해결**:
+```bash
+# 1. ArgoCD 로그 확인
+kubectl logs -n argocd deployment/argocd-application-controller
+
+# 2. 매니페스트 검증
+kubectl apply --dry-run=client -f lab_scripts/sample-app/k8s/app.yaml
+
+# 3. 저장소 연결 테스트
+argocd repo list
+argocd app get sample-app
+
+# 4. 수동 동기화
+argocd app sync sample-app --force
+```
+
+### 문제 4: Pod가 Running 상태가 안 됨
+**증상**: Pod가 Pending, CrashLoopBackOff, Error 상태
+
+**해결**:
+```bash
+# Pod 상태 확인
+kubectl get pods -l app=sample-app
+kubectl describe pod -l app=sample-app
+
+# 로그 확인
+kubectl logs -l app=sample-app --tail=50
+
+# 이벤트 확인
+kubectl get events --sort-by='.lastTimestamp' | grep sample-app
+
+# 리소스 부족 확인
+kubectl top nodes
+kubectl top pods
+```
+
+### 문제 5: Metrics Server 메트릭 수집 안 됨
+**증상**: "kubectl top nodes" 실행 시 "Metrics API not available"
+
+**해결**:
+```bash
+# Metrics Server 상태 확인
+kubectl get deployment metrics-server -n kube-system
+kubectl logs -n kube-system deployment/metrics-server
+
+# TLS 설정 재적용
+kubectl patch -n kube-system deployment metrics-server --type=json \
+  -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+
+# 재시작
+kubectl rollout restart deployment/metrics-server -n kube-system
+kubectl wait --for=condition=available --timeout=300s deployment/metrics-server -n kube-system
 ```
 
 ---
