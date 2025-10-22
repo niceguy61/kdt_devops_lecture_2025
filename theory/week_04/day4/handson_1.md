@@ -757,7 +757,109 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 echo ""
 ```
 
-**5-2. ArgoCD UI에서 애플리케이션 생성 (상세 가이드)**
+**5-2. GHCR 인증 설정 (중요!)**
+
+ArgoCD가 Private GHCR 이미지를 pull하려면 인증이 필요합니다.
+
+```bash
+# GitHub Personal Access Token 생성
+echo "=== GitHub PAT 생성 ==="
+echo "1. https://github.com/settings/tokens 접속"
+echo "2. 'Generate new token (classic)' 클릭"
+echo "3. Note: 'ArgoCD GHCR Access'"
+echo "4. Expiration: 90 days"
+echo "5. Scopes: ✅ read:packages"
+echo "6. 'Generate token' 클릭 후 토큰 복사"
+echo ""
+
+# Kubernetes Secret 생성
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=YOUR_GITHUB_USERNAME \
+  --docker-password=YOUR_GITHUB_PAT \
+  --docker-email=YOUR_EMAIL \
+  -n default
+
+# Secret 확인
+kubectl get secret ghcr-secret -n default
+```
+
+**Deployment에 imagePullSecrets 추가**:
+```bash
+# app.yaml 수정
+cat <<'EOF' > lab_scripts/sample-app/k8s/app.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: app
+        image: ghcr.io/YOUR_USERNAME/k8s-gitops-demo/sample-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: APP_VERSION
+          value: "v1.0.0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-app-service
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 3000
+    nodePort: 30080
+  selector:
+    app: sample-app
+EOF
+
+# YOUR_USERNAME 변경
+sed -i 's/YOUR_USERNAME/실제사용자명/g' lab_scripts/sample-app/k8s/app.yaml
+
+# Git 커밋 및 푸시
+git add lab_scripts/sample-app/k8s/app.yaml
+git commit -m "feat: Add imagePullSecrets for GHCR"
+git push origin main
+```
+
+**5-3. ArgoCD UI에서 애플리케이션 생성 (상세 가이드)**
 
 1. **로그인**
    - URL: https://localhost:8080
@@ -789,7 +891,7 @@ echo ""
    - 하단 `CREATE` 버튼 클릭
    - 애플리케이션 카드가 생성되며 자동으로 동기화 시작
 
-**5-3. CLI로 애플리케이션 생성 (대안 방법)**
+**5-4. CLI로 애플리케이션 생성 (대안 방법)**
 ```bash
 # ArgoCD CLI 로그인 (아직 안 했다면)
 argocd login localhost:8080 --insecure
@@ -811,7 +913,7 @@ argocd app get sample-app
 argocd app wait sample-app --health
 ```
 
-**5-4. Kubernetes 매니페스트로 생성 (또 다른 대안)**
+**5-5. Kubernetes 매니페스트로 생성 (또 다른 대안)**
 ```bash
 # ArgoCD Application 리소스 적용
 kubectl apply -f lab_scripts/sample-app/k8s/argocd-app.yaml
