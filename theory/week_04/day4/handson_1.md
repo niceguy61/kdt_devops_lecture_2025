@@ -78,13 +78,13 @@ mkdir -p {lab_scripts/sample-app/{src,k8s,docker},.github/workflows}
 **1-2. Kind Cluster 생성**
 ```bash
 # 기존 클러스터 삭제
-kind delete cluster --name gitops-cluster
+kind delete cluster --name lab-cluster
 
 # Kind 설정 파일 생성
 cat <<EOF > kind-config.yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-name: gitops-cluster
+name: lab-cluster
 nodes:
 - role: control-plane
   extraPortMappings:
@@ -655,7 +655,7 @@ kubectl port-forward -n monitoring svc/grafana-service 3000:3000 &
 kubectl delete application sample-app -n argocd
 
 # Kind 클러스터 삭제
-kind delete cluster --name gitops-cluster
+kind delete cluster --name lab-cluster
 
 # 포트 포워딩 종료
 pkill -f "port-forward"
