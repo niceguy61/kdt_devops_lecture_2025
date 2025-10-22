@@ -242,7 +242,50 @@ sequenceDiagram
 
 **실무 연결**:
 
-![배달의민족 GitOps 아키텍처](../images/baemin_gitops_architecture.svg)
+**배달의민족 GitOps 아키텍처**:
+```mermaid
+graph TB
+    subgraph "배달의민족 GitOps 플랫폼"
+        subgraph "소스 관리"
+            GIT[Git Repository<br/>배달앱 소스코드<br/>K8s 매니페스트]
+        end
+        
+        subgraph "GitOps 엔진"
+            ARGOCD[ArgoCD<br/>GitOps Controller<br/>자동 배포]
+        end
+        
+        subgraph "Kubernetes 클러스터"
+            K8S[Kubernetes<br/>배달앱 서비스<br/>주문/결제/배송]
+        end
+        
+        subgraph "마이크로서비스"
+            ORDER[주문 서비스<br/>Order Service]
+            PAYMENT[결제 서비스<br/>Payment Service]
+            DELIVERY[배송 서비스<br/>Delivery Service]
+            NOTI[알림 서비스<br/>Notification]
+        end
+        
+        subgraph "성과 지표"
+            STATS[일일 배포: 50+회<br/>배포 실패율: < 1%<br/>롤백 시간: < 5분]
+        end
+    end
+    
+    GIT --> ARGOCD
+    ARGOCD --> K8S
+    K8S --> ORDER
+    K8S --> PAYMENT
+    K8S --> DELIVERY
+    K8S --> NOTI
+    
+    style GIT fill:#F05032
+    style ARGOCD fill:#2AC1BC
+    style K8S fill:#326CE5
+    style ORDER fill:#FF6B6B
+    style PAYMENT fill:#4ECDC4
+    style DELIVERY fill:#45B7D1
+    style NOTI fill:#96CEB4
+    style STATS fill:#FEE500
+```
 
 - **배달의민족 사례**: 50+ 마이크로서비스를 ArgoCD로 관리, 일일 배포 50회 이상
   - 주문/결제/배송/알림 서비스의 독립적 배포
@@ -261,30 +304,20 @@ sequenceDiagram
 
 **환경별 브랜치 전략**:
 ```mermaid
-gitgraph
-    commit id: "Initial"
+graph TB
+    A[main branch<br/>Production] --> B[staging branch<br/>Staging Deploy]
+    B --> C[develop branch<br/>Feature A + B]
     
-    branch develop
-    checkout develop
-    commit id: "Feature A"
-    commit id: "Feature B"
+    D[hotfix branch<br/>Critical Fix] --> A
     
-    branch staging
-    checkout staging
-    merge develop
-    commit id: "Staging Deploy"
+    C --> E[Feature A]
+    C --> F[Feature B]
     
-    checkout main
-    merge staging
-    commit id: "Production Deploy"
-    
-    branch hotfix
-    checkout hotfix
-    commit id: "Critical Fix"
-    
-    checkout main
-    merge hotfix
-    commit id: "Hotfix Deploy"
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#ffebee
+    style D fill:#f3e5f5
+    style E,F fill:#e3f2fd
 ```
 
 **ArgoCD Application 구조**:
