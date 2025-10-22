@@ -737,9 +737,294 @@ GHCR 패키지 생성:
 
 ---
 
+## 🛠️ Step 5: ArgoCD 애플리케이션 배포 (10분)
+
+### 📝 ArgoCD UI에서 애플리케이션 생성
+
+**5-1. ArgoCD 웹 UI 접속**
+```bash
+# 포트 포워딩 확인 (이미 실행 중이어야 함)
+ps aux | grep "port-forward.*argocd"
+
+# 실행 중이 아니면 다시 시작
+kubectl port-forward svc/argocd-server -n argocd 8080:443 > /dev/null 2>&1 &
+
+# 브라우저에서 접속
+echo "ArgoCD UI: https://localhost:8080"
+echo "Username: admin"
+echo -n "Password: "
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+echo ""
+```
+
+**5-2. ArgoCD UI에서 애플리케이션 생성 (상세 가이드)**
+
+1. **로그인**
+   - URL: https://localhost:8080
+   - Username: `admin`
+   - Password: [위에서 확인한 비밀번호]
+   - ⚠️ "Your connection is not private" 경고 → "Advanced" → "Proceed to localhost"
+
+2. **New App 클릭**
+   - 좌측 상단 `+ NEW APP` 버튼 클릭
+
+3. **General 섹션 설정**
+   - **Application Name**: `sample-app`
+   - **Project Name**: `default` (드롭다운에서 선택)
+   - **Sync Policy**: `Automatic` 선택
+     - ✅ **PRUNE RESOURCES** 체크
+     - ✅ **SELF HEAL** 체크
+
+4. **Source 섹션 설정**
+   - **Repository URL**: `https://github.com/YOUR_USERNAME/gitops-k8s-demo.git`
+     - ⚠️ YOUR_USERNAME을 실제 사용자명으로 변경
+   - **Revision**: `HEAD` (기본값)
+   - **Path**: `lab_scripts/sample-app/k8s`
+
+5. **Destination 섹션 설정**
+   - **Cluster URL**: `https://kubernetes.default.svc` (드롭다운에서 선택)
+   - **Namespace**: `default`
+
+6. **생성 완료**
+   - 하단 `CREATE` 버튼 클릭
+   - 애플리케이션 카드가 생성되며 자동으로 동기화 시작
+
+**5-3. CLI로 애플리케이션 생성 (대안 방법)**
+```bash
+# ArgoCD CLI 로그인 (아직 안 했다면)
+argocd login localhost:8080 --insecure
+
+# Application 생성
+argocd app create sample-app \
+  --repo https://github.com/YOUR_USERNAME/gitops-k8s-demo.git \
+  --path lab_scripts/sample-app/k8s \
+  --dest-server https://kubernetes.default.svc \
+  --dest-namespace default \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal
+
+# 동기화 상태 확인
+argocd app get sample-app
+
+# 동기화 대기
+argocd app wait sample-app --health
+```
+
+**5-4. Kubernetes 매니페스트로 생성 (또 다른 대안)**
+```bash
+# ArgoCD Application 리소스 적용
+kubectl apply -f lab_scripts/sample-app/k8s/argocd-app.yaml
+
+# 상태 확인
+kubectl get application -n argocd
+kubectl describe application sample-app -n argocd
+```
+
+### 📊 예상 결과
+
+**ArgoCD UI 화면**:
+```
+┌─────────────────────────────────────┐
+│ sample-app                          │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Status: Synced, Healthy             │
+│ Repo: github.com/.../gitops-k8s-... │
+│ Path: lab_scripts/sample-app/k8s    │
+│ Target: HEAD                        │
+│                                     │
+│ Resources:                          │
+│ ✅ Deployment/sample-app            │
+│ ✅ Service/sample-app-service       │
+│ ✅ Pod/sample-app-xxx (3개)         │
+└─────────────────────────────────────┘
+```
+
+**Kubernetes 리소스 확인**:
+```bash
+# Pod 상태 확인
+kubectl get pods -l app=sample-app
+
+# 예상 출력:
+# NAME                          READY   STATUS    RESTARTS   AGE
+# sample-app-7d9f8b5c4d-abc12   1/1     Running   0          2m
+# sample-app-7d9f8b5c4d-def34   1/1     Running   0          2m
+# sample-app-7d9f8b5c4d-ghi56   1/1     Running   0          2m
+
+# Service 확인
+kubectl get svc sample-app-service
+
+# 애플리케이션 접속 테스트
+curl http://localhost:30080
+
+# 예상 출력:
+# {
+#   "message": "Hello from Kubernetes GitOps!",
+#   "version": "v1.0.0",
+#   "timestamp": "2025-10-23T00:00:00.000Z",
+#   "hostname": "sample-app-7d9f8b5c4d-abc12"
+# }
+```
+
+### 💡 ArgoCD 주요 기능 설명
+
+**Sync Policy 옵션**:
+- **Automatic**: Git 변경 시 자동 동기화
+- **PRUNE RESOURCES**: Git에서 삭제된 리소스 자동 제거
+- **SELF HEAL**: 클러스터에서 수동 변경 시 Git 상태로 복구
+
+**Health Status**:
+- **Healthy**: 모든 리소스 정상 동작
+- **Progressing**: 배포 진행 중
+- **Degraded**: 일부 리소스 문제 발생
+- **Missing**: 리소스 누락
+
+**Sync Status**:
+- **Synced**: Git과 클러스터 상태 일치
+- **OutOfSync**: Git과 클러스터 상태 불일치
+- **Unknown**: 상태 확인 불가
+
+---
+
+## 🛠️ Step 6: GitOps 워크플로우 테스트 (5분)
+
+### 📝 애플리케이션 업데이트 테스트
+
+**6-1. 코드 변경**
+```bash
+# app.js 수정 (버전 업데이트)
+cat <<'EOF' > lab_scripts/sample-app/src/app.js
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Hello from Kubernetes GitOps! (Updated)',
+    version: process.env.APP_VERSION || 'v2.0.0',
+    timestamp: new Date().toISOString(),
+    hostname: require('os').hostname(),
+    update: 'This is version 2.0!'
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    uptime: process.uptime()
+  });
+});
+
+app.listen(port, () => {
+  console.log(`App listening at http://localhost:${port}`);
+});
+EOF
+
+# Kubernetes 매니페스트 업데이트
+sed -i 's/v1.0.0/v2.0.0/g' lab_scripts/sample-app/k8s/app.yaml
+```
+
+**6-2. Git 커밋 및 푸시**
+```bash
+# 변경사항 커밋
+git add .
+git commit -m "feat: Update app to v2.0.0"
+git push origin main
+
+echo ""
+echo "=== GitOps 워크플로우 확인 ==="
+echo "1. GitHub Actions: https://github.com/YOUR_USERNAME/gitops-k8s-demo/actions"
+echo "   → 새 이미지 빌드 및 푸시 (2-3분)"
+echo ""
+echo "2. ArgoCD UI: https://localhost:8080"
+echo "   → 자동 동기화 시작 (이미지 업데이트 감지 후)"
+echo "   → Pod 롤링 업데이트 진행"
+echo ""
+echo "3. 업데이트 확인:"
+echo "   curl http://localhost:30080"
+echo ""
+```
+
+**6-3. 롤링 업데이트 모니터링**
+```bash
+# Pod 업데이트 실시간 모니터링
+watch -n 1 'kubectl get pods -l app=sample-app'
+
+# 또는 이벤트 확인
+kubectl get events --sort-by='.lastTimestamp' | grep sample-app
+
+# ArgoCD 동기화 상태 확인
+argocd app get sample-app --refresh
+```
+
+### 📊 예상 결과
+
+**롤링 업데이트 과정**:
+```
+1. 새 ReplicaSet 생성
+   sample-app-9c8d7e6f5 (v2.0.0)
+
+2. 점진적 Pod 교체
+   Old: sample-app-7d9f8b5c4d (v1.0.0) - 3개
+   New: sample-app-9c8d7e6f5 (v2.0.0) - 0개
+   
+   → Old: 2개, New: 1개
+   → Old: 1개, New: 2개
+   → Old: 0개, New: 3개
+
+3. 완료
+   sample-app-9c8d7e6f5-xxx (v2.0.0) - 3개 Running
+```
+
+**업데이트된 응답**:
+```bash
+curl http://localhost:30080
+
+# 출력:
+{
+  "message": "Hello from Kubernetes GitOps! (Updated)",
+  "version": "v2.0.0",
+  "timestamp": "2025-10-23T01:00:00.000Z",
+  "hostname": "sample-app-9c8d7e6f5-abc12",
+  "update": "This is version 2.0!"
+}
+```
+
+### 💡 GitOps 워크플로우 설명
+
+**전체 흐름**:
+```mermaid
+sequenceDiagram
+    participant Dev as 개발자
+    participant Git as GitHub
+    participant GHA as GitHub Actions
+    participant GHCR as GHCR Registry
+    participant ArgoCD as ArgoCD
+    participant K8s as Kubernetes
+
+    Dev->>Git: 1. 코드 변경 및 푸시
+    Git->>GHA: 2. 워크플로우 트리거
+    GHA->>GHCR: 3. 이미지 빌드 및 푸시
+    ArgoCD->>Git: 4. 매니페스트 변경 감지
+    ArgoCD->>K8s: 5. 자동 동기화
+    K8s->>K8s: 6. 롤링 업데이트
+    K8s-->>Dev: 7. 업데이트 완료
+```
+
+**자동화 포인트**:
+1. **CI (GitHub Actions)**: 코드 → 이미지 자동 빌드
+2. **CD (ArgoCD)**: Git → 클러스터 자동 동기화
+3. **롤링 업데이트**: 무중단 배포
+4. **Self-Healing**: 수동 변경 시 자동 복구
+
+---
+
 ## ✅ 실습 체크포인트
 
-### ✅ Step 1: 모니터링 스택
+### ✅ Step 1: 저장소 및 모니터링 스택
+- [ ] GitHub 저장소 `gitops-k8s-demo` 생성 (Public)
+- [ ] 로컬에 저장소 클론 완료
+- [ ] 폴더 구조 생성 완료
 - [ ] Kind 클러스터 생성 완료
 - [ ] Metrics Server (TLS 비활성화) 설치
 - [ ] Prometheus 접속 확인 (http://localhost:30090)
@@ -747,11 +1032,24 @@ GHCR 패키지 생성:
 - [ ] Jaeger 접속 확인 (http://localhost:30686)
 - [ ] ArgoCD 접속 확인 (https://localhost:8080)
 
-### ✅ Step 2-4: GitOps 파이프라인
-- [ ] 샘플 앱 코드 작성 완료
+### ✅ Step 2-4: 애플리케이션 코드 및 CI
+- [ ] Node.js 샘플 앱 코드 작성 완료
+- [ ] Dockerfile 작성 완료
 - [ ] Kubernetes 매니페스트 작성 완료
 - [ ] GitHub Actions 워크플로우 설정
-- [ ] ArgoCD Application 생성 및 동기화
+- [ ] Git 커밋 및 푸시 완료
+- [ ] GitHub Actions 빌드 성공 확인
+- [ ] GHCR 패키지 Public으로 설정
+
+### ✅ Step 5-6: ArgoCD 배포 및 GitOps
+- [ ] ArgoCD UI에서 애플리케이션 생성
+- [ ] 자동 동기화 설정 (Automatic, Prune, Self-Heal)
+- [ ] 애플리케이션 Synced & Healthy 상태 확인
+- [ ] Pod 3개 Running 상태 확인
+- [ ] 샘플 앱 접속 테스트 (http://localhost:30080)
+- [ ] 코드 업데이트 및 푸시
+- [ ] 롤링 업데이트 자동 진행 확인
+- [ ] 업데이트된 버전 응답 확인
 
 ---
 
