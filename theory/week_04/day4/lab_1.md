@@ -186,41 +186,169 @@ git push -u origin main
 
 ## 🛠️ Step 3: 로컬 환경 실행 (10분)
 
-### 3-1. GHCR 이미지 Public 설정
+### 💡 GHCR Package 이해하기
 
-**중요**: GHCR 이미지를 Public으로 변경해야 로컬에서 Pull 가능
+**Q: "front, backend만 따로 package를 한다"는 게 무슨 뜻인가요?**
 
-1. https://github.com/YOUR_USERNAME?tab=packages 접속
-2. `frontend` 패키지 클릭
-3. **Package settings** → **Change visibility** → **Public**
-4. `backend` 패키지도 동일하게 Public으로 변경
+**A: GitHub Actions가 빌드할 때 자동으로 생성됩니다!**
 
-### 3-2. Docker Compose 실행
+```mermaid
+graph LR
+    A[GitHub Actions<br/>빌드 시작] --> B[Frontend 빌드]
+    A --> C[Backend 빌드]
+    
+    B --> D[GHCR에 Push<br/>frontend Package 생성]
+    C --> E[GHCR에 Push<br/>backend Package 생성]
+    
+    D --> F[ghcr.io/username/cicd-demo-app/frontend:latest]
+    E --> G[ghcr.io/username/cicd-demo-app/backend:latest]
+    
+    style A fill:#e8f5e8
+    style B,C fill:#fff3e0
+    style D,E fill:#e3f2fd
+    style F,G fill:#ffebee
+```
+
+**실제 과정**:
+1. **코드 푸시** → GitHub Actions 자동 실행
+2. **Frontend 빌드** → `frontend` Package 자동 생성
+3. **Backend 빌드** → `backend` Package 자동 생성
+4. **GHCR에 저장** → 각각 별도 이미지로 저장
+
+### 3-1. GitHub Actions 빌드 완료 확인
+
+**먼저 빌드가 완료되어야 합니다!**
+
 ```bash
-# 환경 변수 로드
+# 1. GitHub Actions 페이지 확인
+# https://github.com/YOUR_USERNAME/cicd-demo-app/actions
+
+# 2. 최신 워크플로우 상태 확인
+# ✅ 초록색 체크: 빌드 성공
+# ❌ 빨간색 X: 빌드 실패
+# 🟡 노란색 점: 빌드 진행 중 (2-3분 대기)
+```
+
+**빌드 성공 확인 후 다음 단계 진행!**
+
+### 3-2. GHCR Package 확인 및 Public 설정
+
+**Package 위치 확인**:
+```bash
+# 1. GitHub 프로필 → Packages 탭
+# https://github.com/YOUR_USERNAME?tab=packages
+
+# 2. 생성된 Package 확인
+# - cicd-demo-app/frontend
+# - cicd-demo-app/backend
+```
+
+**Public으로 변경** (중요!):
+```
+각 Package 클릭 → Package settings → Change visibility → Public
+
+이유: Public이어야 로컬에서 인증 없이 Pull 가능
+```
+
+### 3-3. Docker Compose 파일 확인
+
+**docker-compose.yml 내용**:
+```yaml
+version: '3.8'
+
+services:
+  frontend:
+    image: ghcr.io/${GITHUB_USERNAME}/cicd-demo-app/frontend:latest
+    # ↑ 이 이미지를 GHCR에서 Pull
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  backend:
+    image: ghcr.io/${GITHUB_USERNAME}/cicd-demo-app/backend:latest
+    # ↑ 이 이미지를 GHCR에서 Pull
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydb
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    # ↑ 이건 Docker Hub에서 Pull (공식 이미지)
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup
+    # 5분마다 GHCR 체크 → 새 이미지 있으면 자동 Pull & 재시작
+
+volumes:
+  postgres_data:
+```
+
+### 3-4. 로컬 실행
+
+```bash
+# 1. 환경 변수 설정 확인
+cat .env
+# GITHUB_USERNAME=your-github-username 확인
+
+# 2. 환경 변수 로드
 export $(cat .env | xargs)
 
-# 서비스 시작
+# 3. 이미지 Pull 테스트 (선택사항)
+docker pull ghcr.io/$GITHUB_USERNAME/cicd-demo-app/frontend:latest
+docker pull ghcr.io/$GITHUB_USERNAME/cicd-demo-app/backend:latest
+
+# 4. Docker Compose 실행
 docker-compose up -d
 
-# 로그 확인
+# 5. 로그 확인
 docker-compose logs -f
 ```
 
-### 3-3. 접속 확인
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001/api/health
-- **Users API**: http://localhost:3001/api/users
+### 3-5. 접속 확인
 
-**예상 화면**:
+**Frontend**: http://localhost:3000
 ```
-🚀 CI/CD Demo App
-Backend is running! 🚀
+예상 화면:
+┌─────────────────────────────┐
+│  🚀 CI/CD Demo App          │
+│                             │
+│  Backend is running! 🚀     │
+│                             │
+│  Users:                     │
+│  - Alice (alice@example.com)│
+│  - Bob (bob@example.com)    │
+│  - Charlie (charlie@...)    │
+└─────────────────────────────┘
+```
 
-Users:
-- Alice (alice@example.com)
-- Bob (bob@example.com)
-- Charlie (charlie@example.com)
+**Backend API**: http://localhost:3001/api/health
+```json
+{
+  "message": "Backend is running! 🚀",
+  "timestamp": "2025-10-22T13:30:00.000Z"
+}
+```
+
+**Users API**: http://localhost:3001/api/users
+```json
+[
+  { "id": 1, "name": "Alice", "email": "alice@example.com" },
+  { "id": 2, "name": "Bob", "email": "bob@example.com" },
+  { "id": 3, "name": "Charlie", "email": "charlie@example.com" }
+]
 ```
 
 ---
@@ -306,36 +434,149 @@ docker logs -f $(docker ps -q -f name=watchtower)
 
 ## 🔍 트러블슈팅
 
-### 문제 1: GHCR 이미지 Pull 실패
+### 문제 1: GitHub Actions 빌드 실패
 ```bash
 # 증상
-Error: pull access denied
+Actions 페이지에서 빨간색 X 표시
+
+# 원인 확인
+1. Actions 페이지에서 실패한 워크플로우 클릭
+2. 빌드 로그 확인
+3. 에러 메시지 확인
+
+# 흔한 원인
+- Dockerfile 문법 오류
+- package.json 의존성 문제
+- GitHub 권한 설정 문제
 
 # 해결
-1. GHCR 패키지를 Public으로 변경
-2. GitHub 로그인 확인
+1. 로그에서 에러 메시지 확인
+2. 해당 파일 수정
+3. 다시 Git Push
 ```
 
-### 문제 2: Watchtower가 업데이트 안 함
+### 문제 2: GHCR Package가 생성되지 않음
 ```bash
 # 증상
-Watchtower 로그에 아무 변화 없음
+https://github.com/YOUR_USERNAME?tab=packages 에 아무것도 없음
+
+# 원인
+GitHub Actions 빌드가 완료되지 않았거나 실패함
 
 # 해결
-1. GHCR에 새 이미지 푸시 확인
-2. Watchtower 재시작
+1. Actions 페이지에서 빌드 상태 확인
+2. 빌드 완료 대기 (2-3분)
+3. 빌드 실패 시 로그 확인 후 수정
+```
+
+### 문제 3: GHCR 이미지 Pull 실패
+```bash
+# 증상
+Error: pull access denied for ghcr.io/username/cicd-demo-app/frontend
+
+# 원인
+Package가 Private 상태
+
+# 해결
+1. https://github.com/YOUR_USERNAME?tab=packages
+2. frontend, backend 각각 클릭
+3. Package settings → Change visibility → Public
+4. 다시 docker-compose up -d
+```
+
+### 문제 4: 환경 변수 인식 안 됨
+```bash
+# 증상
+docker-compose.yml에서 ${GITHUB_USERNAME} 인식 안 됨
+
+# 원인
+환경 변수가 로드되지 않음
+
+# 해결
+# 1. .env 파일 확인
+cat .env
+# GITHUB_USERNAME=your-github-username 있는지 확인
+
+# 2. 환경 변수 로드
+export $(cat .env | xargs)
+
+# 3. 확인
+echo $GITHUB_USERNAME
+
+# 4. 다시 실행
+docker-compose up -d
+```
+
+### 문제 5: Watchtower가 업데이트 안 함
+```bash
+# 증상
+코드 수정 후 Push했는데 로컬에서 변경사항 안 보임
+
+# 원인 확인
+# 1. GitHub Actions 빌드 완료 확인
+# https://github.com/YOUR_USERNAME/cicd-demo-app/actions
+
+# 2. GHCR에 새 이미지 푸시 확인
+# https://github.com/YOUR_USERNAME?tab=packages
+
+# 3. Watchtower 로그 확인
+docker logs -f $(docker ps -q -f name=watchtower)
+
+# 해결
+# Watchtower 재시작
 docker-compose restart watchtower
+
+# 또는 수동 업데이트
+docker-compose pull
+docker-compose up -d
 ```
 
-### 문제 3: 포트 충돌
+### 문제 6: 포트 충돌
 ```bash
 # 증상
-Error: port is already allocated
+Error: Bind for 0.0.0.0:3000 failed: port is already allocated
+
+# 원인
+다른 컨테이너나 프로세스가 포트 사용 중
 
 # 해결
+# 1. 기존 컨테이너 정리
 docker-compose down
 docker ps -a
 docker rm -f $(docker ps -aq)
+
+# 2. 포트 사용 프로세스 확인 (Linux/Mac)
+lsof -i :3000
+kill -9 <PID>
+
+# 3. 포트 사용 프로세스 확인 (Windows)
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# 4. 다시 실행
+docker-compose up -d
+```
+
+### 문제 7: 브라우저에서 변경사항 안 보임
+```bash
+# 증상
+코드 수정했는데 브라우저에서 이전 화면 보임
+
+# 원인
+브라우저 캐시
+
+# 해결
+# 1. 강력 새로고침
+# - Windows/Linux: Ctrl + Shift + R
+# - Mac: Cmd + Shift + R
+
+# 2. 캐시 완전 삭제
+# - Chrome: F12 → Network 탭 → Disable cache 체크
+# - 시크릿 모드로 접속
+
+# 3. 컨테이너 재시작 확인
+docker ps
+# frontend, backend 컨테이너의 CREATED 시간 확인
 ```
 
 ---
