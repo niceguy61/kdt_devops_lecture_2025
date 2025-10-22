@@ -145,8 +145,14 @@ graph TB
         B5[✅ 장점] --> B6[• Git 히스토리로 완전 추적<br/>• 선언적 상태 관리<br/>• 자동 롤백<br/>• 보안 강화]
     end
     
-    style A1,A2,A3,A4 fill:#ffebee
-    style B1,B2,B3,B4 fill:#e8f5e8
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style A3 fill:#ffebee
+    style A4 fill:#ffebee
+    style B1 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style B3 fill:#e8f5e8
+    style B4 fill:#e8f5e8
 ```
 
 **☁️ AWS 구현 예시**:
@@ -317,7 +323,8 @@ graph TB
     style B fill:#fff3e0
     style C fill:#ffebee
     style D fill:#f3e5f5
-    style E,F fill:#e3f2fd
+    style E fill:#e3f2fd
+    style F fill:#e3f2fd
 ```
 
 **ArgoCD Application 구조**:
@@ -378,9 +385,15 @@ graph TB
     G --> J
     
     style A fill:#e8f5e8
-    style B,C,D fill:#fff3e0
-    style E,F,G fill:#ffebee
-    style H,I,J fill:#f3e5f5
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#ffebee
+    style F fill:#ffebee
+    style G fill:#ffebee
+    style H fill:#f3e5f5
+    style I fill:#f3e5f5
+    style J fill:#f3e5f5
 ```
 
 **프로모션 파이프라인**:
@@ -394,8 +407,11 @@ graph LR
     F --> G[운영 배포]
     
     style A fill:#e3f2fd
-    style B,D,G fill:#e8f5e8
-    style C,E fill:#fff3e0
+    style B fill:#e8f5e8
+    style D fill:#e8f5e8
+    style G fill:#e8f5e8
+    style C fill:#fff3e0
+    style E fill:#fff3e0
     style F fill:#ffebee
 ```
 

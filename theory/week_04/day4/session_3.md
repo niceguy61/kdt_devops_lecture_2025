@@ -205,8 +205,14 @@ graph TB
     J3 -.-> T3
     J4 -.-> T4
     
-    style J1,J2,J3,J4 fill:#ffebee
-    style T1,T2,T3,T4 fill:#e8f5e8
+    style J1 fill:#ffebee
+    style J2 fill:#ffebee
+    style J3 fill:#ffebee
+    style J4 fill:#ffebee
+    style T1 fill:#e8f5e8
+    style T2 fill:#e8f5e8
+    style T3 fill:#e8f5e8
+    style T4 fill:#e8f5e8
 ```
 
 **실무 Tekton 활용 사례**:
@@ -312,8 +318,14 @@ graph TB
         A2 --> A3
     end
     
-    style F1,F2,F3,F4 fill:#e8f5e8
-    style A1,A2,A3,A4 fill:#fff3e0
+    style F1 fill:#e8f5e8
+    style F2 fill:#e8f5e8
+    style F3 fill:#e8f5e8
+    style F4 fill:#e8f5e8
+    style A1 fill:#fff3e0
+    style A2 fill:#fff3e0
+    style A3 fill:#fff3e0
+    style A4 fill:#fff3e0
 ```
 
 **주요 차이점 비교**:
@@ -423,10 +435,14 @@ graph TB
     CACHE --> CUSTOM
     ARTIFACT --> REUSABLE
     
-    style PUSH,PR fill:#e8f5e8
-    style HOSTED,SELF fill:#fff3e0
-    style MATRIX,CACHE fill:#ffebee
-    style MARKETPLACE,CUSTOM fill:#f3e5f5
+    style PUSH fill:#e8f5e8
+    style PR fill:#e8f5e8
+    style HOSTED fill:#fff3e0
+    style SELF fill:#fff3e0
+    style MATRIX fill:#ffebee
+    style CACHE fill:#ffebee
+    style MARKETPLACE fill:#f3e5f5
+    style CUSTOM fill:#f3e5f5
 ```
 
 **고급 GitHub Actions 워크플로우**:
@@ -547,9 +563,14 @@ graph TB
     EKS --> IAM
     FARGATE --> SECRETS
     
-    style EC2,EKS,FARGATE fill:#ff9800
-    style REPO,WORKFLOW fill:#4caf50
-    style VPC,IAM,SECRETS fill:#f44336
+    style EC2 fill:#ff9800
+    style EKS fill:#ff9800
+    style FARGATE fill:#ff9800
+    style REPO fill:#4caf50
+    style WORKFLOW fill:#4caf50
+    style VPC fill:#f44336
+    style IAM fill:#f44336
+    style SECRETS fill:#f44336
 ```
 
 **🔑 핵심 키워드 정리**:

@@ -118,9 +118,14 @@ graph TB
     E -.-> I
     
     style A fill:#ffebee
-    style B,C,D fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
     style E fill:#e8f5e8
-    style F,G,H,I fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#e3f2fd
 ```
 
 **Argo Rollouts 카나리 설정**:
@@ -292,8 +297,12 @@ graph TB
     G1 --> CONFIG
     
     style LB fill:#ff9800
-    style B1,B2,B3 fill:#2196f3
-    style G1,G2,G3 fill:#4caf50
+    style B1 fill:#2196f3
+    style B2 fill:#2196f3
+    style B3 fill:#2196f3
+    style G1 fill:#4caf50
+    style G2 fill:#4caf50
+    style G3 fill:#4caf50
     style BDB fill:#1976d2
     style GDB fill:#388e3c
 ```
@@ -402,9 +411,12 @@ graph TB
     C -.-> G
     
     style A fill:#ffebee
-    style B,C,D fill:#fff3e0
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#fff3e0
     style E fill:#e8f5e8
-    style F,G fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#e3f2fd
 ```
 
 **배포 전략 종합 비교**:
@@ -433,8 +445,18 @@ graph TB
         end
     end
     
-    style C1,C2,BG1,BG2,R1,R2 fill:#e8f5e8
-    style C3,C4,BG3,BG4,R3,R4 fill:#ffebee
+    style C1 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style BG1 fill:#e8f5e8
+    style BG2 fill:#e8f5e8
+    style R1 fill:#e8f5e8
+    style R2 fill:#e8f5e8
+    style C3 fill:#ffebee
+    style C4 fill:#ffebee
+    style BG3 fill:#ffebee
+    style BG4 fill:#ffebee
+    style R3 fill:#ffebee
+    style R4 fill:#ffebee
 ```
 
 **상황별 배포 전략 선택 가이드**:
