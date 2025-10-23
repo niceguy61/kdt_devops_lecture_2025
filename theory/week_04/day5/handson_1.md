@@ -33,6 +33,10 @@
 
 ## 🏗️ 최종 통합 아키텍처
 
+### 🤔 Week 4 전체 여정 (Day 1 → Day 5)
+
+**🏠 실생활 비유**: 온라인 쇼핑몰을 처음부터 완성까지 만드는 과정
+
 ```mermaid
 graph TB
     subgraph "🌐 External Layer"
@@ -109,21 +113,102 @@ graph TB
     style KUBE fill:#feca57
 ```
 
+### 📅 Week 4 통합 스토리
+
+**Day 1: 마이크로서비스 아키텍처 (기초 공사)**
+- 🏠 비유: 쇼핑몰의 각 부서 만들기 (회원팀, 상품팀, 주문팀)
+- 역할: CloudMart의 핵심 서비스들을 독립적으로 구축
+- 결과: User, Product, Order, Payment, Notification 서비스
+
+**Day 2: API Gateway & Service Mesh (출입구와 내부 통로)**
+- 🏠 비유: 쇼핑몰 정문(API Gateway)과 부서 간 복도(Service Mesh)
+- 역할: 외부 요청 관리(Kong)와 내부 서비스 간 통신(Istio)
+- 결과: 통합된 API 엔드포인트와 서비스 간 안전한 통신
+
+**Day 3: 보안과 컴플라이언스 (보안 시스템)**
+- 🏠 비유: 출입증(JWT), CCTV(mTLS), 보안 규칙(OPA)
+- 역할: 인증/인가, 암호화 통신, 정책 기반 접근 제어
+- 결과: 프로덕션급 보안 체계 구축
+
+**Day 4: GitOps와 배포 자동화 (자동 관리 시스템)**
+- 🏠 비유: 쇼핑몰 운영 매뉴얼(Git)과 자동 관리 시스템(ArgoCD)
+- 역할: 코드 기반 인프라 관리와 자동 배포
+- 결과: 안전하고 추적 가능한 배포 프로세스
+
+**Day 5: FinOps와 비용 최적화 (가계부와 절약 시스템) ⭐ 오늘**
+- 🏠 비유: 쇼핑몰 운영비 관리와 자동 절약 시스템
+- 역할: 실시간 비용 모니터링과 자동 리소스 최적화
+- 결과: 비용 가시성 확보 + 30-60% 비용 절감
+
+### 🎯 Hands-on 1의 목표
+
+**Lab 1과의 차이점**:
+- **Lab 1**: Kubecost 기본 설치 및 샘플 앱 테스트 (학습용)
+- **Hands-on 1**: 실제 CloudMart에 Kubecost 통합 (실전용)
+
+**왜 통합이 중요한가?**:
+- 실제 프로젝트에서는 모든 시스템이 유기적으로 연결되어야 함
+- 비용 모니터링은 독립적이 아니라 전체 시스템의 일부
+- 🏠 비유: 가계부는 따로 쓰는 게 아니라 실제 지출과 연결되어야 의미 있음
+
+### 💰 CloudMart 마이크로서비스 상세 설명
+
+**User Service (회원 서비스)**:
+- 역할: 회원 가입, 로그인, 프로필 관리
+- 🏠 비유: 쇼핑몰 회원 카드 발급 및 관리 부서
+- 데이터: PostgreSQL (회원 정보는 안전하게 DB에 저장)
+- 비용 특성: 안정적인 트래픽 (회원 수는 급변하지 않음)
+
+**Product Service (상품 서비스)**:
+- 역할: 상품 목록, 상세 정보, 재고 관리
+- 🏠 비유: 쇼핑몰 상품 진열 및 재고 관리 부서
+- 데이터: Redis Cache (빠른 조회를 위해 캐시 사용)
+- 비용 특성: 높은 트래픽 (많은 사람이 상품을 둘러봄)
+
+**Order Service (주문 서비스)**:
+- 역할: 장바구니, 주문 생성, 주문 내역
+- 🏠 비유: 쇼핑몰 계산대 및 주문 처리 부서
+- 데이터: Kafka Queue (주문은 순서대로 처리)
+- 비용 특성: 변동 트래픽 (세일 기간에 급증)
+
+**Payment Service (결제 서비스)**:
+- 역할: 결제 처리, 결제 내역 관리
+- 🏠 비유: 쇼핑몰 결제 시스템 (카드, 계좌이체 등)
+- 데이터: 외부 결제 API 연동
+- 비용 특성: 중요도 높음 (장애 시 매출 손실)
+
+**Notification Service (알림 서비스)**:
+- 역할: 이메일, SMS, 푸시 알림 발송
+- 🏠 비유: 쇼핑몰 고객 안내 방송 시스템
+- 데이터: 메시지 큐 (비동기 처리)
+- 비용 특성: 낮은 리소스 (알림만 보내면 됨)
+
 ---
 
 ## 🛠️ Step 1: Lab 1 환경 확인 (10분)
+
+### 🤔 왜 필요한가?
+**문제 상황**:
+- Lab 1에서 Kubecost를 설치했지만, 샘플 앱만 있음
+- 실제 CloudMart 프로젝트에 적용하려면 기존 환경 확인 필요
+- 🏠 비유: 새 가구(CloudMart)를 들이기 전에 방(클러스터) 상태 확인
+
+**이 단계의 목표**:
+- Lab 1에서 구축한 Kubecost가 정상 동작하는지 확인
+- 기존 샘플 앱을 CloudMart로 교체할 준비
+- 네임스페이스와 리소스 현황 파악
 
 ### 📝 직접 확인하기
 
 **1-1. 현재 클러스터 상태 확인**
 ```bash
-# 노드 확인
+# 노드 확인 (서버 상태 확인)
 kubectl get nodes
 
-# 네임스페이스 확인
+# 네임스페이스 확인 (프로젝트 공간 확인)
 kubectl get namespaces
 
-# Kubecost 확인
+# Kubecost 확인 (비용 모니터링 시스템 확인)
 kubectl get pods -n kubecost
 ```
 
@@ -145,26 +230,71 @@ kubecost-cost-analyzer-xxx              3/3     Running   0          12m
 kubecost-prometheus-server-xxx          2/2     Running   0          12m
 ```
 
+**💡 출력 설명**:
+- **노드 3개**: 1개 관리 노드 + 2개 작업 노드 (정상)
+- **네임스페이스 4개**: production, staging, development, kubecost
+- **Kubecost Pod**: 3/3 Running = 정상 동작 중
+
 **1-2. 기존 애플리케이션 확인**
 ```bash
-# Production 애플리케이션
+# Production 애플리케이션 (Lab 1의 샘플 앱)
 kubectl get pods -n production
 
 # Staging 애플리케이션
 kubectl get pods -n staging
 
-# HPA 상태
+# HPA 상태 (자동 확장 설정)
 kubectl get hpa --all-namespaces
 ```
 
+**예상 출력**:
+```
+NAMESPACE    NAME              READY   STATUS    RESTARTS   AGE
+production   frontend-xxx      1/1     Running   0          10m
+production   user-service-xxx  1/1     Running   0          10m
+
+NAMESPACE    NAME              REFERENCE          TARGETS   MINPODS   MAXPODS
+production   frontend-hpa      Deployment/frontend  50%/70%   2         10
+```
+
+**💡 현재 상태 분석**:
+- Lab 1의 샘플 앱이 실행 중
+- HPA가 설정되어 자동 확장 가능
+- 이제 이것들을 CloudMart 서비스로 교체할 예정
+
 ### 💡 코드 설명
-- Lab 1에서 구축한 기본 환경 확인
-- Kubecost와 샘플 애플리케이션이 정상 동작 중인지 검증
-- 다음 단계에서 CloudMart 마이크로서비스로 교체 예정
+- **kubectl get nodes**: 클러스터의 서버(노드) 상태 확인
+- **kubectl get namespaces**: 프로젝트 공간(네임스페이스) 목록 확인
+- **kubectl get pods -n kubecost**: Kubecost 시스템이 정상 동작하는지 확인
+- **kubectl get hpa**: 자동 확장(HPA) 설정 확인
+
+### 🎯 다음 단계 준비
+- ✅ Kubecost 정상 동작 확인 완료
+- ✅ 기존 샘플 앱 확인 완료
+- 🔜 CloudMart 마이크로서비스로 교체 시작
 
 ---
 
 ## 🛠️ Step 2: CloudMart 마이크로서비스 배포 (20분)
+
+### 🤔 왜 필요한가?
+**문제 상황**:
+- Lab 1의 샘플 앱은 학습용일 뿐, 실제 서비스가 아님
+- Week 4 전체를 통합한 실제 프로젝트(CloudMart)가 필요
+- 🏠 비유: 연습용 모형 매장이 아닌 실제 운영 매장 오픈
+
+**CloudMart 마이크로서비스 구조**:
+- **User Service**: 회원 관리 (가입, 로그인, 프로필)
+- **Product Service**: 상품 관리 (목록, 상세, 재고)
+- **Order Service**: 주문 처리 (장바구니, 결제, 배송)
+- **Payment Service**: 결제 처리 (카드, 계좌이체)
+- **Notification Service**: 알림 발송 (이메일, SMS)
+
+**왜 이렇게 나눴나?**:
+- 🏠 비유: 대형 쇼핑몰을 회원팀, 상품팀, 주문팀으로 나누는 것
+- 각 팀이 독립적으로 일하면 효율적
+- 한 팀에 문제가 생겨도 다른 팀은 정상 운영
+- 팀별로 리소스와 비용을 따로 관리 가능
 
 ### 📝 직접 작성하기
 
@@ -177,11 +307,16 @@ kind: Namespace
 metadata:
   name: cloudmart
   labels:
-    project: cloudmart
-    team: platform
-    cost-center: CC-2001
+    project: cloudmart      # 프로젝트 이름
+    team: platform          # 담당 팀
+    cost-center: CC-2001    # 비용 센터 (Kubecost에서 추적용)
 EOF
 ```
+
+**💡 네임스페이스 라벨 설명**:
+- `project: cloudmart`: Kubecost에서 "cloudmart 프로젝트 비용"으로 집계
+- `team: platform`: 어느 팀이 관리하는지 표시
+- `cost-center: CC-2001`: 회계 부서의 비용 코드 (실제 회사에서 사용)
 
 **2-2. User Service 배포**
 ```bash
@@ -195,7 +330,7 @@ metadata:
     app: user-service
     tier: backend
 spec:
-  replicas: 2
+  replicas: 2              # 기본 2개 Pod (고가용성)
   selector:
     matchLabels:
       app: user-service
@@ -204,11 +339,11 @@ spec:
       labels:
         app: user-service
         tier: backend
-        version: v1
+        version: v1        # 버전 관리 (Day 4 GitOps 연계)
     spec:
       containers:
       - name: user-service
-        image: nginx:alpine  # 실제로는 user-service 이미지
+        image: nginx:alpine  # 💡 실제로는 user-service 이미지 사용
         ports:
         - containerPort: 8080
           name: http
@@ -216,21 +351,21 @@ spec:
         - name: SERVICE_NAME
           value: "user-service"
         - name: DB_HOST
-          value: "postgres-service"
+          value: "postgres-service"  # PostgreSQL 연결
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 100m        # 최소 보장: CPU 0.1 코어
+            memory: 128Mi    # 최소 보장: 메모리 128MB
           limits:
-            cpu: 300m
-            memory: 256Mi
-        livenessProbe:
+            cpu: 300m        # 최대 사용: CPU 0.3 코어
+            memory: 256Mi    # 최대 사용: 메모리 256MB
+        livenessProbe:       # 💡 살아있는지 확인 (죽으면 재시작)
           httpGet:
             path: /health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
-        readinessProbe:
+        readinessProbe:      # 💡 준비됐는지 확인 (준비 안되면 트래픽 안 보냄)
           httpGet:
             path: /ready
             port: 8080
@@ -249,9 +384,17 @@ spec:
   - port: 80
     targetPort: 8080
     name: http
-  type: ClusterIP
+  type: ClusterIP          # 클러스터 내부에서만 접근 가능
 EOF
 ```
+
+**💡 User Service 설정 설명**:
+- **replicas: 2**: 최소 2개로 고가용성 확보 (1개 죽어도 서비스 유지)
+- **resources**: Kubecost가 이 값을 보고 비용 계산
+  - requests: "최소 이만큼은 보장해줘" (비용 계산 기준)
+  - limits: "최대 이만큼까지만 써" (노드 과부하 방지)
+- **livenessProbe**: 서비스가 죽었는지 확인 (죽으면 자동 재시작)
+- **readinessProbe**: 서비스가 준비됐는지 확인 (준비 안되면 트래픽 차단)
 
 **2-3. Product Service 배포**
 ```bash
@@ -265,7 +408,7 @@ metadata:
     app: product-service
     tier: backend
 spec:
-  replicas: 3
+  replicas: 3              # 💡 User보다 많음 (상품 조회가 더 많아서)
   selector:
     matchLabels:
       app: product-service
@@ -285,10 +428,10 @@ spec:
         - name: SERVICE_NAME
           value: "product-service"
         - name: REDIS_HOST
-          value: "redis-service"
+          value: "redis-service"  # 💡 Redis 캐시 사용 (빠른 조회)
         resources:
           requests:
-            cpu: 150m
+            cpu: 150m        # 💡 User보다 많음 (트래픽이 더 많아서)
             memory: 256Mi
           limits:
             cpu: 500m
