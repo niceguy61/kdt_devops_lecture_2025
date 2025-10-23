@@ -185,93 +185,90 @@ graph TB
 
 ---
 
-## 🛠️ Step 1: Lab 1 환경 확인 (10분)
+## 🛠️ Step 1: 클러스터 및 모니터링 스택 설치 (15분)
 
 ### 🤔 왜 필요한가?
 **문제 상황**:
-- Lab 1에서 Kubecost를 설치했지만, 샘플 앱만 있음
-- 실제 CloudMart 프로젝트에 적용하려면 기존 환경 확인 필요
-- 🏠 비유: 새 가구(CloudMart)를 들이기 전에 방(클러스터) 상태 확인
+- CloudMart 전체 시스템을 모니터링하려면 완전한 관측성 스택 필요
+- 비용(Kubecost), 메트릭(Prometheus), 추적(Jaeger), 시각화(Grafana) 모두 필요
+- 🏠 비유: 쇼핑몰 운영에 CCTV(Jaeger), 전기계량기(Prometheus), 가계부(Kubecost), 대시보드(Grafana) 모두 필요
 
-**이 단계의 목표**:
-- Lab 1에서 구축한 Kubecost가 정상 동작하는지 확인
-- 기존 샘플 앱을 CloudMart로 교체할 준비
-- 네임스페이스와 리소스 현황 파악
+**관측성 3요소 + 비용**:
+- **Metrics** (메트릭): CPU, Memory 사용량 → Prometheus
+- **Traces** (추적): 서비스 간 요청 흐름 → Jaeger
+- **Logs** (로그): 애플리케이션 로그 → (이번 실습에서는 생략)
+- **Cost** (비용): 리소스 사용량 → 비용 변환 → Kubecost
 
-### 📝 직접 확인하기
+### 📝 직접 실행하기
 
-**1-1. 현재 클러스터 상태 확인**
+**1-1. 클러스터 생성**
 ```bash
-# 노드 확인 (서버 상태 확인)
-kubectl get nodes
-
-# 네임스페이스 확인 (프로젝트 공간 확인)
-kubectl get namespaces
-
-# Kubecost 확인 (비용 모니터링 시스템 확인)
-kubectl get pods -n kubecost
+cd theory/week_04/day5/lab_scripts/handson1
+./setup-cluster.sh
 ```
 
-**예상 출력**:
+**📋 스크립트 내용**: [setup-cluster.sh](./lab_scripts/handson1/setup-cluster.sh)
+
+**예상 결과**:
 ```
-NAME                        STATUS   ROLES           AGE
-lab-cluster-control-plane   Ready    control-plane   15m
-lab-cluster-worker          Ready    <none>          15m
-lab-cluster-worker2         Ready    <none>          15m
+=== Hands-on 클러스터 초기화 완료 ===
 
-NAME              STATUS   AGE
-production        Active   10m
-staging           Active   10m
-development       Active   10m
-kubecost          Active   12m
-
-NAME                                    READY   STATUS    RESTARTS   AGE
-kubecost-cost-analyzer-xxx              3/3     Running   0          12m
-kubecost-prometheus-server-xxx          2/2     Running   0          12m
+클러스터 정보:
+- 이름: lab-cluster
+- Control Plane: 1개
+- Worker Node: 2개
+- 오픈 포트:
+  * 30080-30082: CloudMart 서비스
+  * 30090: Kubecost
+  * 30091: Grafana
+  * 30092: Jaeger UI
 ```
 
-**💡 출력 설명**:
-- **노드 3개**: 1개 관리 노드 + 2개 작업 노드 (정상)
-- **네임스페이스 4개**: production, staging, development, kubecost
-- **Kubecost Pod**: 3/3 Running = 정상 동작 중
-
-**1-2. 기존 애플리케이션 확인**
+**1-2. 모니터링 스택 설치**
 ```bash
-# Production 애플리케이션 (Lab 1의 샘플 앱)
-kubectl get pods -n production
-
-# Staging 애플리케이션
-kubectl get pods -n staging
-
-# HPA 상태 (자동 확장 설정)
-kubectl get hpa --all-namespaces
+./install-monitoring-stack.sh
 ```
 
-**예상 출력**:
+**📋 스크립트 내용**: [install-monitoring-stack.sh](./lab_scripts/handson1/install-monitoring-stack.sh)
+
+**설치되는 컴포넌트**:
+- **Metrics Server**: 리소스 사용량 수집 (CPU, Memory)
+- **Prometheus**: 메트릭 저장 및 쿼리
+- **Jaeger**: 분산 추적 (서비스 간 요청 흐름)
+- **Kubecost**: 비용 계산 및 분석
+- **Grafana**: 통합 대시보드
+
+**예상 결과**:
 ```
-NAMESPACE    NAME              READY   STATUS    RESTARTS   AGE
-production   frontend-xxx      1/1     Running   0          10m
-production   user-service-xxx  1/1     Running   0          10m
+=== 모니터링 스택 설치 완료 ===
 
-NAMESPACE    NAME              REFERENCE          TARGETS   MINPODS   MAXPODS
-production   frontend-hpa      Deployment/frontend  50%/70%   2         10
+설치된 컴포넌트:
+- Metrics Server (kube-system namespace)
+- Prometheus (monitoring namespace)
+- Jaeger (tracing namespace)
+  * UI: http://localhost:30092
+- Kubecost (kubecost namespace)
+  * UI: http://localhost:30090
+- Grafana (monitoring namespace)
+  * UI: http://localhost:30091
+  * ID: admin / PW: admin
 ```
 
-**💡 현재 상태 분석**:
-- Lab 1의 샘플 앱이 실행 중
-- HPA가 설정되어 자동 확장 가능
-- 이제 이것들을 CloudMart 서비스로 교체할 예정
+**1-3. 설치 확인**
+```bash
+# 모든 네임스페이스의 Pod 확인
+kubectl get pods --all-namespaces
 
-### 💡 코드 설명
-- **kubectl get nodes**: 클러스터의 서버(노드) 상태 확인
-- **kubectl get namespaces**: 프로젝트 공간(네임스페이스) 목록 확인
-- **kubectl get pods -n kubecost**: Kubecost 시스템이 정상 동작하는지 확인
-- **kubectl get hpa**: 자동 확장(HPA) 설정 확인
+# Metrics Server 동작 확인
+kubectl top nodes
+```
 
-### 🎯 다음 단계 준비
-- ✅ Kubecost 정상 동작 확인 완료
-- ✅ 기존 샘플 앱 확인 완료
-- 🔜 CloudMart 마이크로서비스로 교체 시작
+**💡 각 도구의 역할**:
+- **Metrics Server**: "지금 CPU/Memory 얼마나 쓰는지" 실시간 수집
+- **Prometheus**: 메트릭을 시계열로 저장 (과거 데이터 조회 가능)
+- **Jaeger**: "User Service → Product Service → DB" 같은 요청 흐름 추적
+- **Kubecost**: "이 Pod가 한 달에 $50 사용" 같은 비용 계산
+- **Grafana**: 모든 데이터를 보기 좋은 그래프로 표시
 
 ---
 
