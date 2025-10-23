@@ -481,6 +481,58 @@ graph TB
 
 ---
 
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1: 마이크로서비스 아키텍처는 언제 도입해야 하나요?
+**A**: 팀 규모가 10명 이상이고, 서비스가 독립적으로 배포되어야 하며, 다양한 기술 스택이 필요한 경우 고려하세요. 소규모 프로젝트는 모놀리식이 더 효율적일 수 있습니다.
+
+### Q2: API Gateway와 Service Mesh의 차이는?
+**A**: API Gateway(Kong)는 외부 트래픽의 진입점으로 인증/라우팅을 담당하고, Service Mesh(Istio)는 내부 서비스 간 통신을 관리합니다. 둘은 상호 보완적으로 사용됩니다.
+
+### Q3: GitOps를 도입하면 기존 CI/CD는 어떻게 되나요?
+**A**: CI는 그대로 유지되고(빌드/테스트), CD 부분이 GitOps로 대체됩니다. ArgoCD가 Git 저장소를 모니터링하여 자동으로 배포를 수행합니다.
+
+### Q4: Zero Trust 보안을 구현하려면 어디서부터 시작해야 하나요?
+**A**: ①네트워크 정책으로 Pod 간 통신 제한 → ②Istio로 mTLS 활성화 → ③OPA로 정책 자동화 순서로 단계적으로 도입하는 것을 권장합니다.
+
+### Q5: Week 4의 모든 기술을 다 도입해야 하나요?
+**A**: 아닙니다. 프로젝트 규모와 요구사항에 따라 선택적으로 도입하세요. 우선순위: ①컨테이너화 → ②기본 모니터링 → ③API Gateway → ④Service Mesh → ⑤GitOps 순서를 권장합니다.
+
+---
+
+## 📚 공식 문서 및 참고 자료
+
+### 마이크로서비스 아키텍처
+- **Microservices.io**: https://microservices.io/
+- **AWS Microservices**: https://aws.amazon.com/microservices/
+- **Domain-Driven Design**: https://martinfowler.com/bliki/DomainDrivenDesign.html
+
+### API Gateway
+- **Kong Documentation**: https://docs.konghq.com/
+- **Kong Gateway**: https://docs.konghq.com/gateway/latest/
+- **AWS API Gateway**: https://docs.aws.amazon.com/apigateway/
+
+### Service Mesh
+- **Istio Documentation**: https://istio.io/latest/docs/
+- **Istio Concepts**: https://istio.io/latest/docs/concepts/
+- **Istio Security**: https://istio.io/latest/docs/concepts/security/
+
+### Zero Trust Security
+- **NIST Zero Trust Architecture**: https://www.nist.gov/publications/zero-trust-architecture
+- **Open Policy Agent**: https://www.openpolicyagent.org/docs/latest/
+- **Kubernetes Network Policies**: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+### GitOps
+- **ArgoCD Documentation**: https://argo-cd.readthedocs.io/
+- **GitOps Principles**: https://opengitops.dev/
+- **Flux Documentation**: https://fluxcd.io/docs/
+
+### Kubernetes
+- **Kubernetes Documentation**: https://kubernetes.io/docs/home/
+- **Kubernetes Best Practices**: https://kubernetes.io/docs/concepts/configuration/overview/
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과

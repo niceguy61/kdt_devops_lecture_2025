@@ -465,6 +465,52 @@ graph LR
 
 ---
 
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1: FinOps와 DevOps의 차이는 무엇인가요?
+**A**: DevOps는 개발과 운영의 협업에 초점을 맞추고, FinOps는 재무, 개발, 운영 팀이 협력하여 클라우드 비용을 최적화하는 데 초점을 맞춥니다. FinOps는 DevOps의 확장 개념으로 볼 수 있습니다.
+
+### Q2: Kubernetes에서 비용이 가장 많이 발생하는 부분은?
+**A**: 일반적으로 ①과도한 리소스 할당(requests/limits), ②불필요한 복제본 수, ③비효율적인 노드 사용이 주요 비용 발생 원인입니다. Kubecost로 이를 쉽게 식별할 수 있습니다.
+
+### Q3: Right-sizing은 얼마나 자주 해야 하나요?
+**A**: 최소 월 1회 정기 점검을 권장하며, 새로운 서비스 배포 후나 트래픽 패턴 변경 시에는 즉시 검토해야 합니다. VPA를 사용하면 자동화할 수 있습니다.
+
+### Q4: HPA와 VPA를 동시에 사용할 수 있나요?
+**A**: 같은 메트릭(CPU/Memory)에 대해서는 동시 사용이 권장되지 않습니다. 일반적으로 HPA(수평 확장)를 우선 사용하고, VPA는 메모리 집약적 워크로드에 선택적으로 사용합니다.
+
+### Q5: Spot Instance 사용 시 주의사항은?
+**A**: Spot Instance는 언제든 중단될 수 있으므로 상태 비저장(stateless) 워크로드나 개발/테스트 환경에 적합합니다. 프로덕션에서는 중단 허용 가능한 배치 작업에 사용하세요.
+
+---
+
+## 📚 공식 문서 및 참고 자료
+
+### FinOps Foundation
+- **FinOps Framework**: https://www.finops.org/framework/
+- **FinOps Principles**: https://www.finops.org/framework/principles/
+- **FinOps Capabilities**: https://www.finops.org/framework/capabilities/
+- **FinOps Personas**: https://www.finops.org/framework/personas/
+
+### Kubernetes 비용 최적화
+- **Kubernetes Resource Management**: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+- **Horizontal Pod Autoscaler**: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+- **Vertical Pod Autoscaler**: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
+- **Cluster Autoscaler**: https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler
+
+### AWS 비용 관리
+- **AWS Cost Management**: https://aws.amazon.com/aws-cost-management/
+- **AWS Cost Explorer**: https://aws.amazon.com/aws-cost-management/aws-cost-explorer/
+- **AWS Savings Plans**: https://aws.amazon.com/savingsplans/
+- **Amazon EKS Best Practices - Cost Optimization**: https://aws.github.io/aws-eks-best-practices/cost_optimization/
+
+### Kubecost
+- **Kubecost Documentation**: https://docs.kubecost.com/
+- **Kubecost Architecture**: https://docs.kubecost.com/architecture/
+- **Cost Allocation**: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/cost-allocation
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과

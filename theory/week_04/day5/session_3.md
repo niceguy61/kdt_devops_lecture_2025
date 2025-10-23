@@ -650,6 +650,64 @@ resource "aws_volume_attachment" "data" {
 
 ---
 
+## ❓ FAQ (자주 묻는 질문)
+
+### Q1: IaC를 사용하면 수동 설정은 절대 하면 안 되나요?
+**A**: 원칙적으로는 모든 인프라를 코드로 관리해야 하지만, 긴급 상황에서는 수동 변경 후 반드시 코드에 반영해야 합니다. 이를 "드리프트 관리"라고 합니다.
+
+### Q2: Terraform과 CloudFormation 중 어떤 것을 선택해야 하나요?
+**A**: 멀티 클라우드 환경이나 AWS 외 서비스 통합이 필요하면 Terraform, AWS만 사용하고 AWS 네이티브 통합이 중요하면 CloudFormation을 선택하세요.
+
+### Q3: Kubernetes의 Namespace와 AWS의 VPC는 같은 개념인가요?
+**A**: 비슷하지만 다릅니다. Namespace는 논리적 격리(같은 클러스터 내), VPC는 네트워크 격리(완전히 분리된 네트워크)입니다. VPC가 더 강력한 격리를 제공합니다.
+
+### Q4: Terraform State 파일은 어떻게 관리해야 하나요?
+**A**: 로컬 저장은 위험합니다. S3 + DynamoDB를 사용한 원격 백엔드로 관리하고, 팀원 간 상태를 공유하며 동시 수정을 방지해야 합니다.
+
+### Q5: AWS 학습 시 어떤 서비스부터 시작해야 하나요?
+**A**: ①VPC(네트워크 기초) → ②EC2(컴퓨팅) → ③S3(스토리지) → ④RDS(데이터베이스) → ⑤ELB(로드밸런서) 순서로 학습하는 것을 권장합니다.
+
+---
+
+## 📚 공식 문서 및 참고 자료
+
+### Infrastructure as Code (IaC)
+- **IaC Best Practices**: https://www.hashicorp.com/resources/what-is-infrastructure-as-code
+- **IaC Patterns**: https://docs.aws.amazon.com/prescriptive-guidance/latest/choose-iac-tool/introduction.html
+
+### Terraform
+- **Terraform Documentation**: https://developer.hashicorp.com/terraform/docs
+- **Terraform AWS Provider**: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+- **Terraform Best Practices**: https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices
+- **Terraform State Management**: https://developer.hashicorp.com/terraform/language/state
+- **Terraform Registry**: https://registry.terraform.io/
+
+### AWS CloudFormation
+- **CloudFormation Documentation**: https://docs.aws.amazon.com/cloudformation/
+- **CloudFormation Best Practices**: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/best-practices.html
+- **CloudFormation Template Reference**: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-reference.html
+
+### AWS CDK
+- **AWS CDK Documentation**: https://docs.aws.amazon.com/cdk/
+- **CDK Workshop**: https://cdkworkshop.com/
+- **CDK Patterns**: https://cdkpatterns.com/
+
+### AWS 핵심 서비스
+- **Amazon VPC**: https://docs.aws.amazon.com/vpc/
+- **Amazon EC2**: https://docs.aws.amazon.com/ec2/
+- **Amazon S3**: https://docs.aws.amazon.com/s3/
+- **Amazon RDS**: https://docs.aws.amazon.com/rds/
+- **Elastic Load Balancing**: https://docs.aws.amazon.com/elasticloadbalancing/
+- **Amazon EKS**: https://docs.aws.amazon.com/eks/
+
+### AWS Well-Architected Framework
+- **Well-Architected Framework**: https://aws.amazon.com/architecture/well-architected/
+- **Operational Excellence Pillar**: https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/
+- **Security Pillar**: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/
+- **Cost Optimization Pillar**: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/
+
+---
+
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
