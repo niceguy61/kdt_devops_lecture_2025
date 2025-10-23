@@ -85,25 +85,66 @@ graph TB
 
 ### 역할별 상세 설명
 
-**Monitoring Stack**:
-- **Prometheus**: 클러스터 메트릭 수집 (CPU, Memory, Network)
-- **Kubecost**: 비용 계산 엔진 (리소스 사용량 → 비용 변환)
-- **Grafana**: 비용 대시보드 및 시각화
+**Monitoring Stack** (모니터링 스택):
+- **Prometheus** (프로메테우스): 
+  - 역할: 클러스터의 모든 메트릭 수집 (CPU, Memory, Network)
+  - 🏠 실생활 비유: 아파트 관리실의 전기/수도 계량기처럼 모든 사용량을 실시간으로 기록
+  - 왜 필요?: 비용을 계산하려면 먼저 "얼마나 사용했는지" 정확한 데이터가 필요
+  
+- **Kubecost** (큐브코스트):
+  - 역할: 리소스 사용량을 실제 비용으로 변환하는 계산 엔진
+  - 🏠 실생활 비유: 전기 사용량(kWh)을 보고 전기세(원)를 계산해주는 시스템
+  - 왜 필요?: "CPU 200m 사용"이 실제로 "월 $50"인지 알아야 비용 관리 가능
+  
+- **Grafana** (그라파나):
+  - 역할: 비용 데이터를 보기 쉬운 그래프와 대시보드로 시각화
+  - 🏠 실생활 비유: 가계부 앱처럼 지출 내역을 차트와 그래프로 보여줌
+  - 왜 필요?: 숫자만 보면 이해하기 어렵지만, 그래프로 보면 한눈에 파악 가능
 
-**Application Workloads**:
-- **Production**: 실제 운영 서비스 (높은 리소스)
-- **Staging**: 테스트 환경 (중간 리소스)
-- **Development**: 개발 환경 (낮은 리소스)
+**Application Workloads** (애플리케이션 워크로드):
+- **Production** (프로덕션 - 운영 환경):
+  - 역할: 실제 사용자가 접속하는 운영 서비스
+  - 🏠 실생활 비유: 실제 영업 중인 매장 (24시간 운영, 높은 품질 필요)
+  - 리소스: 높은 리소스 할당 (안정성 최우선)
+  
+- **Staging** (스테이징 - 테스트 환경):
+  - 역할: 운영 배포 전 최종 테스트하는 환경
+  - 🏠 실생활 비유: 오픈 전 시범 운영하는 매장 (일부 시간만 운영)
+  - 리소스: 중간 리소스 할당 (운영과 유사하지만 규모는 작게)
+  
+- **Development** (개발 환경):
+  - 역할: 개발자들이 코드를 작성하고 테스트하는 환경
+  - 🏠 실생활 비유: 주방 테스트 공간 (새 메뉴 개발용, 최소 시설)
+  - 리소스: 낮은 리소스 할당 (개발 목적으로만 사용)
 
-**Auto Scaling**:
-- **HPA**: 트래픽 기반 Pod 개수 자동 조정
-- **VPA**: 사용 패턴 기반 리소스 자동 조정
-- **Cluster Autoscaler**: Pod 스케줄링 실패 시 노드 추가
+**Auto Scaling** (자동 확장):
+- **HPA** (Horizontal Pod Autoscaler - 수평 확장):
+  - 역할: 트래픽 증가 시 Pod 개수를 자동으로 늘림
+  - 🏠 실생활 비유: 손님이 많아지면 계산대를 추가로 여는 것
+  - 예시: CPU 사용률 70% 넘으면 Pod 2개 → 4개로 자동 증가
+  
+- **VPA** (Vertical Pod Autoscaler - 수직 확장):
+  - 역할: 사용 패턴을 분석해서 각 Pod의 리소스를 자동 조정
+  - 🏠 실생활 비유: 직원별 업무량을 보고 급여를 적절히 조정하는 것
+  - 예시: 실제로 CPU 100m만 쓰는데 500m 할당된 경우 → 150m로 최적화
+  
+- **Cluster Autoscaler** (클러스터 자동 확장):
+  - 역할: Pod를 배치할 노드가 부족하면 노드를 자동으로 추가
+  - 🏠 실생활 비유: 매장이 꽉 차면 새 지점을 여는 것
+  - 예시: 모든 노드가 80% 이상 사용 중 → 새 노드 자동 추가
 
-**Cost Optimization**:
-- **최적화 정책**: Right-sizing, 자동 스케일링 규칙
-- **비용 알림**: 예산 초과 시 Slack/Email 알림
-- **비용 리포트**: 일일/주간/월간 비용 리포트
+**Cost Optimization** (비용 최적화):
+- **최적화 정책**:
+  - 역할: Right-sizing(적정 크기 조정), 자동 스케일링 규칙 설정
+  - 🏠 실생활 비유: 전기/수도 절약 규칙 (사용하지 않는 방은 전등 끄기)
+  
+- **비용 알림**:
+  - 역할: 예산 초과 시 Slack/Email로 즉시 알림
+  - 🏠 실생활 비유: 카드 사용액이 한도에 가까워지면 문자 알림
+  
+- **비용 리포트**:
+  - 역할: 일일/주간/월간 비용 리포트 자동 생성
+  - 🏠 실생활 비유: 월말에 받는 카드 사용 내역서
 
 ---
 
@@ -172,6 +213,16 @@ lab-cluster-worker2         Ready    <none>          1m    v1.27.3
 
 ## 🛠️ Step 2: Metrics Server 설치 (10분)
 
+### 🤔 왜 필요한가?
+**문제 상황**: 
+- Kubernetes는 기본적으로 "지금 CPU를 얼마나 쓰고 있는지" 알 수 없습니다
+- 🏠 실생활 비유: 전기 계량기가 없으면 전기를 얼마나 쓰는지 알 수 없는 것과 같음
+
+**Metrics Server의 역할**:
+- 모든 Pod와 Node의 실시간 리소스 사용량을 수집
+- HPA(자동 확장)가 "CPU 70% 넘으면 Pod 추가"를 판단하려면 현재 CPU 사용률을 알아야 함
+- Kubecost가 비용을 계산하려면 정확한 사용량 데이터가 필요
+
 ### 목표
 Kubernetes 메트릭 수집을 위한 Metrics Server 설치
 
@@ -188,6 +239,7 @@ Kubernetes 메트릭 수집을 위한 Metrics Server 설치
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
 # Kind 환경을 위한 패치 (TLS 검증 비활성화)
+# 💡 설명: Kind는 로컬 테스트 환경이라 보안 인증서가 없어서 이 설정이 필요
 kubectl patch -n kube-system deployment metrics-server --type=json \
   -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 
@@ -215,9 +267,31 @@ lab-cluster-worker          100m         5%     600Mi           15%
 lab-cluster-worker2         100m         5%     600Mi           15%
 ```
 
+**💡 출력 설명**:
+- `CPU(cores)`: 현재 사용 중인 CPU (150m = 0.15 코어 = CPU의 15%)
+- `CPU%`: 전체 CPU 대비 사용률
+- `MEMORY(bytes)`: 현재 사용 중인 메모리 (800Mi = 약 800MB)
+- `MEMORY%`: 전체 메모리 대비 사용률
+
+**🎯 이제 할 수 있는 것**:
+- `kubectl top pods`: 각 Pod의 실시간 리소스 사용량 확인
+- `kubectl top nodes`: 각 노드의 실시간 리소스 사용량 확인
+- HPA가 CPU/Memory 기반으로 자동 확장 가능
+
 ---
 
 ## 🛠️ Step 3: Kubecost 설치 (15분)
+
+### 🤔 왜 필요한가?
+**문제 상황**:
+- Metrics Server는 "CPU 150m 사용 중"이라고 알려주지만, 이게 "얼마의 비용"인지는 모름
+- 🏠 실생활 비유: 전기 계량기는 "50kWh 사용"이라고 보여주지만, 전기세가 얼마인지는 계산해야 알 수 있음
+
+**Kubecost의 역할**:
+- 리소스 사용량을 실제 클라우드 비용으로 변환
+- "이 Pod가 한 달에 $50 사용 중"처럼 구체적인 비용 표시
+- 어떤 팀/서비스가 비용을 많이 쓰는지 한눈에 파악
+- 비용 절감 방법 자동 추천 (예: "이 Pod는 리소스를 50%만 쓰니 줄이세요")
 
 ### 목표
 Helm을 통한 Kubecost 설치 및 Prometheus 연동
@@ -232,10 +306,12 @@ Helm을 통한 Kubecost 설치 및 Prometheus 연동
 **스크립트 핵심 부분**:
 ```bash
 # Helm 저장소 추가
+# 💡 Helm: Kubernetes 애플리케이션을 쉽게 설치하는 패키지 매니저 (앱스토어 같은 것)
 helm repo add kubecost https://kubecost.github.io/cost-analyzer/
 helm repo update
 
 # Kubecost 설치 (Prometheus 포함)
+# 💡 --set: 설치 옵션 설정 (클러스터 이름 등)
 helm install kubecost kubecost/cost-analyzer \
   --namespace kubecost --create-namespace \
   --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98" \
@@ -271,12 +347,27 @@ kubecost-prometheus-server-7d8f9c6b5-9h4j3   2/2     Running   0          2m
 kubecost-grafana-6b8d9c7f5-3k5l7             1/1     Running   0          2m
 ```
 
+**💡 Pod 설명**:
+- `kubecost-cost-analyzer`: 비용 계산 엔진 (메인 서비스)
+- `kubecost-prometheus-server`: 메트릭 수집 및 저장
+- `kubecost-grafana`: 비용 대시보드 (웹 UI)
+
 ### 🌐 Kubecost 대시보드 접속
 ```bash
 kubectl port-forward -n kubecost svc/kubecost-cost-analyzer 9090:9090
 ```
 
+**💡 port-forward 설명**:
+- Kubernetes 내부 서비스를 로컬 컴퓨터에서 접속 가능하게 만드는 명령어
+- 🏠 실생활 비유: 회사 내부망 서비스를 VPN으로 집에서 접속하는 것과 비슷
+
 브라우저에서 `http://localhost:9090` 접속
+
+**🎯 대시보드에서 확인할 수 있는 것**:
+- 네임스페이스별 비용 (production, staging, development)
+- Pod별 상세 비용
+- 시간대별 비용 트렌드
+- 비용 절감 추천 사항
 
 ---
 
