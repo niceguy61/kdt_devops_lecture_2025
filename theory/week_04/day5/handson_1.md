@@ -396,6 +396,10 @@ spec:
         app: user-service
         tier: backend
         version: v1        # 버전 관리 (Day 4 GitOps 연계)
+      annotations:
+        prometheus.io/scrape: "true"    # 💡 Prometheus가 메트릭 수집
+        prometheus.io/port: "9113"      # 💡 메트릭 포트
+        prometheus.io/path: "/metrics"  # 💡 메트릭 경로
     spec:
       containers:
       - name: user-service
@@ -427,6 +431,21 @@ spec:
             port: 8080
           initialDelaySeconds: 10
           periodSeconds: 5
+      # 💡 Nginx Prometheus Exporter (사이드카)
+      - name: nginx-exporter
+        image: nginx/nginx-prometheus-exporter:0.11.0
+        args:
+        - -nginx.scrape-uri=http://localhost:8080/stub_status
+        ports:
+        - containerPort: 9113
+          name: metrics
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -440,7 +459,10 @@ spec:
   - port: 80
     targetPort: 8080
     name: http
-  type: ClusterIP          # 클러스터 내부에서만 접근 가능
+  - port: 9113
+    targetPort: 9113
+    name: metrics        # 💡 메트릭 포트 추가
+  type: ClusterIP
 EOF
 ```
 
@@ -451,6 +473,13 @@ EOF
   - limits: "최대 이만큼까지만 써" (노드 과부하 방지)
 - **livenessProbe**: 서비스가 죽었는지 확인 (죽으면 자동 재시작)
 - **readinessProbe**: 서비스가 준비됐는지 확인 (준비 안되면 트래픽 차단)
+- **prometheus.io annotations**: Prometheus가 자동으로 메트릭 수집
+  - `scrape: "true"`: 이 Pod에서 메트릭 수집
+  - `port: "9113"`: 메트릭 포트 지정
+  - `path: "/metrics"`: 메트릭 경로 지정
+- **nginx-exporter 사이드카**: Nginx 메트릭을 Prometheus 형식으로 변환
+  - 요청 수, 응답 시간, 연결 수 등 수집
+  - Grafana에서 시각화 가능
 
 **2-3. Product Service 배포**
 ```bash
@@ -474,6 +503,10 @@ spec:
         app: product-service
         tier: backend
         version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: product-service
@@ -492,6 +525,20 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+      - name: nginx-exporter
+        image: nginx/nginx-prometheus-exporter:0.11.0
+        args:
+        - -nginx.scrape-uri=http://localhost:8080/stub_status
+        ports:
+        - containerPort: 9113
+          name: metrics
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -504,6 +551,10 @@ spec:
   ports:
   - port: 80
     targetPort: 8080
+    name: http
+  - port: 9113
+    targetPort: 9113
+    name: metrics
   type: ClusterIP
 EOF
 ```
@@ -530,6 +581,10 @@ spec:
         app: order-service
         tier: backend
         version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: order-service
@@ -548,6 +603,20 @@ spec:
           limits:
             cpu: 300m
             memory: 256Mi
+      - name: nginx-exporter
+        image: nginx/nginx-prometheus-exporter:0.11.0
+        args:
+        - -nginx.scrape-uri=http://localhost:8080/stub_status
+        ports:
+        - containerPort: 9113
+          name: metrics
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -556,6 +625,17 @@ metadata:
   namespace: cloudmart
 spec:
   selector:
+    app: order-service
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  - port: 9113
+    targetPort: 9113
+    name: metrics
+  type: ClusterIP
+EOF
+```
     app: order-service
   ports:
   - port: 80
@@ -800,38 +880,17 @@ Kubecost 대시보드에서 확인할 항목:
 
 **5-4. 통합 아키텍처 검증 체크리스트**
 ```bash
-# 체크리스트 스크립트
-cat <<'SCRIPT' > verify-cloudmart.sh
-#!/bin/bash
-echo "=== CloudMart 통합 검증 ==="
-echo ""
-
-echo "1. CloudMart 서비스 확인"
-kubectl get pods -n cloudmart -o wide
-
-echo ""
-echo "2. HPA 동작 확인"
-kubectl get hpa -n cloudmart
-
-echo ""
-echo "3. Kubecost 상태"
-kubectl get pods -n kubecost
-
-echo ""
-echo "4. 전체 리소스 사용량"
-kubectl top nodes
-
-echo ""
-echo "5. CloudMart 비용 (최근 1일)"
-curl -s "http://localhost:9090/model/allocation?window=1d&aggregate=namespace&filter=namespace:cloudmart" | jq '.data[] | {name: .name, totalCost: .totalCost}'
-
-echo ""
-echo "=== 검증 완료 ==="
-SCRIPT
-
-chmod +x verify-cloudmart.sh
 ./verify-cloudmart.sh
 ```
+
+**📋 스크립트 내용**: [verify-cloudmart.sh](./lab_scripts/handson1/verify-cloudmart.sh)
+
+**검증 항목**:
+1. CloudMart 서비스 Pod 상태
+2. HPA 동작 확인
+3. Kubecost 상태
+4. 전체 리소스 사용량
+5. CloudMart 비용 (최근 1일)
 
 ### 💡 검증 포인트
 - **가용성**: 모든 Pod가 Running 상태

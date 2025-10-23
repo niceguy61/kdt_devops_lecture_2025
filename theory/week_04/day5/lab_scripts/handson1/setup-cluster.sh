@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Week 4 Day 5 Hands-on 1: 클러스터 초기화
-# 설명: 기존 클러스터 삭제 및 새 클러스터 생성
+# 설명: 기존 클러스터 삭제 및 새 클러스터 생성 (CloudMart + 모니터링용)
 
 set -e
 
@@ -20,15 +20,24 @@ name: lab-cluster
 nodes:
 - role: control-plane
   extraPortMappings:
+  # CloudMart 서비스 포트
   - containerPort: 30080
     hostPort: 30080
-    protocol: TCP  # CloudMart Frontend
+    protocol: TCP
   - containerPort: 30081
     hostPort: 30081
-    protocol: TCP  # CloudMart API
+    protocol: TCP
   - containerPort: 30082
     hostPort: 30082
-    protocol: TCP  # CloudMart Admin
+    protocol: TCP
+  # 기본 웹 포트
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  # 모니터링 도구 포트
   - containerPort: 30090
     hostPort: 30090
     protocol: TCP  # Kubecost
@@ -38,12 +47,6 @@ nodes:
   - containerPort: 30092
     hostPort: 30092
     protocol: TCP  # Jaeger UI
-  - containerPort: 443
-    hostPort: 443
-    protocol: TCP
-  - containerPort: 80
-    hostPort: 80
-    protocol: TCP
 - role: worker
 - role: worker
 EOF
@@ -65,4 +68,3 @@ echo "  * 30080-30082: CloudMart 서비스"
 echo "  * 30090: Kubecost"
 echo "  * 30091: Grafana"
 echo "  * 30092: Jaeger UI"
-echo "  * 443, 80: Ingress"
