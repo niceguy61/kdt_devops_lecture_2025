@@ -145,7 +145,7 @@ graph TB
 ---
 
 ### [Session 3: 클라우드 인프라 관리 - IaC와 AWS 기초](./session_3.md) (50분)
-**🎯 목표**: Infrastructure as Code 이해와 Week 5 AWS 학습 준비
+**🎯 목표**: Infrastructure as Code 이해와 Week 5 프로젝트 배포 준비
 
 #### Part 1: IaC 개념과 도구 비교 (20분)
 ```mermaid
@@ -176,14 +176,15 @@ graph TB
 
 #### Part 2: Kubernetes → AWS 매핑 (20분)
 - **컴퓨팅**: Pod/Deployment → EC2 Instance
-- **네트워킹**: Service/Ingress → VPC/Route53/ALB
+- **네트워킹**: Service/Ingress → VPC/ALB/Route53
 - **스토리지**: PV/PVC → EBS/S3
-- **오케스트레이션**: Kubernetes → Docker Compose + Terraform
+- **데이터베이스**: StatefulSet → RDS
 
 #### Part 3: Week 5 학습 로드맵 (10분)
-- **Day 1-2**: AWS 기초 서비스 실습 (EC2, VPC, EBS)
-- **Day 3-4**: Terraform 기초와 IaC 실습
-- **Day 5**: Docker Compose + Terraform 통합
+- **프로젝트 목표**: CloudMart를 AWS에 배포
+- **Day 1-2**: AWS 핵심 서비스 (VPC, EC2, RDS, S3, ALB)
+- **Day 3-4**: Terraform으로 인프라 코드화
+- **Day 5**: CloudMart 프로젝트 AWS 배포 완성
 
 ---
 
@@ -376,9 +377,9 @@ graph LR
 ```
 
 ### Week 5 준비
-- **AWS 기초**: EC2, VPC, EBS, Route53, S3, CloudFront
-- **IaC 도구**: Terraform 기초와 실습
-- **통합 배포**: Docker Compose + Terraform
+- **AWS 기초**: EC2, VPC, S3, RDS 등 프로젝트 구현을 위한 핵심 서비스
+- **IaC 도구**: Terraform으로 인프라 코드화
+- **프로젝트 배포**: CloudMart를 AWS에 배포하기 위한 인프라 구축
 
 ---
 
@@ -392,10 +393,10 @@ graph LR
 - [ ] 통합 운영 챌린지 해결
 
 ### 🎯 Week 5 준비사항
-- **예습**: AWS 기본 서비스 개념 (EC2, VPC)
-- **환경**: AWS 계정 준비 (Free Tier)
+- **예습**: AWS 핵심 서비스 개념 (VPC, EC2, RDS, S3, ALB)
+- **환경**: AWS 계정 준비 (Free Tier 가입)
 - **도구**: Terraform 설치 준비
-- **복습**: Week 4 핵심 개념 정리
+- **목표**: CloudMart 프로젝트를 AWS에 배포할 준비
 
 ### 📊 Week 4 학습 진도
 ```mermaid
@@ -438,8 +439,8 @@ graph LR
 
 **💰 FinOps 전문가** • **🏗️ 클라우드 네이티브 아키텍트** • **☁️ AWS 준비 완료**
 
-*Week 4를 완벽히 마무리하고 Week 5 AWS 학습을 준비합니다*
+*Week 4를 완벽히 마무리하고 Week 5에서 CloudMart를 AWS에 배포합니다*
 
-**이전**: [Day 4 - GitOps와 배포 자동화](../day4/README.md) | **다음**: [Week 5 - Infrastructure as Code & AWS](../../week_05/README.md)
+**이전**: [Day 4 - GitOps와 배포 자동화](../day4/README.md) | **다음**: [Week 5 - AWS 인프라 구축과 프로젝트 배포](../../week_05/README.md)
 
 </div>

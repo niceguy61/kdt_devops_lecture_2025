@@ -289,8 +289,7 @@ graph TB
 - **기초 지식**: 네트워킹, 보안, 모니터링 → 아키텍처 적용
 
 ### 다음 학습 준비
-- **Week 5**: CI/CD 파이프라인 → 마이크로서비스 배포 자동화
-- **Week 6**: 최신 DevOps 트렌드 → Platform Engineering 연계
+- **Week 5**: AWS 인프라 구축과 IaC → CloudMart 프로젝트를 AWS에 배포
 
 ---
 
@@ -369,6 +368,6 @@ graph TB
 
 *Week 4를 통해 현대적 클라우드 네이티브 아키텍처의 모든 것을 마스터합니다*
 
-**이전 주**: [Week 3 - Kubernetes 운영과 관리](../week_03/README.md) | **다음 주**: [Week 5 - CI/CD 파이프라인](../week_05/README.md)
+**이전 주**: [Week 3 - Kubernetes 운영과 관리](../week_03/README.md) | **다음 주**: [Week 5 - AWS 인프라 구축과 프로젝트 배포](../week_05/README.md)
 
 </div>
