@@ -25,18 +25,56 @@
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "iam:CreateAccessKey",
-                "iam:ListAccessKeys",
-                "iam:GetUser"
-            ],
-            "Resource": "arn:aws:iam::*:user/${aws:username}"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances"
+      ],
+      "Resource": [
+        "arn:aws:ec2:*:*:instance/*",
+        "arn:aws:ec2:*:*:volume/*",
+        "arn:aws:ec2:*:*:network-interface/*",
+        "arn:aws:ec2:*:*:subnet/*",
+        "arn:aws:ec2:*:*:security-group/*",
+        "arn:aws:ec2:*:*:key-pair/*",
+        "arn:aws:ec2:*::image/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "ec2:InstanceType": [
+            "t2.micro",
+            "t2.small",
+            "t3.micro",
+            "t3.small",
+            "t3.medium"
+          ]
         }
-    ]
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateKeyPair",
+        "ec2:DeleteKeyPair",
+        "ec2:DescribeKeyPairs"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeImages",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeVpcs"
+      ],
+      "Resource": "*"
+    }
+  ]
 }
 ```
 
