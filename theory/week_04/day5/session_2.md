@@ -122,8 +122,12 @@ graph TB
     
     style K fill:#ff6b6b
     style I fill:#4ecdc4
-    style US,PS,OS fill:#45b7d1
-    style MTLS,JWT,OPA fill:#ff9ff3
+    style US fill:#45b7d1
+    style PS fill:#45b7d1
+    style OS fill:#45b7d1
+    style MTLS fill:#ff9ff3
+    style JWT fill:#ff9ff3
+    style OPA fill:#ff9ff3
     style ARGO fill:#54a0ff
     style KUBE fill:#feca57
 ```
@@ -180,7 +184,9 @@ graph TB
     D1C --> D1C2[Saga 패턴]
     
     style D1 fill:#e8f5e8
-    style D1A,D1B,D1C fill:#fff3e0
+    style D1A fill:#fff3e0
+    style D1B fill:#fff3e0
+    style D1C fill:#fff3e0
 ```
 
 **핵심 포인트**:
@@ -213,7 +219,9 @@ graph TB
     D2C --> D2C2[A/B 테스팅]
     
     style D2 fill:#fff3e0
-    style D2A,D2B,D2C fill:#ffebee
+    style D2A fill:#ffebee
+    style D2B fill:#ffebee
+    style D2C fill:#ffebee
 ```
 
 **핵심 포인트**:
@@ -246,7 +254,9 @@ graph TB
     D3C --> D3C2[Policy as Code]
     
     style D3 fill:#ffebee
-    style D3A,D3B,D3C fill:#e3f2fd
+    style D3A fill:#e3f2fd
+    style D3B fill:#e3f2fd
+    style D3C fill:#e3f2fd
 ```
 
 **핵심 포인트**:
@@ -279,7 +289,9 @@ graph TB
     D4C --> D4C2[블루-그린]
     
     style D4 fill:#e3f2fd
-    style D4A,D4B,D4C fill:#f3e5f5
+    style D4A fill:#f3e5f5
+    style D4B fill:#f3e5f5
+    style D4C fill:#f3e5f5
 ```
 
 **핵심 포인트**:
@@ -312,7 +324,9 @@ graph TB
     D5C --> D5C2[VPA]
     
     style D5 fill:#f3e5f5
-    style D5A,D5B,D5C fill:#e8f5e8
+    style D5A fill:#e8f5e8
+    style D5B fill:#e8f5e8
+    style D5C fill:#e8f5e8
 ```
 
 **핵심 포인트**:

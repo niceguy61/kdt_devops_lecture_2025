@@ -366,8 +366,10 @@ graph LR
     
     B2 -.->|60% 절감| A2
     
-    style B1,B2 fill:#ffebee
-    style A1,A2 fill:#e8f5e8
+    style B1 fill:#ffebee
+    style B2 fill:#ffebee
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
 ```
 
 **3. 비용 최적화 베스트 프랙티스**:

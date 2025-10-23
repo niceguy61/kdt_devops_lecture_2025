@@ -93,8 +93,12 @@ graph TB
     I1 --> I2 --> I3 --> I4
     D1 --> D2
     
-    style I1,I2,I3,I4 fill:#ffebee
-    style D1,D2 fill:#e8f5e8
+    style I1 fill:#ffebee
+    style I2 fill:#ffebee
+    style I3 fill:#ffebee
+    style I4 fill:#ffebee
+    style D1 fill:#e8f5e8
+    style D2 fill:#e8f5e8
 ```
 
 **명령형 예시 (Bash)**:
@@ -333,8 +337,16 @@ graph TB
     K4 --> A4
     K5 --> A5
     
-    style K1,K2,K3,K4,K5 fill:#e8f5e8
-    style A1,A2,A3,A4,A5 fill:#fff3e0
+    style K1 fill:#e8f5e8
+    style K2 fill:#e8f5e8
+    style K3 fill:#e8f5e8
+    style K4 fill:#e8f5e8
+    style K5 fill:#e8f5e8
+    style A1 fill:#fff3e0
+    style A2 fill:#fff3e0
+    style A3 fill:#fff3e0
+    style A4 fill:#fff3e0
+    style A5 fill:#fff3e0
 ```
 
 **1. 컴퓨팅: Pod/Deployment → EC2**:
@@ -353,8 +365,10 @@ graph LR
     P --> E
     D --> A
     
-    style P,D fill:#e8f5e8
-    style E,A fill:#fff3e0
+    style P fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style A fill:#fff3e0
 ```
 
 **Kubernetes Deployment**:
@@ -412,8 +426,11 @@ graph TB
     I --> R
     I --> A
     
-    style S,I fill:#e8f5e8
-    style V,R,A fill:#fff3e0
+    style S fill:#e8f5e8
+    style I fill:#e8f5e8
+    style V fill:#fff3e0
+    style R fill:#fff3e0
+    style A fill:#fff3e0
 ```
 
 **Kubernetes Service + Ingress**:
@@ -487,8 +504,10 @@ graph LR
     PVC --> EBS
     PV --> S3
     
-    style PV,PVC fill:#e8f5e8
-    style EBS,S3 fill:#fff3e0
+    style PV fill:#e8f5e8
+    style PVC fill:#e8f5e8
+    style EBS fill:#fff3e0
+    style S3 fill:#fff3e0
 ```
 
 **Kubernetes PV/PVC**:
@@ -655,7 +674,11 @@ graph LR
     
     W4D5 --> W5D1[Week 5 Day 1<br/>AWS 기초]
     
-    style W4D1,W4D2,W4D3,W4D4,W4D5 fill:#4caf50
+    style W4D1 fill:#4caf50
+    style W4D2 fill:#4caf50
+    style W4D3 fill:#4caf50
+    style W4D4 fill:#4caf50
+    style W4D5 fill:#4caf50
     style W5D1 fill:#fff9c4
 ```
 
