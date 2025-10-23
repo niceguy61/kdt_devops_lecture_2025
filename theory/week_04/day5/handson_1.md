@@ -74,9 +74,8 @@ graph TB
     end
     
     subgraph "💰 FinOps Layer - Day 5 NEW"
-        KUBE[Kubecost]
         PROM[Prometheus]
-        GRAF[Grafana]
+        GRAF[Grafana FinOps Dashboard]
         HPA[HPA/VPA]
     end
     
@@ -101,16 +100,15 @@ graph TB
     US -.-> PROM
     PS -.-> PROM
     OS -.-> PROM
-    PROM --> KUBE
-    KUBE --> GRAF
-    KUBE --> HPA
+    PROM --> GRAF
+    GRAF --> HPA
     
     style K fill:#ff6b6b
     style I fill:#4ecdc4
     style US,PS,OS fill:#45b7d1
     style MTLS,JWT,OPA fill:#ff9ff3
     style ARGO fill:#54a0ff
-    style KUBE fill:#feca57
+    style GRAF fill:#feca57
 ```
 
 ### 📅 Week 4 통합 스토리
@@ -143,13 +141,14 @@ graph TB
 ### 🎯 Hands-on 1의 목표
 
 **Lab 1과의 차이점**:
-- **Lab 1**: Kubecost 기본 설치 및 샘플 앱 테스트 (학습용)
-- **Hands-on 1**: 실제 CloudMart에 Kubecost 통합 (실전용)
+- **Lab 1**: 기본 모니터링 스택 설치 (Prometheus + Grafana)
+- **Hands-on 1**: 실무급 FinOps 대시보드로 CloudMart 비용 분석
 
-**왜 통합이 중요한가?**:
-- 실제 프로젝트에서는 모든 시스템이 유기적으로 연결되어야 함
-- 비용 모니터링은 독립적이 아니라 전체 시스템의 일부
-- 🏠 비유: 가계부는 따로 쓰는 게 아니라 실제 지출과 연결되어야 의미 있음
+**왜 Grafana FinOps 대시보드인가?**:
+- Kubecost는 복잡하고 무거움 (프로덕션 환경에서 부담)
+- Prometheus 메트릭만으로도 충분한 비용 분석 가능
+- Grafana 대시보드는 커스터마이징이 자유로움
+- 🏠 비유: 복잡한 회계 프로그램보다 엑셀 가계부가 더 실용적일 수 있음
 
 ### 💰 CloudMart 마이크로서비스 상세 설명
 
@@ -197,7 +196,7 @@ graph TB
 - **Metrics** (메트릭): CPU, Memory 사용량 → Prometheus
 - **Traces** (추적): 서비스 간 요청 흐름 → Jaeger
 - **Logs** (로그): 애플리케이션 로그 → (이번 실습에서는 생략)
-- **Cost** (비용): 리소스 사용량 → 비용 변환 → Kubecost
+- **Cost** (비용): Prometheus 메트릭 → Grafana FinOps 대시보드로 시각화
 
 ### 🚀 자동화 스크립트 사용
 
