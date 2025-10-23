@@ -12,20 +12,20 @@
 
 ## 🕘 실습 정보
 **시간**: 14:00-15:15 (75분)
-**목표**: Lab 1의 Kubecost를 CloudMart에 통합하여 전체 시스템 완성
+**목표**: Lab 1의 모니터링 스택을 CloudMart에 통합하여 전체 시스템 완성
 **방식**: 직접 코드 작성 및 실행 (inline)
 
 ## 🎯 실습 목표
 
 ### 📚 학습 목표
 - Week 4 전체 개념의 통합 적용
-- Kubecost를 기존 CloudMart에 통합
+- Grafana FinOps 대시보드를 CloudMart에 통합
 - 프로덕션급 모니터링 및 비용 관리
 - 전체 시스템의 유기적 연결 이해
 
 ### 🛠️ 구현 목표
 - CloudMart 마이크로서비스 완전 통합
-- Kubecost 비용 모니터링 추가
+- Grafana FinOps 비용 모니터링 추가
 - 통합 대시보드 구축
 - 최종 시스템 검증
 
@@ -189,8 +189,8 @@ graph TB
 ### 🤔 왜 필요한가?
 **문제 상황**:
 - CloudMart 전체 시스템을 모니터링하려면 완전한 관측성 스택 필요
-- 비용(Kubecost), 메트릭(Prometheus), 추적(Jaeger), 시각화(Grafana) 모두 필요
-- 🏠 비유: 쇼핑몰 운영에 CCTV(Jaeger), 전기계량기(Prometheus), 가계부(Kubecost), 대시보드(Grafana) 모두 필요
+- 비용(Grafana FinOps), 메트릭(Prometheus), 추적(Jaeger), 시각화(Grafana) 모두 필요
+- 🏠 비유: 쇼핑몰 운영에 CCTV(Jaeger), 전기계량기(Prometheus), 가계부(Grafana FinOps), 대시보드(Grafana) 모두 필요
 
 **관측성 3요소 + 비용**:
 - **Metrics** (메트릭): CPU, Memory 사용량 → Prometheus
@@ -239,7 +239,6 @@ EOF
 - Worker Node: 2개
 - 오픈 포트:
   * 30080-30082: CloudMart 서비스
-  * 30090: Kubecost
   * 30091: Grafana
   * 30092: Jaeger UI
 ```
@@ -262,19 +261,16 @@ kubectl apply -f prometheus-config.yaml
 # Jaeger 설치
 kubectl apply -f jaeger-all-in-one.yaml
 
-# Kubecost 설치
-kubectl apply -f kubecost-deployment.yaml
-
-# Grafana 설치
+# Grafana 설치 (FinOps 대시보드 포함)
 kubectl apply -f grafana-deployment.yaml
+./install-grafana-dashboards.sh
 ```
 
 **설치되는 컴포넌트**:
 - **Metrics Server**: 리소스 사용량 수집 (CPU, Memory)
 - **Prometheus**: 메트릭 저장 및 쿼리
 - **Jaeger**: 분산 추적 (서비스 간 요청 흐름)
-- **Kubecost**: 비용 계산 및 분석
-- **Grafana**: 통합 대시보드
+- **Grafana**: 통합 대시보드 + FinOps 비용 분석
 
 **📊 예상 결과**:
 ```
@@ -285,11 +281,10 @@ kubectl apply -f grafana-deployment.yaml
 - Prometheus (monitoring namespace)
 - Jaeger (tracing namespace)
   * UI: http://localhost:30092
-- Kubecost (kubecost namespace)
-  * UI: http://localhost:30090
 - Grafana (monitoring namespace)
   * UI: http://localhost:30091
   * ID: admin / PW: admin
+  * FinOps 대시보드 포함
 ```
 
 ### ✅ 검증
@@ -309,7 +304,6 @@ NAMESPACE       NAME                              READY   STATUS    RESTARTS   A
 kube-system     metrics-server-xxx                1/1     Running   0          2m
 monitoring      prometheus-xxx                    1/1     Running   0          2m
 tracing         jaeger-xxx                        1/1     Running   0          2m
-kubecost        kubecost-xxx                      1/1     Running   0          2m
 monitoring      grafana-xxx                       1/1     Running   0          2m
 ```
 
@@ -319,12 +313,10 @@ monitoring      grafana-xxx                       1/1     Running   0          2
 - **Metrics Server**: "지금 CPU/Memory 얼마나 쓰는지" 실시간 수집
 - **Prometheus**: 메트릭을 시계열로 저장 (과거 데이터 조회 가능)
 - **Jaeger**: "User Service → Product Service → DB" 같은 요청 흐름 추적
-- **Kubecost**: "이 Pod가 한 달에 $50 사용" 같은 비용 계산
-- **Grafana**: 모든 데이터를 보기 좋은 그래프로 표시
+- **Grafana**: 모든 데이터를 보기 좋은 그래프로 표시 + FinOps 비용 분석
 
 **포트 설정 이유**:
-- **30090 (Kubecost)**: 비용 대시보드 접근
-- **30091 (Grafana)**: 통합 모니터링 대시보드
+- **30091 (Grafana)**: 통합 모니터링 대시보드 + FinOps 비용 분석
 - **30092 (Jaeger)**: 분산 추적 UI
 
 ---
@@ -363,12 +355,12 @@ metadata:
   labels:
     project: cloudmart      # 프로젝트 이름
     team: platform          # 담당 팀
-    cost-center: CC-2001    # 비용 센터 (Kubecost에서 추적용)
+    cost-center: CC-2001    # 비용 센터 (Grafana FinOps에서 추적용)
 EOF
 ```
 
 **💡 네임스페이스 라벨 설명**:
-- `project: cloudmart`: Kubecost에서 "cloudmart 프로젝트 비용"으로 집계
+- `project: cloudmart`: Grafana FinOps에서 "cloudmart 프로젝트 비용"으로 집계
 - `team: platform`: 어느 팀이 관리하는지 표시
 - `cost-center: CC-2001`: 회계 부서의 비용 코드 (실제 회사에서 사용)
 
@@ -466,7 +458,7 @@ EOF
 
 **💡 User Service 설정 설명**:
 - **replicas: 2**: 최소 2개로 고가용성 확보 (1개 죽어도 서비스 유지)
-- **resources**: Kubecost가 이 값을 보고 비용 계산
+- **resources**: Grafana FinOps가 이 값을 보고 비용 효율성 계산
   - requests: "최소 이만큼은 보장해줘" (비용 계산 기준)
   - limits: "최대 이만큼까지만 써" (노드 과부하 방지)
 - **livenessProbe**: 서비스가 죽었는지 확인 (죽으면 자동 재시작)
@@ -661,7 +653,7 @@ kubectl wait --for=condition=ready pod \
 - **리소스 설정**: 각 서비스별 적절한 CPU/Memory 할당
 - **헬스체크**: liveness/readiness probe로 안정성 확보
 - **환경 변수**: 서비스 간 연결 정보 설정
-- **라벨**: Kubecost 비용 추적을 위한 체계적 라벨링
+- **라벨**: Grafana FinOps 비용 추적을 위한 체계적 라벨링
 
 ---
 
@@ -779,64 +771,66 @@ kubectl describe hpa -n cloudmart
 
 ---
 
-## 🛠️ Step 4: Kubecost 비용 분석 (15분)
+## 🛠️ Step 4: Grafana FinOps 대시보드 분석 (15분)
 
 ### 📝 직접 분석하기
 
-**4-1. Kubecost 대시보드 접속**
+**4-1. Grafana 대시보드 접속**
 ```bash
 # 포트 포워딩
-kubectl port-forward -n kubecost svc/kubecost-cost-analyzer 9090:9090 &
+kubectl port-forward -n monitoring svc/grafana 3000:80 &
 
-# 브라우저에서 http://localhost:9090 접속
+# 브라우저에서 http://localhost:3000 접속
+# ID: admin / PW: admin
 ```
 
-**4-2. 네임스페이스별 비용 조회 (API)**
-```bash
-# CloudMart 비용 조회
-curl -s "http://localhost:9090/model/allocation?window=1d&aggregate=namespace&filter=namespace:cloudmart" | jq
+**4-2. FinOps Cost Analysis 대시보드 열기**
+1. 좌측 메뉴 → **Dashboards**
+2. **FinOps Cost Analysis** 선택
+3. 상단 **namespace** 필터에서 `cloudmart` 선택
 
-# 전체 네임스페이스 비용 비교
-curl -s "http://localhost:9090/model/allocation?window=1d&aggregate=namespace" | jq '.data[] | {name: .name, totalCost: .totalCost}'
-```
+**4-3. 주요 메트릭 분석**
 
-**예상 출력**:
-```json
-{
-  "name": "cloudmart",
-  "totalCost": 12.50
-}
-{
-  "name": "production",
-  "totalCost": 8.30
-}
-{
-  "name": "staging",
-  "totalCost": 4.20
-}
-```
+**💰 Total Resource Requests (Cost Baseline)**
+- CloudMart 전체 CPU 요청량 확인
+- 🏠 비유: 쇼핑몰 전체 전기 계약 용량
+- 예상 값: 약 1.5-2.0 CPU cores
 
-**4-3. 서비스별 비용 조회**
-```bash
-# CloudMart 서비스별 비용
-curl -s "http://localhost:9090/model/allocation?window=1d&aggregate=pod&filter=namespace:cloudmart" | jq '.data[] | {pod: .name, cpu: .cpuCost, memory: .memoryCost, total: .totalCost}' | head -20
-```
+**⚡ Overall CPU Efficiency**
+- 효율성 게이지 확인
+- **70% 이상**: 효율적 (초록색) ✅
+- **40-70%**: 보통 (노란색) ⚠️
+- **40% 미만**: 낭비 (빨간색) ❌
 
-**4-4. 비용 최적화 기회 식별**
-```bash
-# 리소스 사용률 확인
-kubectl top pods -n cloudmart
+**💸 Wasted Resources**
+- 낭비되는 리소스 확인
+- 🏠 비유: 계약했지만 안 쓰는 전기 용량
+- 목표: 0.5 CPU cores 미만
 
-# 과다 프로비저닝 Pod 식별
-kubectl top pods -n cloudmart --sort-by=cpu
-kubectl top pods -n cloudmart --sort-by=memory
-```
+**4-4. 서비스별 효율성 분석**
+
+**CPU Efficiency by Namespace 막대 그래프**:
+- `cloudmart`: 예상 60-80% (적정)
+- `monitoring`: 예상 40-60% (개선 필요)
+- `tracing`: 예상 30-50% (최적화 필요)
+
+**Top 10 Over-Provisioned Pods 테이블**:
+- 가장 낭비가 심한 Pod 확인
+- 🏠 비유: 가장 예산을 낭비하는 부서 순위
+- 개선 대상: Wasted CPU > 0.1 cores인 Pod
+
+**4-5. 최적화 권장사항 확인**
+
+대시보드 하단 **Cost Optimization Recommendations** 패널:
+- **즉시 적용 가능한 개선 사항**
+- **장기 개선 전략**
+- 실무에서 바로 사용 가능한 구체적 가이드
 
 ### 💡 분석 포인트
-- **비용 비교**: CloudMart vs 기존 샘플 애플리케이션
-- **서비스별 비용**: 어떤 서비스가 가장 비용이 높은가?
-- **최적화 기회**: 실제 사용량 대비 요청 리소스 비율
-- **HPA 효과**: 자동 스케일링으로 인한 비용 변화
+- **비용 효율성**: CloudMart의 전체 CPU 효율성이 70% 이상인가?
+- **서비스별 비교**: 어떤 서비스가 가장 효율적인가?
+- **최적화 기회**: Over-provisioned Pod를 찾아 리소스 조정
+- **HPA 효과**: 자동 스케일링으로 인한 효율성 변화
 
 ---
 
@@ -847,7 +841,7 @@ kubectl top pods -n cloudmart --sort-by=memory
 **5-1. 전체 시스템 상태 확인**
 ```bash
 # 모든 네임스페이스의 Pod
-kubectl get pods --all-namespaces | grep -E "cloudmart|kubecost|production|staging"
+kubectl get pods --all-namespaces | grep -E "cloudmart|monitoring|production|staging"
 
 # 모든 HPA
 kubectl get hpa --all-namespaces
@@ -870,11 +864,11 @@ kubectl top pods --all-namespaces --sort-by=cpu | head -20
 
 **5-3. 비용 대시보드 최종 확인**
 
-Kubecost 대시보드에서 확인할 항목:
-1. **Namespace 비용**: cloudmart, production, staging, development 비교
-2. **서비스별 비용**: user-service, product-service, order-service
-3. **비용 트렌드**: 시간대별 비용 변화
-4. **최적화 제안**: Kubecost가 제안하는 최적화 기회
+Grafana FinOps 대시보드에서 확인할 항목:
+1. **Namespace 비용 효율성**: cloudmart, production, staging, development 비교
+2. **서비스별 효율성**: user-service, product-service, order-service
+3. **리소스 사용 트렌드**: 24시간 리소스 사용 패턴
+4. **최적화 제안**: Over-provisioned Pod 목록 및 개선 권장사항
 
 **5-4. 통합 아키텍처 검증 체크리스트**
 ```bash
@@ -886,14 +880,14 @@ Kubecost 대시보드에서 확인할 항목:
 **검증 항목**:
 1. CloudMart 서비스 Pod 상태
 2. HPA 동작 확인
-3. Kubecost 상태
+3. Grafana 대시보드 상태
 4. 전체 리소스 사용량
-5. CloudMart 비용 (최근 1일)
+5. CloudMart 비용 효율성
 
 ### 💡 검증 포인트
 - **가용성**: 모든 Pod가 Running 상태
 - **스케일링**: HPA가 메트릭을 정상적으로 수집
-- **비용 추적**: Kubecost가 CloudMart 비용 정상 추적
+- **비용 추적**: Grafana FinOps가 CloudMart 비용 효율성 정상 추적
 - **리소스 효율**: 노드 리소스 사용률 적정 수준
 
 ---
@@ -901,9 +895,9 @@ Kubecost 대시보드에서 확인할 항목:
 ## ✅ 실습 체크포인트
 
 ### ✅ Step 1: 환경 확인
-- [ ] Lab 1 클러스터 정상 동작
-- [ ] Kubecost 정상 실행 (3/3 Running)
-- [ ] 기존 샘플 애플리케이션 확인
+- [ ] 클러스터 정상 생성
+- [ ] Grafana 정상 실행
+- [ ] FinOps 대시보드 설치 완료
 
 ### ✅ Step 2: CloudMart 배포
 - [ ] cloudmart 네임스페이스 생성
@@ -919,15 +913,15 @@ Kubecost 대시보드에서 확인할 항목:
 - [ ] HPA TARGETS 표시 확인
 
 ### ✅ Step 4: 비용 분석
-- [ ] Kubecost 대시보드 접속 성공
-- [ ] CloudMart 비용 조회 성공
-- [ ] 서비스별 비용 분석 완료
+- [ ] Grafana 대시보드 접속 성공
+- [ ] FinOps Cost Analysis 대시보드 확인
+- [ ] CloudMart 비용 효율성 분석 완료
 - [ ] 최적화 기회 식별
 
 ### ✅ Step 5: 통합 검증
 - [ ] 전체 시스템 상태 정상
 - [ ] 리소스 사용량 적정 수준
-- [ ] 비용 추적 정상 동작
+- [ ] 비용 효율성 추적 정상 동작
 - [ ] 검증 스크립트 실행 성공
 
 ---
@@ -976,11 +970,11 @@ kubectl get hpa -n cloudmart
 kubectl logs -n kube-system deployment/metrics-server
 ```
 
-### 문제 3: Kubecost API 응답 없음
+### 문제 3: Grafana 대시보드 접속 실패
 ```bash
 # 증상
-curl http://localhost:9090/model/allocation
-curl: (7) Failed to connect to localhost port 9090
+curl http://localhost:3000
+curl: (7) Failed to connect to localhost port 3000
 ```
 
 **원인**: 포트 포워딩 실행 안 됨
@@ -988,10 +982,10 @@ curl: (7) Failed to connect to localhost port 9090
 **해결 방법**:
 ```bash
 # 포트 포워딩 재실행
-kubectl port-forward -n kubecost svc/kubecost-cost-analyzer 9090:9090
+kubectl port-forward -n monitoring svc/grafana 3000:80
 
-# 다른 터미널에서 API 호출
-curl http://localhost:9090/model/allocation?window=1d
+# 다른 터미널에서 접속 확인
+curl http://localhost:3000
 ```
 
 ---
@@ -1000,9 +994,34 @@ curl http://localhost:9090/model/allocation?window=1d
 
 ### 🤝 팀 회고 (10분)
 1. **통합 경험**: Week 4 전체 개념을 통합하면서 어려웠던 점은?
-2. **비용 인사이트**: Kubecost를 통해 발견한 비용 최적화 기회는?
+2. **비용 인사이트**: Grafana FinOps를 통해 발견한 비용 최적화 기회는?
 3. **실무 적용**: CloudMart 프로젝트를 실제 업무에 어떻게 적용할 수 있을까?
 4. **개선 아이디어**: 추가하고 싶은 기능이나 개선 사항은?
+
+### 📊 학습 성과
+- **통합 아키텍처**: Week 4 전체 개념의 유기적 통합
+- **비용 관리**: Grafana FinOps를 활용한 실시간 비용 효율성 추적
+- **실무 역량**: 프로덕션급 마이크로서비스 구축 경험
+- **문제 해결**: 복잡한 시스템의 트러블슈팅 능력 향상
+
+### 🔗 다음 단계
+- **Challenge 1**: 통합 운영 챌린지로 실전 대응 능력 강화
+- **Week 5**: Infrastructure as Code로 전체 시스템 자동화
+- **실무 프로젝트**: 학습한 내용을 실제 프로젝트에 적용
+
+---
+
+<div align="center">
+
+**🏗️ 통합 완성** • **💰 비용 최적화** • **🔒 보안 강화** • **📊 실시간 모니터링**
+
+*Week 4 CloudMart 프로젝트 최종 완성!*
+
+</div>
+
+---
+
+**이전**: [Lab 1 - Grafana FinOps 모니터링](./lab_1.md) | **다음**: [Challenge 1 - 통합 운영 챌린지](./challenge_1.md)
 
 ### 📊 학습 성과
 - **통합 역량**: Week 4 전체 개념의 유기적 통합
