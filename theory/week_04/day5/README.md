@@ -411,7 +411,11 @@ graph LR
     W4D4 --> W4D5[Day 5 ✅]
     W4D5 --> W5[Week 5 준비]
     
-    style W4D1,W4D2,W4D3,W4D4,W4D5 fill:#4caf50
+    style W4D1 fill:#4caf50
+    style W4D2 fill:#4caf50
+    style W4D3 fill:#4caf50
+    style W4D4 fill:#4caf50
+    style W4D5 fill:#4caf50
     style W5 fill:#fff9c4
 ```
 
