@@ -3,8 +3,6 @@
 # Week 4 Day 5 Challenge 1: 해결 검증
 # 설명: 4가지 시나리오 해결 여부 자동 검증
 
-set -e
-
 echo "=== Challenge 해결 검증 시작 ==="
 echo ""
 
@@ -15,8 +13,8 @@ FAIL=0
 echo "1/4 시나리오 1 검증 중: 리소스 Right-sizing..."
 
 # Production 네임스페이스의 주요 서비스 리소스 확인
-FRONTEND_CPU=$(kubectl get deployment frontend -n production -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}')
-FRONTEND_MEM=$(kubectl get deployment frontend -n production -o jsonpath='{.spec.template.spec.containers[0].resources.requests.memory}')
+FRONTEND_CPU=$(kubectl get deployment frontend -n production -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}' 2>/dev/null || echo "")
+FRONTEND_MEM=$(kubectl get deployment frontend -n production -o jsonpath='{.spec.template.spec.containers[0].resources.requests.memory}' 2>/dev/null || echo "")
 
 # CPU가 200m-500m 범위인지 확인 (원래 2000m에서 최적화)
 if [[ "$FRONTEND_CPU" =~ ^[2-5][0-9][0-9]m$ ]] && [[ "$FRONTEND_MEM" =~ ^[2-5][0-9][0-9]Mi$ ]]; then
@@ -62,12 +60,12 @@ echo ""
 echo "3/4 시나리오 3 검증 중: 환경별 최적화..."
 
 # Staging 복제본 수 확인
-STAGING_FRONTEND_REPLICAS=$(kubectl get deployment frontend -n staging -o jsonpath='{.spec.replicas}')
-STAGING_USER_REPLICAS=$(kubectl get deployment user-service -n staging -o jsonpath='{.spec.replicas}')
+STAGING_FRONTEND_REPLICAS=$(kubectl get deployment frontend -n staging -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+STAGING_USER_REPLICAS=$(kubectl get deployment user-service -n staging -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
 
 # Development 복제본 수 확인
-DEV_FRONTEND_REPLICAS=$(kubectl get deployment frontend -n development -o jsonpath='{.spec.replicas}')
-DEV_USER_REPLICAS=$(kubectl get deployment user-service -n development -o jsonpath='{.spec.replicas}')
+DEV_FRONTEND_REPLICAS=$(kubectl get deployment frontend -n development -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+DEV_USER_REPLICAS=$(kubectl get deployment user-service -n development -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
 
 if [ "$STAGING_FRONTEND_REPLICAS" -le 2 ] && [ "$STAGING_USER_REPLICAS" -le 2 ] && \
    [ "$DEV_FRONTEND_REPLICAS" -eq 1 ] && [ "$DEV_USER_REPLICAS" -eq 1 ]; then
@@ -85,8 +83,8 @@ echo ""
 echo "4/4 시나리오 4 검증 중: 리소스 제한 설정..."
 
 # limits 누락된 Pod 찾기
-PODS_WITHOUT_LIMITS=$(kubectl get pods -n production -o json | \
-  jq -r '.items[] | select(.spec.containers[].resources.limits == null) | .metadata.name' | wc -l)
+PODS_WITHOUT_LIMITS=$(kubectl get pods -n production -o json 2>/dev/null | \
+  jq -r '.items[] | select(.spec.containers[].resources.limits == null) | .metadata.name' 2>/dev/null | wc -l)
 
 if [ "$PODS_WITHOUT_LIMITS" -eq 0 ]; then
   echo "✅ 시나리오 4: 통과 (모든 Pod에 리소스 제한 설정 완료)"
@@ -113,8 +111,8 @@ if [ $PASS -eq 4 ]; then
   echo "- 시나리오 3 (환경별 최적화): 60-70% 절감"
   echo "- 시나리오 4 (리소스 제한): 노드 과부하 방지"
   echo ""
-  echo "📊 Kubecost에서 실제 비용 절감 효과를 확인하세요:"
-  echo "http://localhost:30090"
+  echo "📊 Grafana FinOps에서 실제 비용 절감 효과를 확인하세요:"
+  echo "http://localhost:30091"
   exit 0
 else
   echo ""

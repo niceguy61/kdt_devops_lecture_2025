@@ -29,8 +29,8 @@ spec:
         - containerPort: 80
         resources:
           requests:
-            cpu: 2000m      # 의도적 오류: 과도한 CPU 할당 (실제 사용량 200m)
-            memory: 4Gi     # 의도적 오류: 과도한 메모리 할당 (실제 사용량 256Mi)
+            cpu: 2000m      # 의도적 오류: 과도한 CPU 할당
+            memory: 4Gi     # 의도적 오류: 과도한 메모리 할당
           limits:
             cpu: 4000m
             memory: 8Gi

@@ -13,7 +13,7 @@ metadata:
     tier: frontend
     cost-center: CC-1002
 spec:
-  replicas: 3  # 의도적 오류: Production과 동일 (권장: 2)
+  replicas: 5  # 의도적 오류: Production과 동일
   selector:
     matchLabels:
       app: frontend
@@ -47,7 +47,7 @@ metadata:
     tier: backend
     cost-center: CC-1002
 spec:
-  replicas: 5  # 의도적 오류: Production과 동일 (권장: 2)
+  replicas: 5  # 의도적 오류: Production과 동일
   selector:
     matchLabels:
       app: user-service
@@ -81,7 +81,7 @@ metadata:
     tier: backend
     cost-center: CC-1002
 spec:
-  replicas: 4  # 의도적 오류: Production과 동일 (권장: 2)
+  replicas: 2  # 의도적 오류: Production과 동일
   selector:
     matchLabels:
       app: product-service
@@ -116,7 +116,7 @@ metadata:
     tier: frontend
     cost-center: CC-1003
 spec:
-  replicas: 2  # 의도적 오류: 불필요한 복제본 (권장: 1)
+  replicas: 2  # 의도적 오류: 불필요한 복제본
   selector:
     matchLabels:
       app: frontend
@@ -150,7 +150,7 @@ metadata:
     tier: backend
     cost-center: CC-1003
 spec:
-  replicas: 3  # 의도적 오류: 불필요한 복제본 (권장: 1)
+  replicas: 3  # 의도적 오류: 불필요한 복제본
   selector:
     matchLabels:
       app: user-service
@@ -184,7 +184,7 @@ metadata:
     tier: backend
     cost-center: CC-1003
 spec:
-  replicas: 2  # 의도적 오류: 불필요한 복제본 (권장: 1)
+  replicas: 2  # 의도적 오류: 불필요한 복제본
   selector:
     matchLabels:
       app: product-service
