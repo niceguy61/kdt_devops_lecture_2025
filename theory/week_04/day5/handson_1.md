@@ -776,12 +776,13 @@ kubectl describe hpa -n cloudmart
 ### 🤔 왜 필요한가?
 **문제 상황**:
 - CloudMart 서비스가 ClusterIP로 클러스터 내부에서만 접근 가능
-- Grafana, Jaeger도 외부 접근 불가
-- 🏠 비유: 쇼핑몰을 만들었는데 문이 잠겨있어서 고객이 못 들어옴
+- Jaeger도 외부 접근 불가
+- Grafana는 이미 NodePort 30091로 설정됨
+- 🏠 비유: 쇼핑몰 일부 출입구는 열려있지만(Grafana), 나머지는 잠겨있음
 
 ### 📝 직접 실행하기
 
-**3.5-1. 모든 서비스 포트포워딩**
+**3.5-1. CloudMart 및 Jaeger 포트포워딩**
 ```bash
 cd theory/week_04/day5/lab_scripts/handson1
 ./start-port-forwarding.sh
@@ -796,9 +797,10 @@ kubectl port-forward -n cloudmart svc/user-service 8080:80 &
 kubectl port-forward -n cloudmart svc/product-service 8081:80 &
 kubectl port-forward -n cloudmart svc/order-service 8082:80 &
 
-# 모니터링 도구 포트포워딩
-kubectl port-forward -n monitoring svc/grafana 3000:80 &
+# Jaeger 포트포워딩
 kubectl port-forward -n tracing svc/jaeger-query 16686:16686 &
+
+# Grafana는 이미 NodePort 30091로 설정됨 (포트포워딩 불필요)
 ```
 
 **📊 예상 결과**:
@@ -809,7 +811,7 @@ kubectl port-forward -n tracing svc/jaeger-query 16686:16686 &
 - User Service: http://localhost:8080
 - Product Service: http://localhost:8081
 - Order Service: http://localhost:8082
-- Grafana: http://localhost:3000 (admin/admin)
+- Grafana: http://localhost:30091 (admin/admin) - NodePort
 - Jaeger UI: http://localhost:16686
 ```
 
@@ -817,23 +819,22 @@ kubectl port-forward -n tracing svc/jaeger-query 16686:16686 &
 
 **서비스 접근 테스트**:
 ```bash
-# CloudMart 서비스 확인
+# CloudMart 서비스 확인 (포트포워딩)
 curl http://localhost:8080  # User Service
 curl http://localhost:8081  # Product Service
 curl http://localhost:8082  # Order Service
 
 # 모니터링 도구 확인
-curl http://localhost:3000  # Grafana
-curl http://localhost:16686  # Jaeger UI
+curl http://localhost:30091  # Grafana (NodePort)
+curl http://localhost:16686  # Jaeger (포트포워딩)
 ```
 
 ### 💡 코드 설명
 
-**포트포워딩 방식**:
-- Kind 클러스터에서 가장 간단한 외부 접근 방법
-- NodePort는 클러스터 생성 시 `extraPortMappings` 필요
-- 포트포워딩은 언제든지 실행/중지 가능
-- 🏠 비유: 임시 통로를 만들어서 외부에서 접근 가능하게 함
+**포트포워딩 vs NodePort**:
+- **Grafana**: install-grafana.sh에서 이미 NodePort 30091로 설정됨
+- **CloudMart & Jaeger**: 포트포워딩으로 간단하게 접근
+- 🏠 비유: Grafana는 정문(NodePort), 나머지는 임시 통로(포트포워딩)
 
 **백그라운드 실행**:
 - `&`: 백그라운드로 실행하여 터미널 계속 사용 가능
@@ -847,8 +848,8 @@ curl http://localhost:16686  # Jaeger UI
 
 **4-1. Grafana 대시보드 접속**
 ```bash
-# 이미 포트포워딩 실행됨 (Step 3.5)
-# 브라우저에서 http://localhost:3000 접속
+# Grafana는 NodePort 30091로 이미 설정됨
+# 브라우저에서 http://localhost:30091 접속
 # ID: admin / PW: admin
 ```
 
@@ -990,7 +991,7 @@ Grafana FinOps 대시보드에서 확인할 항목:
 - [ ] User Service 접근 가능 (8080)
 - [ ] Product Service 접근 가능 (8081)
 - [ ] Order Service 접근 가능 (8082)
-- [ ] Grafana 접근 가능 (3000)
+- [ ] Grafana 접근 가능 (30091 NodePort)
 - [ ] Jaeger 접근 가능 (16686)
 
 ### ✅ Step 4: 비용 분석
@@ -1054,19 +1055,22 @@ kubectl logs -n kube-system deployment/metrics-server
 ### 문제 3: Grafana 대시보드 접속 실패
 ```bash
 # 증상
-curl http://localhost:3000
-curl: (7) Failed to connect to localhost port 3000
+curl http://localhost:30091
+curl: (7) Failed to connect to localhost port 30091
 ```
 
-**원인**: 포트포워딩 실행 안 됨
+**원인**: Grafana Service가 NodePort로 설정되지 않음
 
 **해결 방법**:
 ```bash
-# 포트포워딩 재실행
-./start-port-forwarding.sh
+# Service 타입 확인
+kubectl get svc -n monitoring grafana
 
-# 또는 수동 실행
-kubectl port-forward -n monitoring svc/grafana 3000:80
+# 예상: TYPE이 NodePort, PORT(S)가 80:30091/TCP
+
+# 만약 ClusterIP라면 install-grafana.sh 재실행
+cd theory/week_04/day5/lab_scripts/handson1
+./install-grafana.sh
 ```
 
 ---

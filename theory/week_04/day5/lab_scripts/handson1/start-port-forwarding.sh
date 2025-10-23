@@ -7,10 +7,6 @@ set -e
 
 echo "=== 포트포워딩 시작 ==="
 
-# 기존 포트포워딩 프로세스 종료
-pkill -f "port-forward" 2>/dev/null || true
-sleep 2
-
 # CloudMart 서비스 포트포워딩
 echo "1/4 User Service 포트포워딩 (8080 → 80)..."
 kubectl port-forward -n cloudmart svc/user-service 8080:80 > /dev/null 2>&1 &
@@ -26,7 +22,7 @@ echo "4/4 Jaeger 포트포워딩 (16686 → 16686)..."
 kubectl port-forward -n tracing svc/jaeger-query 16686:16686 > /dev/null 2>&1 &
 
 # 잠시 대기
-sleep 3
+sleep 2
 
 echo ""
 echo "=== 포트포워딩 완료 ==="
@@ -39,4 +35,5 @@ echo "- Grafana: http://localhost:30091 (admin/admin) - NodePort"
 echo "- Jaeger UI: http://localhost:16686"
 echo ""
 echo "포트포워딩 중지: pkill -f port-forward"
+
 
