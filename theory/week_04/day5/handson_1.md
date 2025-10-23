@@ -771,18 +771,91 @@ kubectl describe hpa -n cloudmart
 
 ---
 
+## 🛠️ Step 3.5: 포트포워딩 시작 (5분)
+
+### 🤔 왜 필요한가?
+**문제 상황**:
+- CloudMart 서비스가 ClusterIP로 클러스터 내부에서만 접근 가능
+- Grafana, Jaeger도 외부 접근 불가
+- 🏠 비유: 쇼핑몰을 만들었는데 문이 잠겨있어서 고객이 못 들어옴
+
+### 📝 직접 실행하기
+
+**3.5-1. 모든 서비스 포트포워딩**
+```bash
+cd theory/week_04/day5/lab_scripts/handson1
+./start-port-forwarding.sh
+```
+
+**📋 스크립트 내용**: [start-port-forwarding.sh](./lab_scripts/handson1/start-port-forwarding.sh)
+
+**스크립트 핵심 부분**:
+```bash
+# CloudMart 서비스 포트포워딩
+kubectl port-forward -n cloudmart svc/user-service 8080:80 &
+kubectl port-forward -n cloudmart svc/product-service 8081:80 &
+kubectl port-forward -n cloudmart svc/order-service 8082:80 &
+
+# 모니터링 도구 포트포워딩
+kubectl port-forward -n monitoring svc/grafana 3000:80 &
+kubectl port-forward -n tracing svc/jaeger-query 16686:16686 &
+```
+
+**📊 예상 결과**:
+```
+=== 포트포워딩 완료 ===
+
+접속 정보:
+- User Service: http://localhost:8080
+- Product Service: http://localhost:8081
+- Order Service: http://localhost:8082
+- Grafana: http://localhost:3000 (admin/admin)
+- Jaeger UI: http://localhost:16686
+```
+
+### ✅ 검증
+
+**서비스 접근 테스트**:
+```bash
+# CloudMart 서비스 확인
+curl http://localhost:8080  # User Service
+curl http://localhost:8081  # Product Service
+curl http://localhost:8082  # Order Service
+
+# 모니터링 도구 확인
+curl http://localhost:3000  # Grafana
+curl http://localhost:16686  # Jaeger UI
+```
+
+### 💡 코드 설명
+
+**포트포워딩 방식**:
+- Kind 클러스터에서 가장 간단한 외부 접근 방법
+- NodePort는 클러스터 생성 시 `extraPortMappings` 필요
+- 포트포워딩은 언제든지 실행/중지 가능
+- 🏠 비유: 임시 통로를 만들어서 외부에서 접근 가능하게 함
+
+**백그라운드 실행**:
+- `&`: 백그라운드로 실행하여 터미널 계속 사용 가능
+- `pkill -f port-forward`: 모든 포트포워딩 중지
+
+---
+
 ## 🛠️ Step 4: Grafana FinOps 대시보드 분석 (15분)
 
 ### 📝 직접 분석하기
 
 **4-1. Grafana 대시보드 접속**
 ```bash
-# 포트 포워딩
-kubectl port-forward -n monitoring svc/grafana 3000:80 &
-
+# 이미 포트포워딩 실행됨 (Step 3.5)
 # 브라우저에서 http://localhost:3000 접속
 # ID: admin / PW: admin
 ```
+
+**4-2. FinOps Cost Analysis 대시보드 열기**
+1. 좌측 메뉴 → **Dashboards**
+2. **FinOps Cost Analysis** 선택
+3. 상단 **namespace** 필터에서 `cloudmart` 선택
 
 **4-2. FinOps Cost Analysis 대시보드 열기**
 1. 좌측 메뉴 → **Dashboards**
@@ -912,6 +985,14 @@ Grafana FinOps 대시보드에서 확인할 항목:
 - [ ] order-service HPA 설정
 - [ ] HPA TARGETS 표시 확인
 
+### ✅ Step 3.5: 포트포워딩
+- [ ] 포트포워딩 스크립트 실행 완료
+- [ ] User Service 접근 가능 (8080)
+- [ ] Product Service 접근 가능 (8081)
+- [ ] Order Service 접근 가능 (8082)
+- [ ] Grafana 접근 가능 (3000)
+- [ ] Jaeger 접근 가능 (16686)
+
 ### ✅ Step 4: 비용 분석
 - [ ] Grafana 대시보드 접속 성공
 - [ ] FinOps Cost Analysis 대시보드 확인
@@ -977,15 +1058,15 @@ curl http://localhost:3000
 curl: (7) Failed to connect to localhost port 3000
 ```
 
-**원인**: 포트 포워딩 실행 안 됨
+**원인**: 포트포워딩 실행 안 됨
 
 **해결 방법**:
 ```bash
-# 포트 포워딩 재실행
-kubectl port-forward -n monitoring svc/grafana 3000:80
+# 포트포워딩 재실행
+./start-port-forwarding.sh
 
-# 다른 터미널에서 접속 확인
-curl http://localhost:3000
+# 또는 수동 실행
+kubectl port-forward -n monitoring svc/grafana 3000:80
 ```
 
 ---
