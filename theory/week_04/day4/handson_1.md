@@ -1272,6 +1272,69 @@ kubectl rollout restart deployment/metrics-server -n kube-system
 kubectl wait --for=condition=available --timeout=300s deployment/metrics-server -n kube-system
 ```
 
+### 🆕 문제 6: Prometheus 메트릭 수집 403 Forbidden (추가됨)
+**증상**: 
+- Grafana에서 "Post http://localhost:30090/api/v1/query: dial tcp connection refused"
+- Prometheus Targets에서 "server returned HTTP status 403 Forbidden"
+
+**원인**: Prometheus ServiceAccount의 Kubernetes API 접근 권한 부족
+
+**🔍 문제 진단**:
+```bash
+# 현재 상태 확인
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+
+# Prometheus Targets 상태 확인
+curl -s http://localhost:30090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health, lastError: .lastError}'
+```
+
+**💡 해결 방법 1: Grafana 연결 설정**
+```bash
+# Grafana 데이터소스 URL을 다음으로 변경:
+# http://prometheus-service.monitoring.svc.cluster.local:9090
+# 또는 http://prometheus-service:9090 (같은 네임스페이스인 경우)
+```
+
+**🔧 해결 방법 2: Prometheus 권한 강화 (핵심)**
+```bash
+# 기존 권한 삭제
+kubectl delete clusterrolebinding prometheus prometheus-kubelet 2>/dev/null || true
+
+# 강력한 권한으로 재생성 (cluster-admin 권한)
+kubectl create clusterrolebinding prometheus-admin \
+  --clusterrole=cluster-admin \
+  --serviceaccount=monitoring:prometheus
+
+# Prometheus 재시작
+kubectl rollout restart deployment/prometheus -n monitoring
+
+# 상태 확인 (2-3분 후)
+kubectl wait --for=condition=available deployment/prometheus -n monitoring --timeout=300s
+```
+
+**✅ 검증**:
+```bash
+# Prometheus UI에서 확인
+# 1. http://localhost:30090 접속
+# 2. Status > Targets에서 모든 job이 UP 상태인지 확인
+# 3. Graph에서 다음 쿼리 테스트:
+#    - up (모든 타겟 상태)
+#    - kubernetes_build_info (클러스터 정보)
+#    - kubelet_running_pods (kubelet 메트릭)
+
+# API로 확인
+curl -s http://localhost:30090/api/v1/targets | jq '.data.activeTargets[] | select(.health == "up") | .labels.job' | sort | uniq
+```
+
+**📊 정상 상태 예시**:
+```
+Expected UP targets:
+- kubernetes-apiservers
+- kubernetes-nodes  
+- kubernetes-pods
+```
+
 ---
 
 ## 🚀 심화 실습 (선택사항)
