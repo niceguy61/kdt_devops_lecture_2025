@@ -222,7 +222,6 @@ nodes:
 - role: control-plane
   extraPortMappings:
   - containerPort: 30080-30082  # CloudMart 서비스
-  - containerPort: 30090        # Kubecost
   - containerPort: 30091        # Grafana
   - containerPort: 30092        # Jaeger UI
 - role: worker
