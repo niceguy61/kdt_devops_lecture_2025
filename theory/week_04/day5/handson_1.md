@@ -199,7 +199,7 @@ graph TB
 - **Logs** (로그): 애플리케이션 로그 → (이번 실습에서는 생략)
 - **Cost** (비용): 리소스 사용량 → 비용 변환 → Kubecost
 
-### 📝 직접 실행하기
+### 🚀 자동화 스크립트 사용
 
 **1-1. 클러스터 생성**
 ```bash
@@ -209,7 +209,29 @@ cd theory/week_04/day5/lab_scripts/handson1
 
 **📋 스크립트 내용**: [setup-cluster.sh](./lab_scripts/handson1/setup-cluster.sh)
 
-**예상 결과**:
+**스크립트 핵심 부분**:
+```bash
+# 기존 클러스터 삭제
+kind delete cluster --name lab-cluster
+
+# 새 클러스터 생성 (모니터링 포트 포함)
+kind create cluster --config=- <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: lab-cluster
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30080-30082  # CloudMart 서비스
+  - containerPort: 30090        # Kubecost
+  - containerPort: 30091        # Grafana
+  - containerPort: 30092        # Jaeger UI
+- role: worker
+- role: worker
+EOF
+```
+
+**📊 예상 결과**:
 ```
 === Hands-on 클러스터 초기화 완료 ===
 
@@ -231,6 +253,24 @@ cd theory/week_04/day5/lab_scripts/handson1
 
 **📋 스크립트 내용**: [install-monitoring-stack.sh](./lab_scripts/handson1/install-monitoring-stack.sh)
 
+**스크립트 핵심 부분**:
+```bash
+# Metrics Server 설치
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Prometheus 설치
+kubectl apply -f prometheus-config.yaml
+
+# Jaeger 설치
+kubectl apply -f jaeger-all-in-one.yaml
+
+# Kubecost 설치
+kubectl apply -f kubecost-deployment.yaml
+
+# Grafana 설치
+kubectl apply -f grafana-deployment.yaml
+```
+
 **설치되는 컴포넌트**:
 - **Metrics Server**: 리소스 사용량 수집 (CPU, Memory)
 - **Prometheus**: 메트릭 저장 및 쿼리
@@ -238,7 +278,7 @@ cd theory/week_04/day5/lab_scripts/handson1
 - **Kubecost**: 비용 계산 및 분석
 - **Grafana**: 통합 대시보드
 
-**예상 결과**:
+**📊 예상 결과**:
 ```
 === 모니터링 스택 설치 완료 ===
 
@@ -254,7 +294,9 @@ cd theory/week_04/day5/lab_scripts/handson1
   * ID: admin / PW: admin
 ```
 
-**1-3. 설치 확인**
+### ✅ 검증
+
+**설치 확인**:
 ```bash
 # 모든 네임스페이스의 Pod 확인
 kubectl get pods --all-namespaces
@@ -263,12 +305,29 @@ kubectl get pods --all-namespaces
 kubectl top nodes
 ```
 
-**💡 각 도구의 역할**:
+**예상 출력**:
+```
+NAMESPACE       NAME                              READY   STATUS    RESTARTS   AGE
+kube-system     metrics-server-xxx                1/1     Running   0          2m
+monitoring      prometheus-xxx                    1/1     Running   0          2m
+tracing         jaeger-xxx                        1/1     Running   0          2m
+kubecost        kubecost-xxx                      1/1     Running   0          2m
+monitoring      grafana-xxx                       1/1     Running   0          2m
+```
+
+### 💡 코드 설명
+
+**각 도구의 역할**:
 - **Metrics Server**: "지금 CPU/Memory 얼마나 쓰는지" 실시간 수집
 - **Prometheus**: 메트릭을 시계열로 저장 (과거 데이터 조회 가능)
 - **Jaeger**: "User Service → Product Service → DB" 같은 요청 흐름 추적
 - **Kubecost**: "이 Pod가 한 달에 $50 사용" 같은 비용 계산
 - **Grafana**: 모든 데이터를 보기 좋은 그래프로 표시
+
+**포트 설정 이유**:
+- **30090 (Kubecost)**: 비용 대시보드 접근
+- **30091 (Grafana)**: 통합 모니터링 대시보드
+- **30092 (Jaeger)**: 분산 추적 UI
 
 ---
 
