@@ -11,33 +11,38 @@ echo "=== 모니터링 스택 통합 설치 시작 ==="
 echo ""
 
 # 1. Metrics Server
-echo "1/6 Metrics Server 설치..."
+echo "1/7 Metrics Server 설치..."
 "$SCRIPT_DIR/install-metrics-server.sh"
 echo ""
 
 # 2. Prometheus
-echo "2/6 Prometheus 설치..."
+echo "2/7 Prometheus 설치..."
 "$SCRIPT_DIR/install-prometheus.sh"
 echo ""
 
 # 3. kube-state-metrics
-echo "3/6 kube-state-metrics 설치..."
+echo "3/7 kube-state-metrics 설치..."
 "$SCRIPT_DIR/install-kube-state-metrics.sh"
 echo ""
 
 # 4. node-exporter
-echo "4/6 node-exporter 설치..."
+echo "4/7 node-exporter 설치..."
 "$SCRIPT_DIR/install-node-exporter.sh"
 echo ""
 
 # 5. Grafana
-echo "5/6 Grafana 설치..."
+echo "5/7 Grafana 설치..."
 "$SCRIPT_DIR/install-grafana.sh"
 echo ""
 
 # 6. Grafana 대시보드
-echo "6/6 Grafana 대시보드 설치..."
+echo "6/7 Grafana 대시보드 설치..."
 "$SCRIPT_DIR/install-grafana-dashboards.sh"
+echo ""
+
+# 7. Jaeger
+echo "7/7 Jaeger 설치..."
+"$SCRIPT_DIR/install-jaeger.sh"
 echo ""
 
 echo "=== 모니터링 스택 통합 설치 완료 ==="
@@ -48,6 +53,7 @@ echo "- Prometheus (monitoring)"
 echo "- kube-state-metrics (monitoring)"
 echo "- node-exporter (monitoring)"
 echo "- Grafana: http://localhost:30091 (admin/admin)"
+echo "- Jaeger: http://localhost:16686 (포트포워딩 필요)"
 echo ""
 echo "Grafana 대시보드:"
 echo "  * Cluster Overview - 클러스터 전체 현황"
@@ -57,5 +63,10 @@ echo "  * FinOps Detail - 비용 효율성 분석"
 echo ""
 echo "확인 명령어:"
 echo "  kubectl get pods -n monitoring"
+echo "  kubectl get pods -n tracing"
 echo "  kubectl top nodes"
 echo "  kubectl top pods -A"
+echo ""
+echo "포트포워딩 시작:"
+echo "  ./start-port-forwarding.sh"
+

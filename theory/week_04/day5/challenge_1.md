@@ -88,9 +88,16 @@ graph TB
     M --> P
     P --> K
     
-    style P1,P2,P3,P4 fill:#ffebee
-    style S1,S2,S3 fill:#fff3e0
-    style D1,D2,D3 fill:#e8f5e8
+    style P1 fill:#ffebee
+    style P2 fill:#ffebee
+    style P3 fill:#ffebee
+    style P4 fill:#ffebee
+    style S1 fill:#fff3e0
+    style S2 fill:#fff3e0
+    style S3 fill:#fff3e0
+    style D1 fill:#e8f5e8
+    style D2 fill:#e8f5e8
+    style D3 fill:#e8f5e8
     style K fill:#e3f2fd
 ```
 
