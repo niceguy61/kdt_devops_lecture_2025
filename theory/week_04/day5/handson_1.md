@@ -31,42 +31,141 @@
 
 ---
 
-## 🏗️ 전체 아키텍처
+## 🏗️ 전체 아키텍처 (Week 4 통합)
 
 ```mermaid
 graph TB
+    subgraph "External Access"
+        CLIENT[Client<br/>사용자]
+    end
+    
+    subgraph "API Gateway Layer (Day 2)"
+        KONG[Kong API Gateway<br/>외부 진입점]
+    end
+    
+    subgraph "Service Mesh Layer (Day 2)"
+        ISTIO[Istio Control Plane<br/>트래픽 관리]
+        ENVOY[Envoy Sidecars<br/>프록시]
+    end
+    
+    subgraph "Security Layer (Day 3)"
+        JWT[JWT 인증<br/>토큰 검증]
+        MTLS[mTLS<br/>암호화 통신]
+        OPA[OPA Gatekeeper<br/>정책 엔진]
+    end
+    
     subgraph "CloudMart Microservices"
-        US[User Service<br/>회원 관리]
-        PS[Product Service<br/>상품 관리]
-        OS[Order Service<br/>주문 처리]
+        US[User Service<br/>회원 관리<br/>2 replicas]
+        PS[Product Service<br/>상품 관리<br/>3 replicas]
+        OS[Order Service<br/>주문 처리<br/>2 replicas]
+        PAYS[Payment Service<br/>결제 처리]
+        NS[Notification Service<br/>알림 발송]
     end
     
-    subgraph "Cost Monitoring"
+    subgraph "GitOps Layer (Day 4)"
+        GIT[Git Repository<br/>단일 진실 소스]
+        ARGO[ArgoCD<br/>자동 배포]
+    end
+    
+    subgraph "Cost Monitoring Stack (Day 5 Lab 1)"
+        MS[Metrics Server<br/>리소스 메트릭]
         PROM[Prometheus<br/>메트릭 수집]
-        KC[Kubecost<br/>비용 계산]
-        DASH[Kubecost Dashboard<br/>비용 분석]
+        KC[Kubecost<br/>비용 계산 엔진]
+        DASH[Kubecost Dashboard<br/>http://localhost:30080]
     end
     
-    subgraph "Auto Optimization"
-        HPA[HPA<br/>자동 스케일링]
-        OPT[최적화 권장사항]
+    subgraph "Optimization (Day 5 Hands-on 1)"
+        HPA1[User Service HPA<br/>CPU 기반]
+        HPA2[Product Service HPA<br/>Memory 기반]
+        HPA3[Order Service HPA<br/>CPU+Memory]
+        ALERT[비용 알림<br/>Slack/Email]
     end
     
-    US --> PROM
-    PS --> PROM
-    OS --> PROM
+    subgraph "Database Layer"
+        DB[(PostgreSQL<br/>주문/회원 DB)]
+        CACHE[(Redis<br/>캐시)]
+    end
     
+    CLIENT --> KONG
+    KONG --> JWT
+    JWT --> ISTIO
+    ISTIO --> ENVOY
+    ENVOY --> MTLS
+    MTLS --> OPA
+    
+    OPA --> US
+    OPA --> PS
+    OPA --> OS
+    
+    GIT --> ARGO
+    ARGO -.배포.-> US
+    ARGO -.배포.-> PS
+    ARGO -.배포.-> OS
+    ARGO -.배포.-> PAYS
+    ARGO -.배포.-> NS
+    
+    US --> MS
+    PS --> MS
+    OS --> MS
+    
+    MS --> PROM
     PROM --> KC
     KC --> DASH
-    KC --> OPT
-    OPT --> HPA
     
-    style US fill:#45b7d1
-    style PS fill:#45b7d1
-    style OS fill:#45b7d1
-    style KC fill:#feca57
-    style HPA fill:#ff9ff3
+    KC -.비용 분석.-> HPA1
+    KC -.비용 분석.-> HPA2
+    KC -.비용 분석.-> HPA3
+    KC -.임계값 초과.-> ALERT
+    
+    HPA1 -.스케일링.-> US
+    HPA2 -.스케일링.-> PS
+    HPA3 -.스케일링.-> OS
+    
+    US --> DB
+    OS --> DB
+    PS --> CACHE
+    
+    OS --> PAYS
+    PAYS --> NS
+    
+    style KONG fill:#f0f0f0
+    style ISTIO fill:#f0f0f0
+    style ENVOY fill:#f0f0f0
+    
+    style JWT fill:#f0f0f0
+    style MTLS fill:#f0f0f0
+    style OPA fill:#f0f0f0
+    
+    style GIT fill:#f0f0f0
+    style ARGO fill:#f0f0f0
+    
+    style MS fill:#e3f2fd
+    style PROM fill:#e3f2fd
+    style KC fill:#e3f2fd
+    style DASH fill:#e3f2fd
+    
+    style US fill:#fff
+    style PS fill:#fff
+    style OS fill:#fff
+    style PAYS fill:#fff
+    style NS fill:#fff
+    
+    style HPA1 fill:#fff9c4
+    style HPA2 fill:#fff9c4
+    style HPA3 fill:#fff9c4
+    style ALERT fill:#fff9c4
+    
+    style DB fill:#f0f0f0
+    style CACHE fill:#f0f0f0
 ```
+
+**범례**:
+- ⚫ **회색 (Day 2-4 구축 완료)**: Kong, Istio, JWT/mTLS/OPA, GitOps
+- 🔵 **연파랑 (Day 5 Lab 1 구현)**: Metrics Server, Prometheus, Kubecost 모니터링 스택
+- ⚪ **흰색 (Hands-on 1 배포)**: CloudMart 마이크로서비스들
+- 🟡 **노란색 (Hands-on 1 구현)**: HPA 자동 스케일링 및 비용 알림
+
+---
 
 ### 📅 Week 4 통합 스토리
 
@@ -106,6 +205,93 @@ graph TB
 - 실무와 유사한 마이크로서비스 구조
 - 서비스별 비용 특성이 다름 (최적화 연습에 적합)
 - 🏠 비유: 연습용 모형이 아닌 실제 운영 쇼핑몰
+
+---
+
+## 🛠️ Step 0: 환경 초기화 및 모니터링 스택 설치 (5분)
+
+### 목표
+- 기존 lab-cluster 삭제 및 새 클러스터 생성
+- Helm 기반 모니터링 스택 설치 (Metrics Server, Prometheus, Grafana, Jaeger)
+- Kubecost 설치 및 설정
+
+### 📝 직접 실행하기
+
+**0-1. 클러스터 초기화 및 모니터링 스택 설치**
+
+Lab 1에서 사용한 스크립트를 재사용합니다:
+
+```bash
+# Lab 1 스크립트 디렉토리로 이동
+cd theory/week_04/day5/lab_scripts/lab1
+
+# Step 1: 클러스터 초기화
+./step1-setup-cluster.sh
+
+# Step 2: Metrics Server 설치
+./step2-install-metrics-server.sh
+
+# Step 3: Kubecost 설치 (Prometheus 포함)
+./step3-install-kubecost.sh
+```
+
+**0-2. 설치 확인**
+
+```bash
+# 모든 Pod 상태 확인
+kubectl get pods -n kube-system
+kubectl get pods -n kubecost
+
+# Kubecost 서비스 확인
+kubectl get svc -n kubecost
+
+# Kubecost 대시보드 접속
+echo "Kubecost Dashboard: http://localhost:30080"
+```
+
+### 📊 예상 결과
+
+```bash
+# kube-system namespace
+NAME                                    READY   STATUS    RESTARTS   AGE
+metrics-server-xxx                      1/1     Running   0          2m
+
+# kubecost namespace
+NAME                                    READY   STATUS    RESTARTS   AGE
+kubecost-cost-analyzer-xxx              2/2     Running   0          3m
+kubecost-prometheus-server-xxx          2/2     Running   0          3m
+kubecost-kube-state-metrics-xxx         1/1     Running   0          3m
+
+# Kubecost 서비스
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)
+kubecost-cost-analyzer    NodePort    10.96.xxx.xxx   <none>        9090:30080/TCP
+```
+
+### ✅ 검증
+
+```bash
+# Kubecost 대시보드 접속 테스트
+curl -s http://localhost:30080 | grep -q "Kubecost" && echo "✅ Kubecost 정상" || echo "❌ Kubecost 오류"
+
+# Prometheus 메트릭 확인
+kubectl port-forward -n kubecost svc/kubecost-prometheus-server 9090:80 &
+sleep 3
+curl -s http://localhost:9090/api/v1/query?query=up | grep -q "success" && echo "✅ Prometheus 정상" || echo "❌ Prometheus 오류"
+pkill -f "port-forward.*9090"
+```
+
+### 💡 설명
+
+**왜 Lab 1 스크립트를 재사용하나요?**
+- Hands-on 1은 Lab 1의 환경을 기반으로 확장하는 실습입니다
+- 동일한 모니터링 스택이 필요하므로 스크립트를 재사용합니다
+- 클러스터를 새로 만들어 깨끗한 환경에서 시작합니다
+
+**설치되는 컴포넌트**:
+- **Metrics Server**: CPU/Memory 메트릭 수집
+- **Prometheus**: 시계열 메트릭 저장소
+- **Kubecost**: 비용 계산 및 분석 엔진
+- **Kube State Metrics**: Kubernetes 리소스 상태 메트릭
 
 ---
 
