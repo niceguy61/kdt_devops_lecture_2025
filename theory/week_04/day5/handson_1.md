@@ -212,8 +212,7 @@ graph TB
 
 ### 목표
 - 기존 lab-cluster 삭제 및 새 클러스터 생성
-- Helm 기반 모니터링 스택 설치 (Metrics Server, Prometheus, Grafana, Jaeger)
-- Kubecost 설치 및 설정
+- Helm 기반 모니터링 스택 설치 (Metrics Server, Prometheus, Grafana, Kubecost)
 
 ### 📝 직접 실행하기
 
@@ -231,6 +230,9 @@ cd theory/week_04/day5/lab_scripts/lab1
 # Step 2: Metrics Server 설치
 ./step2-install-metrics-server.sh
 
+# Step 2.5: Grafana 설치
+./step2-5-install-grafana.sh
+
 # Step 3: Kubecost 설치 (Prometheus 포함)
 ./step3-install-kubecost.sh
 ```
@@ -242,11 +244,12 @@ cd theory/week_04/day5/lab_scripts/lab1
 kubectl get pods -n kube-system
 kubectl get pods -n kubecost
 
-# Kubecost 서비스 확인
+# 서비스 확인
 kubectl get svc -n kubecost
 
-# Kubecost 대시보드 접속
+# 대시보드 접속 정보
 echo "Kubecost Dashboard: http://localhost:30080"
+echo "Grafana Dashboard: http://localhost:30081 (admin/admin)"
 ```
 
 ### 📊 예상 결과
@@ -261,10 +264,12 @@ NAME                                    READY   STATUS    RESTARTS   AGE
 kubecost-cost-analyzer-xxx              2/2     Running   0          3m
 kubecost-prometheus-server-xxx          2/2     Running   0          3m
 kubecost-kube-state-metrics-xxx         1/1     Running   0          3m
+grafana-xxx                             1/1     Running   0          2m
 
-# Kubecost 서비스
+# 서비스
 NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)
 kubecost-cost-analyzer    NodePort    10.96.xxx.xxx   <none>        9090:30080/TCP
+grafana                   NodePort    10.96.xxx.xxx   <none>        80:30081/TCP
 ```
 
 ### ✅ 검증
@@ -272,6 +277,9 @@ kubecost-cost-analyzer    NodePort    10.96.xxx.xxx   <none>        9090:30080/T
 ```bash
 # Kubecost 대시보드 접속 테스트
 curl -s http://localhost:30080 | grep -q "Kubecost" && echo "✅ Kubecost 정상" || echo "❌ Kubecost 오류"
+
+# Grafana 접속 테스트
+curl -s http://localhost:30081/login | grep -q "Grafana" && echo "✅ Grafana 정상" || echo "❌ Grafana 오류"
 
 # Prometheus 메트릭 확인
 kubectl port-forward -n kubecost svc/kubecost-prometheus-server 9090:80 &
@@ -290,6 +298,7 @@ pkill -f "port-forward.*9090"
 **설치되는 컴포넌트**:
 - **Metrics Server**: CPU/Memory 메트릭 수집
 - **Prometheus**: 시계열 메트릭 저장소
+- **Grafana**: 메트릭 시각화 및 대시보드
 - **Kubecost**: 비용 계산 및 분석 엔진
 - **Kube State Metrics**: Kubernetes 리소스 상태 메트릭
 

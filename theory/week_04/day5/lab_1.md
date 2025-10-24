@@ -344,6 +344,79 @@ echo "Kubecost URL: http://localhost:30080"
 
 ---
 
+## 🛠️ Step 3.5: Grafana 설치 (5분)
+
+### 🤔 왜 필요한가?
+**문제 상황**: 
+- Prometheus 메트릭을 시각화하고 싶음
+- 커스텀 대시보드로 비용 추이를 보고 싶음
+- 🏠 실생활 비유: 가계부 데이터를 그래프로 보기
+
+**Grafana의 역할**:
+- Prometheus 데이터를 시각적으로 표현
+- 커스텀 대시보드 생성 가능
+- 알림 설정 및 관리
+
+### 목표
+Grafana 설치 및 Prometheus 데이터소스 연동
+
+### 🚀 자동화 스크립트 사용
+```bash
+cd theory/week_04/day5/lab_scripts/lab1
+./step2-5-install-grafana.sh
+```
+
+**📋 스크립트 내용**: [step2-5-install-grafana.sh](./lab_scripts/lab1/step2-5-install-grafana.sh)
+
+**스크립트 핵심 부분**:
+```bash
+# Grafana 설치 (Prometheus 데이터소스 자동 설정)
+helm install grafana grafana/grafana \
+  --namespace kubecost \
+  --set service.type=NodePort \
+  --set service.nodePort=30081 \
+  --set adminPassword=admin \
+  --set datasources."datasources\.yaml".datasources[0].name=Prometheus \
+  --set datasources."datasources\.yaml".datasources[0].url=http://kubecost-prometheus-server:80
+```
+
+### 📊 예상 결과
+```
+NAME: grafana
+NAMESPACE: kubecost
+STATUS: deployed
+REVISION: 1
+```
+
+### ✅ 검증
+```bash
+kubectl get pods -n kubecost -l app.kubernetes.io/name=grafana
+kubectl get svc -n kubecost -l app.kubernetes.io/name=grafana
+```
+
+**예상 출력**:
+```
+NAME                      READY   STATUS    AGE
+grafana-xxx               1/1     Running   1m
+
+NAME      TYPE       CLUSTER-IP      PORT(S)
+grafana   NodePort   10.96.xxx.xxx   80:30081/TCP
+```
+
+### 🌐 Grafana 대시보드 접속
+```bash
+echo "Grafana URL: http://localhost:30081"
+echo "Username: admin"
+echo "Password: admin"
+```
+
+브라우저에서 `http://localhost:30081` 접속 후:
+1. Username: `admin`, Password: `admin` 입력
+2. 좌측 메뉴 → Configuration → Data Sources
+3. Prometheus 데이터소스가 자동 설정되어 있는지 확인
+
+---
+
 ## 🛠️ Step 4: 샘플 애플리케이션 배포 (10분)
 
 ### 목표
