@@ -7,14 +7,14 @@ echo "=== Lab 환경 정리 시작 ==="
 
 # 1. Helm 릴리스 삭제
 echo "1/4 Helm 릴리스 삭제 중..."
-helm uninstall prometheus -n monitoring 2>/dev/null || echo "prometheus 릴리스 없음"
-helm uninstall loki -n monitoring 2>/dev/null || echo "loki 릴리스 없음"
-helm uninstall jaeger -n monitoring 2>/dev/null || echo "jaeger 릴리스 없음"
+helm uninstall kubecost -n kubecost 2>/dev/null || echo "kubecost 릴리스 없음"
 
 # 2. 네임스페이스 삭제
 echo "2/4 네임스페이스 삭제 중..."
-kubectl delete namespace monitoring --ignore-not-found=true
-kubectl delete namespace demo --ignore-not-found=true
+kubectl delete namespace kubecost --ignore-not-found=true
+kubectl delete namespace production --ignore-not-found=true
+kubectl delete namespace staging --ignore-not-found=true
+kubectl delete namespace development --ignore-not-found=true
 
 # 3. PVC 삭제 확인
 echo "3/4 PVC 삭제 확인 중..."
