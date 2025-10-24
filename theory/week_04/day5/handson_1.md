@@ -105,8 +105,12 @@ graph TB
     
     style K fill:#ff6b6b
     style I fill:#4ecdc4
-    style US,PS,OS fill:#45b7d1
-    style MTLS,JWT,OPA fill:#ff9ff3
+    style US fill:#45b7d1
+    style PS fill:#45b7d1
+    style OS fill:#45b7d1
+    style MTLS fill:#ff9ff3
+    style JWT fill:#ff9ff3
+    style OPA fill:#ff9ff3
     style ARGO fill:#54a0ff
     style GRAF fill:#feca57
 ```
