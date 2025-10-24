@@ -364,8 +364,50 @@ EOF
 - `team: platform`: 어느 팀이 관리하는지 표시
 - `cost-center: CC-2001`: 회계 부서의 비용 코드 (실제 회사에서 사용)
 
-**2-2. User Service 배포**
+**2-2. User Service 배포 (nginx 설정 포함)**
 ```bash
+# 먼저 nginx 설정 ConfigMap 생성
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-nginx-config
+  namespace: cloudmart
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        server {
+            listen 8080;
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /ready {
+                access_log off;
+                return 200 "ready\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /stub_status {
+                stub_status;
+                access_log off;
+            }
+            
+            location / {
+                return 200 "User Service v1.0 - CloudMart\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }
+EOF
+
+# User Service Deployment 생성
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -421,6 +463,10 @@ spec:
             port: 8080
           initialDelaySeconds: 10
           periodSeconds: 5
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
       # 💡 Nginx Prometheus Exporter (사이드카)
       - name: nginx-exporter
         image: nginx/nginx-prometheus-exporter:0.11.0
@@ -436,6 +482,10 @@ spec:
           limits:
             cpu: 50m
             memory: 64Mi
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: user-service-nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -471,8 +521,50 @@ EOF
   - 요청 수, 응답 시간, 연결 수 등 수집
   - Grafana에서 시각화 가능
 
-**2-3. Product Service 배포**
+**2-3. Product Service 배포 (nginx 설정 포함)**
 ```bash
+# Product Service nginx 설정 ConfigMap
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-service-nginx-config
+  namespace: cloudmart
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        server {
+            listen 8080;
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /ready {
+                access_log off;
+                return 200 "ready\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /stub_status {
+                stub_status;
+                access_log off;
+            }
+            
+            location / {
+                return 200 "Product Service v1.0 - CloudMart\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }
+EOF
+
+# Product Service Deployment
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -515,6 +607,22 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
       - name: nginx-exporter
         image: nginx/nginx-prometheus-exporter:0.11.0
         args:
@@ -529,6 +637,10 @@ spec:
           limits:
             cpu: 50m
             memory: 64Mi
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: product-service-nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -549,8 +661,50 @@ spec:
 EOF
 ```
 
-**2-4. Order Service 배포**
+**2-4. Order Service 배포 (nginx 설정 포함)**
 ```bash
+# Order Service nginx 설정 ConfigMap
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-nginx-config
+  namespace: cloudmart
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        server {
+            listen 8080;
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /ready {
+                access_log off;
+                return 200 "ready\n";
+                add_header Content-Type text/plain;
+            }
+            
+            location /stub_status {
+                stub_status;
+                access_log off;
+            }
+            
+            location / {
+                return 200 "Order Service v1.0 - CloudMart\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }
+EOF
+
+# Order Service Deployment
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -593,6 +747,22 @@ spec:
           limits:
             cpu: 300m
             memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
       - name: nginx-exporter
         image: nginx/nginx-prometheus-exporter:0.11.0
         args:
@@ -607,6 +777,10 @@ spec:
           limits:
             cpu: 50m
             memory: 64Mi
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: order-service-nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -626,14 +800,6 @@ spec:
   type: ClusterIP
 EOF
 ```
-    app: order-service
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-```
-
 **2-5. 배포 확인**
 ```bash
 # Pod 상태 확인
