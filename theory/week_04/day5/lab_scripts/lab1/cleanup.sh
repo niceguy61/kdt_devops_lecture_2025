@@ -1,16 +1,27 @@
 #!/bin/bash
+
+# Week 4 Day 5 Lab 1: 실습 환경 정리
+# 설명: 모든 실습 리소스 삭제
+
 echo "=== Lab 환경 정리 시작 ==="
 
-echo "1/3 네임스페이스 삭제 중..."
-kubectl delete namespace production --ignore-not-found=true
-kubectl delete namespace staging --ignore-not-found=true
-kubectl delete namespace development --ignore-not-found=true
-kubectl delete namespace kubecost --ignore-not-found=true
+# 1. Helm 릴리스 삭제
+echo "1/4 Helm 릴리스 삭제 중..."
+helm uninstall prometheus -n monitoring 2>/dev/null || echo "prometheus 릴리스 없음"
+helm uninstall loki -n monitoring 2>/dev/null || echo "loki 릴리스 없음"
+helm uninstall jaeger -n monitoring 2>/dev/null || echo "jaeger 릴리스 없음"
 
-echo "2/3 Metrics Server 삭제 중..."
-kubectl delete -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --ignore-not-found=true
+# 2. 네임스페이스 삭제
+echo "2/4 네임스페이스 삭제 중..."
+kubectl delete namespace monitoring --ignore-not-found=true
+kubectl delete namespace demo --ignore-not-found=true
 
-echo "3/3 클러스터 삭제 확인..."
+# 3. PVC 삭제 확인
+echo "3/4 PVC 삭제 확인 중..."
+kubectl get pvc --all-namespaces 2>/dev/null || echo "남은 PVC 없음"
+
+# 4. 클러스터 삭제 (선택사항)
+echo "4/4 클러스터 삭제 확인..."
 read -p "클러스터를 삭제하시겠습니까? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then

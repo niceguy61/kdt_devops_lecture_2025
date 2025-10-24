@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Week 4 Day 5 Lab 1: 클러스터 초기화
-# 설명: 기존 클러스터 삭제 및 새로운 lab-cluster 생성
-# 사용법: ./step1-setup-cluster.sh
+# 설명: 기존 클러스터 삭제 및 새 클러스터 생성
 
 set -e
 
@@ -27,6 +26,9 @@ nodes:
   - containerPort: 30081
     hostPort: 30081
     protocol: TCP
+  - containerPort: 30082
+    hostPort: 30082
+    protocol: TCP
   - containerPort: 443
     hostPort: 443
     protocol: TCP
@@ -49,6 +51,6 @@ echo "클러스터 정보:"
 echo "- 이름: lab-cluster"
 echo "- Control Plane: 1개"
 echo "- Worker Node: 2개"
-echo "- 오픈 포트: 30080-30081, 443, 80"
+echo "- 오픈 포트: 30080-30082, 443, 80"
 echo ""
-echo "다음 단계: ./step2-install-metrics-server.sh"
+echo "✅ 모든 작업이 성공적으로 완료되었습니다."
