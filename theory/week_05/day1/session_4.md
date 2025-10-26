@@ -74,20 +74,27 @@ architecture-beta
     
     group aza(cloud)[AZ A] in vpc
     group public_a(cloud)[Public Subnet A] in aza
-    service sg_pub(server)[Security Group Web] in public_a
-    service ec2_pub(server)[EC2 Nginx] in public_a
+    service sg_pub_a(server)[Security Group Web] in public_a
+    service ec2_pub_a(server)[EC2 Nginx A] in public_a
     
     group private_a(cloud)[Private Subnet A] in aza
-    service ec2_priv(server)[EC2 Private] in private_a
+    service ec2_priv_a(server)[EC2 Private A] in private_a
     
     group azb(cloud)[AZ B] in vpc
     group public_b(cloud)[Public Subnet B] in azb
+    service sg_pub_b(server)[Security Group Web] in public_b
+    service ec2_pub_b(server)[EC2 Nginx B] in public_b
+    
     group private_b(cloud)[Private Subnet B] in azb
+    service ec2_priv_b(server)[EC2 Private B] in private_b
     
     internet:R -- L:igw
-    igw:R -- L:sg_pub
-    sg_pub:R -- L:ec2_pub
-    ec2_pub:B -- T:ec2_priv
+    igw:R -- L:sg_pub_a
+    igw:R -- L:sg_pub_b
+    sg_pub_a:R -- L:ec2_pub_a
+    sg_pub_b:R -- L:ec2_pub_b
+    ec2_pub_a:B -- T:ec2_priv_a
+    ec2_pub_b:B -- T:ec2_priv_b
 ```
 
 #### 📋 구성 요소 상세
