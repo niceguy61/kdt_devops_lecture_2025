@@ -39,8 +39,8 @@ aws___read_documentation(url)
 Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/
 └── Architecture-Service-Icons_01312023/
     └── Arch_[Category]/
-        └── 64/
-            └── Arch_[Service-Name]_64.svg
+        └── 48/
+            └── Arch_[Service-Name]_48.svg
 ```
 
 ## 📝 Session에서 사용
