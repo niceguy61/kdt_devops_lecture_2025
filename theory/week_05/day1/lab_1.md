@@ -35,18 +35,18 @@ architecture-beta
     service internet(internet)[Internet] in aws
     service igw(internet)[IGW] in aws
     
-    group vpc(cloud)[VPC 10.0.0.0/16] in aws
+    group vpc(cloud)[VPC] in aws
     
     group aza(cloud)[AZ A] in vpc
-    group public_a(cloud)[Public Subnet 10.0.1.0/24] in aza
-    group private_a(cloud)[Private Subnet 10.0.11.0/24] in aza
+    group public_a(cloud)[Public Subnet A] in aza
+    group private_a(cloud)[Private Subnet A] in aza
     
     group azb(cloud)[AZ B] in vpc
-    group public_b(cloud)[Public Subnet 10.0.2.0/24] in azb
-    group private_b(cloud)[Private Subnet 10.0.12.0/24] in azb
+    group public_b(cloud)[Public Subnet B] in azb
+    group private_b(cloud)[Private Subnet B] in azb
     
-    service rt_pub(server)[Public Route Table] in vpc
-    service rt_priv(server)[Private Route Table] in vpc
+    service rt_pub(server)[Public RT] in vpc
+    service rt_priv(server)[Private RT] in vpc
     
     internet:R -- L:igw
     igw:R -- L:vpc
