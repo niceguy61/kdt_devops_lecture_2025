@@ -85,18 +85,36 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "다층 보안 아키텍처"
-        A[인터넷] --> B[AWS WAF<br/>애플리케이션 계층]
-        B --> C[Network ACL<br/>Subnet 계층]
-        C --> D[Security Group<br/>인스턴스 계층]
-        D --> E[EC2 Instance<br/>OS 방화벽]
+    subgraph "AWS Cloud"
+        subgraph "VPC: 10.0.0.0/16"
+            subgraph "Public Subnet: 10.0.1.0/24"
+                IGW[Internet Gateway]
+                EIP[Elastic IP<br/>고정 공인 IP]
+                NACL[Network ACL<br/>Subnet 방화벽]
+                
+                subgraph "EC2 Instance"
+                    SG[Security Group<br/>인스턴스 방화벽]
+                    EC2[EC2 Instance<br/>웹 서버]
+                    ENI[ENI<br/>네트워크 인터페이스]
+                end
+            end
+        end
     end
     
-    style A fill:#ffebee
-    style B fill:#fff3e0
-    style C fill:#fff9c4
-    style D fill:#e8f5e8
-    style E fill:#e3f2fd
+    Internet[인터넷] --> IGW
+    IGW --> EIP
+    EIP --> NACL
+    NACL --> SG
+    SG --> ENI
+    ENI --> EC2
+    
+    style Internet fill:#ffebee
+    style IGW fill:#fff3e0
+    style EIP fill:#fff9c4
+    style NACL fill:#e1f5fe
+    style SG fill:#e8f5e8
+    style ENI fill:#f3e5f5
+    style EC2 fill:#e3f2fd
 ```
 
 #### 📊 Security Group vs Network ACL 비교
@@ -159,6 +177,45 @@ graph LR
 - ✅ **SSH는 내 IP 또는 회사 IP만 허용**
 - ✅ **최소 권한 원칙**: 필요한 포트만 오픈
 - ✅ **정기적 검토**: 사용하지 않는 규칙 제거
+
+#### 🌐 Elastic IP & ENI
+
+**Elastic IP (탄력적 IP)**:
+- **정의**: 고정된 공인 IPv4 주소
+- **용도**: 인스턴스 재시작 시에도 동일한 IP 유지
+- **비용**: 
+  - 실행 중인 인스턴스에 연결: 무료
+  - 미사용 또는 중지된 인스턴스: 시간당 과금
+- **제한**: 리전당 5개 (증가 요청 가능)
+
+**ENI (Elastic Network Interface)**:
+- **정의**: 가상 네트워크 카드
+- **특징**: 
+  - 하나의 EC2에 여러 ENI 연결 가능
+  - Private IP, Public IP, Elastic IP 할당
+  - Security Group 연결
+- **용도**: 
+  - 이중화 네트워크 구성
+  - 관리 네트워크 분리
+  - 라이선스 관리 (MAC 주소 고정)
+
+```mermaid
+graph LR
+    subgraph "EC2 Instance"
+        A[Primary ENI<br/>eth0]
+        B[Secondary ENI<br/>eth1]
+    end
+    
+    A --> C[Private IP<br/>10.0.1.10]
+    A --> D[Elastic IP<br/>3.35.123.45]
+    B --> E[Private IP<br/>10.0.1.11]
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#e3f2fd
+    style D fill:#ffebee
+    style E fill:#e3f2fd
+```
 
 ---
 
