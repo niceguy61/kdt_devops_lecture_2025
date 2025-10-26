@@ -620,64 +620,77 @@ http://[EC2-Public-IP]
 ## 📤 Challenge 제출
 
 ### 제출 방법
-**디스코드 스레드에 다음 내용 작성**:
+**디스코드 "Week 5 Day 2 Challenge 1" 스레드에 아래 양식을 복사하여 작성**
 
-```markdown
-## Week 5 Day 2 Challenge 1 제출
+---
 
-**이름**: [학생 이름]
+### 📋 제출 양식 (아래 내용을 복사하여 사용하세요)
 
-### ⭐ 강사 확인용 URL (가장 중요!)
-**웹 페이지 URL**: `http://[EC2-Public-IP]`
-→ 이 URL로 접속하면 CloudFront를 통한 이미지가 표시됩니다
-
-### 1. 웹 페이지 URL (EC2)
 ```
+========================================
+Week 5 Day 2 Challenge 1 제출
+========================================
+
+👤 이름: [본인 이름]
+
+========================================
+⭐ 강사 확인용 URL (가장 중요!)
+========================================
+웹 페이지 URL: http://[EC2-Public-IP]
+→ 이 URL로 접속하면 CloudFront 이미지가 표시됩니다
+
+========================================
+📋 상세 정보
+========================================
+
+1️⃣ 웹 페이지 URL (EC2)
 http://[EC2-Public-IP]
-```
-**확인 사항**: 웹 페이지에서 CloudFront를 통한 이미지 3개 정상 표시
 
-### 2. CloudFront Distribution URL
-```
-https://d1234567890abc.cloudfront.net
-```
-**확인 사항**: 이미지 직접 접근 가능 (예: /tech1.jpg)
+2️⃣ CloudFront Distribution URL
+https://[CloudFront-Domain].cloudfront.net
 
-### 3. S3 Bucket URL (직접 접근 차단 확인용)
-```
+3️⃣ S3 Bucket URL (403 확인용)
 https://week5-day2-challenge-[학번].s3.ap-northeast-2.amazonaws.com/tech1.jpg
+
+========================================
+✅ 보안 검증 결과
+========================================
+- ❌ S3 직접 접근: 403 Forbidden 확인
+- ✅ CloudFront 접근: 정상 작동 확인
+- ✅ 웹 페이지 이미지: CloudFront에서 로드 확인
+
+========================================
+📸 스크린샷 (아래에 첨부)
+========================================
+1. 웹 페이지 (CloudFront 이미지 표시)
+2. Network 탭 (CloudFront 도메인 확인)
+3. S3 직접 접근 (403 에러)
+
+========================================
+🏗️ 아키텍처 정보
+========================================
+- EC2 인스턴스: week5-day2-challenge-web
+- S3 Bucket: week5-day2-challenge-[학번]
+- CloudFront Distribution ID: E[Distribution-ID]
+- OAC 이름: week5-day2-challenge-oac
+
+========================================
 ```
-**확인 사항**: 403 Access Denied 에러 발생
 
-### 4. 보안 검증 결과
-- ❌ **S3 직접 접근**: 403 Forbidden
-- ✅ **CloudFront 접근**: 정상 작동
-- ✅ **웹 페이지 이미지**: CloudFront에서 로드
+**스크린샷 3개를 위 양식 아래에 첨부하세요!**
 
-### 5. 스크린샷
-**웹 페이지 (CloudFront 이미지 표시)**:
-[웹 페이지 스크린샷 첨부]
-
-**Network 탭 (CloudFront 도메인 확인)**:
-[개발자 도구 Network 탭 스크린샷 첨부]
-
-**S3 직접 접근 차단 (403 에러)**:
-[S3 URL 접근 시 403 에러 스크린샷 첨부]
-
-### 6. 아키텍처 정보
-- **EC2**: week5-day2-challenge-web
-- **S3 Bucket**: week5-day2-challenge-[학번]
-- **CloudFront Distribution**: E1234567890ABC
-- **OAC**: week5-day2-challenge-oac
-```
+---
 
 ### 제출 체크리스트
-- [ ] ⭐ **웹 페이지 URL (EC2)** - 강사가 이 URL로 확인!
-- [ ] CloudFront Distribution URL
-- [ ] S3 Bucket URL (403 확인용)
-- [ ] 웹 페이지 스크린샷 (CloudFront 이미지 표시)
-- [ ] Network 탭 스크린샷 (CloudFront 도메인 표시)
-- [ ] S3 직접 접근 403 에러 스크린샷
+제출 전 반드시 확인하세요:
+
+- [ ] ⭐ **웹 페이지 URL (EC2)** 작성 - `http://[실제-IP]`
+- [ ] **CloudFront URL** 작성 - `https://[실제-도메인].cloudfront.net`
+- [ ] **S3 URL** 작성 - 실제 버킷 이름 포함
+- [ ] **스크린샷 1**: 웹 페이지 전체 화면
+- [ ] **스크린샷 2**: 개발자 도구 Network 탭 (CloudFront 도메인 보임)
+- [ ] **스크린샷 3**: S3 직접 접근 시 403 에러 화면
+- [ ] 모든 `[대괄호]` 부분을 실제 값으로 변경했는지 확인!
 
 ---
 
