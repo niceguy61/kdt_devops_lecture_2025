@@ -32,28 +32,18 @@
 architecture-beta
     group aws(cloud)[AWS Cloud]
     
-    service internet(internet)[Internet] in aws
-    service igw(internet)[IGW] in aws
-    
     group vpc(cloud)[VPC] in aws
-    
     group aza(cloud)[AZ A] in vpc
-    group public_a(cloud)[Public Subnet A] in aza
-    group private_a(cloud)[Private Subnet A] in aza
-    
     group azb(cloud)[AZ B] in vpc
-    group public_b(cloud)[Public Subnet B] in azb
-    group private_b(cloud)[Private Subnet B] in azb
     
-    service rt_pub(server)[Public RT] in vpc
-    service rt_priv(server)[Private RT] in vpc
+    service igw(internet)[IGW] in aws
+    service public_a(server)[Public Subnet A] in aza
+    service private_a(disk)[Private Subnet A] in aza
+    service public_b(server)[Public Subnet B] in azb
+    service private_b(disk)[Private Subnet B] in azb
     
-    internet:R -- L:igw
-    igw:R -- L:vpc
-    rt_pub:R -- L:public_a
-    rt_pub:R -- L:public_b
-    rt_priv:R -- L:private_a
-    rt_priv:R -- L:private_b
+    igw:R -- L:public_a
+    igw:R -- L:public_b
 ```
 
 ### 🔗 참조 Session
