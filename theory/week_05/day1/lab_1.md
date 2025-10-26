@@ -454,6 +454,16 @@ VPC → Route Tables → Main route table 확인
 - 명시적으로 연결하지 않은 Subnet은 Main RT 사용
 - Private Subnet용으로 사용 (IGW 경로 없음)
 
+**💡 VPC 내부 통신 (local 경로)**:
+- 모든 Route Table에는 자동으로 **local 경로** 생성됨
+- Destination: 10.0.0.0/16 (VPC CIDR)
+- Target: local
+- **의미**: VPC 내부 모든 Subnet 간 통신 가능
+  - Public ↔ Private 통신 가능
+  - Private ↔ Private 통신 가능
+  - Public ↔ Public 통신 가능
+- **차단 방법**: Security Group 또는 Network ACL로 제어 (Lab 2에서 학습)
+
 ### ✅ Step 4 검증
 
 **AWS Console에서 확인**:
