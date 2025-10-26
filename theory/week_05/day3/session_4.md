@@ -70,7 +70,7 @@ architecture-beta
     service redis(disk)[ElastiCache] in data_layer
     
     service cw(disk)[CloudWatch] in monitoring
-    service xray(disk)[X-Ray] in monitoring
+    service xray(disk)[XRay] in monitoring
 ```
 
 ### 🔧 계층별 구성 요소
