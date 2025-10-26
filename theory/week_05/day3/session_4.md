@@ -50,27 +50,64 @@
 ### 📐 전체 시스템 아키텍처
 
 ```mermaid
-architecture-beta
-    group aws(cloud)[AWS Cloud]
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "Security Layer"
+            WAF[WAF<br/>DDoS Protection]
+            ALB[Application Load Balancer<br/>HTTPS Termination]
+        end
+        
+        subgraph "Application Layer"
+            API1[API Server 1<br/>Node.js]
+            API2[API Server 2<br/>Node.js]
+            API3[API Server 3<br/>Node.js]
+        end
+        
+        subgraph "Data Layer"
+            RDS_P[RDS Primary<br/>PostgreSQL]
+            RDS_S[RDS Standby<br/>Multi-AZ]
+            Redis[ElastiCache Redis<br/>Session & Cache]
+        end
+        
+        subgraph "Monitoring Layer"
+            CW[CloudWatch<br/>Metrics & Logs]
+            XRay[X-Ray<br/>Distributed Tracing]
+        end
+    end
     
-    group waf_layer(cloud)[Security Layer] in aws
-    group app_layer(cloud)[Application Layer] in aws
-    group data_layer(cloud)[Data Layer] in aws
-    group monitoring(cloud)[Monitoring Layer] in aws
+    WAF --> ALB
+    ALB --> API1
+    ALB --> API2
+    ALB --> API3
     
-    service waf(internet)[WAF] in waf_layer
-    service alb(internet)[ALB] in waf_layer
+    API1 --> RDS_P
+    API2 --> RDS_P
+    API3 --> RDS_P
     
-    service api1(server)[API Server 1] in app_layer
-    service api2(server)[API Server 2] in app_layer
-    service api3(server)[API Server 3] in app_layer
+    API1 --> Redis
+    API2 --> Redis
+    API3 --> Redis
     
-    service rds_primary(database)[RDS Primary] in data_layer
-    service rds_standby(database)[RDS Standby] in data_layer
-    service redis(disk)[ElastiCache] in data_layer
+    RDS_P -.동기 복제.-> RDS_S
     
-    service cw(disk)[CloudWatch] in monitoring
-    service xray(disk)[XRay] in monitoring
+    API1 -.메트릭.-> CW
+    API2 -.메트릭.-> CW
+    API3 -.메트릭.-> CW
+    
+    API1 -.추적.-> XRay
+    API2 -.추적.-> XRay
+    API3 -.추적.-> XRay
+    
+    style WAF fill:#ff9800
+    style ALB fill:#ff9800
+    style API1 fill:#4caf50
+    style API2 fill:#4caf50
+    style API3 fill:#4caf50
+    style RDS_P fill:#2196f3
+    style RDS_S fill:#2196f3
+    style Redis fill:#f44336
+    style CW fill:#9c27b0
+    style XRay fill:#9c27b0
 ```
 
 ### 🔧 계층별 구성 요소
