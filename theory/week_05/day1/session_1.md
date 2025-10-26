@@ -440,46 +440,75 @@ stateDiagram-v2
 
 #### 💰 AWS 프리티어 활용 전략
 
-**12개월 무료 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2**: t2.micro/t3.micro 750시간/월
-- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS**: db.t2.micro 750시간/월
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: 5GB 스토리지
-- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **CloudFront**: 50GB 전송
+**🆕 2025년 7월 15일 신규 프리티어 정책**:
 
-**항상 무료 서비스**:
+**신규 고객 (2025년 7월 15일 이후 가입)**:
+- **$200 크레딧 제공**: 가입 시 $100 + 활동 완료 시 최대 $100 추가
+- **6개월 무료 플랜**: 크레딧 소진 또는 6개월 중 먼저 도래하는 시점까지
+- **2가지 플랜 선택**:
+  - **Free Plan**: 크레딧 소진 전까지 과금 없음 (일부 서비스 제한)
+  - **Paid Plan**: 크레딧 초과 시 종량제 과금 (모든 서비스 접근)
+
+**추가 크레딧 획득 방법** (각 $20):
+1. ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2 인스턴스 실행 및 종료**
+2. ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS 데이터베이스 기본 설정**
+3. ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **Lambda 함수 생성 및 실행**
+4. **Amazon Bedrock 프롬프트 실행**
+5. **AWS Budgets 예산 설정**
+
+**기존 고객 (2025년 7월 15일 이전 가입)**:
+- **기존 프리티어 유지**: 12개월 무료 + 항상 무료 서비스
+- **변경 없음**: 기존 정책 그대로 적용
+
+```mermaid
+timeline
+    title AWS 프리티어 정책 변화
+    section 2025년 7월 15일 이전
+        기존 정책 : 12개월 무료
+                  : 서비스별 한도
+                  : 항상 무료 서비스
+    section 2025년 7월 15일 이후
+        신규 정책 : $200 크레딧
+                  : 6개월 무료 플랜
+                  : 활동 기반 추가 크레딧
+                  : Free/Paid 플랜 선택
+```
+
+**항상 무료 서비스** (신규/기존 모두 적용):
 - ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **Lambda**: 100만 요청/월
 - ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **DynamoDB**: 25GB 스토리지
 - ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **SNS**: 100만 요청/월
 
 ```mermaid
 graph TB
-    subgraph "AWS 프리티어 유형"
-        A[12개월 무료<br/>Free Tier]
-        B[항상 무료<br/>Always Free]
-        C[평가판<br/>Trials]
+    subgraph "신규 프리티어 (2025.07.15 이후)"
+        A[가입 시 $100 크레딧]
+        B[활동 완료 시<br/>최대 $100 추가]
+        C[총 $200 크레딧]
     end
     
-    subgraph "12개월 무료 서비스"
-        D[EC2<br/>t2.micro/t3.micro<br/>750시간/월]
-        E[RDS<br/>db.t2.micro<br/>750시간/월]
-        F[S3<br/>5GB 스토리지]
-        G[CloudFront<br/>50GB 전송]
+    subgraph "크레딧 획득 활동 (각 $20)"
+        D[EC2 실행/종료]
+        E[RDS 설정]
+        F[Lambda 함수]
+        G[Bedrock 프롬프트]
+        H[Budgets 예산]
     end
     
-    subgraph "항상 무료 서비스"
-        H[Lambda<br/>100만 요청/월]
-        I[DynamoDB<br/>25GB 스토리지]
-        J[SNS<br/>100만 요청/월]
+    subgraph "항상 무료 (Always Free)"
+        I[Lambda<br/>100만 요청/월]
+        J[DynamoDB<br/>25GB]
+        K[SNS<br/>100만 요청/월]
     end
     
-    A --> D
-    A --> E
-    A --> F
-    A --> G
+    A --> C
+    B --> C
     
-    B --> H
-    B --> I
-    B --> J
+    D --> B
+    E --> B
+    F --> B
+    G --> B
+    H --> B
     
     style A fill:#e8f5e8
     style B fill:#fff3e0
@@ -488,26 +517,46 @@ graph TB
     style E fill:#e3f2fd
     style F fill:#e3f2fd
     style G fill:#e3f2fd
-    style H fill:#f3e5f5
+    style H fill:#e3f2fd
     style I fill:#f3e5f5
     style J fill:#f3e5f5
+    style K fill:#f3e5f5
 ```
 
 #### 📊 프리티어 한도 (Week 5 실습 기준)
 
-| 서비스 | 프리티어 한도 | Week 5 사용 예상 | 초과 여부 |
-|--------|---------------|------------------|-----------|
-| **EC2** | 750시간/월 | 120시간 (5일 × 24시간) | ✅ 안전 |
-| **RDS** | 750시간/월 | 120시간 | ✅ 안전 |
-| **S3** | 5GB 스토리지 | 1GB | ✅ 안전 |
-| **데이터 전송** | 100GB/월 | 10GB | ✅ 안전 |
-| **NAT Gateway** | ❌ 유료 | $0.045/시간 | ⚠️ 비용 발생 |
+**⚠️ 중요**: 2025년 7월 15일 이후 가입자는 크레딧 기반 시스템
 
-**💡 비용 절감 팁**:
+| 항목 | 신규 프리티어 (2025.07.15 이후) | 기존 프리티어 (이전 가입자) | Week 5 사용 예상 |
+|------|----------------------------------|----------------------------|------------------|
+| **초기 크레딧** | $100 (가입 시) | - | - |
+| **추가 크레딧** | 최대 $100 (활동 완료) | - | - |
+| **유효 기간** | 6개월 또는 크레딧 소진 | 12개월 | 5일 |
+| **EC2** | 크레딧으로 사용 | 750시간/월 무료 | 120시간 |
+| **RDS** | 크레딧으로 사용 | 750시간/월 무료 | 120시간 |
+| **S3** | 크레딧으로 사용 | 5GB 무료 | 1GB |
+| **Lambda** | 100만 요청/월 (항상 무료) | 100만 요청/월 | 소량 |
+| **DynamoDB** | 25GB (항상 무료) | 25GB | 미사용 |
+
+**💡 Week 5 실습 비용 관리**:
+
+**신규 가입자 ($200 크레딧)**:
+- Week 5 예상 비용: 약 $17.40 (12명 기준)
+- 학생당 비용: 약 $1.45
+- ✅ $200 크레딧으로 충분히 커버 가능
+- 💡 추가 크레딧 활동 완료 권장 (총 $200 확보)
+
+**기존 가입자 (12개월 무료)**:
+- 프리티어 서비스 최대 활용
+- EC2 t2.micro/t3.micro (750시간/월)
+- RDS db.t2.micro (750시간/월)
+- 초과 사용 시 종량제 과금
+
+**공통 비용 절감 팁**:
 - **실습 시간 엄수**: 50분 실습 후 즉시 리소스 정리
 - **프리티어 서비스 우선**: t2.micro, t3.micro 인스턴스 사용
 - **NAT Gateway 최소화**: 필요시에만 생성, 즉시 삭제
-- **비용 알림 설정**: $5 초과 시 알림 설정
+- **비용 알림 설정**: AWS Budgets로 $5 초과 시 알림
 
 #### 🔧 프리티어 모니터링
 
