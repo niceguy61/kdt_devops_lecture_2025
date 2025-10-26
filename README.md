@@ -142,12 +142,16 @@ graph TB
 - Day 5: FinOps와 클라우드 비용 최적화
 
 ### Week 5: AWS 인프라 구축과 프로젝트 배포
-**목표**: CloudMart 프로젝트를 AWS에 배포하기 위한 인프라 구축
+**목표**: CloudMart 프로젝트를 AWS에 배포하기 위한 단계적 인프라 구축
 
-#### [Week 5: AWS 인프라 구축과 IaC](./theory/week_05/README.md)
-- Day 1-2: AWS 핵심 서비스 (VPC, EC2, RDS, S3, ALB)
-- Day 3-4: Terraform으로 인프라 코드화
+#### [Week 5: AWS 집중 과정](./theory/week_05/README.md)
+- Day 1: AWS 기초 & 네트워킹 (VPC, EC2, Security Groups)
+- Day 2: 컴퓨팅 & 스토리지 (EBS, EFS, S3, CloudFront)
+- Day 3: 데이터베이스 & 캐싱 (RDS, ElastiCache)
+- Day 4: 로드밸런싱 & 고가용성 (ALB, Auto Scaling)
 - Day 5: CloudMart 프로젝트 AWS 배포 완성
+
+**💡 특강**: Terraform IaC (Infrastructure as Code) - 별도 진행, AWS EKS 및 기타범위 관련 보강
 
 ## 🤝 협업 학습 시스템
 
