@@ -147,8 +147,8 @@ Organizations: Arch_Management-Governance/64/Arch_AWS-Organizations_64.svg
 ## ⚠️ 주의사항
 
 ### 1. 크기 선택
-- **64px 사용**: `/64/` 폴더의 아이콘 사용
-- 다른 크기 (16, 32, 48)는 사용하지 않음
+- **48px 사용**: `/48/` 폴더의 아이콘 사용
+- 다른 크기 (16, 32, 64)는 사용하지 않음
 
 ### 2. 서비스명 정확성
 - **S3**: `Amazon-Simple-Storage-Service` (O)
