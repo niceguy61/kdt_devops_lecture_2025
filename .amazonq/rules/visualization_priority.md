@@ -4,7 +4,44 @@
 
 모든 Session, Lab, Challenge 작성 시 다음 우선순위를 따릅니다.
 
-### 1순위: AWS/공식 이미지 (MCP에서 확인 가능 시)
+### 1순위: AWS Asset Icons (Week 5 전용)
+
+**Week 5 (AWS 집중 과정)에서는 AWS Asset Icons 적극 활용**
+
+```markdown
+### 아키텍처 구성
+
+![VPC Architecture](../images/architecture-vpc.png)
+
+**사용된 AWS 서비스**:
+- ![EC2](../../../assets/aws-icons/Compute/Amazon-EC2.svg) **Amazon EC2**: 가상 서버
+- ![VPC](../../../assets/aws-icons/Networking/Amazon-VPC.svg) **Amazon VPC**: 네트워크 격리
+- ![RDS](../../../assets/aws-icons/Database/Amazon-RDS.svg) **Amazon RDS**: 관리형 데이터베이스
+```
+
+**아이콘 위치**: `/assets/aws-icons/[Category]/[Service-Name].svg`
+
+**주요 카테고리**:
+- `Compute/`: EC2, Lambda, ECS, EKS
+- `Networking/`: VPC, CloudFront, Route53, ELB
+- `Database/`: RDS, DynamoDB, ElastiCache
+- `Storage/`: S3, EBS, EFS
+- `Security/`: IAM, KMS, WAF
+
+**활용 방법**:
+1. **아키텍처 다이어그램**: 각 서비스 아이콘 배치
+2. **서비스 설명**: 제목 옆에 아이콘 표시
+3. **비교표**: 서비스 비교 시 아이콘 포함
+4. **단계별 가이드**: 각 단계에서 사용하는 서비스 아이콘
+
+### 2순위: AWS/공식 이미지 (MCP에서 확인 가능 시)
+
+```markdown
+![AWS 공식 아키텍처](https://docs.aws.amazon.com/.../official-diagram.png)
+*출처: AWS 공식 문서*
+```
+
+### 2순위: AWS/공식 이미지 (MCP에서 확인 가능 시)
 
 ```markdown
 ![AWS 공식 아키텍처](https://docs.aws.amazon.com/.../official-diagram.png)
@@ -37,7 +74,7 @@
 
 ---
 
-### 2순위: Mermaid 다이어그램 (공식 이미지 없을 시)
+### 3순위: Mermaid 다이어그램 (공식 이미지 없을 시)
 
 ```mermaid
 graph TB
@@ -59,7 +96,7 @@ graph TB
 
 ---
 
-### 3순위: 커스텀 SVG (복잡한 구조 필요 시)
+### 4순위: 커스텀 SVG (복잡한 구조 필요 시)
 
 ```markdown
 ![커스텀 다이어그램](../images/day1/custom-diagram.svg)
@@ -81,7 +118,7 @@ theory/week_0n/images/
 
 ---
 
-### 4순위: ASCII Art (간단한 구조)
+### 5순위: ASCII Art (간단한 구조)
 
 ```
 ┌─────────────────┐
@@ -103,9 +140,10 @@ theory/week_0n/images/
 ## ✅ 체크리스트
 
 Session/Lab/Challenge 작성 시:
+- [ ] **Week 5**: AWS Asset Icons 적극 활용
 - [ ] MCP로 AWS 공식 문서 확인
 - [ ] 공식 이미지 존재 여부 확인
-- [ ] 공식 이미지 있으면 **1순위로 사용**
+- [ ] 공식 이미지 있으면 **2순위로 사용**
 - [ ] 공식 이미지 없으면 Mermaid 다이어그램 작성
 - [ ] 복잡한 구조는 SVG로 별도 제작
 - [ ] 간단한 구조는 ASCII Art 활용

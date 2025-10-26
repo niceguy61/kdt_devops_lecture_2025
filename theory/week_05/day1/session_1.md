@@ -73,6 +73,11 @@ graph LR
 
 > **정의**: AWS는 전 세계에 분산된 데이터센터를 통해 서비스를 제공하는 글로벌 클라우드 인프라
 
+**핵심 구성 요소**:
+- ![Global Infrastructure](../../../assets/aws-icons/General/AWS-Cloud.svg) **AWS Cloud**: 전 세계 분산 인프라
+- ![Region](../../../assets/aws-icons/General/Region.svg) **Region**: 지리적으로 분리된 데이터센터 그룹
+- ![Availability Zone](../../../assets/aws-icons/General/Availability-Zone.svg) **Availability Zone**: Region 내 물리적으로 분리된 데이터센터
+
 #### 🏗️ AWS 글로벌 인프라 구조
 
 ```mermaid
@@ -182,6 +187,11 @@ graph TB
 ### 🔍 개념 2: 클라우드 컴퓨팅 모델 (12분)
 
 > **정의**: 클라우드 서비스는 제공하는 관리 수준에 따라 IaaS, PaaS, SaaS로 구분
+
+**AWS 서비스 모델 예시**:
+- ![EC2](../../../assets/aws-icons/Compute/Amazon-EC2.svg) **IaaS**: Amazon EC2 (완전한 제어)
+- ![Elastic Beanstalk](../../../assets/aws-icons/Compute/AWS-Elastic-Beanstalk.svg) **PaaS**: Elastic Beanstalk (플랫폼 관리)
+- ![WorkMail](../../../assets/aws-icons/Business-Applications/Amazon-WorkMail.svg) **SaaS**: WorkMail (즉시 사용)
 
 #### ☁️ 클라우드 서비스 모델 비교
 
@@ -303,6 +313,23 @@ graph TB
 
 #### 🔧 AWS 서비스 분류
 
+**IaaS 서비스**:
+- ![EC2](../../../assets/aws-icons/Compute/Amazon-EC2.svg) **EC2**: 가상 서버
+- ![VPC](../../../assets/aws-icons/Networking/Amazon-VPC.svg) **VPC**: 네트워크
+- ![S3](../../../assets/aws-icons/Storage/Amazon-S3.svg) **S3**: 스토리지
+- ![EBS](../../../assets/aws-icons/Storage/Amazon-EBS.svg) **EBS**: 블록 스토리지
+
+**PaaS 서비스**:
+- ![Elastic Beanstalk](../../../assets/aws-icons/Compute/AWS-Elastic-Beanstalk.svg) **Elastic Beanstalk**: 애플리케이션 배포
+- ![RDS](../../../assets/aws-icons/Database/Amazon-RDS.svg) **RDS**: 관리형 데이터베이스
+- ![Lambda](../../../assets/aws-icons/Compute/AWS-Lambda.svg) **Lambda**: 서버리스 함수
+- ![ECS](../../../assets/aws-icons/Containers/Amazon-ECS.svg) **ECS/EKS**: 컨테이너 오케스트레이션
+
+**SaaS 서비스**:
+- ![WorkMail](../../../assets/aws-icons/Business-Applications/Amazon-WorkMail.svg) **WorkMail**: 이메일
+- ![Chime](../../../assets/aws-icons/Business-Applications/Amazon-Chime.svg) **Chime**: 화상회의
+- ![QuickSight](../../../assets/aws-icons/Analytics/Amazon-QuickSight.svg) **QuickSight**: BI 도구
+
 ```mermaid
 graph TB
     subgraph "IaaS 서비스"
@@ -343,6 +370,11 @@ graph TB
 ### 🔍 개념 3: AWS 계정 구조 & 프리티어 (11분)
 
 > **정의**: AWS 계정은 Root, IAM User, Role로 구성되며, 프리티어를 통해 무료로 학습 가능
+
+**핵심 보안 서비스**:
+- ![IAM](../../../assets/aws-icons/Security-Identity-Compliance/AWS-IAM.svg) **IAM**: 권한 관리
+- ![Organizations](../../../assets/aws-icons/Management-Governance/AWS-Organizations.svg) **Organizations**: 계정 관리
+- ![CloudTrail](../../../assets/aws-icons/Management-Governance/AWS-CloudTrail.svg) **CloudTrail**: 감사 로그
 
 #### 🔐 AWS 계정 구조
 
@@ -417,6 +449,17 @@ graph LR
 4. **모든 작업은 IAM User로 수행**
 
 #### 💰 AWS 프리티어 활용 전략
+
+**12개월 무료 서비스**:
+- ![EC2](../../../assets/aws-icons/Compute/Amazon-EC2.svg) **EC2**: t2.micro/t3.micro 750시간/월
+- ![RDS](../../../assets/aws-icons/Database/Amazon-RDS.svg) **RDS**: db.t2.micro 750시간/월
+- ![S3](../../../assets/aws-icons/Storage/Amazon-S3.svg) **S3**: 5GB 스토리지
+- ![CloudFront](../../../assets/aws-icons/Networking/Amazon-CloudFront.svg) **CloudFront**: 50GB 전송
+
+**항상 무료 서비스**:
+- ![Lambda](../../../assets/aws-icons/Compute/AWS-Lambda.svg) **Lambda**: 100만 요청/월
+- ![DynamoDB](../../../assets/aws-icons/Database/Amazon-DynamoDB.svg) **DynamoDB**: 25GB 스토리지
+- ![SNS](../../../assets/aws-icons/Application-Integration/Amazon-SNS.svg) **SNS**: 100만 요청/월
 
 ```mermaid
 graph TB
