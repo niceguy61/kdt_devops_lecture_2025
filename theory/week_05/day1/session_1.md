@@ -137,8 +137,8 @@ architecture-beta
 ```mermaid
 quadrantChart
     title AWS 리전 선택 기준
-    x-axis 낮은 비용 --> 높은 비용
-    y-axis 낮은 지연시간 --> 높은 지연시간
+    x-axis Low Cost --> High Cost
+    y-axis Low Latency --> High Latency
     quadrant-1 최적 선택
     quadrant-2 비용 고려
     quadrant-3 재검토 필요
