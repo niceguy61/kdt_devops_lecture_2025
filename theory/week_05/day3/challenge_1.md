@@ -49,6 +49,49 @@ FinTech 스타트업 "QuickPay"의 데이터베이스 담당자가 급하게 RDS
 
 ---
 
+## 🏗️ 목표 아키텍처
+
+### 📐 정상 작동하는 아키텍처 (성공 기준)
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud (ap-northeast-2)"
+        subgraph "VPC (10.0.0.0/16)"
+            subgraph "Private Subnet"
+                RDS[("RDS PostgreSQL<br/>Port: 5432<br/>Engine: 17.4<br/>Backup: 7 days")]
+            end
+            
+            SG["Security Group<br/>Inbound: 5432<br/>Source: 10.0.0.0/16"]
+            
+            DBSubnet["DB Subnet Group<br/>2 AZ (2a, 2c)"]
+        end
+        
+        CW["CloudWatch<br/>Monitoring"]
+    end
+    
+    App["Application<br/>(VPC 내부)"] --> SG
+    SG --> RDS
+    RDS --> DBSubnet
+    RDS -.-> CW
+    
+    style RDS fill:#4caf50
+    style SG fill:#2196f3
+    style DBSubnet fill:#ff9800
+    style CW fill:#9c27b0
+    style App fill:#607d8b
+```
+
+**핵심 구성 요소**:
+- **RDS PostgreSQL**: 지원되는 엔진 버전 (17.4)
+- **Security Group**: PostgreSQL 포트 (5432) 오픈
+- **DB Subnet Group**: 2개 AZ에 Private Subnet
+- **백업 설정**: 최소 7일 보관
+- **CloudWatch**: 자동 모니터링
+
+💡 **힌트**: 위 다이어그램과 실제 배포된 환경을 비교해보세요!
+
+---
+
 ## 🔧 Challenge 환경 배포
 
 ⚠️ **주의**: 다음 단계는 **의도적으로 문제가 있는 설정**입니다.
@@ -102,11 +145,7 @@ AWS Console → EC2 → Security Groups → Create security group
 **💡 힌트**: PostgreSQL의 기본 포트는 무엇일까요?
 
 **✅ 검증**:
-```bash
-aws ec2 describe-security-groups \
-  --filters "Name=group-name,Values=challenge-rds-sg" \
-  --region ap-northeast-2
-```
+AWS Console에서 생성된 Security Group 확인
 
 ---
 
@@ -238,25 +277,6 @@ AWS Console → RDS → Databases → Create database
 4. **근본 원인**: 왜 이 문제가 발생했는가?
 5. **해결 및 검증**: 수정 후 정상 작동 확인
 
-### 유용한 확인 명령어
-```bash
-# RDS 상태 확인
-aws rds describe-db-instances \
-  --db-instance-identifier challenge-postgres \
-  --region ap-northeast-2
-
-# Security Group 확인
-aws ec2 describe-security-groups \
-  --filters "Name=group-name,Values=challenge-rds-sg" \
-  --region ap-northeast-2
-
-# 지원되는 PostgreSQL 버전 확인
-aws rds describe-db-engine-versions \
-  --engine postgres \
-  --region ap-northeast-2 \
-  --query "DBEngineVersions[].EngineVersion"
-```
-
 ---
 
 ## 📸 결과 제출
@@ -383,13 +403,6 @@ aws rds delete-db-instance \
 AWS Console → RDS → Subnet groups → challenge-db-subnet → Delete
 ```
 
-**CLI 명령어** (선택):
-```bash
-aws rds delete-db-subnet-group \
-  --db-subnet-group-name challenge-db-subnet \
-  --region ap-northeast-2
-```
-
 **이미지 자리**: DB Subnet Group 삭제 확인
 
 ---
@@ -399,13 +412,6 @@ aws rds delete-db-subnet-group \
 **AWS Console 경로**:
 ```
 AWS Console → EC2 → Security Groups → challenge-rds-sg → Actions → Delete security groups
-```
-
-**CLI 명령어** (선택):
-```bash
-aws ec2 delete-security-group \
-  --group-id [SG_ID] \
-  --region ap-northeast-2
 ```
 
 **이미지 자리**: Security Group 삭제 확인
@@ -419,15 +425,6 @@ aws ec2 delete-security-group \
 RDS → Databases: challenge-postgres 없음 ✅
 RDS → Subnet groups: challenge-db-subnet 없음 ✅
 EC2 → Security Groups: challenge-rds-sg 없음 ✅
-```
-
-**CLI 확인**:
-```bash
-# RDS 삭제 확인
-aws rds describe-db-instances \
-  --db-instance-identifier challenge-postgres \
-  --region ap-northeast-2
-# 결과: DBInstanceNotFound 오류 = 정상 삭제됨 ✅
 ```
 
 **이미지 자리**: 모든 리소스 삭제 완료
