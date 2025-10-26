@@ -51,9 +51,9 @@
 
 ```mermaid
 architecture-beta
-    group aws(cloud)[AWS Cloud ap-northeast-2]
+    group aws(cloud)[AWS Cloud]
     
-    group vpc(cloud)[VPC 10.0.0.0/16] in aws
+    group vpc(cloud)[VPC] in aws
     group public(cloud)[Public Subnet] in vpc
     group private_a(cloud)[Private Subnet A] in vpc
     group private_b(cloud)[Private Subnet B] in vpc
@@ -65,13 +65,13 @@ architecture-beta
     service redis(disk)[ElastiCache Redis] in private_a
     service cw(disk)[CloudWatch] in aws
     
-    internet:R -- L:ec2
-    ec2:B -- T:rds_primary
-    ec2:B -- T:redis
-    rds_primary:R -- L:rds_standby
-    ec2:T -- B:cw
-    rds_primary:T -- B:cw
-    redis:T -- B:cw
+    internet:R --> L:ec2
+    ec2:B --> T:rds_primary
+    ec2:B --> T:redis
+    rds_primary:R --> L:rds_standby
+    ec2:T --> B:cw
+    rds_primary:T --> B:cw
+    redis:T --> B:cw
 ```
 
 ### 🔧 사용된 AWS 서비스
