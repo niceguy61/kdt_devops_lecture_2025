@@ -78,7 +78,7 @@ graph LR
 - **AWS Cloud**: 전 세계 분산 인프라
 - **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 37개 리전)
 - **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (117개 AZ)
-- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (700개 이상)
+- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (700개 이상)
 
 #### 🏗️ AWS 글로벌 인프라 구조
 
@@ -200,9 +200,9 @@ mindmap
 > **정의**: 클라우드 서비스는 제공하는 관리 수준에 따라 IaaS, PaaS, SaaS로 구분
 
 **AWS 서비스 모델 예시**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **IaaS**: Amazon EC2 (완전한 제어)
-- ![Elastic Beanstalk](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_AWS-Elastic-Beanstalk_64.svg) **PaaS**: Elastic Beanstalk (플랫폼 관리)
-- ![WorkMail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Business-Applications/64/Arch_Amazon-WorkMail_64.svg) **SaaS**: WorkMail (즉시 사용)
+- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **IaaS**: Amazon EC2 (완전한 제어)
+- ![Elastic Beanstalk](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Elastic-Beanstalk_48.svg) **PaaS**: Elastic Beanstalk (플랫폼 관리)
+- ![WorkMail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Business-Applications/48/Arch_Amazon-WorkMail_48.svg) **SaaS**: WorkMail (즉시 사용)
 
 #### ☁️ 클라우드 서비스 모델 비교
 
@@ -352,9 +352,9 @@ mindmap
 > **정의**: AWS 계정은 Root, IAM User, Role로 구성되며, 프리티어를 통해 무료로 학습 가능
 
 **핵심 보안 서비스**:
-- ![IAM](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/64/Arch_AWS-Identity-and-Access-Management_64.svg) **IAM**: 권한 관리
-- ![Organizations](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_AWS-Organizations_64.svg) **Organizations**: 계정 관리
-- ![CloudTrail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_AWS-CloudTrail_64.svg) **CloudTrail**: 감사 로그
+- ![IAM](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Identity-and-Access-Management_48.svg) **IAM**: 권한 관리
+- ![Organizations](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-Organizations_48.svg) **Organizations**: 계정 관리
+- ![CloudTrail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-CloudTrail_48.svg) **CloudTrail**: 감사 로그
 
 #### 🔐 AWS 계정 구조
 
@@ -441,15 +441,15 @@ stateDiagram-v2
 #### 💰 AWS 프리티어 활용 전략
 
 **12개월 무료 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **EC2**: t2.micro/t3.micro 750시간/월
-- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-RDS_64.svg) **RDS**: db.t2.micro 750시간/월
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/64/Arch_Amazon-Simple-Storage-Service_64.svg) **S3**: 5GB 스토리지
-- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) **CloudFront**: 50GB 전송
+- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2**: t2.micro/t3.micro 750시간/월
+- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS**: db.t2.micro 750시간/월
+- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: 5GB 스토리지
+- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **CloudFront**: 50GB 전송
 
 **항상 무료 서비스**:
-- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_AWS-Lambda_64.svg) **Lambda**: 100만 요청/월
-- ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-DynamoDB_64.svg) **DynamoDB**: 25GB 스토리지
-- ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/64/Arch_Amazon-Simple-Notification-Service_64.svg) **SNS**: 100만 요청/월
+- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **Lambda**: 100만 요청/월
+- ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **DynamoDB**: 25GB 스토리지
+- ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **SNS**: 100만 요청/월
 
 ```mermaid
 graph TB
