@@ -234,25 +234,27 @@ graph TB
         B --> C[계정에 예약]
     end
     
-    subgraph "인스턴스 연결"
-        C --> D[Instance A 연결]
-        D --> E[Public IP 대체]
+    subgraph "다양한 리소스에 연결"
+        C --> D[EC2 Instance]
+        C --> E[NAT Gateway]
+        C --> F[Network Load Balancer]
     end
     
-    subgraph "인스턴스 변경"
-        E --> F[Instance A Stop]
-        F --> G[Elastic IP 유지]
-        G --> H[Instance B로 재연결]
+    subgraph "사용 사례"
+        D --> G[웹/API 서버<br/>고정 IP]
+        E --> H[Private Subnet<br/>아웃바운드]
+        F --> I[고정 IP<br/>로드밸런서]
     end
     
     style A fill:#e3f2fd
     style B fill:#fff3e0
     style C fill:#e8f5e8
     style D fill:#fff3e0
-    style E fill:#e8f5e8
-    style F fill:#ffebee
+    style E fill:#fff3e0
+    style F fill:#fff3e0
     style G fill:#e8f5e8
-    style H fill:#fff3e0
+    style H fill:#e8f5e8
+    style I fill:#e8f5e8
 ```
 
 #### Elastic IP vs Public IP
@@ -335,8 +337,16 @@ EC2 Console → Network & Security → Elastic IPs → Elastic IP 선택 → Act
 **Elastic IP 사용 시나리오**:
 - **웹 서버**: 도메인 DNS에 고정 IP 등록
 - **API 서버**: 외부 서비스에 IP 화이트리스트 등록
+- **NAT Gateway**: Private Subnet의 아웃바운드 트래픽용 (가장 흔한 사용)
+- **Network Load Balancer**: 고정 IP가 필요한 로드밸런서
 - **VPN 서버**: 고정 IP로 안정적 접속
 - **장애 복구**: 빠른 인스턴스 교체 (IP 변경 없이)
+
+**주요 사용처별 특징**:
+- **EC2 인스턴스**: 1개 Elastic IP 연결
+- **NAT Gateway**: 생성 시 자동으로 Elastic IP 할당 (필수)
+- **Network Load Balancer**: AZ당 1개 Elastic IP 할당 가능
+- **VPN Gateway**: 고정 IP로 온프레미스 연결
 
 **비용 최적화**:
 - **사용 중**: 무료 (Running 인스턴스에 연결)
@@ -509,8 +519,9 @@ aws ssm start-session \
 
 **토론 주제**:
 1. **Elastic IP 사용 결정**: "어떤 경우에 Elastic IP를 사용하고, 어떤 경우에 일반 Public IP를 사용할까요?"
-2. **Session Manager vs SSH**: "Session Manager가 SSH보다 나은 점은 무엇이고, SSH가 여전히 필요한 경우는 언제일까요?"
-3. **인스턴스 생명주기 관리**: "개발 환경과 프로덕션 환경에서 인스턴스 생명주기를 어떻게 다르게 관리해야 할까요?"
+2. **NAT Gateway vs NAT Instance**: "NAT Gateway에 Elastic IP가 필수인 이유는 무엇일까요? Private Subnet의 인스턴스들이 외부와 통신하려면 왜 고정 IP가 필요할까요?"
+3. **Session Manager vs SSH**: "Session Manager가 SSH보다 나은 점은 무엇이고, SSH가 여전히 필요한 경우는 언제일까요?"
+4. **인스턴스 생명주기 관리**: "개발 환경과 프로덕션 환경에서 인스턴스 생명주기를 어떻게 다르게 관리해야 할까요?"
 
 **페어 활동 가이드**:
 - 👥 **자유 페어링**: 관심사가 비슷한 사람끼리
