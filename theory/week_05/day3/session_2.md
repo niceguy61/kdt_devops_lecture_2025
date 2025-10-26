@@ -1158,6 +1158,93 @@ Read Replicas (2개):
 - [ ] Performance Insights 필요성 검토
 - [ ] Multi-AZ 필요성 검토 (개발 환경)
 - [ ] 백업 보관 기간 최적화
+
+---
+
+## 📊 실습 연계
+
+### Lab 1에서 활용
+- **RDS 인스턴스 생성**: Multi-AZ 구성
+- **CloudWatch 모니터링**: 기본 메트릭 확인
+- **자동 백업 설정**: 백업 윈도우 구성
+- **스냅샷 생성**: 수동 백업 실습
+
+### Lab 2에서 활용
+- **Performance Insights**: 쿼리 성능 분석
+- **Enhanced Monitoring**: OS 레벨 메트릭
+- **파라미터 그룹**: DB 설정 최적화
+- **읽기 복제본**: 읽기 부하 분산
+
+### 주의사항
+- **비용 관리**: Enhanced Monitoring, Performance Insights 비용 확인
+- **백업 보관**: 불필요한 스냅샷 정기 삭제
+- **Multi-AZ**: 개발 환경은 Single-AZ로 비용 절감
+- **인스턴스 크기**: 프리티어 범위 내 사용 (db.t3.micro)
+
+---
+
+## 🔗 공식 문서 (필수)
+
+**⚠️ 학생들이 직접 확인해야 할 공식 문서**:
+
+- 📘 [Amazon RDS 사용자 가이드](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html)
+- 📗 [RDS 모니터링](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Monitoring.html)
+- 📙 [RDS 백업 및 복원](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.BackupRestore.html)
+- 📕 [RDS 요금](https://aws.amazon.com/rds/pricing/)
+- 🆕 [RDS 최신 업데이트](https://aws.amazon.com/about-aws/whats-new/database/)
+
+---
+
+## 🔑 핵심 키워드
+
+### 모니터링
+- **CloudWatch**: 기본 메트릭 (CPU, Memory, IOPS)
+- **Enhanced Monitoring**: OS 레벨 메트릭 (프로세스, 스레드)
+- **Performance Insights**: 쿼리 성능 분석 (Top SQL)
+- **알람**: 임계값 기반 알림 (SNS 연동)
+
+### 백업 및 복구
+- **자동 백업**: 일일 자동 백업 (최대 35일)
+- **수동 스냅샷**: 무제한 보관 가능
+- **PITR**: Point-in-Time Recovery (5분 단위)
+- **스냅샷 공유**: 다른 계정과 공유
+
+### 성능 최적화
+- **파라미터 그룹**: DB 엔진 설정
+- **옵션 그룹**: 추가 기능 활성화
+- **읽기 복제본**: 읽기 부하 분산 (최대 15개)
+- **인덱스**: 쿼리 성능 향상
+
+### 고가용성
+- **Multi-AZ**: 자동 Failover (1-2분)
+- **동기 복제**: 데이터 무손실
+- **자동 백업**: 두 AZ에 저장
+- **DNS 자동 전환**: 애플리케이션 재연결 불필요
+
+---
+
+## 💡 Session 마무리
+
+### ✅ 오늘 Session 성과
+- **모니터링 전략**: CloudWatch, Enhanced Monitoring, Performance Insights 이해
+- **백업 전략**: 자동 백업, 스냅샷, PITR 활용 방법
+- **성능 최적화**: 쿼리 튜닝, 인덱스 관리, 파라미터 조정
+- **장애 대응**: Multi-AZ Failover 및 복구 절차
+
+### 🎯 다음 Session 준비
+- **Session 3**: ElastiCache Redis - 캐싱 전략 및 성능 향상
+- **연계 내용**: RDS와 ElastiCache 통합 아키텍처
+- **실습 준비**: RDS + Redis 캐싱 계층 구축
+
+---
+
+<div align="center">
+
+**📊 체계적 모니터링** • **💾 안전한 백업** • **🔧 성능 최적화** • **🚨 신속한 장애 대응**
+
+*RDS 운영의 모든 것*
+
+</div>
 - 임계값 초과 시 자동 알람
 - 예: CPU 80% 초과 시 SNS 알림
 
