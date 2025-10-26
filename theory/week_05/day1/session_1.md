@@ -277,56 +277,67 @@ timeline
 
 #### 🔧 AWS 서비스 분류
 
-**IaaS 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **EC2**: 가상 서버
-- ![VPC](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-Virtual-Private-Cloud_64.svg) **VPC**: 네트워크
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/64/Arch_Amazon-Simple-Storage-Service_64.svg) **S3**: 스토리지
-- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/64/Arch_Amazon-Elastic-Block-Store_64.svg) **EBS**: 블록 스토리지
+```mermaid
+sankey-beta
 
-**PaaS 서비스**:
-- ![Elastic Beanstalk](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_AWS-Elastic-Beanstalk_64.svg) **Elastic Beanstalk**: 애플리케이션 배포
-- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-RDS_64.svg) **RDS**: 관리형 데이터베이스
-- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_AWS-Lambda_64.svg) **Lambda**: 서버리스 함수
-- ![ECS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Containers/64/Arch_Amazon-Elastic-Container-Service_64.svg) **ECS/EKS**: 컨테이너 오케스트레이션
+AWS Services,IaaS,25
+AWS Services,PaaS,15
+AWS Services,SaaS,5
 
-**SaaS 서비스**:
-- ![WorkMail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Business-Applications/64/Arch_Amazon-WorkMail_64.svg) **WorkMail**: 이메일
-- ![Chime](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Business-Applications/64/Arch_Amazon-Chime_64.svg) **Chime**: 화상회의
-- ![QuickSight](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Analytics/64/Arch_Amazon-QuickSight_64.svg) **QuickSight**: BI 도구
+IaaS,Compute (EC2),8
+IaaS,Storage (S3/EBS),7
+IaaS,Network (VPC),10
+
+PaaS,Database (RDS),5
+PaaS,Container (ECS/EKS),5
+PaaS,Serverless (Lambda),5
+
+SaaS,Collaboration (WorkMail),2
+SaaS,Analytics (QuickSight),2
+SaaS,Communication (Chime),1
+```
+
+**주요 서비스 카테고리**:
 
 ```mermaid
-graph TB
-    subgraph "IaaS 서비스"
-        A1[EC2<br/>가상 서버]
-        A2[VPC<br/>네트워크]
-        A3[S3<br/>스토리지]
-        A4[EBS<br/>블록 스토리지]
-    end
-    
-    subgraph "PaaS 서비스"
-        B1[Elastic Beanstalk<br/>애플리케이션 배포]
-        B2[RDS<br/>관리형 데이터베이스]
-        B3[Lambda<br/>서버리스 함수]
-        B4[ECS/EKS<br/>컨테이너 오케스트레이션]
-    end
-    
-    subgraph "SaaS 서비스"
-        C1[WorkMail<br/>이메일]
-        C2[Chime<br/>화상회의]
-        C3[QuickSight<br/>BI 도구]
-    end
-    
-    style A1 fill:#e3f2fd
-    style A2 fill:#e3f2fd
-    style A3 fill:#e3f2fd
-    style A4 fill:#e3f2fd
-    style B1 fill:#fff3e0
-    style B2 fill:#fff3e0
-    style B3 fill:#fff3e0
-    style B4 fill:#fff3e0
-    style C1 fill:#e8f5e8
-    style C2 fill:#e8f5e8
-    style C3 fill:#e8f5e8
+mindmap
+  root((AWS 서비스))
+    IaaS
+      EC2
+        가상 서버
+        완전한 제어
+      VPC
+        네트워크 격리
+        보안 그룹
+      S3
+        객체 스토리지
+        무제한 확장
+      EBS
+        블록 스토리지
+        고성능 디스크
+    PaaS
+      RDS
+        관리형 DB
+        자동 백업
+      Lambda
+        서버리스
+        이벤트 기반
+      Elastic Beanstalk
+        앱 배포
+        자동 스케일링
+      ECS/EKS
+        컨테이너
+        오케스트레이션
+    SaaS
+      WorkMail
+        이메일
+        즉시 사용
+      Chime
+        화상회의
+        협업 도구
+      QuickSight
+        BI 분석
+        시각화
 ```
 
 ---
@@ -384,26 +395,36 @@ graph TB
 #### 🔒 보안 베스트 프랙티스
 
 ```mermaid
-graph LR
-    A[Root Account] --> B{보안 설정}
+stateDiagram-v2
+    [*] --> RootAccount: AWS 계정 생성
     
-    B --> C[MFA 활성화<br/>필수]
-    B --> D[액세스 키 생성 금지<br/>필수]
-    B --> E[일상 작업 금지<br/>필수]
+    state RootAccount {
+        [*] --> EnableMFA: 1. MFA 활성화
+        EnableMFA --> NoAccessKey: 2. 액세스 키 생성 금지
+        NoAccessKey --> CreateIAMUser: 3. IAM User 생성
+    }
     
-    C --> F[IAM User 생성]
-    D --> F
-    E --> F
+    RootAccount --> IAMUser: Root 계정 잠금
     
-    F --> G[일상 작업은<br/>IAM User 사용]
+    state IAMUser {
+        [*] --> SetPermissions: 권한 설정
+        SetPermissions --> EnableUserMFA: MFA 활성화
+        EnableUserMFA --> DailyWork: 일상 작업 수행
+    }
     
-    style A fill:#ffebee
-    style B fill:#fff3e0
-    style C fill:#e8f5e8
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#e3f2fd
-    style G fill:#f3e5f5
+    IAMUser --> [*]: 안전한 운영
+    
+    note right of RootAccount
+        ⚠️ Root 계정은
+        절대 일상 작업에
+        사용 금지
+    end note
+    
+    note right of IAMUser
+        ✅ 모든 작업은
+        IAM User로
+        수행
+    end note
 ```
 
 **⚠️ 중요 보안 규칙**:
