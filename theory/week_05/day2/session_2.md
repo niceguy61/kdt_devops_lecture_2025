@@ -83,6 +83,10 @@ pie title EBS 볼륨 타입 사용 비율
 
 > **정의**: 워크로드 특성에 따라 최적화된 다양한 스토리지 옵션
 
+**핵심 서비스**:
+- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 블록 스토리지 서비스
+- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: EBS 볼륨 연결 대상
+
 #### EBS 볼륨 타입 발전 과정
 
 ```mermaid
@@ -144,6 +148,38 @@ mindmap
 
 #### 볼륨 타입 상세 비교
 
+**성능 비교 차트**:
+
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      backgroundColor: "transparent"
+---
+xychart-beta
+    title "EBS Volume Type Performance Comparison"
+    x-axis [gp3, gp2, io2, io2-BE, st1, sc1]
+    y-axis "Max IOPS (thousands)" 0 --> 260
+    bar [16, 16, 64, 256, 0.5, 0.25]
+```
+
+**비용 비교 차트**:
+
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      backgroundColor: "transparent"
+---
+xychart-beta
+    title "EBS Volume Type Cost per GB"
+    x-axis [sc1, st1, gp3, gp2, io2]
+    y-axis "Cost (USD per GB)" 0 --> 0.15
+    bar [0.015, 0.045, 0.08, 0.10, 0.125]
+```
+
 | 볼륨 타입 | 용도 | 크기 | IOPS | 처리량 | 가격 | 사용 사례 |
 |----------|------|------|------|--------|------|----------|
 | **gp3** | 범용 SSD | 1GB-16TB | 3,000-16,000 | 125-1,000 MB/s | $0.08/GB | 웹 서버, 개발 환경 |
@@ -166,16 +202,68 @@ mindmap
 - gp2: 볼륨 크기에 비례 (1GB당 3 IOPS, 최소 100 IOPS)
 - **권장**: 신규 워크로드는 gp3 사용 (20% 저렴)
 
+**볼륨 크기 조정 (중요!)**:
+
+**✅ 크기 늘리기 (무중단 가능)**:
+```
+AWS Console 경로:
+EC2 Console → Volumes → 볼륨 선택 → Actions → Modify volume
+
+설정:
+- Size: 100 GB → 200 GB (증가)
+- Volume Type: gp3 → io2 (변경 가능)
+- IOPS/Throughput: 조정 가능
+
+특징:
+- 인스턴스 실행 중에도 가능 (무중단)
+- 6시간 대기 후 다시 수정 가능
+- OS에서 파일시스템 확장 필요
+  Linux: sudo resize2fs /dev/xvdf
+  Windows: Disk Management에서 확장
+```
+
+**❌ 크기 줄이기 (불가능!)**:
+```
+문제:
+- EBS 볼륨 크기를 줄일 수 없음
+- 200 GB → 100 GB 직접 축소 불가능
+
+해결 방법 (마이그레이션 필요):
+1. 새로운 작은 볼륨 생성 (100 GB)
+2. 데이터 복사
+   - rsync, dd 명령어 사용
+   - 또는 스냅샷 → 새 볼륨 생성
+3. 기존 볼륨 분리
+4. 새 볼륨 연결
+5. 기존 볼륨 삭제
+
+⚠️ 주의사항:
+- 다운타임 발생 (계획 필요)
+- 데이터 백업 필수
+- 파일시스템 크기 확인 (df -h)
+```
+
+**볼륨 수정 제약사항**:
+- **6시간 대기**: 수정 후 6시간 동안 재수정 불가
+- **크기 증가만**: 감소는 절대 불가능
+- **타입 변경**: 대부분 가능 (Magnetic 제외)
+- **IOPS 조정**: io2, gp3만 가능
+
 **비용 최적화**:
 - 사용하지 않는 볼륨 삭제
 - gp2 → gp3 마이그레이션
 - 스냅샷 수명주기 정책 설정
+- **과도한 프로비저닝 주의**: 필요한 만큼만 할당
 
 ---
 
 ### 🔍 개념 2: EBS 스냅샷 (12분)
 
 > **정의**: 특정 시점의 EBS 볼륨 데이터를 S3에 백업하는 기능
+
+**핵심 서비스**:
+- ![Snapshot](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **EBS Snapshot**: 증분 백업
+- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 스냅샷 저장소
 
 #### 스냅샷 동작 원리
 
@@ -202,6 +290,23 @@ sequenceDiagram
 ```
 
 #### 스냅샷 백업 전략
+
+**백업 스케줄 예시**:
+
+```mermaid
+gantt
+    title EBS Snapshot Backup Schedule
+    dateFormat YYYY-MM-DD
+    section Daily Backup
+        Production DB     :a1, 2025-01-20, 7d
+        Web Server        :a2, 2025-01-20, 7d
+    section Weekly Backup
+        Application Data  :b1, 2025-01-20, 30d
+        User Files        :b2, 2025-01-20, 30d
+    section Monthly Backup
+        Archive Data      :c1, 2025-01-01, 365d
+        Compliance Data   :c2, 2025-01-01, 365d
+```
 
 ```mermaid
 graph TB
@@ -329,6 +434,10 @@ EC2 Console → Elastic Block Store → Lifecycle Manager → Create lifecycle p
 ### 🔍 개념 3: EBS 암호화 (11분)
 
 > **정의**: AWS KMS를 사용하여 EBS 볼륨과 스냅샷을 자동으로 암호화
+
+**핵심 서비스**:
+- ![KMS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
+- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Nitro System**: 하드웨어 기반 암호화
 
 #### 암호화 아키텍처
 
