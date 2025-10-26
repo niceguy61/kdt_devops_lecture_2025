@@ -33,25 +33,53 @@
 
 ## 🏗️ 구축할 아키텍처
 
-### 📐 아키텍처 다이어그램
+### 📐 목표 아키텍처 (성공 기준)
 
 ```mermaid
-architecture-beta
-    group aws(cloud)[AWS Cloud]
+graph TB
+    subgraph "AWS Cloud (ap-northeast-2)"
+        IGW["Internet Gateway<br/>인터넷 연결"]
+        
+        subgraph "VPC (10.0.0.0/16)"
+            subgraph "AZ-A (ap-northeast-2a)"
+                PubA["Public Subnet A<br/>10.0.1.0/24<br/>Route: 0.0.0.0/0 → IGW"]
+                PrivA["Private Subnet A<br/>10.0.11.0/24<br/>Route: Local only"]
+            end
+            
+            subgraph "AZ-B (ap-northeast-2b)"
+                PubB["Public Subnet B<br/>10.0.2.0/24<br/>Route: 0.0.0.0/0 → IGW"]
+                PrivB["Private Subnet B<br/>10.0.12.0/24<br/>Route: Local only"]
+            end
+            
+            RTPublic["Public Route Table<br/>0.0.0.0/0 → IGW"]
+            RTPrivate["Private Route Table<br/>Local only"]
+        end
+    end
     
-    group vpc(cloud)[VPC] in aws
-    group aza(cloud)[AZ A] in vpc
-    group azb(cloud)[AZ B] in vpc
+    Internet["Internet"] --> IGW
+    IGW --> RTPublic
+    RTPublic --> PubA
+    RTPublic --> PubB
+    RTPrivate --> PrivA
+    RTPrivate --> PrivB
     
-    service igw(internet)[IGW] in aws
-    service public_a(server)[Public Subnet A] in aza
-    service private_a(disk)[Private Subnet A] in aza
-    service public_b(server)[Public Subnet B] in azb
-    service private_b(disk)[Private Subnet B] in azb
-    
-    igw:R -- L:public_a
-    igw:R -- L:public_b
+    style IGW fill:#ff9800
+    style PubA fill:#4caf50
+    style PubB fill:#4caf50
+    style PrivA fill:#2196f3
+    style PrivB fill:#2196f3
+    style RTPublic fill:#9c27b0
+    style RTPrivate fill:#607d8b
 ```
+
+**핵심 구성 요소**:
+- **VPC**: 10.0.0.0/16 (65,536개 IP)
+- **Public Subnet**: 인터넷 접근 가능 (IGW 연결)
+- **Private Subnet**: 내부 통신만 가능
+- **Multi-AZ**: 고가용성을 위한 2개 AZ 구성
+- **Route Table**: Public/Private 트래픽 분리
+
+💡 **목표**: 위 아키텍처를 AWS Console에서 직접 구축하기!
 
 ### 🔗 참조 Session
 **당일 Session**:
