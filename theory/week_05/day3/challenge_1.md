@@ -72,11 +72,7 @@ AWS Console → RDS → Subnet groups → Create DB subnet group
 **이미지 자리**: DB Subnet Group 생성 화면
 
 **✅ 검증**:
-```bash
-aws rds describe-db-subnet-groups \
-  --db-subnet-group-name challenge-db-subnet \
-  --region ap-northeast-2
-```
+AWS Console에서 생성된 Subnet Group 확인
 
 ---
 
