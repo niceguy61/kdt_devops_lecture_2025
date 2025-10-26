@@ -627,42 +627,55 @@ http://[EC2-Public-IP]
 
 **이름**: [학생 이름]
 
-### 1. CloudFront Distribution URL
-```
-https://d1234567890abc.cloudfront.net
-```
+### ⭐ 강사 확인용 URL (가장 중요!)
+**웹 페이지 URL**: `http://[EC2-Public-IP]`
+→ 이 URL로 접속하면 CloudFront를 통한 이미지가 표시됩니다
 
-### 2. 웹 페이지 URL
+### 1. 웹 페이지 URL (EC2)
 ```
 http://[EC2-Public-IP]
 ```
+**확인 사항**: 웹 페이지에서 CloudFront를 통한 이미지 3개 정상 표시
 
-### 3. 보안 검증 결과
-- ✅ S3 직접 접근: 403 Forbidden
-- ✅ CloudFront 접근: 정상 작동
-- ✅ 웹 페이지 이미지: CloudFront에서 로드
+### 2. CloudFront Distribution URL
+```
+https://d1234567890abc.cloudfront.net
+```
+**확인 사항**: 이미지 직접 접근 가능 (예: /tech1.jpg)
 
-### 4. 스크린샷
-**웹 페이지**:
+### 3. S3 Bucket URL (직접 접근 차단 확인용)
+```
+https://week5-day2-challenge-[학번].s3.ap-northeast-2.amazonaws.com/tech1.jpg
+```
+**확인 사항**: 403 Access Denied 에러 발생
+
+### 4. 보안 검증 결과
+- ❌ **S3 직접 접근**: 403 Forbidden
+- ✅ **CloudFront 접근**: 정상 작동
+- ✅ **웹 페이지 이미지**: CloudFront에서 로드
+
+### 5. 스크린샷
+**웹 페이지 (CloudFront 이미지 표시)**:
 [웹 페이지 스크린샷 첨부]
 
-**Network 탭 (CloudFront 확인)**:
+**Network 탭 (CloudFront 도메인 확인)**:
 [개발자 도구 Network 탭 스크린샷 첨부]
 
-**S3 직접 접근 차단**:
+**S3 직접 접근 차단 (403 에러)**:
 [S3 URL 접근 시 403 에러 스크린샷 첨부]
 
-### 5. 아키텍처 정보
+### 6. 아키텍처 정보
+- **EC2**: week5-day2-challenge-web
 - **S3 Bucket**: week5-day2-challenge-[학번]
 - **CloudFront Distribution**: E1234567890ABC
 - **OAC**: week5-day2-challenge-oac
-- **EC2**: week5-day2-challenge-web
 ```
 
 ### 제출 체크리스트
-- [ ] CloudFront URL 제공
-- [ ] 웹 페이지 URL 제공
-- [ ] 웹 페이지 스크린샷
+- [ ] ⭐ **웹 페이지 URL (EC2)** - 강사가 이 URL로 확인!
+- [ ] CloudFront Distribution URL
+- [ ] S3 Bucket URL (403 확인용)
+- [ ] 웹 페이지 스크린샷 (CloudFront 이미지 표시)
 - [ ] Network 탭 스크린샷 (CloudFront 도메인 표시)
 - [ ] S3 직접 접근 403 에러 스크린샷
 
