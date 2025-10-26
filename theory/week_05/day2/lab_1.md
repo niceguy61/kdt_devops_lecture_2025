@@ -105,6 +105,15 @@ VPC → Subnets → Create subnet
 | Availability Zone | ap-northeast-2a | 서울 AZ-A |
 | IPv4 CIDR | 10.0.1.0/24 | 256개 IP |
 
+**Auto-assign public IP 설정**:
+```
+Subnet 선택 → Actions → Edit subnet settings → Enable auto-assign public IPv4 address
+```
+
+**⚠️ 주의사항**:
+- 이 설정을 해야 EC2 인스턴스가 자동으로 Public IP를 받습니다
+- 설정하지 않으면 인터넷 접속 불가
+
 #### 0-3. Internet Gateway 생성 및 연결
 
 **AWS Console 경로**:
