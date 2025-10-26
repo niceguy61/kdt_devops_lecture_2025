@@ -16,6 +16,13 @@
 **방식**: AWS Web Console 실습
 **예상 비용**: $0.00 (VPC 자체는 무료)
 
+**⏱️ 시간 배분**:
+- 사전 준비 (Default VPC 삭제): 5분
+- Step 1 (VPC 생성): 10분
+- Step 2 (Subnet 생성): 15분
+- Step 3 (IGW 생성): 10분
+- Step 4 (Route Table 설정): 10분
+
 ## 🎯 학습 목표
 - [ ] VPC CIDR 블록 설계 및 생성
 - [ ] Multi-AZ Subnet 구성 (Public/Private)
@@ -53,6 +60,71 @@ architecture-beta
 
 ---
 
+## 🔧 사전 준비: Default VPC 삭제 (예상 시간: 5분)
+
+### ⚠️ 왜 필요한가?
+
+**VPC Quota 제한**:
+- AWS 기본 제한: 리전당 VPC 5개
+- Default VPC: 1개 (자동 생성)
+- 팀원 5명 실습: 5개 VPC 필요
+- **문제**: Default VPC + 5개 = 6개 (제한 초과!)
+
+**해결 방법**: Default VPC 삭제 후 실습 시작
+
+### 📝 Default VPC 삭제 절차
+
+#### 준비-1. Default VPC 확인
+
+**AWS Console 경로**:
+```
+VPC → Your VPCs
+```
+
+**확인 항목**:
+- "Default VPC" 라벨이 있는 VPC 찾기
+- CIDR: 172.31.0.0/16 (일반적)
+
+**이미지 자리**: Default VPC 확인
+
+#### 준비-2. Default VPC 삭제
+
+**AWS Console 경로**:
+```
+VPC → Your VPCs → Default VPC 선택 → Actions → Delete VPC
+```
+
+**⚠️ 주의사항**:
+- Default VPC 삭제 시 연결된 모든 리소스 함께 삭제
+- 실습 전이므로 안전하게 삭제 가능
+- 필요 시 나중에 재생성 가능
+
+**삭제 확인**:
+- "delete" 입력하여 확인
+- 모든 연결된 리소스 자동 삭제
+
+**이미지 자리**: Default VPC 삭제
+
+#### 준비-3. 삭제 확인
+
+**AWS Console에서 확인**:
+```
+VPC → Your VPCs
+```
+
+**예상 결과**:
+- VPC 목록이 비어있음
+- 또는 Default VPC가 없음
+
+**이미지 자리**: 삭제 확인
+
+**💡 Default VPC 재생성 방법** (실습 후 필요 시):
+```
+VPC → Your VPCs → Actions → Create default VPC
+```
+
+---
+
 ## 🛠️ Step 1: VPC 생성 (예상 시간: 10분)
 
 ### 📋 이 단계에서 할 일
@@ -76,10 +148,15 @@ AWS Console → VPC → Your VPCs → Create VPC
 | 항목 | 값 | 설명 |
 |------|-----|------|
 | **Resources to create** | VPC only | VPC만 생성 (Subnet은 별도) |
-| **Name tag** | week5-day1-vpc | 실습용 VPC |
+| **Name tag** | [username]-vpc | 예: alice-vpc, bob-vpc |
 | **IPv4 CIDR block** | 10.0.0.0/16 | 65,536개 IP 주소 |
 | **IPv6 CIDR block** | No IPv6 CIDR block | IPv6 사용 안 함 |
 | **Tenancy** | Default | 공유 하드웨어 (비용 절감) |
+
+**💡 유저네임 규칙**:
+- 팀 계정 내 각 팀원의 IAM 유저네임 사용
+- 모든 리소스 이름에 본인의 유저네임 포함
+- 예: alice, bob, charlie, david, eve
 
 **이미지 자리**: Step 1-1 VPC 생성 화면
 
@@ -92,7 +169,7 @@ AWS Console → VPC → Your VPCs → Create VPC
 
 **AWS Console 경로**:
 ```
-VPC → Your VPCs → week5-day1-vpc 선택 → Actions → Edit VPC settings
+VPC → Your VPCs → [username]-vpc 선택 → Actions → Edit VPC settings
 ```
 
 **설정 값**:
@@ -111,7 +188,7 @@ VPC → Your VPCs → week5-day1-vpc 선택 → Actions → Edit VPC settings
 
 **AWS Console에서 확인**:
 ```
-VPC → Your VPCs → week5-day1-vpc 선택
+VPC → Your VPCs → [username]-vpc 선택
 ```
 
 **확인 항목**:
@@ -155,8 +232,8 @@ VPC → Subnets → Create subnet
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **VPC ID** | week5-day1-vpc | 위에서 생성한 VPC |
-| **Subnet name** | week5-day1-public-a | Public Subnet A |
+| **VPC ID** | [username]-vpc | 위에서 생성한 VPC |
+| **Subnet name** | [username]-public-a | Public Subnet A |
 | **Availability Zone** | ap-northeast-2a | AZ-A |
 | **IPv4 CIDR block** | 10.0.1.0/24 | 256개 IP (251개 사용 가능) |
 
@@ -167,8 +244,8 @@ VPC → Subnets → Create subnet
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **VPC ID** | week5-day1-vpc | 동일 VPC |
-| **Subnet name** | week5-day1-private-a | Private Subnet A |
+| **VPC ID** | [username]-vpc | 동일 VPC |
+| **Subnet name** | [username]-private-a | Private Subnet A |
 | **Availability Zone** | ap-northeast-2a | AZ-A |
 | **IPv4 CIDR block** | 10.0.11.0/24 | 256개 IP (251개 사용 가능) |
 
@@ -179,8 +256,8 @@ VPC → Subnets → Create subnet
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **VPC ID** | week5-day1-vpc | 동일 VPC |
-| **Subnet name** | week5-day1-public-b | Public Subnet B |
+| **VPC ID** | [username]-vpc | 동일 VPC |
+| **Subnet name** | [username]-public-b | Public Subnet B |
 | **Availability Zone** | ap-northeast-2b | AZ-B |
 | **IPv4 CIDR block** | 10.0.2.0/24 | 256개 IP (251개 사용 가능) |
 
@@ -191,8 +268,8 @@ VPC → Subnets → Create subnet
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **VPC ID** | week5-day1-vpc | 동일 VPC |
-| **Subnet name** | week5-day1-private-b | Private Subnet B |
+| **VPC ID** | [username]-vpc | 동일 VPC |
+| **Subnet name** | [username]-private-b | Private Subnet B |
 | **Availability Zone** | ap-northeast-2b | AZ-B |
 | **IPv4 CIDR block** | 10.0.12.0/24 | 256개 IP (251개 사용 가능) |
 
@@ -213,10 +290,10 @@ VPC → Subnets → Filters에서 VPC 선택
 **확인 항목**:
 | Subnet 이름 | CIDR | AZ | 타입 |
 |------------|------|-----|------|
-| week5-day1-public-a | 10.0.1.0/24 | ap-northeast-2a | Public |
-| week5-day1-private-a | 10.0.11.0/24 | ap-northeast-2a | Private |
-| week5-day1-public-b | 10.0.2.0/24 | ap-northeast-2b | Public |
-| week5-day1-private-b | 10.0.12.0/24 | ap-northeast-2b | Private |
+| [username]-public-a | 10.0.1.0/24 | ap-northeast-2a | Public |
+| [username]-private-a | 10.0.11.0/24 | ap-northeast-2a | Private |
+| [username]-public-b | 10.0.2.0/24 | ap-northeast-2b | Public |
+| [username]-private-b | 10.0.12.0/24 | ap-northeast-2b | Private |
 
 **이미지 자리**: Step 2 검증 결과
 
@@ -249,7 +326,7 @@ VPC → Internet Gateways → Create internet gateway
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **Name tag** | week5-day1-igw | Internet Gateway |
+| **Name tag** | [username]-igw | Internet Gateway |
 
 **이미지 자리**: Step 3-1 IGW 생성
 
@@ -257,13 +334,13 @@ VPC → Internet Gateways → Create internet gateway
 
 **AWS Console 경로**:
 ```
-Internet Gateways → week5-day1-igw 선택 → Actions → Attach to VPC
+Internet Gateways → [username]-igw 선택 → Actions → Attach to VPC
 ```
 
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **Available VPCs** | week5-day1-vpc | 위에서 생성한 VPC |
+| **Available VPCs** | [username]-vpc | 위에서 생성한 VPC |
 
 **이미지 자리**: Step 3-2 VPC 연결
 
@@ -275,7 +352,7 @@ Internet Gateways → week5-day1-igw 선택 → Actions → Attach to VPC
 
 **AWS Console에서 확인**:
 ```
-VPC → Internet Gateways → week5-day1-igw 선택
+VPC → Internet Gateways → [username]-igw 선택
 ```
 
 **확인 항목**:
@@ -283,7 +360,7 @@ VPC → Internet Gateways → week5-day1-igw 선택
 |------|---------|
 | **Internet gateway ID** | igw-xxxxx |
 | **State** | Attached |
-| **VPC ID** | vpc-xxxxx (week5-day1-vpc) |
+| **VPC ID** | vpc-xxxxx ([username]-vpc) |
 
 **이미지 자리**: Step 3 검증 결과
 
@@ -317,8 +394,8 @@ VPC → Route Tables → Create route table
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **Name** | week5-day1-public-rt | Public Route Table |
-| **VPC** | week5-day1-vpc | 위에서 생성한 VPC |
+| **Name** | [username]-public-rt | Public Route Table |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
 
 **이미지 자리**: Step 4-1 Public RT 생성
 
@@ -326,13 +403,13 @@ VPC → Route Tables → Create route table
 
 **AWS Console 경로**:
 ```
-Route Tables → week5-day1-public-rt 선택 → Routes 탭 → Edit routes
+Route Tables → [username]-public-rt 선택 → Routes 탭 → Edit routes
 ```
 
 **설정 값**:
 | Destination | Target | 설명 |
 |-------------|--------|------|
-| 0.0.0.0/0 | week5-day1-igw | 모든 외부 트래픽을 IGW로 |
+| 0.0.0.0/0 | [username]-igw | 모든 외부 트래픽을 IGW로 |
 
 **이미지 자리**: Step 4-2 IGW 경로 추가
 
@@ -344,12 +421,12 @@ Route Tables → week5-day1-public-rt 선택 → Routes 탭 → Edit routes
 
 **AWS Console 경로**:
 ```
-Route Tables → week5-day1-public-rt 선택 → Subnet associations 탭 → Edit subnet associations
+Route Tables → [username]-public-rt 선택 → Subnet associations 탭 → Edit subnet associations
 ```
 
 **설정 값**:
-- ✅ week5-day1-public-a
-- ✅ week5-day1-public-b
+- ✅ [username]-public-a
+- ✅ [username]-public-b
 
 **이미지 자리**: Step 4-3 Subnet 연결
 
@@ -376,7 +453,7 @@ VPC → Route Tables → Main route table 확인
 
 **AWS Console에서 확인**:
 ```
-VPC → Route Tables → week5-day1-public-rt 선택 → Routes 탭
+VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 ```
 
 **확인 항목 (Routes)**:
@@ -388,8 +465,8 @@ VPC → Route Tables → week5-day1-public-rt 선택 → Routes 탭
 **Subnet associations 탭 확인**:
 | Subnet ID | Subnet 이름 |
 |-----------|-------------|
-| subnet-xxxxx | week5-day1-public-a |
-| subnet-yyyyy | week5-day1-public-b |
+| subnet-xxxxx | [username]-public-a |
+| subnet-yyyyy | [username]-public-b |
 
 **이미지 자리**: Step 4 검증 결과
 
@@ -402,6 +479,10 @@ VPC → Route Tables → week5-day1-public-rt 선택 → Routes 탭
 ---
 
 ## ✅ 전체 검증 체크리스트
+
+### ✅ 사전 준비 완료
+- [ ] Default VPC 삭제 확인
+- [ ] VPC 목록 비어있음 확인
 
 ### ✅ VPC 구성 완료
 - [ ] VPC 생성 (10.0.0.0/16)
