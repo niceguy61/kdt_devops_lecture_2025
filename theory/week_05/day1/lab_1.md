@@ -478,6 +478,103 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 
 ---
 
+## 🛠️ Step 5: VPC Resource Map으로 아키텍처 검증 (예상 시간: 5분)
+
+### 📋 이 단계에서 할 일
+- VPC Resource Map으로 전체 아키텍처 시각화
+- 리소스 연결 관계 확인
+- 설정 오류 자동 감지
+
+### 🔗 참조 개념
+- [Session 2: VPC 아키텍처](./session_2.md) - VPC 전체 구조
+
+### 📝 실습 절차
+
+#### 5-1. VPC Resource Map 접근
+
+**AWS Console 경로**:
+```
+VPC → Your VPCs → [username]-vpc 선택 → Resource map 탭
+```
+
+**이미지 자리**: Step 5-1 Resource Map 화면
+
+**💡 VPC Resource Map이란?**:
+- AWS Console의 시각화 도구
+- VPC 내 모든 리소스와 연결 관계를 한눈에 표시
+- 설정 오류 자동 감지
+
+#### 5-2. 아키텍처 구조 확인
+
+**확인 항목**:
+
+**1. VPC 기본 정보**
+- VPC CIDR: 10.0.0.0/16
+- Availability Zone: 2개 (ap-northeast-2a, ap-northeast-2b)
+
+**2. Subnet 배치 및 색상**
+- ✅ Public Subnet A (녹색): 10.0.1.0/24, AZ-A
+- ✅ Public Subnet B (녹색): 10.0.2.0/24, AZ-B
+- ✅ Private Subnet A (파란색): 10.0.11.0/24, AZ-A
+- ✅ Private Subnet B (파란색): 10.0.12.0/24, AZ-B
+
+**💡 색상 의미**:
+- **녹색**: Public Subnet (IGW 경로 있음)
+- **파란색**: Private Subnet (IGW 경로 없음)
+
+**3. 연결 관계 (실선)**
+- Internet Gateway → Public Route Table
+- Public Route Table → Public Subnet A
+- Public Route Table → Public Subnet B
+- Main Route Table → Private Subnet A
+- Main Route Table → Private Subnet B
+
+**4. 트래픽 흐름 (점선)**
+- Public Subnet A → Internet Gateway
+- Public Subnet B → Internet Gateway
+
+**이미지 자리**: Step 5-2 아키텍처 구조
+
+#### 5-3. 상세 정보 확인
+
+**AWS Console에서**:
+```
+Resource map → Show details 클릭
+```
+
+**확인 가능한 정보**:
+- VPC CIDR 범위
+- Subnet CIDR 범위
+- Route Table 상세 경로
+- Internet Gateway 연결 상태
+
+**이미지 자리**: Step 5-3 상세 정보
+
+### ✅ Step 5 검증
+
+**정상 구성 확인**:
+- [ ] Public Subnet이 녹색으로 표시
+- [ ] Private Subnet이 파란색으로 표시
+- [ ] Internet Gateway 연결 확인 (실선)
+- [ ] Public Route Table → Public Subnets 연결 (실선)
+- [ ] Main Route Table → Private Subnets 연결 (실선)
+- [ ] Public Subnets → IGW 트래픽 흐름 (점선)
+
+**⚠️ 오류 감지 (이런 경우 재확인 필요)**:
+- ❌ Private Subnet이 녹색으로 표시 (IGW 직접 연결 - 보안 위험)
+- ❌ Public Subnet이 파란색으로 표시 (IGW 경로 없음 - 외부 접속 불가)
+- ❌ Subnet이 Route Table에 연결되지 않음 (고립된 Subnet)
+- ❌ IGW가 VPC에 연결되지 않음 (외부 통신 불가)
+
+**이미지 자리**: Step 5 검증 결과
+
+**💡 Resource Map 활용 팁**:
+- 아키텍처 문서화: 스크린샷으로 저장하여 문서화
+- 오류 진단: 색상과 연결선으로 빠른 문제 파악
+- 팀 공유: 시각적 자료로 팀원과 소통
+
+---
+
 ## ✅ 전체 검증 체크리스트
 
 ### ✅ 사전 준비 완료
@@ -498,13 +595,21 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 ### ✅ Internet Gateway 구성 완료
 - [ ] IGW 생성
 - [ ] VPC에 연결
-- [ ] State "available" 확인
+- [ ] State "Attached" 확인
 
 ### ✅ Route Table 구성 완료
 - [ ] Public Route Table 생성
 - [ ] 0.0.0.0/0 → IGW 경로 추가
 - [ ] Public Subnet 2개 연결
 - [ ] Private Subnet Main RT 사용 확인
+
+### ✅ VPC Resource Map 검증 완료
+- [ ] Public Subnet 녹색 표시 확인
+- [ ] Private Subnet 파란색 표시 확인
+- [ ] IGW 연결 관계 확인 (실선)
+- [ ] Route Table 연결 확인 (실선)
+- [ ] 트래픽 흐름 확인 (점선)
+- [ ] 설정 오류 없음 확인
 
 ---
 
