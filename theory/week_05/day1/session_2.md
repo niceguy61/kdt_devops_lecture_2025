@@ -99,30 +99,40 @@ graph LR
 #### 📊 VPC 아키텍처 구조
 
 ```mermaid
-architecture-beta
-    group cloud(cloud)[AWS Cloud - Region]
+graph TB
+    subgraph "AWS Cloud - Region"
+        subgraph "VPC: 10.0.0.0/16"
+            subgraph "AZ-A"
+                PS1[Public Subnet<br/>10.0.1.0/24]
+                PRS1[Private Subnet<br/>10.0.11.0/24]
+            end
+            
+            subgraph "AZ-B"
+                PS2[Public Subnet<br/>10.0.2.0/24]
+                PRS2[Private Subnet<br/>10.0.12.0/24]
+            end
+            
+            IGW[Internet Gateway]
+            NAT[NAT Gateway]
+        end
+    end
     
-    group vpc(server)[VPC 10.0.0.0/16] in cloud
+    Internet[인터넷] --> IGW
+    IGW --> PS1
+    IGW --> PS2
+    PS1 --> NAT
+    NAT --> PRS1
+    PS1 -.Web Server.-> PS1
+    PS2 -.Web Server.-> PS2
+    PRS1 -.App Server.-> PRS1
+    PRS2 -.App Server.-> PRS2
     
-    group public1(internet)[Public Subnet<br/>10.0.1.0/24<br/>AZ-A] in vpc
-    group public2(internet)[Public Subnet<br/>10.0.2.0/24<br/>AZ-B] in vpc
-    
-    group private1(disk)[Private Subnet<br/>10.0.11.0/24<br/>AZ-A] in vpc
-    group private2(disk)[Private Subnet<br/>10.0.12.0/24<br/>AZ-B] in vpc
-    
-    service igw(internet)[Internet Gateway] in cloud
-    service nat(server)[NAT Gateway] in public1
-    
-    service web1(server)[Web Server] in public1
-    service web2(server)[Web Server] in public2
-    service app1(database)[App Server] in private1
-    service app2(database)[App Server] in private2
-    
-    igw:B -- T:web1
-    igw:B -- T:web2
-    web1:B -- T:app1
-    web2:B -- T:app2
-    nat:B -- T:app1
+    style PS1 fill:#e8f5e8
+    style PS2 fill:#e8f5e8
+    style PRS1 fill:#ffebee
+    style PRS2 fill:#ffebee
+    style IGW fill:#e3f2fd
+    style NAT fill:#fff3e0
 ```
 
 #### 🔧 VPC 핵심 원리 (How?)
