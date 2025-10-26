@@ -103,29 +103,42 @@ graph TB
     subgraph "AWS Cloud - Region"
         subgraph "VPC: 10.0.0.0/16"
             subgraph "AZ-A"
-                PS1[Public Subnet<br/>10.0.1.0/24]
-                PRS1[Private Subnet<br/>10.0.11.0/24]
+                PS1[Public Subnet<br/>10.0.1.0/24<br/>Web Server]
+                PRS1[Private Subnet<br/>10.0.11.0/24<br/>App Server]
             end
             
             subgraph "AZ-B"
-                PS2[Public Subnet<br/>10.0.2.0/24]
-                PRS2[Private Subnet<br/>10.0.12.0/24]
+                PS2[Public Subnet<br/>10.0.2.0/24<br/>Web Server]
+                PRS2[Private Subnet<br/>10.0.12.0/24<br/>App Server]
             end
             
             IGW[Internet Gateway]
             NAT[NAT Gateway]
+            
+            PubRT[Public Route Table<br/>0.0.0.0/0 → IGW]
+            PrivRT[Private Route Table<br/>0.0.0.0/0 → NAT]
+            
+            VPCE[VPC Endpoint<br/>S3/DynamoDB]
         end
+        
+        S3[Amazon S3]
+        DDB[DynamoDB]
     end
     
     Internet[인터넷] --> IGW
-    IGW --> PS1
-    IGW --> PS2
+    IGW --> PubRT
+    PubRT --> PS1
+    PubRT --> PS2
+    
     PS1 --> NAT
-    NAT --> PRS1
-    PS1 -.Web Server.-> PS1
-    PS2 -.Web Server.-> PS2
-    PRS1 -.App Server.-> PRS1
-    PRS2 -.App Server.-> PRS2
+    NAT --> PrivRT
+    PrivRT --> PRS1
+    PrivRT --> PRS2
+    
+    PRS1 -.-> VPCE
+    PRS2 -.-> VPCE
+    VPCE -.Private 연결.-> S3
+    VPCE -.Private 연결.-> DDB
     
     style PS1 fill:#e8f5e8
     style PS2 fill:#e8f5e8
@@ -133,6 +146,9 @@ graph TB
     style PRS2 fill:#ffebee
     style IGW fill:#e3f2fd
     style NAT fill:#fff3e0
+    style PubRT fill:#f3e5f5
+    style PrivRT fill:#f3e5f5
+    style VPCE fill:#fff9c4
 ```
 
 #### 🔧 VPC 핵심 원리 (How?)
