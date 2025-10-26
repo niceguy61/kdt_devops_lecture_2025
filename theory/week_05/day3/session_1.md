@@ -560,10 +560,62 @@ Reserved Instance (1년): $268.94 (40% 절감)
 
 #### 2024년 주요 변경사항
 
-**RDS Blue/Green Deployments** (2024.03):
-- 무중단 DB 업그레이드
-- 블루(현재) → 그린(새 버전) 전환
-- 롤백 가능 (1시간 이내)
+**RDS Blue/Green Deployments** (2022.11 출시, 2024 개선):
+- **무중단 DB 업그레이드 및 변경**
+- Blue(현재 프로덕션) + Green(스테이징) 환경
+- Green 환경에서 변경 사항 테스트
+- 1분 이내 전환 (Switchover)
+- 데이터 손실 제로 (동기식 복제)
+- **출처**: [RDS Blue/Green Deployments 개요](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-overview.html)
+
+**Blue/Green 동작 원리**:
+```mermaid
+sequenceDiagram
+    participant Prod as Blue (Production)
+    participant Stage as Green (Staging)
+    participant App as Application
+    
+    Note over Prod,Stage: 1. Green 환경 생성
+    Prod->>Stage: 스토리지 볼륨 복제
+    Prod->>Stage: 지속적 동기화
+    
+    Note over Stage: 2. 변경 사항 적용
+    Stage->>Stage: DB 엔진 업그레이드
+    Stage->>Stage: 파라미터 변경
+    Stage->>Stage: 스키마 변경
+    
+    Note over Stage: 3. 테스트 수행
+    Stage->>Stage: 성능 테스트
+    Stage->>Stage: 기능 테스트
+    
+    Note over Prod,App: 4. Switchover (1분 이내)
+    App->>Prod: 기존 연결
+    Prod->>Stage: DNS 전환
+    App->>Stage: 새 연결 (자동)
+    
+    Note over Prod: 5. 롤백 가능 (필요시)
+    Stage->>Prod: 이전 환경 유지
+```
+
+**Blue/Green 장점**:
+- **안전한 업그레이드**: 프로덕션 영향 없이 테스트
+- **빠른 전환**: 1분 이내 Switchover
+- **데이터 무손실**: 동기식 복제로 RPO=0
+- **롤백 가능**: 문제 발생 시 즉시 복귀
+- **다운타임 최소화**: 기존 방식 대비 90% 감소
+
+**지원 엔진**:
+- RDS for MariaDB
+- RDS for MySQL
+- RDS for PostgreSQL
+- Aurora MySQL
+- Aurora PostgreSQL
+
+**사용 사례**:
+- DB 엔진 메이저 버전 업그레이드
+- 스키마 변경 (테이블 추가, 인덱스 생성)
+- 파라미터 그룹 변경
+- 인스턴스 타입 변경
 
 **RDS Optimized Reads** (2024.06):
 - 읽기 성능 2배 향상
@@ -585,7 +637,9 @@ Reserved Instance (1년): $268.94 (40% 절감)
 - 자동 쿼리 튜닝
 - 인덱스 추천
 
-**참조**: [AWS RDS What's New](https://aws.amazon.com/rds/whats-new/)
+**참조**: 
+- [AWS RDS What's New](https://aws.amazon.com/rds/whats-new/)
+- [Blue/Green Deployments 가이드](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html)
 
 ---
 
