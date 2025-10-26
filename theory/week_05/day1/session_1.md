@@ -136,18 +136,18 @@ architecture-beta
 
 ```mermaid
 quadrantChart
-    title AWS 리전 선택 기준
+    title AWS Region Selection
     x-axis Low Cost --> High Cost
     y-axis Low Latency --> High Latency
-    quadrant-1 최적 선택
-    quadrant-2 비용 고려
-    quadrant-3 재검토 필요
-    quadrant-4 성능 우선
-    서울 리전: [0.7, 0.2]
-    도쿄 리전: [0.6, 0.3]
-    버지니아 리전: [0.3, 0.7]
-    오하이오 리전: [0.2, 0.6]
-    싱가포르 리전: [0.5, 0.5]
+    quadrant-1 Optimal
+    quadrant-2 Cost Focus
+    quadrant-3 Review
+    quadrant-4 Performance Focus
+    Seoul: [0.7, 0.2]
+    Tokyo: [0.6, 0.3]
+    Virginia: [0.3, 0.7]
+    Ohio: [0.2, 0.6]
+    Singapore: [0.5, 0.5]
 ```
 
 **리전 선택 4대 고려사항**:
