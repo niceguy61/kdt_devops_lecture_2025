@@ -36,6 +36,71 @@
 - **고가용성**: 장애 대비 Multi-AZ 구성
 - **접속 가능**: 강사가 브라우저로 직접 확인
 
+---
+
+## 🏗️ 목표 아키텍처 (성공 기준)
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud (ap-northeast-2)"
+        IGW["Internet Gateway"]
+        
+        subgraph "VPC (10.0.0.0/16)"
+            subgraph "AZ-A (ap-northeast-2a)"
+                PubA["Public Subnet A<br/>10.0.1.0/24"]
+                WebA["EC2 Web Server A<br/>Nginx<br/>Public IP"]
+                PrivA["Private Subnet A<br/>10.0.11.0/24"]
+                ApiA["EC2 API Server A<br/>Private only"]
+            end
+            
+            subgraph "AZ-B (ap-northeast-2b)"
+                PubB["Public Subnet B<br/>10.0.2.0/24"]
+                WebB["EC2 Web Server B<br/>Nginx<br/>Public IP"]
+                PrivB["Private Subnet B<br/>10.0.12.0/24"]
+                ApiB["EC2 API Server B<br/>Private only"]
+            end
+            
+            SGPublic["Public SG<br/>HTTP: 80<br/>SSH: 22"]
+            SGPrivate["Private SG<br/>SSH from Public"]
+        end
+    end
+    
+    User["사용자/강사<br/>브라우저 접속"] --> IGW
+    IGW --> PubA
+    IGW --> PubB
+    PubA --> WebA
+    PubB --> WebB
+    SGPublic --> WebA
+    SGPublic --> WebB
+    WebA -.SSH.-> ApiA
+    WebB -.SSH.-> ApiB
+    SGPrivate --> ApiA
+    SGPrivate --> ApiB
+    
+    style IGW fill:#ff9800
+    style PubA fill:#4caf50
+    style PubB fill:#4caf50
+    style WebA fill:#2196f3
+    style WebB fill:#2196f3
+    style PrivA fill:#9e9e9e
+    style PrivB fill:#9e9e9e
+    style ApiA fill:#607d8b
+    style ApiB fill:#607d8b
+    style SGPublic fill:#e91e63
+    style SGPrivate fill:#9c27b0
+```
+
+**핵심 구성 요소**:
+- **Multi-AZ**: 2개 AZ에 동일 구성 (고가용성)
+- **Public EC2**: Nginx 웹 서버, Public IP 할당
+- **Private EC2**: API 서버, Public EC2에서만 SSH 접근
+- **Security Group**: Public(HTTP/SSH), Private(SSH from Public)
+- **Route Table**: Public은 IGW 연결, Private는 Local only
+
+💡 **목표**: 강사가 Public IP로 웹 페이지 접속 가능!
+
+---
+
 ### 요구사항 명세서
 
 #### 🔧 사전 준비
