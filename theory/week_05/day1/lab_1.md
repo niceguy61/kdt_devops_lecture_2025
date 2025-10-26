@@ -147,11 +147,16 @@ AWS Console → VPC → Your VPCs → Create VPC
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **Resources to create** | VPC only | VPC만 생성 (Subnet은 별도) |
+| **Resources to create** | VPC only | ⚠️ VPC만 생성 (Subnet은 별도로 생성) |
 | **Name tag** | [username]-vpc | 예: alice-vpc, bob-vpc |
 | **IPv4 CIDR block** | 10.0.0.0/16 | 65,536개 IP 주소 |
 | **IPv6 CIDR block** | No IPv6 CIDR block | IPv6 사용 안 함 |
 | **Tenancy** | Default | 공유 하드웨어 (비용 절감) |
+
+**⚠️ 중요: Resources to create**:
+- **"VPC only"** 선택 (기본값)
+- ❌ "VPC and more" 선택하지 마세요 (자동으로 Subnet 등 생성됨)
+- 이유: 학습을 위해 각 리소스를 직접 생성
 
 **💡 유저네임 규칙**:
 - 팀 계정 내 각 팀원의 IAM 유저네임 사용
