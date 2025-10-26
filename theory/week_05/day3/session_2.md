@@ -163,18 +163,24 @@ graph TB
 
 ```mermaid
 quadrantChart
-    title 백업 전략 선택 매트릭스
-    x-axis 낮은 비용 --> 높은 비용
-    y-axis 단기 보관 --> 장기 보관
-    quadrant-1 최적 선택
-    quadrant-2 비용 주의
-    quadrant-3 기본 전략
-    quadrant-4 과도한 투자
-    자동 백업 7일: [0.2, 0.3]
-    자동 백업 35일: [0.3, 0.5]
-    수동 스냅샷: [0.6, 0.8]
-    크로스 리전 복제: [0.8, 0.9]
+    title Backup Strategy Selection Matrix
+    x-axis Low Cost --> High Cost
+    y-axis Short Term --> Long Term
+    quadrant-1 Optimal
+    quadrant-2 Cost Concern
+    quadrant-3 Basic
+    quadrant-4 Over Investment
+    Auto Backup 7days: [0.2, 0.3]
+    Auto Backup 35days: [0.3, 0.5]
+    Manual Snapshot: [0.6, 0.8]
+    Cross Region Copy: [0.8, 0.9]
 ```
+
+**전략 설명**:
+- **Auto Backup 7days**: 기본 전략, 비용 효율적
+- **Auto Backup 35days**: 규정 준수, 중간 비용
+- **Manual Snapshot**: 장기 보관, 높은 비용
+- **Cross Region Copy**: 재해 복구, 최고 비용
 
 #### RDS 운영 프로세스
 
