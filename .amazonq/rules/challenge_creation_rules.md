@@ -2,6 +2,16 @@
 
 ## 📋 Challenge 기본 원칙
 
+### 🎯 AWS Asset Icons 사용 (Week 5 전용)
+**참조**: [AWS Asset Icons 사용 규칙](./aws_asset_icons_usage.md)
+
+Challenge 문서에서 AWS 서비스 표시 시 반드시 공식 아이콘 사용:
+```markdown
+**배포된 AWS 서비스**:
+- ![ALB](../../../Asset-Package.../Arch_Networking-Content-Delivery/64/Arch_Elastic-Load-Balancing_64.svg) **ALB**
+- ![EC2](../../../Asset-Package.../Arch_Compute/64/Arch_Amazon-EC2_64.svg) **EC2**
+```
+
 ### 🎯 Challenge 특징
 - **실무 시나리오 기반**: Session의 실제 아키텍처 활용
 - **Lab + Hands-on 통합**: 두 실습의 개념을 모두 포함

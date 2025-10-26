@@ -40,9 +40,9 @@
 **아키텍처**: 간단한 2-Tier (Web + DB)
 
 **핵심 AWS 서비스**:
-- ![VPC](../../assets/aws-icons/Networking/Amazon-VPC.svg) **VPC**: 네트워크 격리
-- ![EC2](../../assets/aws-icons/Compute/Amazon-EC2.svg) **EC2**: 가상 서버
-- ![Security Groups](../../assets/aws-icons/Security-Identity-Compliance/AWS-IAM.svg) **Security Groups**: 방화벽
+- ![VPC](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-Virtual-Private-Cloud_64.svg) **VPC**: 네트워크 격리
+- ![EC2](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **EC2**: 가상 서버
+- ![Security Groups](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/64/Arch_AWS-Identity-and-Access-Management_64.svg) **Security Groups**: 방화벽
 
 ```
 Session 1: AWS 기초 개념 (Region, AZ, 프리티어)
@@ -62,9 +62,9 @@ Lab 2: 멀티 AZ 네트워크
 **아키텍처**: CDN + 스토리지 통합
 
 **핵심 AWS 서비스**:
-- ![EBS](../../assets/aws-icons/Storage/Amazon-EBS.svg) **EBS**: 블록 스토리지
-- ![S3](../../assets/aws-icons/Storage/Amazon-S3.svg) **S3**: 객체 스토리지
-- ![CloudFront](../../assets/aws-icons/Networking/Amazon-CloudFront.svg) **CloudFront**: CDN
+- ![EBS](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/64/Arch_Amazon-Elastic-Block-Store_64.svg) **EBS**: 블록 스토리지
+- ![S3](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/64/Arch_Amazon-Simple-Storage-Service_64.svg) **S3**: 객체 스토리지
+- ![CloudFront](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) **CloudFront**: CDN
 
 ```
 Session 1: EC2 심화 (Elastic IP, ENI)
@@ -84,9 +84,9 @@ Lab 2: S3 정적 웹 호스팅 + CloudFront
 **아키텍처**: 3-Tier + 캐싱 계층
 
 **핵심 AWS 서비스**:
-- ![RDS](../../assets/aws-icons/Database/Amazon-RDS.svg) **RDS**: 관리형 데이터베이스
-- ![ElastiCache](../../assets/aws-icons/Database/Amazon-ElastiCache.svg) **ElastiCache**: Redis/Memcached
-- ![CloudWatch](../../assets/aws-icons/Management-Governance/Amazon-CloudWatch.svg) **CloudWatch**: 모니터링
+- ![RDS](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-RDS_64.svg) **RDS**: 관리형 데이터베이스
+- ![ElastiCache](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-ElastiCache_64.svg) **ElastiCache**: Redis/Memcached
+- ![CloudWatch](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_Amazon-CloudWatch_64.svg) **CloudWatch**: 모니터링
 
 ```
 Session 1: RDS 기초 (Multi-AZ, Read Replica)
@@ -106,9 +106,9 @@ Lab 2: Redis 캐싱 구현
 **아키텍처**: 완전한 HA 구성
 
 **핵심 AWS 서비스**:
-- ![ELB](../../assets/aws-icons/Networking/Elastic-Load-Balancing.svg) **ALB**: 로드 밸런서
-- ![Auto Scaling](../../assets/aws-icons/Management-Governance/AWS-Auto-Scaling.svg) **Auto Scaling**: 자동 확장
-- ![Route 53](../../assets/aws-icons/Networking/Amazon-Route-53.svg) **Route 53**: DNS
+- ![ELB](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Elastic-Load-Balancing_64.svg) **ALB**: 로드 밸런서
+- ![Auto Scaling](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2-Auto-Scaling_64.svg) **Auto Scaling**: 자동 확장
+- ![Route 53](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-Route-53_64.svg) **Route 53**: DNS
 
 ```
 Session 1: Elastic Load Balancing (ALB, NLB)
@@ -128,10 +128,10 @@ Challenge: 고가용성 아키텍처 구현
 **아키텍처**: 프로덕션급 전체 인프라
 
 **핵심 AWS 서비스**:
-- ![CloudFormation](../../assets/aws-icons/Management-Governance/AWS-CloudFormation.svg) **CloudFormation**: IaC
-- ![Systems Manager](../../assets/aws-icons/Management-Governance/AWS-Systems-Manager.svg) **Systems Manager**: 운영 관리
-- ![CloudTrail](../../assets/aws-icons/Management-Governance/AWS-CloudTrail.svg) **CloudTrail**: 감사 로그
-- ![Cost Explorer](../../assets/aws-icons/Cloud-Financial-Management/AWS-Cost-Explorer.svg) **Cost Explorer**: 비용 분석
+- ![CloudFormation](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_AWS-CloudFormation_64.svg) **CloudFormation**: IaC
+- ![Systems Manager](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_AWS-Systems-Manager_64.svg) **Systems Manager**: 운영 관리
+- ![CloudTrail](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/64/Arch_AWS-CloudTrail_64.svg) **CloudTrail**: 감사 로그
+- ![Cost Explorer](../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Cloud-Financial-Management/64/Arch_AWS-Cost-Explorer_64.svg) **Cost Explorer**: 비용 분석
 
 ```
 Session 1: 배포 전략 수립

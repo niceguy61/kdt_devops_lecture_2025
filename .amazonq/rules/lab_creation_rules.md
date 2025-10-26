@@ -2,6 +2,16 @@
 
 ## 📋 Lab 구조 표준
 
+### 🎯 AWS Asset Icons 사용 (Week 5 전용)
+**참조**: [AWS Asset Icons 사용 규칙](./aws_asset_icons_usage.md)
+
+Lab 문서에서 AWS 서비스 표시 시 반드시 공식 아이콘 사용:
+```markdown
+**사용된 AWS 서비스**:
+- ![EC2](../../../Asset-Package.../Arch_Compute/64/Arch_Amazon-EC2_64.svg) **EC2**
+- ![RDS](../../../Asset-Package.../Arch_Database/64/Arch_Amazon-RDS_64.svg) **RDS**
+```
+
 ### 필수 구성 요소 (순서대로)
 
 1. **전체 아키텍처 설명**
