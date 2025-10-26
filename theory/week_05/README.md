@@ -10,6 +10,12 @@
 
 ---
 
+## 📚 중요 문서
+
+- **[AWS Asset Icons 사용 가이드](./AWS_ASSET_ICONS_GUIDE.md)**: Week 5에서 사용하는 AWS 공식 아이콘 경로 및 사용법
+
+---
+
 ## 🎯 주간 목표
 
 > **Docker Compose 애플리케이션을 AWS 프로덕션 환경으로 마이그레이션**
