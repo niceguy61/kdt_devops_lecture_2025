@@ -72,16 +72,16 @@ architecture-beta
     service cw(disk)[CloudWatch] in monitoring
     service xray(disk)[X-Ray] in monitoring
     
-    waf:R -- L:alb
-    alb:R -- L:api1
-    alb:R -- L:api2
-    alb:R -- L:api3
-    api1:B -- T:rds_primary
-    api2:B -- T:redis
-    api3:B -- T:rds_primary
-    rds_primary:R -- L:rds_standby
-    api1:T -- B:cw
-    api2:T -- B:xray
+    waf:R -- alb:L
+    alb:R -- api1:L
+    alb:R -- api2:L
+    alb:R -- api3:L
+    api1:B -- rds_primary:T
+    api2:B -- redis:T
+    api3:B -- rds_primary:T
+    rds_primary:R -- rds_standby:L
+    api1:T -- cw:B
+    api2:T -- xray:B
 ```
 
 ### 🔧 계층별 구성 요소
