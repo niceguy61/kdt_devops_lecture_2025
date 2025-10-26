@@ -135,25 +135,42 @@ architecture-beta
 #### 🔧 리전 선택 기준
 
 ```mermaid
-graph TB
-    A[리전 선택] --> B{고려 사항}
-    
-    B --> C[지연시간<br/>Latency]
-    B --> D[비용<br/>Cost]
-    B --> E[규정 준수<br/>Compliance]
-    B --> F[서비스 가용성<br/>Service Availability]
-    
-    C --> G[사용자와 가까운 리전]
-    D --> H[리전별 가격 차이]
-    E --> I[데이터 주권 법규]
-    F --> J[필요한 서비스 제공 여부]
-    
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
-    style E fill:#e3f2fd
-    style F fill:#e3f2fd
+quadrantChart
+    title AWS 리전 선택 기준
+    x-axis 낮은 비용 --> 높은 비용
+    y-axis 낮은 지연시간 --> 높은 지연시간
+    quadrant-1 최적 선택
+    quadrant-2 비용 고려
+    quadrant-3 재검토 필요
+    quadrant-4 성능 우선
+    서울 리전: [0.7, 0.2]
+    도쿄 리전: [0.6, 0.3]
+    버지니아 리전: [0.3, 0.7]
+    오하이오 리전: [0.2, 0.6]
+    싱가포르 리전: [0.5, 0.5]
+```
+
+**리전 선택 4대 고려사항**:
+
+```mermaid
+mindmap
+  root((리전 선택))
+    지연시간
+      사용자 위치
+      네트워크 거리
+      응답 속도
+    비용
+      리전별 가격 차이
+      데이터 전송 비용
+      운영 비용
+    규정 준수
+      데이터 주권
+      법적 요구사항
+      컴플라이언스
+    서비스 가용성
+      필요 서비스 제공
+      최신 기능 지원
+      리전별 제약사항
 ```
 
 **실무 예시**:
