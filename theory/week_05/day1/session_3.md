@@ -84,72 +84,42 @@ graph LR
 #### 🛡️ Multi-AZ 보안 아키텍처
 
 ```mermaid
-graph TB
-    Internet[인터넷]
+architecture-beta
+    group aws(cloud)[AWS Cloud - ap-northeast-2]
     
-    subgraph "AWS Cloud - Region: ap-northeast-2"
-        IGW[Internet Gateway]
-        
-        subgraph "VPC: 10.0.0.0/16"
-            subgraph "AZ-A: ap-northeast-2a"
-                subgraph "Public Subnet A: 10.0.1.0/24"
-                    NACL_A[Network ACL]
-                    
-                    subgraph "EC2 Instance A"
-                        SG_A[Security Group<br/>Web-SG]
-                        ENI_A[ENI: eth0<br/>10.0.1.10]
-                        EC2_A[EC2: Web Server A]
-                    end
-                end
-                
-                subgraph "Private Subnet A: 10.0.11.0/24"
-                    DB_A[RDS Primary<br/>10.0.11.10]
-                end
-            end
-            
-            subgraph "AZ-B: ap-northeast-2b"
-                subgraph "Public Subnet B: 10.0.2.0/24"
-                    NACL_B[Network ACL]
-                    
-                    subgraph "EC2 Instance B"
-                        SG_B[Security Group<br/>Web-SG]
-                        ENI_B[ENI: eth0<br/>10.0.2.10]
-                        EC2_B[EC2: Web Server B]
-                    end
-                end
-                
-                subgraph "Private Subnet B: 10.0.12.0/24"
-                    DB_B[RDS Standby<br/>10.0.12.10]
-                end
-            end
-        end
-    end
+    service internet(internet)[Internet] in aws
+    service igw(internet)[Internet Gateway] in aws
     
-    Internet --> IGW
-    IGW --> NACL_A
-    IGW --> NACL_B
-    NACL_A --> SG_A
-    NACL_B --> SG_B
-    SG_A --> ENI_A
-    SG_B --> ENI_B
-    ENI_A --> EC2_A
-    ENI_B --> EC2_B
-    EC2_A -.-> DB_A
-    EC2_B -.-> DB_B
-    DB_A -.Replication.-> DB_B
+    group vpc(cloud)[VPC: 10.0.0.0/16] in aws
     
-    style Internet fill:#ffebee
-    style IGW fill:#ff9800
-    style NACL_A fill:#e1f5fe
-    style NACL_B fill:#e1f5fe
-    style SG_A fill:#e8f5e8
-    style SG_B fill:#e8f5e8
-    style ENI_A fill:#f3e5f5
-    style ENI_B fill:#f3e5f5
-    style EC2_A fill:#e3f2fd
-    style EC2_B fill:#e3f2fd
-    style DB_A fill:#c8e6c9
-    style DB_B fill:#ffccbc
+    group aza(cloud)[AZ-A: ap-northeast-2a] in vpc
+    group public_a(cloud)[Public Subnet: 10.0.1.0/24] in aza
+    service nacl_a(server)[Network ACL] in public_a
+    service sg_a(server)[Security Group] in public_a
+    service ec2_a(server)[EC2 Web Server A] in public_a
+    
+    group private_a(cloud)[Private Subnet: 10.0.11.0/24] in aza
+    service rds_a(database)[RDS Primary] in private_a
+    
+    group azb(cloud)[AZ-B: ap-northeast-2b] in vpc
+    group public_b(cloud)[Public Subnet: 10.0.2.0/24] in azb
+    service nacl_b(server)[Network ACL] in public_b
+    service sg_b(server)[Security Group] in public_b
+    service ec2_b(server)[EC2 Web Server B] in public_b
+    
+    group private_b(cloud)[Private Subnet: 10.0.12.0/24] in azb
+    service rds_b(database)[RDS Standby] in private_b
+    
+    internet:R -- L:igw
+    igw:R -- L:nacl_a
+    igw:R -- L:nacl_b
+    nacl_a:R -- L:sg_a
+    nacl_b:R -- L:sg_b
+    sg_a:R -- L:ec2_a
+    sg_b:R -- L:ec2_b
+    ec2_a:B -- T:rds_a
+    ec2_b:B -- T:rds_b
+    rds_a:R -- L:rds_b
 ```
 
 #### 📊 Security Group vs Network ACL 비교
