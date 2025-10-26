@@ -94,7 +94,6 @@ graph TB
             subgraph "AZ-A: ap-northeast-2a"
                 subgraph "Public Subnet A: 10.0.1.0/24"
                     NACL_A[Network ACL]
-                    EIP_A[Elastic IP<br/>3.35.x.x]
                     
                     subgraph "EC2 Instance A"
                         SG_A[Security Group<br/>Web-SG]
@@ -111,7 +110,6 @@ graph TB
             subgraph "AZ-B: ap-northeast-2b"
                 subgraph "Public Subnet B: 10.0.2.0/24"
                     NACL_B[Network ACL]
-                    EIP_B[Elastic IP<br/>3.35.x.y]
                     
                     subgraph "EC2 Instance B"
                         SG_B[Security Group<br/>Web-SG]
@@ -128,10 +126,8 @@ graph TB
     end
     
     Internet --> IGW
-    IGW --> EIP_A
-    IGW --> EIP_B
-    EIP_A --> NACL_A
-    EIP_B --> NACL_B
+    IGW --> NACL_A
+    IGW --> NACL_B
     NACL_A --> SG_A
     NACL_B --> SG_B
     SG_A --> ENI_A
@@ -148,8 +144,6 @@ graph TB
     style NACL_B fill:#e1f5fe
     style SG_A fill:#e8f5e8
     style SG_B fill:#e8f5e8
-    style EIP_A fill:#fff9c4
-    style EIP_B fill:#fff9c4
     style ENI_A fill:#f3e5f5
     style ENI_B fill:#f3e5f5
     style EC2_A fill:#e3f2fd
