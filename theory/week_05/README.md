@@ -33,6 +33,11 @@
 ### Day 1: AWS 기초 & 네트워킹
 **아키텍처**: 간단한 2-Tier (Web + DB)
 
+**핵심 AWS 서비스**:
+- ![VPC](../../assets/aws-icons/Networking/Amazon-VPC.svg) **VPC**: 네트워크 격리
+- ![EC2](../../assets/aws-icons/Compute/Amazon-EC2.svg) **EC2**: 가상 서버
+- ![Security Groups](../../assets/aws-icons/Security-Identity-Compliance/AWS-IAM.svg) **Security Groups**: 방화벽
+
 ```
 Session 1: AWS 기초 개념 (Region, AZ, 프리티어)
 Session 2: VPC 아키텍처 (Subnet, IGW, Route Table)
@@ -49,6 +54,11 @@ Lab 2: 멀티 AZ 네트워크
 
 ### Day 2: 컴퓨팅 & 스토리지
 **아키텍처**: CDN + 스토리지 통합
+
+**핵심 AWS 서비스**:
+- ![EBS](../../assets/aws-icons/Storage/Amazon-EBS.svg) **EBS**: 블록 스토리지
+- ![S3](../../assets/aws-icons/Storage/Amazon-S3.svg) **S3**: 객체 스토리지
+- ![CloudFront](../../assets/aws-icons/Networking/Amazon-CloudFront.svg) **CloudFront**: CDN
 
 ```
 Session 1: EC2 심화 (Elastic IP, ENI)
@@ -67,6 +77,11 @@ Lab 2: S3 정적 웹 호스팅 + CloudFront
 ### Day 3: 데이터베이스 & 캐싱
 **아키텍처**: 3-Tier + 캐싱 계층
 
+**핵심 AWS 서비스**:
+- ![RDS](../../assets/aws-icons/Database/Amazon-RDS.svg) **RDS**: 관리형 데이터베이스
+- ![ElastiCache](../../assets/aws-icons/Database/Amazon-ElastiCache.svg) **ElastiCache**: Redis/Memcached
+- ![CloudWatch](../../assets/aws-icons/Management-Governance/Amazon-CloudWatch.svg) **CloudWatch**: 모니터링
+
 ```
 Session 1: RDS 기초 (Multi-AZ, Read Replica)
 Session 2: RDS 운영 (모니터링, 백업)
@@ -84,6 +99,11 @@ Lab 2: Redis 캐싱 구현
 ### Day 4: 로드밸런싱 & 고가용성
 **아키텍처**: 완전한 HA 구성
 
+**핵심 AWS 서비스**:
+- ![ELB](../../assets/aws-icons/Networking/Elastic-Load-Balancing.svg) **ALB**: 로드 밸런서
+- ![Auto Scaling](../../assets/aws-icons/Management-Governance/AWS-Auto-Scaling.svg) **Auto Scaling**: 자동 확장
+- ![Route 53](../../assets/aws-icons/Networking/Amazon-Route-53.svg) **Route 53**: DNS
+
 ```
 Session 1: Elastic Load Balancing (ALB, NLB)
 Session 2: Auto Scaling Groups
@@ -100,6 +120,12 @@ Challenge: 고가용성 아키텍처 구현
 
 ### Day 5: CloudMart 프로젝트 배포
 **아키텍처**: 프로덕션급 전체 인프라
+
+**핵심 AWS 서비스**:
+- ![CloudFormation](../../assets/aws-icons/Management-Governance/AWS-CloudFormation.svg) **CloudFormation**: IaC
+- ![Systems Manager](../../assets/aws-icons/Management-Governance/AWS-Systems-Manager.svg) **Systems Manager**: 운영 관리
+- ![CloudTrail](../../assets/aws-icons/Management-Governance/AWS-CloudTrail.svg) **CloudTrail**: 감사 로그
+- ![Cost Explorer](../../assets/aws-icons/Cloud-Financial-Management/AWS-Cost-Explorer.svg) **Cost Explorer**: 비용 분석
 
 ```
 Session 1: 배포 전략 수립
