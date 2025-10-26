@@ -134,6 +134,71 @@ graph TB
     style RR3 fill:#e3f2fd
 ```
 
+#### Multi-AZ Failover 성능 비교
+
+```mermaid
+graph LR
+    subgraph "One Standby"
+        A1[Primary 장애] --> A2[Failover 시작]
+        A2 --> A3[약 60초]
+        A3 --> A4[Standby 승격]
+    end
+    
+    subgraph "Two Readable Standbys"
+        B1[Primary 장애] --> B2[Failover 시작]
+        B2 --> B3[35초 이내]
+        B3 --> B4[Standby 승격]
+    end
+    
+    style A3 fill:#ffebee
+    style B3 fill:#e8f5e8
+```
+
+**성능 차이**:
+- **One Standby**: 약 60초 Failover
+- **Two Readable Standbys**: 35초 이내 Failover (42% 빠름)
+- **출처**: [AWS RDS Multi-AZ Features](https://aws.amazon.com/rds/features/multi-az/)
+
+#### RDS 핵심 모니터링 메트릭
+
+```mermaid
+graph TB
+    subgraph "CloudWatch 메트릭"
+        A[CPU Utilization]
+        B[Database Connections]
+        C[Read Write IOPS]
+        D[Freeable Memory]
+        E[Network Throughput]
+        F[Replica Lag]
+    end
+    
+    subgraph "알람 설정"
+        G[CPU 80% 초과]
+        H[Connections 90% 초과]
+        I[Memory 10% 미만]
+    end
+    
+    A --> G
+    B --> H
+    D --> I
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#ffebee
+    style H fill:#ffebee
+    style I fill:#ffebee
+```
+
+**모니터링 베스트 프랙티스**:
+- **CPU**: 80% 이상 시 인스턴스 타입 업그레이드 고려
+- **Connections**: 최대 연결 수의 90% 도달 시 경고
+- **Memory**: 10% 이하 시 메모리 부족 위험
+- **Replica Lag**: Read Replica 지연 시간 모니터링 (5초 이상 시 주의)
+
 ### 3. 주요 사용 사례 (When?)
 
 #### 적합한 워크로드
@@ -202,6 +267,21 @@ graph TB
 - OS 레벨 접근이 필요할 때
 - 비용 최적화가 최우선일 때
 - 완전한 제어가 필요할 때
+
+**Multi-AZ 배포 옵션 비교**:
+
+| 기능 | Single-AZ | Multi-AZ (One Standby) | Multi-AZ (Two Readable Standbys) |
+|------|-----------|------------------------|----------------------------------|
+| **가용성** | 단일 AZ | 2개 AZ | 3개 AZ |
+| **Failover 시간** | N/A | ~60초 | <35초 |
+| **읽기 용량** | Primary만 | Primary만 | Primary + 2 Standbys |
+| **트랜잭션 지연** | 낮음 | 중간 | 낮음 (최적화) |
+| **업그레이드 다운타임** | 수분 | 수분 | <1초 |
+| **비용** | 낮음 | 중간 (2배) | 높음 (3배) |
+| **권장 용도** | 개발/테스트 | 프로덕션 | 미션 크리티컬 |
+| **SLA** | 없음 | 99.95% | 99.99% |
+
+**출처**: [AWS RDS Multi-AZ Features](https://aws.amazon.com/rds/features/multi-az/)
 
 **RDS vs Aurora**:
 
@@ -384,6 +464,39 @@ Provisioned IOPS SSD (io1):
 **Read Replica 활용**:
 - 보고서 생성을 Replica로 분산
 - Primary 부하 감소 → 작은 인스턴스 가능
+
+#### RDS 비용 최적화 전략
+
+```mermaid
+graph TB
+    A[RDS 비용 구성] --> B[인스턴스 비용]
+    A --> C[스토리지 비용]
+    A --> D[백업 비용]
+    A --> E[데이터 전송 비용]
+    
+    B --> B1[Reserved Instance<br/>최대 72% 절감]
+    B --> B2[적절한 인스턴스 타입<br/>워크로드 분석]
+    
+    C --> C1[gp3 사용<br/>gp2 대비 20% 저렴]
+    C --> C2[스토리지 자동 확장<br/>과다 프로비저닝 방지]
+    
+    D --> D1[백업 보관 기간 최적화<br/>7-35일 권장]
+    
+    E --> E1[VPC Endpoint 사용<br/>NAT Gateway 비용 절감]
+    
+    style B1 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C1 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style D1 fill:#e8f5e8
+    style E1 fill:#e8f5e8
+```
+
+**비용 절감 팁**:
+- **Reserved Instance**: 1년 약정 시 최대 72% 할인
+- **gp3 스토리지**: gp2 대비 20% 저렴하고 성능 독립 조정
+- **백업 최적화**: 필요한 기간만 보관 (기본 7일)
+- **VPC Endpoint**: S3/DynamoDB 접근 시 데이터 전송 비용 무료
 
 #### 예상 비용 계산 예시
 
