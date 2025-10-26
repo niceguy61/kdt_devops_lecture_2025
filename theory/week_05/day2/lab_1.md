@@ -63,6 +63,103 @@ graph TB
 
 ---
 
+## 🛠️ Step 0: VPC 네트워크 구성 (5분)
+
+### 📋 이 단계에서 할 일
+- VPC 생성 (10.0.0.0/16)
+- Public Subnet 생성
+- Internet Gateway 연결
+
+### 🔗 참조 개념
+- [Week 5 Day 1 Session 2: VPC 아키텍처](../../day1/session_2.md)
+
+### 📝 실습 절차
+
+#### 0-1. VPC 생성
+
+**AWS Console 경로**:
+```
+VPC → Your VPCs → Create VPC
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Name | week5-day2-vpc | VPC 이름 |
+| IPv4 CIDR | 10.0.0.0/16 | IP 주소 범위 |
+| IPv6 CIDR | No IPv6 CIDR block | IPv6 미사용 |
+| Tenancy | Default | 공유 하드웨어 |
+
+#### 0-2. Public Subnet 생성
+
+**AWS Console 경로**:
+```
+VPC → Subnets → Create subnet
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| VPC | week5-day2-vpc | 위에서 생성한 VPC |
+| Name | week5-day2-public-a | Subnet 이름 |
+| Availability Zone | ap-northeast-2a | 서울 AZ-A |
+| IPv4 CIDR | 10.0.1.0/24 | 256개 IP |
+
+#### 0-3. Internet Gateway 생성 및 연결
+
+**AWS Console 경로**:
+```
+VPC → Internet Gateways → Create internet gateway
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Name | week5-day2-igw | IGW 이름 |
+
+**VPC 연결**:
+```
+Actions → Attach to VPC → week5-day2-vpc 선택
+```
+
+#### 0-4. Route Table 설정
+
+**AWS Console 경로**:
+```
+VPC → Route Tables → week5-day2-vpc의 Main route table 선택
+```
+
+**Route 추가**:
+| Destination | Target | 설명 |
+|-------------|--------|------|
+| 0.0.0.0/0 | week5-day2-igw | 인터넷 연결 |
+
+**Subnet 연결**:
+```
+Subnet associations → Edit subnet associations → week5-day2-public-a 선택
+```
+
+### ✅ Step 0 검증
+
+**검증 방법**:
+```
+VPC → Your VPCs → week5-day2-vpc 선택 → Resource map
+```
+
+**예상 결과**:
+- VPC: 10.0.0.0/16
+- Subnet: 10.0.1.0/24 (ap-northeast-2a)
+- Internet Gateway: Attached
+- Route Table: 0.0.0.0/0 → IGW
+
+**✅ 체크리스트**:
+- [ ] VPC 생성 완료
+- [ ] Public Subnet 생성 완료
+- [ ] Internet Gateway 연결 완료
+- [ ] Route Table 설정 완료
+
+---
+
 ## 🛠️ Step 1: EC2 인스턴스 생성 (10분)
 
 ### 📋 이 단계에서 할 일
@@ -89,8 +186,8 @@ AWS Console → EC2 → Instances → Launch instances
 | AMI | Amazon Linux 2023 | 최신 Amazon Linux |
 | Instance type | t3.micro | 프리티어 |
 | Key pair | week5-keypair | SSH 접속용 |
-| Network | 기본 VPC | 기본 네트워크 |
-| Subnet | 기본 Public Subnet | 퍼블릭 서브넷 |
+| Network | week5-day2-vpc | Step 0에서 생성한 VPC |
+| Subnet | week5-day2-public-a | Step 0에서 생성한 Subnet |
 | Auto-assign public IP | Enable | 공인 IP 자동 할당 |
 
 **Security Group 설정**:
@@ -525,7 +622,7 @@ http://[EC2-Public-IP]
 
 **삭제 순서** (역순으로):
 ```
-Step 4 (Nginx 설정) → Step 3 (S3) → Step 2 (EBS) → Step 1 (EC2)
+Step 4 (Nginx) → Step 3 (S3) → Step 2 (EBS) → Step 1 (EC2) → Step 0 (VPC)
 ```
 
 ### 🗑️ 삭제 절차
@@ -563,6 +660,35 @@ EC2 → Instances → week5-day2-web → Instance state → Terminate instance
 - [ ] 인스턴스 종료 완료
 - [ ] 연결된 EBS 루트 볼륨 자동 삭제 확인
 
+#### 4. VPC 리소스 삭제
+
+**삭제 순서** (반드시 순서대로):
+
+**4-1. Security Group 삭제**:
+```
+EC2 → Security Groups → week5-day2-web-sg → Delete
+```
+
+**4-2. Internet Gateway 분리 및 삭제**:
+```
+VPC → Internet Gateways → week5-day2-igw → Detach from VPC → Delete
+```
+
+**4-3. Subnet 삭제**:
+```
+VPC → Subnets → week5-day2-public-a → Delete
+```
+
+**4-4. Route Table 삭제** (Main이 아닌 경우):
+```
+VPC → Route Tables → week5-day2-public-rt → Delete
+```
+
+**4-5. VPC 삭제**:
+```
+VPC → Your VPCs → week5-day2-vpc → Delete
+```
+
 ### ✅ 정리 완료 확인
 
 **확인 명령어**:
@@ -582,8 +708,10 @@ aws s3 ls | grep week5-day2-images
 - [ ] S3 버킷 삭제
 - [ ] EBS 볼륨 삭제
 - [ ] EC2 인스턴스 종료
-- [ ] Security Group 삭제 (선택)
-- [ ] Key Pair 삭제 (선택)
+- [ ] Security Group 삭제
+- [ ] Internet Gateway 삭제
+- [ ] Subnet 삭제
+- [ ] VPC 삭제
 
 ---
 
