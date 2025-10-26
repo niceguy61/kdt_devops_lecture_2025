@@ -219,9 +219,14 @@ ap-northeast-2c (AZ-C):
 | 장애 유형 | 복구 시간 | 데이터 손실 | 자동 복구 |
 |----------|----------|------------|----------|
 | **EC2 장애** | 30초 | 없음 | ALB가 자동 제외 |
-| **RDS 장애** | 1-2분 | 없음 | Multi-AZ Failover |
+| **RDS 장애 (Multi-AZ DB Instance)** | 60-120초 | 없음 | Multi-AZ Failover |
+| **RDS 장애 (Multi-AZ DB Cluster)** | 35초 이하 | 없음 | Multi-AZ Failover |
 | **Redis 장애** | 30초 | 캐시만 손실 | Replica 승격 |
-| **AZ 장애** | 1분 | 없음 | 다른 AZ로 전환 |
+| **AZ 장애** | 1-2분 | 없음 | 다른 AZ로 전환 |
+
+**출처**: 
+- [RDS Multi-AZ Failover](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.Failover.html) - 60-120초
+- [RDS Multi-AZ DB Cluster Failover](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts-failover.html) - 35초 이하
 
 ### 2. 보안 (Security)
 
