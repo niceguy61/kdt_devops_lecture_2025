@@ -462,7 +462,7 @@ config:
 ---
 xychart-beta
     title "Daily Traffic Pattern"
-    x-axis [00:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00, 23:59]
+    x-axis [0, 6, 9, 12, 15, 18, 21, 24]
     y-axis "Requests per Second" 0 --> 1000
     line [100, 50, 200, 400, 300, 600, 800, 400]
 ```
