@@ -240,6 +240,39 @@ graph TB
 - Multi-AZ로 장애 시 자동 복구
 - Read Replica로 보고서 생성 부하 분산
 
+#### RDS 엔진 선택 가이드
+
+```mermaid
+graph TB
+    A[데이터베이스 선택] --> B{기존 DB 있음?}
+    
+    B -->|Yes| C{어떤 DB?}
+    B -->|No| D{워크로드 특성?}
+    
+    C -->|MySQL| E[RDS MySQL<br/>또는 Aurora MySQL]
+    C -->|PostgreSQL| F[RDS PostgreSQL<br/>또는 Aurora PostgreSQL]
+    C -->|Oracle| G[RDS Oracle]
+    C -->|SQL Server| H[RDS SQL Server]
+    
+    D -->|오픈소스 선호| I{성능 요구사항?}
+    D -->|상용 필요| J{라이선스?}
+    
+    I -->|표준| K[RDS MySQL/PostgreSQL]
+    I -->|고성능| L[Aurora]
+    
+    J -->|BYOL| M[RDS Oracle BYOL]
+    J -->|포함| N[RDS Oracle/SQL Server<br/>License Included]
+    
+    style E fill:#e8f5e8
+    style F fill:#e8f5e8
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style K fill:#e8f5e8
+    style L fill:#e3f2fd
+    style M fill:#fff3e0
+    style N fill:#fff3e0
+```
+
 ### 4. 비슷한 서비스 비교 (Which?)
 
 #### AWS 내 대안 서비스
