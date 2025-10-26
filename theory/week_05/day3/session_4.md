@@ -53,10 +53,10 @@
 architecture-beta
     group aws(cloud)[AWS Cloud]
     
-    group waf_layer(cloud)[보안 계층] in aws
-    group app_layer(cloud)[애플리케이션 계층] in aws
-    group data_layer(cloud)[데이터 계층] in aws
-    group monitoring(cloud)[모니터링 계층] in aws
+    group waf_layer(cloud)[Security Layer] in aws
+    group app_layer(cloud)[Application Layer] in aws
+    group data_layer(cloud)[Data Layer] in aws
+    group monitoring(cloud)[Monitoring Layer] in aws
     
     service waf(internet)[WAF] in waf_layer
     service alb(internet)[ALB] in waf_layer
@@ -72,16 +72,16 @@ architecture-beta
     service cw(disk)[CloudWatch] in monitoring
     service xray(disk)[X-Ray] in monitoring
     
-    waf:R --> L:alb
-    alb:R --> L:api1
-    alb:R --> L:api2
-    alb:R --> L:api3
-    api1:B --> T:rds_primary
-    api2:B --> T:redis
-    api3:B --> T:rds_primary
-    rds_primary:R --> L:rds_standby
-    api1:T --> B:cw
-    api2:T --> B:xray
+    waf:R -- L:alb
+    alb:R -- L:api1
+    alb:R -- L:api2
+    alb:R -- L:api3
+    api1:B -- T:rds_primary
+    api2:B -- T:redis
+    api3:B -- T:rds_primary
+    rds_primary:R -- L:rds_standby
+    api1:T -- B:cw
+    api2:T -- B:xray
 ```
 
 ### 🔧 계층별 구성 요소
