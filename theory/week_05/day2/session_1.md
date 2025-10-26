@@ -46,22 +46,35 @@
 - **CloudWatch**: 자동차 계기판 (속도, 연료, 엔진 상태)
 
 **☁️ AWS 아키텍처**:
-```
-사용자
-  ↓
-[Elastic IP] ← 고정 IP 주소
-  ↓
-[EC2 Instance] ← 생명주기 관리
-  ↓
-[Session Manager] ← 안전한 접속
-  ↓
-[CloudWatch] ← 모니터링
+
+**핵심 서비스**:
+- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 가상 서버
+- ![Elastic IP](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-VPC_48.svg) **Elastic IP**: 고정 Public IP
+- ![Systems Manager](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-Systems-Manager_48.svg) **Systems Manager**: 안전한 접속
+- ![CloudWatch](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **CloudWatch**: 모니터링
+
+```mermaid
+graph TB
+    A[사용자] --> B[Elastic IP<br/>고정 주소]
+    B --> C[EC2 Instance<br/>생명주기 관리]
+    C --> D[Session Manager<br/>안전한 접속]
+    C --> E[CloudWatch<br/>모니터링]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#ffebee
+    style E fill:#f3e5f5
 ```
 
 **📊 시장 동향**:
-- **Elastic IP 사용률**: 프로덕션 환경의 80% 이상 사용
-- **Session Manager 도입**: 보안 강화로 SSH 키 관리 부담 50% 감소
-- **CloudWatch 활용**: 장애 감지 시간 70% 단축
+```mermaid
+pie title EC2 관리 기능 사용률
+    "Elastic IP 사용" : 80
+    "Session Manager 도입" : 65
+    "CloudWatch 활용" : 90
+    "기타" : 10
+```
 
 ---
 
@@ -70,6 +83,23 @@
 ### 🔍 개념 1: EC2 인스턴스 생명주기 (12분)
 
 > **정의**: EC2 인스턴스가 생성부터 종료까지 거치는 상태 변화 과정
+
+#### EC2 생명주기 발전 과정
+
+```mermaid
+timeline
+    title EC2 인스턴스 관리 기능 발전
+    section 2006년
+        EC2 출시 : 기본 Start/Stop
+    section 2010년
+        Elastic IP : 고정 IP 도입
+    section 2015년
+        Spot Instance : 비용 최적화
+    section 2018년
+        Session Manager : 안전한 접속
+    section 2020년
+        Hibernate : 빠른 재시작
+```
 
 #### 인스턴스 상태 전환
 
@@ -225,6 +255,23 @@ EC2 Console → Instances → 인스턴스 선택 → Instance state → Termina
 
 > **정의**: 인스턴스 Stop/Start 시에도 변하지 않는 고정 Public IPv4 주소
 
+#### IP 주소 선택 기준
+
+```mermaid
+quadrantChart
+    title IP Address Selection Matrix
+    x-axis Low Flexibility --> High Flexibility
+    y-axis Low Cost --> High Cost
+    quadrant-1 Production Use
+    quadrant-2 Cost Sensitive
+    quadrant-3 Development
+    quadrant-4 Enterprise
+    Public IP: [0.3, 0.2]
+    Elastic IP: [0.7, 0.4]
+    NAT Gateway: [0.8, 0.7]
+    NLB with EIP: [0.9, 0.8]
+```
+
 #### Elastic IP 동작 원리
 
 ```mermaid
@@ -363,6 +410,55 @@ EC2 Console → Network & Security → Elastic IPs → Elastic IP 선택 → Act
 ### 🔍 개념 3: Session Manager (11분)
 
 > **정의**: SSH 키나 Bastion Host 없이 브라우저 또는 AWS CLI로 EC2에 안전하게 접속하는 서비스
+
+#### Session Manager 개념 구조
+
+```mermaid
+mindmap
+  root((Session Manager))
+    접속 방법
+      AWS Console
+      AWS CLI
+      SSH 터널링
+    보안 기능
+      IAM 인증
+      CloudTrail 로깅
+      암호화 통신
+    고급 기능
+      포트 포워딩
+      세션 녹화
+      명령어 제한
+    장점
+      키 관리 불필요
+      포트 오픈 불필요
+      감사 추적 자동
+```
+
+#### Session Manager 통신 흐름
+
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant C as AWS Console
+    participant I as IAM
+    participant S as Session Manager
+    participant A as SSM Agent
+    participant E as EC2 Instance
+    
+    U->>C: 1. 접속 요청
+    C->>I: 2. 인증 확인
+    I->>C: 3. 권한 검증
+    C->>S: 4. 세션 시작
+    S->>A: 5. 연결 요청
+    A->>E: 6. 터미널 오픈
+    E->>A: 7. 응답
+    A->>S: 8. 데이터 전송
+    S->>C: 9. 화면 표시
+    C->>U: 10. 터미널 사용
+    
+    Note over S,A: TLS 1.2 암호화
+    Note over I,S: CloudTrail 로깅
+```
 
 #### Session Manager 아키텍처
 
