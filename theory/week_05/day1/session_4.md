@@ -129,13 +129,13 @@ architecture-beta
 | All | All | All | 0.0.0.0/0 | 모든 외부 접근 |
 
 **4. EC2 인스턴스**:
-| 항목 | Public EC2 | Private EC2 |
-|------|-----------|-------------|
-| **AMI** | Amazon Linux 2023 | Amazon Linux 2023 |
-| **타입** | t3.micro | t3.micro |
-| **Subnet** | Public-A | Private-A |
-| **Public IP** | 자동 할당 | 없음 |
-| **용도** | Nginx 웹 서버 | 내부 서비스 |
+| 항목 | Public EC2 A | Public EC2 B | Private EC2 A | Private EC2 B |
+|------|-------------|-------------|---------------|---------------|
+| **AMI** | Amazon Linux 2023 | Amazon Linux 2023 | Amazon Linux 2023 | Amazon Linux 2023 |
+| **타입** | t3.micro | t3.micro | t3.micro | t3.micro |
+| **Subnet** | Public-A | Public-B | Private-A | Private-B |
+| **Public IP** | 자동 할당 | 자동 할당 | 없음 | 없음 |
+| **용도** | Nginx 웹 서버 | Nginx 웹 서버 | 내부 서비스 | 내부 서비스 |
 
 ---
 
