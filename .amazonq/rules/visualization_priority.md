@@ -135,6 +135,28 @@ architecture-beta
 - 인프라 구조 표현
 - 서비스 간 물리적 배치
 
+**⚠️ 중요 규칙**:
+- **특수문자 금지**: `:`, `-`, `/` 등 특수문자 사용 금지
+- **대괄호 내 텍스트**: 영문 또는 한글만 사용, 특수문자 제거
+- **간결한 이름**: 긴 이름은 축약 (Internet Gateway → IGW)
+- **IP 주소 제거**: 가독성을 위해 IP 주소는 별도 설명으로
+
+**올바른 예시**:
+```mermaid
+architecture-beta
+    group vpc(cloud)[VPC]
+    group aza(cloud)[AZ A] in vpc
+    service ec2(server)[EC2 Web] in aza
+```
+
+**잘못된 예시**:
+```mermaid
+architecture-beta
+    group vpc(cloud)[VPC: 10.0.0.0/16]  ❌ 특수문자 사용
+    group aza(cloud)[AZ-A: ap-northeast-2a] in vpc  ❌ 특수문자 사용
+    service ec2(server)[EC2 Web Server A] in aza  ❌ 너무 긴 이름
+```
+
 ##### 2. **Timeline** (시간 흐름)
 ```mermaid
 timeline
