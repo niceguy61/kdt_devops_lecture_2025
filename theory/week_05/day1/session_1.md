@@ -185,91 +185,49 @@ graph TB
 #### ☁️ 클라우드 서비스 모델 비교
 
 ```mermaid
-graph TB
-    subgraph "온프레미스 (On-Premises)"
-        A1[애플리케이션]
-        A2[데이터]
-        A3[런타임]
-        A4[미들웨어]
-        A5[OS]
-        A6[가상화]
-        A7[서버]
-        A8[스토리지]
-        A9[네트워크]
-    end
-    
-    subgraph "IaaS (Infrastructure as a Service)"
-        B1[애플리케이션]
-        B2[데이터]
-        B3[런타임]
-        B4[미들웨어]
-        B5[OS]
-        B6[가상화 - AWS 관리]
-        B7[서버 - AWS 관리]
-        B8[스토리지 - AWS 관리]
-        B9[네트워크 - AWS 관리]
-    end
-    
-    subgraph "PaaS (Platform as a Service)"
-        C1[애플리케이션]
-        C2[데이터]
-        C3[런타임 - AWS 관리]
-        C4[미들웨어 - AWS 관리]
-        C5[OS - AWS 관리]
-        C6[가상화 - AWS 관리]
-        C7[서버 - AWS 관리]
-        C8[스토리지 - AWS 관리]
-        C9[네트워크 - AWS 관리]
-    end
-    
-    subgraph "SaaS (Software as a Service)"
-        D1[애플리케이션 - AWS 관리]
-        D2[데이터 - AWS 관리]
-        D3[런타임 - AWS 관리]
-        D4[미들웨어 - AWS 관리]
-        D5[OS - AWS 관리]
-        D6[가상화 - AWS 관리]
-        D7[서버 - AWS 관리]
-        D8[스토리지 - AWS 관리]
-        D9[네트워크 - AWS 관리]
-    end
-    
-    style A1 fill:#ffebee
-    style A2 fill:#ffebee
-    style A3 fill:#ffebee
-    style A4 fill:#ffebee
-    style A5 fill:#ffebee
-    style A6 fill:#ffebee
-    style A7 fill:#ffebee
-    style A8 fill:#ffebee
-    style A9 fill:#ffebee
-    style B1 fill:#ffebee
-    style B2 fill:#ffebee
-    style B3 fill:#ffebee
-    style B4 fill:#ffebee
-    style B5 fill:#ffebee
-    style B6 fill:#e8f5e8
-    style B7 fill:#e8f5e8
-    style B8 fill:#e8f5e8
-    style B9 fill:#e8f5e8
-    style C1 fill:#ffebee
-    style C2 fill:#ffebee
-    style C3 fill:#e8f5e8
-    style C4 fill:#e8f5e8
-    style C5 fill:#e8f5e8
-    style C6 fill:#e8f5e8
-    style C7 fill:#e8f5e8
-    style C8 fill:#e8f5e8
-    style C9 fill:#e8f5e8
-    style D1 fill:#e8f5e8
-    style D2 fill:#e8f5e8
-    style D3 fill:#e8f5e8
-    style D4 fill:#e8f5e8
-    style D5 fill:#e8f5e8
-    style D6 fill:#e8f5e8
-    style D7 fill:#e8f5e8
-    style D8 fill:#e8f5e8
-    style D9 fill:#e8f5e8
+%%{init: {'theme':'base'}}%%
+timeline
+    title 클라우드 서비스 모델 진화
+    section 온프레미스
+        모든 것을 직접 관리 : 애플리케이션
+                              : 데이터
+                              : 런타임
+                              : 미들웨어
+                              : OS
+                              : 가상화
+                              : 서버
+                              : 스토리지
+                              : 네트워크
+    section IaaS
+        인프라만 AWS 관리 : 애플리케이션 (고객)
+                          : 데이터 (고객)
+                          : 런타임 (고객)
+                          : 미들웨어 (고객)
+                          : OS (고객)
+                          : 가상화 (AWS)
+                          : 서버 (AWS)
+                          : 스토리지 (AWS)
+                          : 네트워크 (AWS)
+    section PaaS
+        플랫폼까지 AWS 관리 : 애플리케이션 (고객)
+                            : 데이터 (고객)
+                            : 런타임 (AWS)
+                            : 미들웨어 (AWS)
+                            : OS (AWS)
+                            : 가상화 (AWS)
+                            : 서버 (AWS)
+                            : 스토리지 (AWS)
+                            : 네트워크 (AWS)
+    section SaaS
+        모든 것을 AWS 관리 : 애플리케이션 (AWS)
+                           : 데이터 (AWS)
+                           : 런타임 (AWS)
+                           : 미들웨어 (AWS)
+                           : OS (AWS)
+                           : 가상화 (AWS)
+                           : 서버 (AWS)
+                           : 스토리지 (AWS)
+                           : 네트워크 (AWS)
 ```
 
 #### 📊 서비스 모델 비교표
