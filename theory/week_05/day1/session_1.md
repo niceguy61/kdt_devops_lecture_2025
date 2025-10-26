@@ -52,8 +52,9 @@
 
 **📊 시장 동향**: 
 - 2024년 기준 AWS 시장 점유율 32% (1위)
-- 전 세계 37개 리전, 117개 가용 영역 운영
-- 700개 이상의 CloudFront POP 및 엣지 캐시
+- 전 세계 **38개 리전, 120개 가용 영역** 운영 (2024년 10월 기준)
+- **700개 이상**의 CloudFront POP 및 13개 리전 엣지 캐시
+- **43개 Local Zones & 31개 Wavelength Zones** 운영
 - Fortune 500 기업의 90% 이상이 AWS 사용
 
 ### 학습 전후 비교
@@ -76,9 +77,9 @@ graph LR
 
 **핵심 구성 요소**:
 - **AWS Cloud**: 전 세계 분산 인프라
-- **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 37개 리전)
-- **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (117개 AZ)
-- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (700개 이상)
+- **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 **38개 리전**)
+- **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (**120개 AZ**)
+- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (**700개 이상**)
 
 #### 🏗️ AWS 글로벌 인프라 구조
 
@@ -111,9 +112,10 @@ architecture-beta
 
 | 계층 | 설명 | 개수 (2024년 10월) | 역할 |
 |------|------|---------------------|------|
-| **Region** | 지리적으로 분리된 지역 | 37개 | 데이터 주권, 지연시간 최소화 |
-| **Availability Zone (AZ)** | Region 내 물리적으로 분리된 데이터센터 | 117개 | 고가용성, 장애 격리 |
-| **Edge Location** | 콘텐츠 전송 네트워크(CDN) 거점 | 700개+ | 콘텐츠 캐싱, 빠른 전송 |
+| **Region** | 지리적으로 분리된 지역 | **38개** | 데이터 주권, 지연시간 최소화 |
+| **Availability Zone (AZ)** | Region 내 물리적으로 분리된 데이터센터 | **120개** | 고가용성, 장애 격리 |
+| **Edge Location** | 콘텐츠 전송 네트워크(CDN) 거점 | **700개+** | 콘텐츠 캐싱, 빠른 전송 |
+| **Local/Wavelength Zones** | 초저지연 애플리케이션 지원 | **43개 & 31개** | 5G, 엣지 컴퓨팅 |
 
 #### 🌍 실생활 비유
 
@@ -186,10 +188,20 @@ mindmap
 #### 💡 AWS 공식 문서
 
 **AWS 글로벌 인프라 현황 (2024년 10월)**:
-- **37개 리전**: 개별 다중 가용 영역을 갖춘 지리적 리전
-- **117개 가용 영역**: 물리적으로 분리된 독립적인 데이터센터
-- **700개 이상 POP**: CloudFront 엣지 로케이션 및 리전 엣지 캐시
-- **43개 로컬/Wavelength 영역**: 초저지연 애플리케이션 지원
+- **38개 리전**: 개별 다중 가용 영역을 갖춘 지리적 리전
+- **120개 가용 영역**: 물리적으로 분리된 독립적인 데이터센터
+- **700개 이상 POP**: CloudFront 엣지 로케이션 및 13개 리전 엣지 캐시
+- **43개 로컬 영역 & 31개 Wavelength 영역**: 초저지연 애플리케이션 지원
+
+**최근 추가된 리전 (2024)**:
+- 🆕 **뉴질랜드** (Asia Pacific - Auckland)
+- 🆕 **대만** (Asia Pacific - Taipei)
+- 🆕 **멕시코** (Mexico Central)
+
+**예정된 리전**:
+- 🔜 **칠레** (South America - Santiago)
+- 🔜 **사우디아라비아** (Middle East - Riyadh)
+- 🔜 **AWS European Sovereign Cloud**
 
 **참조**: [AWS 글로벌 인프라 공식 페이지](https://aws.amazon.com/ko/about-aws/global-infrastructure/)
 
@@ -440,44 +452,69 @@ stateDiagram-v2
 
 #### 💰 AWS 프리티어 활용 전략
 
-**🆕 2025년 7월 15일 신규 프리티어 정책**:
+**🆕 2025년 7월 15일 신규 프리티어 정책 변경**:
+
+AWS는 2025년 7월 15일부터 신규 고객을 위한 프리티어 정책을 대폭 개편했습니다.
 
 **신규 고객 (2025년 7월 15일 이후 가입)**:
-- **$200 크레딧 제공**: 가입 시 $100 + 활동 완료 시 최대 $100 추가
-- **6개월 무료 플랜**: 크레딧 소진 또는 6개월 중 먼저 도래하는 시점까지
-- **2가지 플랜 선택**:
-  - **Free Plan**: 크레딧 소진 전까지 과금 없음 (일부 서비스 제한)
-  - **Paid Plan**: 크레딧 초과 시 종량제 과금 (모든 서비스 접근)
 
-**추가 크레딧 획득 방법** (각 $20):
-1. ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2 인스턴스 실행 및 종료**
-2. ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS 데이터베이스 기본 설정**
-3. ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **Lambda 함수 생성 및 실행**
-4. **Amazon Bedrock 프롬프트 실행**
-5. **AWS Budgets 예산 설정**
+**$200 크레딧 시스템**:
+- **가입 시 $100 크레딧** 즉시 제공
+- **활동 완료 시 최대 $100 추가 크레딧** 획득 가능
+- **유효 기간**: 6개월 또는 크레딧 소진 중 먼저 도래하는 시점까지
+- **업그레이드 시**: 미사용 크레딧은 12개월간 사용 가능
+
+**2가지 플랜 선택**:
+1. **Free Plan (무료 플랜)**:
+   - 크레딧 소진 전까지 **과금 없음**
+   - 일부 엔터프라이즈 서비스 제한
+   - 학습 및 실험 목적에 최적
+   - 언제든지 Paid Plan으로 업그레이드 가능
+
+2. **Paid Plan (유료 플랜)**:
+   - 크레딧 자동 적용
+   - 크레딧 초과 시 **종량제 과금**
+   - **모든 AWS 서비스 접근 가능**
+   - 프로덕션 환경 구축 가능
+
+**추가 크레딧 획득 방법** (각 활동당 $20):
+1. ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 인스턴스 실행 및 종료 학습
+2. ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **Amazon RDS**: 데이터베이스 기본 설정 학습
+3. ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 함수 URL로 웹 애플리케이션 구축
+4. **Amazon Bedrock**: 텍스트 플레이그라운드에서 프롬프트 실행
+5. **AWS Budgets**: 예산 알림 설정
 
 **기존 고객 (2025년 7월 15일 이전 가입)**:
-- **기존 프리티어 유지**: 12개월 무료 + 항상 무료 서비스
-- **변경 없음**: 기존 정책 그대로 적용
+- **기존 프리티어 정책 유지**: 변경 없음
+- **12개월 무료**: 가입일로부터 12개월간 무료 사용
+- **항상 무료 서비스**: 기간 제한 없이 무료
+- **단기 평가판**: 서비스별 제한된 기간 무료
 
 ```mermaid
 timeline
     title AWS 프리티어 정책 변화
     section 2025년 7월 15일 이전
-        기존 정책 : 12개월 무료
-                  : 서비스별 한도
+        기존 정책 : 12개월 무료 사용
+                  : 서비스별 사용량 한도
                   : 항상 무료 서비스
-    section 2025년 7월 15일 이후
-        신규 정책 : $200 크레딧
+                  : 단기 평가판
+    section 2025년 7월 15일 이후 (신규 고객)
+        신규 정책 : $200 크레딧 시스템
+                  : 가입 시 $100 즉시 제공
+                  : 활동 완료 시 최대 $100 추가
                   : 6개월 무료 플랜
-                  : 활동 기반 추가 크레딧
                   : Free/Paid 플랜 선택
+    section 기존 고객
+        변경 없음 : 기존 정책 유지
+                  : 12개월 무료
+                  : 항상 무료 서비스
 ```
 
-**항상 무료 서비스** (신규/기존 모두 적용):
-- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **Lambda**: 100만 요청/월
-- ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **DynamoDB**: 25GB 스토리지
-- ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **SNS**: 100만 요청/월
+**항상 무료 서비스** (신규/기존 고객 모두 적용):
+- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 100만 요청/월 무료
+- ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **Amazon DynamoDB**: 25GB 스토리지 무료
+- ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **Amazon SNS**: 100만 요청/월 무료
+- ![CloudWatch](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **Amazon CloudWatch**: 10개 커스텀 메트릭 무료
 
 ```mermaid
 graph TB
@@ -525,11 +562,11 @@ graph TB
 
 #### 📊 프리티어 한도 (Week 5 실습 기준)
 
-**⚠️ 중요**: 2025년 7월 15일 이후 가입자는 크레딧 기반 시스템
+**⚠️ 중요**: 2025년 7월 15일 이후 가입자는 크레딧 기반 시스템 적용
 
-| 항목 | 신규 프리티어 (2025.07.15 이후) | 기존 프리티어 (이전 가입자) | Week 5 사용 예상 |
-|------|----------------------------------|----------------------------|------------------|
-| **초기 크레딧** | $100 (가입 시) | - | - |
+| 서비스 | 신규 프리티어<br/>(2025.07.15 이후) | 기존 프리티어<br/>(이전 가입자) | Week 5<br/>사용 예상 |
+|--------|-------------------------------------|--------------------------------|---------------------|
+| **초기 크레딧** | $100 (가입 시 즉시) | - | - |
 | **추가 크레딧** | 최대 $100 (활동 완료) | - | - |
 | **유효 기간** | 6개월 또는 크레딧 소진 | 12개월 | 5일 |
 | **EC2** | 크레딧으로 사용 | 750시간/월 무료 | 120시간 |
@@ -537,26 +574,30 @@ graph TB
 | **S3** | 크레딧으로 사용 | 5GB 무료 | 1GB |
 | **Lambda** | 100만 요청/월 (항상 무료) | 100만 요청/월 | 소량 |
 | **DynamoDB** | 25GB (항상 무료) | 25GB | 미사용 |
+| **CloudWatch** | 10개 메트릭 (항상 무료) | 10개 메트릭 | 기본 사용 |
 
-**💡 Week 5 실습 비용 관리**:
+**💡 Week 5 실습 비용 관리 전략**:
 
-**신규 가입자 ($200 크레딧)**:
-- Week 5 예상 비용: 약 $17.40 (12명 기준)
-- 학생당 비용: 약 $1.45
-- ✅ $200 크레딧으로 충분히 커버 가능
-- 💡 추가 크레딧 활동 완료 권장 (총 $200 확보)
+**신규 가입자 ($200 크레딧 시스템)**:
+- **Week 5 예상 총 비용**: 약 $17.40 (12명 기준)
+- **학생당 예상 비용**: 약 $1.45
+- ✅ **$200 크레딧으로 충분히 커버 가능**
+- 💡 **추가 크레딧 활동 완료 권장**: 5가지 활동 완료 시 총 $200 확보
+- 🎯 **Free Plan 선택 권장**: 실습 기간 동안 과금 걱정 없음
 
-**기존 가입자 (12개월 무료)**:
-- 프리티어 서비스 최대 활용
-- EC2 t2.micro/t3.micro (750시간/월)
-- RDS db.t2.micro (750시간/월)
-- 초과 사용 시 종량제 과금
+**기존 가입자 (12개월 무료 시스템)**:
+- **프리티어 서비스 최대 활용**
+- EC2 t2.micro/t3.micro (750시간/월 무료)
+- RDS db.t2.micro/db.t3.micro (750시간/월 무료)
+- S3 5GB 스토리지 무료
+- ⚠️ **초과 사용 시 종량제 과금** 주의
 
 **공통 비용 절감 팁**:
-- **실습 시간 엄수**: 50분 실습 후 즉시 리소스 정리
-- **프리티어 서비스 우선**: t2.micro, t3.micro 인스턴스 사용
-- **NAT Gateway 최소화**: 필요시에만 생성, 즉시 삭제
-- **비용 알림 설정**: AWS Budgets로 $5 초과 시 알림
+- ✅ **실습 시간 엄수**: 50분 실습 후 즉시 리소스 정리
+- ✅ **프리티어 인스턴스 사용**: t2.micro, t3.micro 우선 선택
+- ✅ **NAT Gateway 최소화**: 필요시에만 생성, 사용 후 즉시 삭제
+- ✅ **비용 알림 설정**: AWS Budgets로 $5 초과 시 알림 설정
+- ✅ **태그 활용**: 모든 리소스에 "Week5" 태그 추가하여 추적
 
 #### 🔧 프리티어 모니터링
 
@@ -666,8 +707,9 @@ AWS Console → Billing Dashboard → Free Tier
 **⚠️ 학생들이 직접 확인해야 할 공식 문서**:
 - 📘 [AWS 글로벌 인프라](https://aws.amazon.com/about-aws/global-infrastructure/)
 - 📗 [AWS 계정 및 IAM 사용자 가이드](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
-- 📙 [AWS 프리티어](https://aws.amazon.com/free/)
-- 📕 [AWS 요금 계산기](https://calculator.aws/)
+- 📙 [AWS 프리티어 (신규 정책)](https://aws.amazon.com/free/)
+- 📕 [AWS 프리티어 크레딧 안내](https://aws.amazon.com/blogs/aws/aws-free-tier-update-new-customers-can-get-started-and-explore-aws-with-up-to-200-in-credits/)
+- 📊 [AWS 요금 계산기](https://calculator.aws/)
 - 🆕 [AWS 최신 업데이트](https://aws.amazon.com/new/)
 
 ---
