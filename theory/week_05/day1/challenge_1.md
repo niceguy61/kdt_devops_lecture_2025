@@ -116,7 +116,7 @@
     <div class="container">
         <h1>🚀 DevOps 커뮤니티</h1>
         <div class="info">
-            <span class="label">학생 이름:</span> [본인 이름]
+            <span class="label">챌린저 이름:</span> [본인 이름]
         </div>
         <div class="info">
             <span class="label">서버 위치:</span> [AZ-A 또는 AZ-B]
@@ -175,7 +175,7 @@ cat > /usr/share/nginx/html/index.html <<EOF
     <div class="container">
         <h1>🚀 DevOps 커뮤니티</h1>
         <div class="info">
-            <span class="label">학생 이름:</span> [본인 이름으로 수정]
+            <span class="label">챌린저 이름:</span> [본인 이름으로 수정]
         </div>
         <div class="info">
             <span class="label">서버 위치:</span> $AZ
@@ -218,7 +218,7 @@ systemctl enable nginx
 5. Private EC2에서 외부 인터넷 접속 불가 (정상)
 
 #### 📤 제출 방법
-**강사에게 다음 정보 제공**:
+**디스코드 스레드에 다음 정보 업로드**:
 
 1. **접속 URL** (2개):
    ```
@@ -238,7 +238,7 @@ systemctl enable nginx
 
 3. **구성 정보**:
    ```
-   학생 이름: [본인 이름]
+   챌린저 이름: [본인 이름]
    VPC ID: vpc-xxxxx
    Public EC2 A: i-xxxxx (10.0.1.x)
    Public EC2 B: i-xxxxx (10.0.2.x)
@@ -246,11 +246,11 @@ systemctl enable nginx
    Private EC2 B: i-xxxxx (10.0.12.x)
    ```
 
-**제출 형식 예시**:
+**디스코드 제출 형식**:
 ```markdown
 # Challenge 1 제출
 
-## 학생 정보
+## 챌린저 정보
 - 이름: 홍길동
 - 제출 시간: 2025-10-26 15:45
 
@@ -274,6 +274,11 @@ systemctl enable nginx
 - [x] Private SSH 접속 가능
 - [x] Private 간 통신 가능
 ```
+
+**💡 디스코드 업로드 팁**:
+- 스크린샷은 이미지 파일로 첨부
+- URL은 클릭 가능하도록 작성
+- 마크다운 형식으로 깔끔하게 정리
 
 ---
 
@@ -465,7 +470,7 @@ graph TB
 ### 강사 접속 확인 포인트
 강사는 다음을 확인합니다:
 1. **웹 페이지 접속**: 제공된 URL로 접속 가능한가?
-2. **정보 표시**: 학생 이름, 서버 위치, 인스턴스 정보가 정확한가?
+2. **정보 표시**: 챌린저 이름, 서버 위치, 인스턴스 정보가 정확한가?
 3. **Multi-AZ**: 2개 서버가 서로 다른 AZ에 배치되었는가?
 4. **아키텍처**: 다이어그램이 실제 구성과 일치하는가?
 
