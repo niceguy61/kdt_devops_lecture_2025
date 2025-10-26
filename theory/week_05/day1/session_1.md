@@ -52,7 +52,8 @@
 
 **📊 시장 동향**: 
 - 2024년 기준 AWS 시장 점유율 32% (1위)
-- 전 세계 33개 리전, 105개 가용 영역 운영
+- 전 세계 37개 리전, 117개 가용 영역 운영
+- 700개 이상의 CloudFront POP 및 엣지 캐시
 - Fortune 500 기업의 90% 이상이 AWS 사용
 
 ### 학습 전후 비교
@@ -75,62 +76,44 @@ graph LR
 
 **핵심 구성 요소**:
 - **AWS Cloud**: 전 세계 분산 인프라
-- **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 33개 리전)
-- **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (105개 AZ)
-- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버
+- **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 37개 리전)
+- **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (117개 AZ)
+- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (700개 이상)
 
 #### 🏗️ AWS 글로벌 인프라 구조
 
 ```mermaid
-graph TB
-    subgraph "AWS 글로벌 인프라"
-        subgraph "Region (리전)"
-            subgraph "Availability Zone A"
-                DC1[Data Center 1]
-                DC2[Data Center 2]
-            end
-            
-            subgraph "Availability Zone B"
-                DC3[Data Center 3]
-                DC4[Data Center 4]
-            end
-            
-            subgraph "Availability Zone C"
-                DC5[Data Center 5]
-                DC6[Data Center 6]
-            end
-        end
-        
-        subgraph "Edge Locations"
-            EDGE1[CloudFront<br/>Edge Location]
-            EDGE2[CloudFront<br/>Edge Location]
-        end
-    end
+architecture-beta
+    group region(cloud)[AWS Region]
     
-    DC1 -.고속 네트워크.-> DC3
-    DC3 -.고속 네트워크.-> DC5
-    DC1 -.고속 네트워크.-> DC5
+    group az1(server)[Availability Zone A] in region
+    group az2(server)[Availability Zone B] in region
+    group az3(server)[Availability Zone C] in region
     
-    EDGE1 -.콘텐츠 캐싱.-> DC1
-    EDGE2 -.콘텐츠 캐싱.-> DC3
+    service dc1(database)[Data Center 1] in az1
+    service dc2(database)[Data Center 2] in az1
+    service dc3(database)[Data Center 3] in az2
+    service dc4(database)[Data Center 4] in az2
+    service dc5(database)[Data Center 5] in az3
+    service dc6(database)[Data Center 6] in az3
     
-    style DC1 fill:#e8f5e8
-    style DC2 fill:#e8f5e8
-    style DC3 fill:#fff3e0
-    style DC4 fill:#fff3e0
-    style DC5 fill:#ffebee
-    style DC6 fill:#ffebee
-    style EDGE1 fill:#e3f2fd
-    style EDGE2 fill:#e3f2fd
+    service edge1(internet)[CloudFront Edge] in region
+    service edge2(internet)[CloudFront Edge] in region
+    
+    dc1:R -- L:dc3
+    dc3:R -- L:dc5
+    dc1:B -- T:dc5
+    edge1:B -- T:dc1
+    edge2:B -- T:dc3
 ```
 
 #### 📊 인프라 계층 구조
 
-| 계층 | 설명 | 개수 (2024년) | 역할 |
-|------|------|---------------|------|
-| **Region** | 지리적으로 분리된 지역 | 33개 | 데이터 주권, 지연시간 최소화 |
-| **Availability Zone (AZ)** | Region 내 물리적으로 분리된 데이터센터 | 105개 | 고가용성, 장애 격리 |
-| **Edge Location** | 콘텐츠 전송 네트워크(CDN) 거점 | 400개+ | 콘텐츠 캐싱, 빠른 전송 |
+| 계층 | 설명 | 개수 (2024년 10월) | 역할 |
+|------|------|---------------------|------|
+| **Region** | 지리적으로 분리된 지역 | 37개 | 데이터 주권, 지연시간 최소화 |
+| **Availability Zone (AZ)** | Region 내 물리적으로 분리된 데이터센터 | 117개 | 고가용성, 장애 격리 |
+| **Edge Location** | 콘텐츠 전송 네트워크(CDN) 거점 | 700개+ | 콘텐츠 캐싱, 빠른 전송 |
 
 #### 🌍 실생활 비유
 
@@ -180,8 +163,13 @@ graph TB
 
 #### 💡 AWS 공식 문서
 
-![AWS Global Infrastructure](https://d1.awsstatic.com/about-aws/regions/Global-Infra_1.20.2024.5c2f37e1e61e7e5c2b4e5f1c8e3d4f5a6b7c8d9e.png)
-*출처: [AWS Global Infrastructure](https://aws.amazon.com/about-aws/global-infrastructure/)*
+**AWS 글로벌 인프라 현황 (2024년 10월)**:
+- **37개 리전**: 개별 다중 가용 영역을 갖춘 지리적 리전
+- **117개 가용 영역**: 물리적으로 분리된 독립적인 데이터센터
+- **700개 이상 POP**: CloudFront 엣지 로케이션 및 리전 엣지 캐시
+- **43개 로컬/Wavelength 영역**: 초저지연 애플리케이션 지원
+
+**참조**: [AWS 글로벌 인프라 공식 페이지](https://aws.amazon.com/ko/about-aws/global-infrastructure/)
 
 ---
 
