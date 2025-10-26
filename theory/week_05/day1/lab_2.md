@@ -129,17 +129,41 @@ EC2 → Security Groups → Create security group
 | **Description** | Security group for private EC2 instances | 설명 |
 | **VPC** | [username]-vpc | Lab 1에서 생성한 VPC |
 
-**Inbound rules**:
+**Inbound rules** (초기 생성):
 | Type | Protocol | Port Range | Source | 설명 |
 |------|----------|------------|--------|------|
 | SSH | TCP | 22 | [username]-public-sg | Public EC2에서만 SSH |
 | All ICMP | ICMP | All | 10.0.0.0/16 | VPC 내부 Ping |
-| All traffic | All | All | [username]-private-sg | 같은 SG 내 통신 |
 
 **Outbound rules**:
 | Type | Protocol | Port Range | Destination | 설명 |
 |------|----------|------------|-------------|------|
 | All traffic | All | All | 0.0.0.0/0 | 모든 외부 통신 허용 |
+
+**이미지 자리**: Step 1-2 Private SG 생성
+
+**⚠️ 주의사항**:
+- 같은 SG 내 통신 규칙은 생성 후 추가 (1-3에서 진행)
+- 이유: SG 생성 시점에는 자기 자신의 SG ID를 모름
+
+#### 1-3. Private SG에 자기 참조 규칙 추가
+
+**AWS Console 경로**:
+```
+EC2 → Security Groups → [username]-private-sg 선택 → Inbound rules → Edit inbound rules
+```
+
+**추가할 규칙**:
+| Type | Protocol | Port Range | Source | 설명 |
+|------|----------|------------|--------|------|
+| All traffic | All | All | [username]-private-sg | 같은 SG 내 모든 통신 허용 |
+
+**💡 자기 참조 규칙이란?**:
+- Source에 자기 자신의 SG를 지정
+- 같은 SG를 사용하는 모든 인스턴스 간 통신 허용
+- Private EC2 간 자유로운 통신 가능
+
+**이미지 자리**: Step 1-3 자기 참조 규칙 추가
 
 **이미지 자리**: Step 1-2 Private SG 생성
 
@@ -164,9 +188,9 @@ EC2 → Security Groups → Filters에서 VPC 선택
 **이미지 자리**: Step 1 검증 결과
 
 **✅ 체크리스트**:
-- [ ] Public SG 생성 확인
-- [ ] Private SG 생성 확인
-- [ ] Inbound 규칙 정확히 설정 확인
+- [ ] Public SG 생성 확인 (3개 Inbound 규칙)
+- [ ] Private SG 생성 확인 (초기 2개 Inbound 규칙)
+- [ ] Private SG에 자기 참조 규칙 추가 확인 (총 3개 Inbound 규칙)
 - [ ] VPC 연결 확인
 
 ---
