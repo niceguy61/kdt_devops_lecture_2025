@@ -85,29 +85,29 @@ graph LR
 
 ```mermaid
 architecture-beta
-    group aws(cloud)[AWS Cloud ap-northeast-2]
+    group aws(cloud)[AWS Cloud]
     
     service internet(internet)[Internet] in aws
-    service igw(internet)[Internet Gateway] in aws
+    service igw(internet)[IGW] in aws
     
-    group vpc(cloud)[VPC 10.0.0.0/16] in aws
+    group vpc(cloud)[VPC] in aws
     
-    group aza(cloud)[AZ-A ap-northeast-2a] in vpc
-    group public_a(cloud)[Public Subnet 10.0.1.0/24] in aza
-    service nacl_a(server)[Network ACL] in public_a
-    service sg_a(server)[Security Group] in public_a
-    service ec2_a(server)[EC2 Web Server A] in public_a
+    group aza(cloud)[AZ A] in vpc
+    group public_a(cloud)[Public Subnet A] in aza
+    service nacl_a(server)[Network ACL A] in public_a
+    service sg_a(server)[Security Group A] in public_a
+    service ec2_a(server)[EC2 Web A] in public_a
     
-    group private_a(cloud)[Private Subnet 10.0.11.0/24] in aza
+    group private_a(cloud)[Private Subnet A] in aza
     service rds_a(database)[RDS Primary] in private_a
     
-    group azb(cloud)[AZ-B ap-northeast-2b] in vpc
-    group public_b(cloud)[Public Subnet 10.0.2.0/24] in azb
-    service nacl_b(server)[Network ACL] in public_b
-    service sg_b(server)[Security Group] in public_b
-    service ec2_b(server)[EC2 Web Server B] in public_b
+    group azb(cloud)[AZ B] in vpc
+    group public_b(cloud)[Public Subnet B] in azb
+    service nacl_b(server)[Network ACL B] in public_b
+    service sg_b(server)[Security Group B] in public_b
+    service ec2_b(server)[EC2 Web B] in public_b
     
-    group private_b(cloud)[Private Subnet 10.0.12.0/24] in azb
+    group private_b(cloud)[Private Subnet B] in azb
     service rds_b(database)[RDS Standby] in private_b
     
     internet:R -- L:igw
