@@ -81,40 +81,81 @@ graph LR
 - ![Network ACL](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Network-Firewall_48.svg) **Network ACL**: Subnet 방화벽
 - ![WAF](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-WAF_48.svg) **AWS WAF**: 애플리케이션 방화벽
 
-#### 🛡️ 보안 계층 구조
+#### 🛡️ Multi-AZ 보안 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "AWS Cloud"
+    Internet[인터넷]
+    
+    subgraph "AWS Cloud - Region: ap-northeast-2"
+        IGW[Internet Gateway]
+        
         subgraph "VPC: 10.0.0.0/16"
-            subgraph "Public Subnet: 10.0.1.0/24"
-                IGW[Internet Gateway]
-                EIP[Elastic IP<br/>고정 공인 IP]
-                NACL[Network ACL<br/>Subnet 방화벽]
+            subgraph "AZ-A: ap-northeast-2a"
+                subgraph "Public Subnet A: 10.0.1.0/24"
+                    NACL_A[Network ACL]
+                    EIP_A[Elastic IP<br/>3.35.x.x]
+                    
+                    subgraph "EC2 Instance A"
+                        SG_A[Security Group<br/>Web-SG]
+                        ENI_A[ENI: eth0<br/>10.0.1.10]
+                        EC2_A[EC2: Web Server A]
+                    end
+                end
                 
-                subgraph "EC2 Instance"
-                    SG[Security Group<br/>인스턴스 방화벽]
-                    EC2[EC2 Instance<br/>웹 서버]
-                    ENI[ENI<br/>네트워크 인터페이스]
+                subgraph "Private Subnet A: 10.0.11.0/24"
+                    DB_A[RDS Primary<br/>10.0.11.10]
+                end
+            end
+            
+            subgraph "AZ-B: ap-northeast-2b"
+                subgraph "Public Subnet B: 10.0.2.0/24"
+                    NACL_B[Network ACL]
+                    EIP_B[Elastic IP<br/>3.35.x.y]
+                    
+                    subgraph "EC2 Instance B"
+                        SG_B[Security Group<br/>Web-SG]
+                        ENI_B[ENI: eth0<br/>10.0.2.10]
+                        EC2_B[EC2: Web Server B]
+                    end
+                end
+                
+                subgraph "Private Subnet B: 10.0.12.0/24"
+                    DB_B[RDS Standby<br/>10.0.12.10]
                 end
             end
         end
     end
     
-    Internet[인터넷] --> IGW
-    IGW --> EIP
-    EIP --> NACL
-    NACL --> SG
-    SG --> ENI
-    ENI --> EC2
+    Internet --> IGW
+    IGW --> EIP_A
+    IGW --> EIP_B
+    EIP_A --> NACL_A
+    EIP_B --> NACL_B
+    NACL_A --> SG_A
+    NACL_B --> SG_B
+    SG_A --> ENI_A
+    SG_B --> ENI_B
+    ENI_A --> EC2_A
+    ENI_B --> EC2_B
+    EC2_A -.-> DB_A
+    EC2_B -.-> DB_B
+    DB_A -.Replication.-> DB_B
     
     style Internet fill:#ffebee
-    style IGW fill:#fff3e0
-    style EIP fill:#fff9c4
-    style NACL fill:#e1f5fe
-    style SG fill:#e8f5e8
-    style ENI fill:#f3e5f5
-    style EC2 fill:#e3f2fd
+    style IGW fill:#ff9800
+    style NACL_A fill:#e1f5fe
+    style NACL_B fill:#e1f5fe
+    style SG_A fill:#e8f5e8
+    style SG_B fill:#e8f5e8
+    style EIP_A fill:#fff9c4
+    style EIP_B fill:#fff9c4
+    style ENI_A fill:#f3e5f5
+    style ENI_B fill:#f3e5f5
+    style EC2_A fill:#e3f2fd
+    style EC2_B fill:#e3f2fd
+    style DB_A fill:#c8e6c9
+    style DB_B fill:#ffccbc
 ```
 
 #### 📊 Security Group vs Network ACL 비교
