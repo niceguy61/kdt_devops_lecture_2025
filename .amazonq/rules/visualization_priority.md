@@ -4,7 +4,30 @@
 
 모든 Session, Lab, Challenge 작성 시 다음 우선순위를 따릅니다.
 
-### 1순위: AWS Asset Icons (Week 5 전용)
+## ⚠️ 필수 검증 절차 (모든 이미지/아이콘 사용 전)
+
+### 1. AWS Asset Icons 검증
+```bash
+# 파일 존재 확인
+ls Asset-Package_01312023.../Arch_[Category]/64/Arch_[Service-Name]_64.svg
+```
+
+### 2. MCP 공식 이미지 검증
+```bash
+# 1. MCP로 문서 읽기
+aws___read_documentation(url)
+
+# 2. 이미지 URL 추출
+# 3. 브라우저에서 직접 접근 테스트
+# 4. 접근 가능한 경우에만 사용
+```
+
+### 3. 검증 실패 시
+- 아이콘 없음 → 대체 아이콘 찾기
+- 이미지 접근 불가 → Mermaid 다이어그램 사용
+- 불확실 → 텍스트만 사용
+
+## 1순위: AWS Asset Icons (Week 5 전용)
 
 **Week 5 (AWS 집중 과정)에서는 AWS Asset Icons 적극 활용**
 

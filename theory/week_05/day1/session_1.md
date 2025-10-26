@@ -74,9 +74,10 @@ graph LR
 > **정의**: AWS는 전 세계에 분산된 데이터센터를 통해 서비스를 제공하는 글로벌 클라우드 인프라
 
 **핵심 구성 요소**:
-- ![Global Infrastructure](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_AWS-Cloud_64.svg) **AWS Cloud**: 전 세계 분산 인프라
-- ![Region](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_AWS-Region_64.svg) **Region**: 지리적으로 분리된 데이터센터 그룹
-- ![Availability Zone](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Availability-Zone_64.svg) **Availability Zone**: Region 내 물리적으로 분리된 데이터센터
+- **AWS Cloud**: 전 세계 분산 인프라
+- **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 33개 리전)
+- **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (105개 AZ)
+- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-CloudFront_64.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버
 
 #### 🏗️ AWS 글로벌 인프라 구조
 

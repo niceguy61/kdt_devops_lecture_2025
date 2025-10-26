@@ -4,6 +4,32 @@
 
 **Week 5 전용**: AWS 집중 과정에서 AWS 공식 아이콘 필수 사용
 
+## ⚠️ 필수 검증 절차
+
+### 아이콘 사용 전 반드시 확인
+```bash
+# 1. 아이콘 파일 존재 확인
+ls Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_[Category]/64/Arch_[Service-Name]_64.svg
+
+# 2. 예시: EC2 아이콘 확인
+ls Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg
+```
+
+### MCP 공식 이미지 사용 전 반드시 확인
+```bash
+# 1. MCP로 AWS 문서 읽기
+aws___read_documentation(url)
+
+# 2. 이미지 URL 추출 확인
+# 3. 브라우저에서 이미지 URL 직접 접근 테스트
+# 4. 접근 가능한 경우에만 사용
+```
+
+### 검증 실패 시 대응
+- **아이콘 없음**: AWS_ASSET_ICONS_GUIDE.md에서 대체 아이콘 찾기
+- **이미지 접근 불가**: Mermaid 다이어그램으로 대체
+- **불확실한 경우**: 아이콘 사용하지 않고 텍스트만 사용
+
 ## 📁 아이콘 위치
 
 **가이드 문서**: `theory/week_05/AWS_ASSET_ICONS_GUIDE.md`
