@@ -497,6 +497,9 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 VPC → Your VPCs → [username]-vpc 선택 → Resource map 탭
 ```
 
+**직접 링크**:
+- [VPC Console - Your VPCs](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#vpcs:)
+
 **이미지 자리**: Step 5-1 Resource Map 화면
 
 **💡 VPC Resource Map이란?**:
