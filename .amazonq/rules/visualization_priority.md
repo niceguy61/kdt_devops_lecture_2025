@@ -155,13 +155,15 @@ timeline
 ##### 3. **Quadrant Chart** (4분면 분석)
 ```mermaid
 quadrantChart
-    title 기술 선택 기준
+    title Technology Selection
     x-axis Low Complexity --> High Complexity
     y-axis Low Cost --> High Cost
-    quadrant-1 최적 선택
-    quadrant-2 비용 고려
-    quadrant-3 재검토
-    quadrant-4 성능 우선
+    quadrant-1 Optimal
+    quadrant-2 Cost Focus
+    quadrant-3 Review
+    quadrant-4 Performance Focus
+    Option A: [0.3, 0.6]
+    Option B: [0.6, 0.4]
 ```
 
 **사용 시기**:
@@ -169,7 +171,7 @@ quadrantChart
 - 비교 분석
 - 우선순위 결정
 
-**⚠️ 주의**: x-axis, y-axis는 반드시 영문으로 작성 (한글 사용 시 오류)
+**⚠️ 주의**: title, axis, quadrant, 데이터 포인트 모두 영문 사용 필수
 
 ##### 4. **Mind Map** (마인드맵)
 ```mermaid
