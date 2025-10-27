@@ -430,7 +430,28 @@ ssh -i "[username]-key.pem" ec2-user@[Public-IP-A]
 
 **이미지 자리**: Step 4-1 SSH 접속 성공
 
-#### 4-2. Public A → Private A 통신 테스트
+#### 4-2. SSH Key를 Public EC2로 복사
+
+**⚠️ 중요**: Private EC2에 SSH 접속하려면 Key Pair가 필요합니다.
+
+**로컬에서 Public EC2로 SSH Key 복사**:
+```bash
+# Windows (PowerShell)
+scp -i "[username]-key.pem" "[username]-key.pem" ec2-user@[Public-IP-A]:/home/ec2-user/
+
+# macOS/Linux
+scp -i "[username]-key.pem" "[username]-key.pem" ec2-user@[Public-IP-A]:/home/ec2-user/
+```
+
+**Public EC2 A에서 Key 권한 설정**:
+```bash
+# SSH Key 권한 설정
+chmod 400 /home/ec2-user/[username]-key.pem
+```
+
+**이미지 자리**: Step 4-2 SSH Key 복사
+
+#### 4-3. Public A → Private A 통신 테스트
 
 **Public EC2 A에서 실행**:
 ```bash
@@ -438,7 +459,7 @@ ssh -i "[username]-key.pem" ec2-user@[Public-IP-A]
 ping -c 4 10.0.11.X
 
 # SSH 테스트 (Private EC2 A로)
-ssh ec2-user@10.0.11.X
+ssh -i "/home/ec2-user/[username]-key.pem" ec2-user@10.0.11.X
 ```
 
 **예상 결과**:
@@ -450,7 +471,7 @@ PING 10.0.11.X (10.0.11.X) 56(84) bytes of data.
 
 **이미지 자리**: Step 4-2 Ping 테스트 결과
 
-#### 4-3. Private A에서 정보 확인
+#### 4-4. Private A에서 정보 확인
 
 **Private EC2 A에서 실행**:
 ```bash
@@ -468,9 +489,9 @@ Hostname: ip-10-0-11-X
 Private IP: 10.0.11.X
 ```
 
-**이미지 자리**: Step 4-3 Private EC2 정보
+**이미지 자리**: Step 4-4 Private EC2 정보
 
-#### 4-4. Private A → Private B 통신 테스트
+#### 4-5. Private A → Private B 통신 테스트
 
 **Private EC2 A에서 실행**:
 ```bash
@@ -483,26 +504,37 @@ ping -c 4 10.0.12.X
 64 bytes from 10.0.12.X: icmp_seq=1 ttl=64 time=1.2 ms
 ```
 
-**이미지 자리**: Step 4-4 AZ 간 통신 테스트
+**이미지 자리**: Step 4-5 AZ 간 통신 테스트
 
-#### 4-5. 외부 인터넷 접근 테스트
+#### 4-6. 외부 인터넷 접근 테스트
 
 **Private EC2 A에서 실행**:
 ```bash
 # 외부 인터넷 접근 시도
 ping -c 4 8.8.8.8
+
+# 패키지 업데이트 시도
+sudo yum update -y
 ```
 
 **예상 결과**:
 ```
 ping: connect: Network is unreachable
+Cannot retrieve repository metadata (repomd.xml)
 ```
 
 **💡 왜 실패하는가?**:
-- Private Subnet은 Internet Gateway 경로 없음
-- NAT Gateway가 필요 (Day 2에서 학습)
+- Private Subnet은 Internet Gateway로의 경로가 없음
+- NAT Gateway가 없으면 외부 인터넷 접근 불가
+- 패키지 설치, 업데이트 등 모든 외부 통신 차단
+- **실무 중요사항**: Private EC2는 NAT Gateway 없이는 외부 API 호출, 패키지 설치 등 불가능
 
-**이미지 자리**: Step 4-5 외부 접근 실패
+**🔧 해결 방법 (Day 2에서 학습)**:
+- NAT Gateway 구성
+- Private Route Table에 NAT Gateway 경로 추가
+- 또는 VPC Endpoint로 특정 AWS 서비스 접근
+
+**이미지 자리**: Step 4-6 외부 접근 실패
 
 ### ✅ Step 4 검증
 
@@ -664,24 +696,49 @@ sudo systemctl start nginx
 # Security Group HTTP (80) 포트 확인
 ```
 
-### 문제 3: Private EC2 접속 불가
+### 문제 3: Private EC2 SSH 접속 불가
 **증상**:
 ```
-No route to host
+Permission denied (publickey)
 ```
 
 **원인**:
-- Private SG에서 Public SG 허용 안 됨
-- 잘못된 Private IP 사용
+- Public EC2에 SSH Key가 없음
+- Key 파일 권한 문제
 
 **해결 방법**:
 ```bash
-# Private SG Inbound 확인
-# Source: week5-day1-public-sg 확인
+# 1. SSH Key를 Public EC2로 복사
+scp -i "[username]-key.pem" "[username]-key.pem" ec2-user@[Public-IP]:/home/ec2-user/
 
-# Private IP 확인
-# AWS Console → EC2 → Private IP 복사
+# 2. Public EC2에서 Key 권한 설정
+chmod 400 /home/ec2-user/[username]-key.pem
+
+# 3. Key 파일 경로 지정하여 SSH 접속
+ssh -i "/home/ec2-user/[username]-key.pem" ec2-user@[Private-IP]
 ```
+
+### 문제 4: Private EC2에서 외부 접근 불가
+**증상**:
+```
+Network is unreachable
+Cannot retrieve repository metadata
+```
+
+**원인**:
+- Private Subnet에 NAT Gateway 없음
+- Route Table에 외부 경로 없음
+
+**해결 방법**:
+```bash
+# 현재는 정상적인 동작 (Private Subnet 특성)
+# 해결책: NAT Gateway 구성 (Day 2에서 학습)
+```
+
+**💡 실무 중요사항**:
+- Private EC2는 NAT Gateway 없이는 외부 통신 불가
+- 패키지 설치, API 호출, 소프트웨어 업데이트 모두 차단
+- 보안은 강화되지만 운영상 제약 존재
 
 ---
 
