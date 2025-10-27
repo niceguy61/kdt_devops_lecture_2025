@@ -332,28 +332,6 @@ aws ssm start-session --target i-1234567890abcdef0 --region ap-northeast-2
 
 #### ⚙️ SSM 사용을 위한 IAM Role 설정
 
-**EC2에 연결할 IAM Role**:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ssm:UpdateInstanceInformation",
-        "ssmmessages:CreateControlChannel",
-        "ssmmessages:CreateDataChannel",
-        "ssmmessages:OpenControlChannel",
-        "ssmmessages:OpenDataChannel"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-**설정 방법**:
 ```
 1. IAM Console → Roles → Create role
 2. AWS service → EC2 선택
