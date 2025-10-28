@@ -25,7 +25,7 @@
 | **13:00-14:00** | 🍽️ 점심 | 점심시간 | |
 | **14:00-14:50** | 🛠️ Lab 1 | RDS PostgreSQL 구성 | DB 구축 |
 | **14:50-15:00** | ☕ 휴식 | 10분 휴식 | |
-| **15:00-15:50** | 🛠️ Lab 2 | Redis 캐싱 구현 | 성능 최적화 |
+| **15:00-15:50** | 🎮 Challenge 1 | 데이터베이스 장애 복구 | 실전 대응 |
 
 ---
 
@@ -101,15 +101,15 @@ graph TB
     
     S1 --> L1[Lab 1<br/>RDS 구성]
     S2 --> L1
-    S3 --> L2[Lab 2<br/>Redis 캐싱]
-    S4 --> L2
+    S2 --> C1[Challenge 1<br/>장애 복구]
+    S4 --> C1
     
     style S1 fill:#e8f5e8
     style S2 fill:#fff3e0
     style S3 fill:#e3f2fd
     style S4 fill:#f3e5f5
     style L1 fill:#ffebee
-    style L2 fill:#fce4ec
+    style C1 fill:#fce4ec
 ```
 
 ### Session 1: RDS 기초 (09:00-09:50)
@@ -284,15 +284,15 @@ architecture-beta
 ```mermaid
 graph LR
     L1[Lab 1<br/>RDS 구성] --> T1[테스트<br/>DB 연결]
-    T1 --> L2[Lab 2<br/>Redis 캐싱]
-    L2 --> T2[성능<br/>비교]
-    T2 --> C[정리]
+    T1 --> C1[Challenge 1<br/>장애 복구]
+    C1 --> T2[복구<br/>검증]
+    T2 --> CL[정리]
     
     style L1 fill:#e8f5e8
     style T1 fill:#fff3e0
-    style L2 fill:#e3f2fd
+    style C1 fill:#ffebee
     style T2 fill:#f3e5f5
-    style C fill:#ffebee
+    style CL fill:#e3f2fd
 ```
 
 ### Lab 1: RDS PostgreSQL 구성 (14:00-14:50)
@@ -326,39 +326,51 @@ graph TB
     style F fill:#c8e6c9
 ```
 
-### Lab 2: Redis 캐싱 구현 (15:00-15:50)
-**목표**: ElastiCache Redis로 성능 최적화
+### Challenge 1: 데이터베이스 장애 복구 (15:00-15:50)
+**목표**: RDS 장애 상황 대응 및 복구
 
-**구현 내용**:
-1. ElastiCache Redis 클러스터 생성
-2. Security Group 설정
-3. 애플리케이션에 Redis 연동
-4. Cache-Aside 패턴 구현
-5. 성능 비교 (캐싱 전/후)
-6. 세션 스토어 구현
+**시나리오**:
+1. **시나리오 1**: RDS Primary 장애 (Multi-AZ Failover)
+2. **시나리오 2**: 잘못된 데이터 삭제 (스냅샷 복구)
+3. **시나리오 3**: 성능 저하 (Read Replica 추가)
+4. **시나리오 4**: 연결 실패 (Security Group 문제)
 
-**예상 비용**: $0.20 (1시간 기준)
+**학습 포인트**:
+- 장애 상황 진단
+- 신속한 복구 절차
+- 데이터 무결성 보장
+- 모니터링 및 알람
 
-### ⚡ 캐싱 성능 비교
+**예상 비용**: $0.30 (1시간 기준)
+
+### 🚨 Challenge 1 장애 시나리오
 
 ```mermaid
-graph LR
-    subgraph "캐싱 전"
-        A1[요청] --> A2[DB 조회<br/>200ms]
-        A2 --> A3[응답]
+graph TB
+    subgraph "시나리오 1: Failover"
+        A1[Primary 장애] --> A2[Standby 승격]
+        A2 --> A3[DNS 업데이트]
+        A3 --> A4[서비스 복구]
     end
     
-    subgraph "캐싱 후"
-        B1[요청] --> B2{Cache?}
-        B2 -->|Hit| B3[Redis<br/>5ms]
-        B2 -->|Miss| B4[DB 조회<br/>200ms]
-        B3 --> B5[응답]
-        B4 --> B5
+    subgraph "시나리오 2: 데이터 복구"
+        B1[데이터 삭제] --> B2[스냅샷 확인]
+        B2 --> B3[새 인스턴스]
+        B3 --> B4[데이터 복원]
     end
     
-    style A2 fill:#ffebee
-    style B3 fill:#c8e6c9
-    style B4 fill:#ffebee
+    subgraph "시나리오 3: 성능 개선"
+        C1[느린 조회] --> C2[Read Replica]
+        C2 --> C3[읽기 분산]
+        C3 --> C4[성능 향상]
+    end
+    
+    style A1 fill:#ffebee
+    style A4 fill:#c8e6c9
+    style B1 fill:#ffebee
+    style B4 fill:#c8e6c9
+    style C1 fill:#ffebee
+    style C4 fill:#c8e6c9
 ```
 
 ---
@@ -369,12 +381,13 @@ graph LR
 | 리소스 | 사양 | 시간 | 단가 | 비용 |
 |--------|------|------|------|------|
 | RDS PostgreSQL | db.t3.micro Multi-AZ | 2시간 | $0.034/hour | $0.068 |
-| ElastiCache Redis | cache.t3.micro | 1시간 | $0.017/hour | $0.017 |
+| RDS Read Replica | db.t3.micro | 1시간 | $0.017/hour | $0.017 |
 | EC2 | t3.micro | 3시간 | $0.0104/hour | $0.031 |
 | 데이터 전송 | 1GB | - | $0.09/GB | $0.09 |
-| **합계** | | | | **$0.206** |
+| 스냅샷 스토리지 | 5GB | - | $0.095/GB-month | $0.016 |
+| **합계** | | | | **$0.222** |
 
-**학생당**: $0.206 × 14명 = **$2.88**
+**학생당**: $0.222 × 14명 = **$3.11**
 
 ### 비용 절감 팁
 - 프리티어 활용 (RDS 750시간/월)
