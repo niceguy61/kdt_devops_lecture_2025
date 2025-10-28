@@ -362,6 +362,83 @@ AWS Console → EC2 → Auto Scaling Groups → Create Auto Scaling group
 
 ---
 
+---
+
+## 🔍 발견해야 할 문제들 (시나리오)
+
+### 문제 1: "ALB로 접속이 안 돼요!"
+**증상**: 
+- 브라우저에서 ALB DNS 주소로 접속 시도
+- 연결 시간 초과 또는 연결 거부 오류 발생
+
+**확인해야 할 것**:
+- ALB는 어떤 포트로 트래픽을 받아야 하나요?
+- 사용자들은 일반적으로 웹사이트에 접속할 때 어떤 포트를 사용하나요?
+- ALB Security Group의 Inbound Rules를 확인해보세요
+
+**💡 힌트**: HTTP의 기본 포트는?
+
+---
+
+### 문제 2: "Target Group에서 인스턴스가 Unhealthy 상태예요!"
+**증상**:
+- Target Group의 Targets 탭에서 모든 인스턴스가 `unhealthy` 상태
+- Health check status: `Health checks failed`
+
+**확인해야 할 것**:
+- Health Check가 어떤 경로를 확인하고 있나요?
+- nginx 기본 설치 시 어떤 경로가 실제로 존재하나요?
+- `/health` 경로가 실제로 있나요?
+
+**💡 힌트**: nginx 기본 페이지는 어떤 경로에 있을까요?
+
+---
+
+### 문제 3: "EC2 인스턴스에서 웹 서버가 안 떠요!"
+**증상**:
+- EC2 인스턴스에 SSH 접속 후 확인
+- `curl localhost` 실행 시 연결 거부
+- `systemctl status nginx` 실행 시 inactive (dead) 상태
+
+**확인해야 할 것**:
+- User Data 스크립트에서 nginx를 설치만 했나요?
+- nginx 서비스를 실제로 시작했나요?
+- 부팅 시 자동 시작되도록 설정했나요?
+
+**💡 힌트**: `systemctl start nginx`와 `systemctl enable nginx`
+
+---
+
+### 문제 4: "EC2가 ALB로부터 트래픽을 못 받아요!"
+**증상**:
+- Target Group에서 인스턴스가 healthy 상태가 되었지만
+- 여전히 ALB를 통한 접속이 안 됨
+- 또는 보안 경고가 발생
+
+**확인해야 할 것**:
+- EC2 Security Group이 어디서 오는 트래픽을 허용하고 있나요?
+- 인터넷(0.0.0.0/0)에서 직접 EC2로 접근해야 하나요?
+- ALB를 통해서만 접근하도록 제한해야 하지 않나요?
+
+**💡 힌트**: EC2 Security Group의 Source를 ALB Security Group으로 설정
+
+---
+
+### 문제 5: "고가용성이 보장되지 않아요!"
+**증상**:
+- Auto Scaling Group에 인스턴스가 1개만 실행 중
+- 한 AZ에만 인스턴스가 배치됨
+- 인스턴스 장애 시 서비스 중단 위험
+
+**확인해야 할 것**:
+- 고가용성을 위해 최소 몇 개의 인스턴스가 필요한가요?
+- 여러 AZ에 분산 배치되어 있나요?
+- ASG의 Minimum capacity가 적절한가요?
+
+**💡 힌트**: 최소 2개 이상의 인스턴스를 서로 다른 AZ에 배치
+
+---
+
 ## 💡 힌트 (최소한의 가이드)
 
 ### 🔍 어디를 확인해야 할까요?
