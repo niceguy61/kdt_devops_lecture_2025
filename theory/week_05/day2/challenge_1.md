@@ -100,6 +100,10 @@ graph TB
 
 ### Phase 1: EC2 웹 서버 구축 (10분)
 
+**AWS Console 바로가기**:
+- [EC2 인스턴스 시작](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LaunchInstances:)
+- [보안 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateSecurityGroup:)
+
 #### 목표
 - Lab 1 기반 빠른 EC2 구성
 - 간단한 웹 페이지 준비
@@ -300,6 +304,9 @@ http://[EC2-Public-IP]
 
 ### Phase 2: S3 Private Bucket + 이미지 업로드 (10분)
 
+**AWS Console 바로가기**:
+- [S3 버킷 생성](https://s3.console.aws.amazon.com/s3/bucket/create?region=ap-northeast-2)
+
 #### 목표
 - S3 Private Bucket 생성 (퍼블릭 액세스 완전 차단)
 - 이미지 업로드
@@ -379,6 +386,9 @@ https://week5-day2-challenge-12345.s3.ap-northeast-2.amazonaws.com/tech1.jpg
 ---
 
 ### Phase 3: CloudFront + OAC 설정 (20분) ⭐ 핵심
+
+**AWS Console 바로가기**:
+- [CloudFront 배포 생성](https://console.aws.amazon.com/cloudfront/v3/home#/distributions/create)
 
 #### 목표
 - CloudFront Distribution 생성

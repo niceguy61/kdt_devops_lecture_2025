@@ -126,6 +126,14 @@ graph TB
 - 실수로 인한 기존 설정 영향 방지
 
 #### 📋 네트워크 인프라
+
+**AWS Console 바로가기**:
+- [VPC 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateVpc:)
+- [서브넷 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateSubnet:)
+- [인터넷 게이트웨이 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateInternetGateway:)
+- [라우팅 테이블 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateRouteTable:)
+
+**요구사항**:
 - **VPC**: 10.0.0.0/16
 - **Availability Zone**: 2개 (ap-northeast-2a, ap-northeast-2b)
 - **Subnet**: 총 4개
@@ -137,6 +145,12 @@ graph TB
 - **Route Table**: Public/Private 분리
 
 #### 💻 서버 구성
+
+**AWS Console 바로가기**:
+- [EC2 인스턴스 시작](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LaunchInstances:)
+- [보안 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateSecurityGroup:)
+
+**요구사항**:
 - **Public EC2 (웹 서버)**: 2대
   - 위치: Public Subnet A, B (각 1대)
   - 인스턴스 타입: t2.micro

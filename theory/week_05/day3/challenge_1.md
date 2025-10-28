@@ -98,6 +98,9 @@ graph TB
 
 ### Step 1: DB Subnet Group 생성 (5분)
 
+**AWS Console 바로가기**:
+- [DB 서브넷 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-create:)
+
 **AWS Console 경로**:
 ```
 AWS Console → RDS → Subnet groups → Create DB subnet group
@@ -120,6 +123,9 @@ AWS Console에서 생성된 Subnet Group 확인
 ---
 
 ### Step 2: Security Group 생성 (10분)
+
+**AWS Console 바로가기**:
+- [보안 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateSecurityGroup:)
 
 **AWS Console 경로**:
 ```
@@ -150,6 +156,9 @@ AWS Console에서 생성된 Security Group 확인
 ---
 
 ### Step 3: RDS 인스턴스 생성 (15분)
+
+**AWS Console 바로가기**:
+- [RDS 데이터베이스 생성](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#launch-dbinstance:)
 
 **AWS Console 경로**:
 ```

@@ -107,6 +107,11 @@ graph TB
 
 ### Step 1: VPC 및 Subnet 생성 (5분)
 
+**AWS Console 바로가기**:
+- [VPC 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateVpc:)
+- [서브넷 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateSubnet:)
+- [인터넷 게이트웨이 생성](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#CreateInternetGateway:)
+
 **AWS Console 경로**:
 ```
 AWS Console → VPC → Create VPC
@@ -139,6 +144,9 @@ AWS Console → VPC → Create VPC
 ---
 
 ### Step 2: Security Groups 생성 (5분)
+
+**AWS Console 바로가기**:
+- [보안 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateSecurityGroup:)
 
 #### 2-1. ALB Security Group (의도적 오류)
 
@@ -187,6 +195,9 @@ AWS Console → EC2 → Security Groups → Create security group
 
 ### Step 3: Target Group 생성 (5분)
 
+**AWS Console 바로가기**:
+- [대상 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateTargetGroup:)
+
 **AWS Console 경로**:
 ```
 AWS Console → EC2 → Target Groups → Create target group
@@ -219,6 +230,9 @@ AWS Console → EC2 → Target Groups → Create target group
 ---
 
 ### Step 4: Application Load Balancer 생성 (5분)
+
+**AWS Console 바로가기**:
+- [로드 밸런서 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateLoadBalancer:)
 
 **AWS Console 경로**:
 ```
@@ -253,6 +267,9 @@ AWS Console → EC2 → Load Balancers → Create load balancer → Application 
 ---
 
 ### Step 5: Launch Template 생성 (10분)
+
+**AWS Console 바로가기**:
+- [시작 템플릿 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateTemplate:)
 
 **AWS Console 경로**:
 ```
@@ -309,6 +326,9 @@ EOF
 ---
 
 ### Step 6: Auto Scaling Group 생성 (10분)
+
+**AWS Console 바로가기**:
+- [Auto Scaling 그룹 생성](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateAutoScalingGroup:)
 
 **AWS Console 경로**:
 ```
