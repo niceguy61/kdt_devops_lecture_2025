@@ -282,8 +282,6 @@ AWS Console → EC2 → Launch Templates → Create launch template
 #!/bin/bash
 yum update -y
 yum install -y nginx
-# systemctl start nginx  ⚠️ 주석 처리됨!
-# systemctl enable nginx  ⚠️ 주석 처리됨!
 
 cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
@@ -304,7 +302,7 @@ cat <<EOF > /usr/share/nginx/html/index.html
 EOF
 ```
 
-**이미지 자리**: Launch Template User Data (nginx 시작 안됨)
+**이미지 자리**: Launch Template User Data
 
 **💡 힌트**: nginx를 설치만 하고 시작하지 않으면 어떻게 될까요?
 
