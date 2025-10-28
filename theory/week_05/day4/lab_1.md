@@ -998,7 +998,7 @@ AWS Console → VPC → Route tables
    - `week5-day4-public-rt` 선택
    - 동일한 방법으로 삭제
 
-#### 9. Internet Gateway 분리 및 삭제
+#### 8. Internet Gateway 분리 및 삭제
 
 **AWS Console 경로**:
 ```
@@ -1016,7 +1016,7 @@ AWS Console → VPC → Internet gateways
 2. "Actions" → "Delete internet gateway"
 3. 확인 창에서 "Delete internet gateway" 클릭
 
-#### 10. Subnets 삭제
+#### 9. Subnets 삭제
 
 **AWS Console 경로**:
 ```
@@ -1033,7 +1033,7 @@ AWS Console → VPC → Subnets
 3. "Delete subnet" 선택
 4. 확인 창에서 "Delete" 클릭
 
-#### 11. VPC 삭제
+#### 10. VPC 삭제
 
 **AWS Console 경로**:
 ```
@@ -1075,8 +1075,7 @@ AWS Console → VPC → Your VPCs
 - [ ] Target Group 삭제
 - [ ] Launch Template 삭제
 - [ ] Security Groups 삭제 (2개)
-- [ ] NAT Gateway 삭제 (1개)
-- [ ] Elastic IP 해제 (1개)
+- [ ] NAT Gateway 삭제 (1개, EIP 자동 해제됨)
 - [ ] Route Tables 삭제 (2개)
 - [ ] Internet Gateway 분리 및 삭제
 - [ ] Subnets 삭제 (4개)
@@ -1129,10 +1128,10 @@ AWS Console → Cost Explorer → Cost & Usage
 ssh -i your-key.pem ec2-user@instance-ip
 
 # 웹 서버 상태 확인
-sudo systemctl status httpd
+sudo systemctl status nginx
 
 # 웹 서버 재시작
-sudo systemctl restart httpd
+sudo systemctl restart nginx
 ```
 
 **참조**: [Session 1: Elastic Load Balancing](../session_1.md) - Health Check 설정
