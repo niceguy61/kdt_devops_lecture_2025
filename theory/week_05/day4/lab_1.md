@@ -558,12 +558,12 @@ graph TB
 ```bash
 #!/bin/bash
 yum update -y
-yum install -y httpd
-systemctl start httpd
-systemctl enable httpd
+yum install -y nginx
+systemctl start nginx
+systemctl enable nginx
 
 # 간단한 웹 페이지 생성
-cat <<EOF > /var/www/html/index.html
+cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
 <head>
@@ -620,7 +620,7 @@ cat <<EOF > /var/www/html/index.html
 EOF
 
 # 웹 서버 상태 확인
-systemctl status httpd
+systemctl status nginx
 ```
 
 **이미지 자리**: Step 3-4 User Data 설정 스크린샷
