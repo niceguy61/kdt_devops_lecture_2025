@@ -979,20 +979,9 @@ AWS Console → VPC → NAT gateways
 
 **⚠️ 주의**: NAT Gateway 삭제는 몇 분 소요됨 (완전히 삭제될 때까지 대기)
 
-#### 7. Elastic IP 해제
+**💡 참고**: NAT Gateway 삭제 시 연결된 Elastic IP도 자동으로 해제됨
 
-**AWS Console 경로**:
-```
-AWS Console → EC2 → Elastic IPs
-```
-
-**EIP 해제**:
-1. `week5-day4-eip-nat` 선택
-2. "Actions" 버튼 클릭
-3. "Release Elastic IP addresses" 선택
-4. 확인 창에서 "Release" 클릭
-
-#### 8. Route Tables 삭제
+#### 7. Route Tables 삭제
 
 **AWS Console 경로**:
 ```
