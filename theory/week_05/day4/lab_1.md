@@ -221,27 +221,12 @@ graph TB
 
 **이미지 자리**: Step 1-6 IGW 생성 및 VPC 연결 완료 스크린샷
 
-#### 1-7. Elastic IP 생성 (NAT Gateway용)
-
-**Elastic IP 생성**:
-1. 상단 검색창에 "EC2" 입력 후 EC2 서비스로 이동
-2. 왼쪽 메뉴에서 **"탄력적 IP"** 클릭
-3. 오른쪽 상단 **"탄력적 IP 주소 할당"** 버튼 클릭
-4. **직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#AllocateAddress:
-5. 네트워크 경계 그룹: "ap-northeast-2" (기본값)
-6. 퍼블릭 IPv4 주소 풀: "Amazon의 IPv4 주소 풀" (기본값)
-7. 이름 태그: `week5-day4-eip-nat` 입력
-8. **"할당"** 버튼 클릭
-
-**이미지 자리**: Step 1-7 Elastic IP 생성 완료 스크린샷
-
-#### 1-8. NAT Gateway 생성
+#### 1-7. NAT Gateway 생성
 
 **NAT Gateway 생성**:
-1. VPC 서비스로 돌아가기 (상단 검색창에 "VPC" 입력)
-2. 왼쪽 메뉴에서 **"NAT 게이트웨이"** 클릭
-3. 오른쪽 상단 **"NAT 게이트웨이 생성"** 버튼 클릭
-4. **직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateNatGateway:
+1. VPC 서비스에서 왼쪽 메뉴 **"NAT 게이트웨이"** 클릭
+2. 오른쪽 상단 **"NAT 게이트웨이 생성"** 버튼 클릭
+3. **직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateNatGateway:
 
 **설정 값 입력**:
 | 항목 | 입력 값 | 설명 |
@@ -249,37 +234,20 @@ graph TB
 | 이름 | `week5-day4-nat` | NAT Gateway 이름 |
 | 서브넷 | `week5-day4-public-a` | Public Subnet A 선택 |
 | 연결 유형 | "퍼블릭" | 퍼블릭 연결 (기본값) |
-| 탄력적 IP 할당 ID | week5-day4-eip-nat의 ID | EIP 선택 |
+| 탄력적 IP 할당 ID | **"탄력적 IP 할당"** 버튼 클릭 | 자동으로 새 EIP 생성 |
 
-3. **"NAT 게이트웨이 생성"** 버튼 클릭
-4. 생성 완료 메시지 확인
+4. **"NAT 게이트웨이 생성"** 버튼 클릭
+5. 생성 완료 메시지 확인
 
 **💡 참고**: 
+- Elastic IP는 NAT Gateway 생성 시 자동으로 할당됨
 - NAT Gateway는 1개만 생성하여 비용 절감
 - 두 AZ의 Private Subnet 모두 이 NAT Gateway 사용
 - 고가용성이 필요한 프로덕션 환경에서는 각 AZ마다 NAT Gateway 권장
 
-**이미지 자리**: Step 1-8 NAT Gateway 생성 완료 스크린샷
+**이미지 자리**: Step 1-7 NAT Gateway 생성 완료 스크린샷
 
-#### 1-9. NAT Gateway 생성 (AZ-B)
-
-**두 번째 NAT Gateway 생성**:
-1. 다시 **"NAT 게이트웨이 생성"** 버튼 클릭
-
-**설정 값 입력**:
-| 항목 | 입력 값 | 설명 |
-|------|---------|------|
-| 이름 | `week5-day4-nat-b` | NAT Gateway 이름 |
-| 서브넷 | `week5-day4-public-b` | Public Subnet B 선택 |
-| 연결 유형 | "퍼블릭" | 퍼블릭 연결 (기본값) |
-| 탄력적 IP 할당 ID | week5-day4-eip-b의 ID | 두 번째 EIP 선택 |
-
-2. **"NAT 게이트웨이 생성"** 버튼 클릭
-3. 생성 완료 메시지 확인
-
-**이미지 자리**: Step 1-8 NAT Gateway 생성 완료 스크린샷
-
-#### 1-9. Public Route Table 생성 및 설정
+#### 1-8. Public Route Table 생성 및 설정
 
 **Public Route Table 생성**:
 1. 왼쪽 메뉴에서 **"라우팅 테이블"** 클릭
@@ -309,9 +277,9 @@ graph TB
 3. `week5-day4-public-a`와 `week5-day4-public-b` 체크
 4. **"연결 저장"** 버튼 클릭
 
-**이미지 자리**: Step 1-9 Public Route Table 설정 완료 스크린샷
+**이미지 자리**: Step 1-8 Public Route Table 설정 완료 스크린샷
 
-#### 1-10. Private Route Table 생성 및 설정
+#### 1-9. Private Route Table 생성 및 설정
 
 **Private Route Table 생성**:
 1. 다시 **"라우팅 테이블 생성"** 버튼 클릭
