@@ -108,6 +108,7 @@ graph TB
 ```
 VPC → Your VPCs
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#vpcs:
 
 **확인 항목**:
 - "Default VPC" 라벨이 있는 VPC 찾기
@@ -171,6 +172,7 @@ VPC → Your VPCs → Actions → Create default VPC
 ```
 AWS Console → VPC → Your VPCs → Create VPC
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateVpc:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -261,6 +263,7 @@ VPC → Your VPCs → [username]-vpc 선택
 ```
 VPC → Subnets → Create subnet
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateSubnet:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -355,6 +358,7 @@ VPC → Subnets → Filters에서 VPC 선택
 ```
 VPC → Internet Gateways → Create internet gateway
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateInternetGateway:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -423,6 +427,7 @@ VPC → Internet Gateways → [username]-igw 선택
 ```
 VPC → Route Tables → Create route table
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateRouteTable:
 
 **설정 값**:
 | 항목 | 값 | 설명 |

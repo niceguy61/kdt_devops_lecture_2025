@@ -81,6 +81,7 @@ graph TB
 ```
 VPC → Your VPCs → Create VPC
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateVpc:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -96,6 +97,7 @@ VPC → Your VPCs → Create VPC
 ```
 VPC → Subnets → Create subnet
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateSubnet:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -120,6 +122,7 @@ Subnet 선택 → Actions → Edit subnet settings → Enable auto-assign public
 ```
 VPC → Internet Gateways → Create internet gateway
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateInternetGateway:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -187,6 +190,7 @@ VPC → Your VPCs → week5-day2-vpc 선택 → Resource map
 ```
 AWS Console → EC2 → Instances → Launch instances
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LaunchInstances:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -286,6 +290,7 @@ sudo systemctl status nginx
 ```
 EC2 → Elastic Block Store → Volumes → Create volume
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#CreateVolume:
 
 **설정 값**:
 | 항목 | 값 | 설명 |
@@ -390,6 +395,7 @@ ls -l /web-data/
 ```
 S3 → Buckets → Create bucket
 ```
+**직접 링크**: https://s3.console.aws.amazon.com/s3/bucket/create?region=ap-northeast-2
 
 **설정 값**:
 | 항목 | 값 | 설명 |
