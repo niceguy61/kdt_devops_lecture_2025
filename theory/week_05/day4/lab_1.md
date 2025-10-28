@@ -1,7 +1,7 @@
 # Week 5 Day 4 Lab 1: ALB + ASG 고가용성 웹 서비스 구축
 
 <div align="center">
-**🎯 로드밸런싱** • **⏱️ 50분** • **💰 $0.30**
+**🎯 로드밸런싱** • **⏱️ 50분** • **💰 $0.13**
 *Application Load Balancer와 Auto Scaling Group으로 확장 가능한 웹 서비스 구축*
 </div>
 
@@ -11,7 +11,7 @@
 **시간**: 14:00-14:50 (50분)
 **목표**: ALB와 ASG를 활용한 고가용성 웹 서비스 구축
 **방식**: AWS Web Console 실습
-**예상 비용**: $0.30
+**예상 비용**: $0.13
 
 ## 🎯 학습 목표
 - [ ] Application Load Balancer 구성 및 운영
@@ -39,7 +39,6 @@ graph TB
             
             subgraph "AZ-B (ap-northeast-2b)"
                 subgraph "Public Subnet B (10.0.2.0/24)"
-                    NATGW2[NAT Gateway]
                 end
                 subgraph "Private Subnet B (10.0.12.0/24)"
                     EC2B[EC2 Web-2<br/>Auto Scale]
@@ -56,16 +55,14 @@ graph TB
     ALB --> EC2A
     ALB --> EC2B
     EC2A --> NATGW
-    EC2B --> NATGW2
+    EC2B --> NATGW
     NATGW --> IGW
-    NATGW2 --> IGW
     
     style EC2A fill:#e8f5e8
     style EC2B fill:#e8f5e8
     style ALB fill:#fff3e0
     style IGW fill:#e3f2fd
     style NATGW fill:#f3e5f5
-    style NATGW2 fill:#f3e5f5
     style Users fill:#ffebee
 ```
 
@@ -89,10 +86,10 @@ graph TB
 
 ### 📋 이 단계에서 할 일
 - VPC 생성 (10.0.0.0/16)
-- 2개 AZ에 Public Subnet 생성 (NAT Gateway용)
+- 2개 AZ에 Public Subnet 생성
 - 2개 AZ에 Private Subnet 생성 (EC2 인스턴스용)
 - Internet Gateway 연결
-- NAT Gateway 생성 (각 AZ마다)
+- NAT Gateway 생성 (1개만, AZ-A에 배치)
 - Route Table 설정 (Public용, Private용)
 
 ### 🔗 참조 개념
@@ -226,27 +223,21 @@ graph TB
 
 #### 1-7. Elastic IP 생성 (NAT Gateway용)
 
-**첫 번째 Elastic IP 생성**:
+**Elastic IP 생성**:
 1. 상단 검색창에 "EC2" 입력 후 EC2 서비스로 이동
 2. 왼쪽 메뉴에서 **"탄력적 IP"** 클릭
 3. 오른쪽 상단 **"탄력적 IP 주소 할당"** 버튼 클릭
 4. **직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#AllocateAddress:
 5. 네트워크 경계 그룹: "ap-northeast-2" (기본값)
 6. 퍼블릭 IPv4 주소 풀: "Amazon의 IPv4 주소 풀" (기본값)
-7. 이름 태그: `week5-day4-eip-a` 입력
+7. 이름 태그: `week5-day4-eip-nat` 입력
 8. **"할당"** 버튼 클릭
 
-**두 번째 Elastic IP 생성**:
-1. 다시 **"탄력적 IP 주소 할당"** 버튼 클릭
-2. 동일한 설정으로 진행
-3. 이름 태그: `week5-day4-eip-b` 입력
-4. **"할당"** 버튼 클릭
+**이미지 자리**: Step 1-7 Elastic IP 생성 완료 스크린샷
 
-**이미지 자리**: Step 1-7 Elastic IP 2개 생성 완료 스크린샷
+#### 1-8. NAT Gateway 생성
 
-#### 1-8. NAT Gateway 생성 (AZ-A)
-
-**첫 번째 NAT Gateway 생성**:
+**NAT Gateway 생성**:
 1. VPC 서비스로 돌아가기 (상단 검색창에 "VPC" 입력)
 2. 왼쪽 메뉴에서 **"NAT 게이트웨이"** 클릭
 3. 오른쪽 상단 **"NAT 게이트웨이 생성"** 버튼 클릭
@@ -255,15 +246,20 @@ graph TB
 **설정 값 입력**:
 | 항목 | 입력 값 | 설명 |
 |------|---------|------|
-| 이름 | `week5-day4-nat-a` | NAT Gateway 이름 |
+| 이름 | `week5-day4-nat` | NAT Gateway 이름 |
 | 서브넷 | `week5-day4-public-a` | Public Subnet A 선택 |
 | 연결 유형 | "퍼블릭" | 퍼블릭 연결 (기본값) |
-| 탄력적 IP 할당 ID | week5-day4-eip-a의 ID | 첫 번째 EIP 선택 |
+| 탄력적 IP 할당 ID | week5-day4-eip-nat의 ID | EIP 선택 |
 
 3. **"NAT 게이트웨이 생성"** 버튼 클릭
 4. 생성 완료 메시지 확인
 
-**이미지 자리**: Step 1-8 NAT Gateway A 생성 완료 스크린샷
+**💡 참고**: 
+- NAT Gateway는 1개만 생성하여 비용 절감
+- 두 AZ의 Private Subnet 모두 이 NAT Gateway 사용
+- 고가용성이 필요한 프로덕션 환경에서는 각 AZ마다 NAT Gateway 권장
+
+**이미지 자리**: Step 1-8 NAT Gateway 생성 완료 스크린샷
 
 #### 1-9. NAT Gateway 생성 (AZ-B)
 
@@ -281,9 +277,9 @@ graph TB
 2. **"NAT 게이트웨이 생성"** 버튼 클릭
 3. 생성 완료 메시지 확인
 
-**이미지 자리**: Step 1-9 NAT Gateway B 생성 완료 스크린샷
+**이미지 자리**: Step 1-8 NAT Gateway 생성 완료 스크린샷
 
-#### 1-10. Public Route Table 생성 및 설정
+#### 1-9. Public Route Table 생성 및 설정
 
 **Public Route Table 생성**:
 1. 왼쪽 메뉴에서 **"라우팅 테이블"** 클릭
@@ -313,17 +309,17 @@ graph TB
 3. `week5-day4-public-a`와 `week5-day4-public-b` 체크
 4. **"연결 저장"** 버튼 클릭
 
-**이미지 자리**: Step 1-10 Public Route Table 설정 완료 스크린샷
+**이미지 자리**: Step 1-9 Public Route Table 설정 완료 스크린샷
 
-#### 1-11. Private Route Table 생성 및 설정 (AZ-A)
+#### 1-10. Private Route Table 생성 및 설정
 
-**첫 번째 Private Route Table 생성**:
+**Private Route Table 생성**:
 1. 다시 **"라우팅 테이블 생성"** 버튼 클릭
 
 **설정 값 입력**:
 | 항목 | 입력 값 | 설명 |
 |------|---------|------|
-| 이름 | `week5-day4-private-rt-a` | AZ-A 프라이빗 라우팅 테이블 |
+| 이름 | `week5-day4-private-rt` | 프라이빗 라우팅 테이블 |
 | VPC | `week5-day4-vpc` | 위에서 생성한 VPC |
 
 2. **"라우팅 테이블 생성"** 버튼 클릭
@@ -333,45 +329,20 @@ graph TB
 2. **"라우팅"** 탭 → **"라우팅 편집"** 버튼 클릭
 3. **"라우팅 추가"** 버튼 클릭
 4. 대상: `0.0.0.0/0` 입력
-5. 타겟: "NAT 게이트웨이" 선택 → `week5-day4-nat-a` 선택
+5. 타겟: "NAT 게이트웨이" 선택 → `week5-day4-nat` 선택
 6. **"변경 사항 저장"** 버튼 클릭
 
-**Private Subnet A 연결**:
+**Private Subnet 연결 (두 AZ 모두)**:
 1. **"서브넷 연결"** 탭 클릭
 2. **"서브넷 연결 편집"** 버튼 클릭
-3. `week5-day4-private-a` 체크
+3. `week5-day4-private-a`와 `week5-day4-private-b` 모두 체크
 4. **"연결 저장"** 버튼 클릭
 
-**이미지 자리**: Step 1-11 Private Route Table A 설정 완료 스크린샷
+**💡 참고**: 
+- Private Subnet 2개가 하나의 NAT Gateway 공유
+- 비용 절감을 위한 구성 (NAT Gateway 1개만 사용)
 
-#### 1-12. Private Route Table 생성 및 설정 (AZ-B)
-
-**두 번째 Private Route Table 생성**:
-1. 다시 **"라우팅 테이블 생성"** 버튼 클릭
-
-**설정 값 입력**:
-| 항목 | 입력 값 | 설명 |
-|------|---------|------|
-| 이름 | `week5-day4-private-rt-b` | AZ-B 프라이빗 라우팅 테이블 |
-| VPC | `week5-day4-vpc` | 위에서 생성한 VPC |
-
-2. **"라우팅 테이블 생성"** 버튼 클릭
-
-**라우팅 규칙 추가**:
-1. 생성된 Route Table 선택
-2. **"라우팅"** 탭 → **"라우팅 편집"** 버튼 클릭
-3. **"라우팅 추가"** 버튼 클릭
-4. 대상: `0.0.0.0/0` 입력
-5. 타겟: "NAT 게이트웨이" 선택 → `week5-day4-nat-b` 선택
-6. **"변경 사항 저장"** 버튼 클릭
-
-**Private Subnet B 연결**:
-1. **"서브넷 연결"** 탭 클릭
-2. **"서브넷 연결 편집"** 버튼 클릭
-3. `week5-day4-private-b` 체크
-4. **"연결 저장"** 버튼 클릭
-
-**이미지 자리**: Step 1-12 Private Route Table B 설정 완료 스크린샷
+**이미지 자리**: Step 1-10 Private Route Table 설정 완료 스크린샷
 
 ### ✅ Step 1 검증
 
@@ -380,8 +351,8 @@ graph TB
 2. "Your VPCs" 에서 week5-day4-vpc 상태 "Available" 확인
 3. "Subnets" 에서 4개 서브넷 모두 "Available" 확인
 4. "Internet gateways" 에서 IGW 상태 "Attached" 확인
-5. "NAT gateways" 에서 2개 NAT Gateway 상태 "Available" 확인
-6. "Route tables" 에서 3개 Route Table 확인
+5. "NAT gateways" 에서 NAT Gateway 상태 "Available" 확인
+6. "Route tables" 에서 2개 Route Table 확인 (Public 1개, Private 1개)
 
 **네트워크 구성 최종 확인**:
 | 리소스 | 이름 | 상태 | 연결 |
@@ -389,20 +360,20 @@ graph TB
 | VPC | week5-day4-vpc | Available | - |
 | Public Subnet A | week5-day4-public-a | Available | Public RT |
 | Public Subnet B | week5-day4-public-b | Available | Public RT |
-| Private Subnet A | week5-day4-private-a | Available | Private RT A |
-| Private Subnet B | week5-day4-private-b | Available | Private RT B |
+| Private Subnet A | week5-day4-private-a | Available | Private RT |
+| Private Subnet B | week5-day4-private-b | Available | Private RT |
 | Internet Gateway | week5-day4-igw | Attached | VPC |
-| NAT Gateway A | week5-day4-nat-a | Available | Public Subnet A |
-| NAT Gateway B | week5-day4-nat-b | Available | Public Subnet B |
+| NAT Gateway | week5-day4-nat | Available | Public Subnet A |
 
 **이미지 자리**: Step 1 전체 네트워크 구성 완료 스크린샷
 
 **✅ 체크리스트**:
 - [ ] VPC 생성 완료 (10.0.0.0/16)
 - [ ] 4개 서브넷 생성 완료 (Public 2개, Private 2개)
+- [ ] Public Subnet에 자동 퍼블릭 IP 할당 활성화
 - [ ] Internet Gateway 연결 완료
-- [ ] 2개 NAT Gateway 생성 완료 (각 AZ마다)
-- [ ] 3개 Route Table 설정 완료 (Public 1개, Private 2개)
+- [ ] NAT Gateway 생성 완료 (1개, AZ-A에 배치)
+- [ ] 2개 Route Table 설정 완료 (Public 1개, Private 1개)
 - [ ] 모든 서브넷 연결 완료
 
 ---
@@ -1031,16 +1002,12 @@ AWS Console → EC2 → Launch Templates → week5-day4-web-template
 AWS Console → VPC → NAT gateways
 ```
 
-**첫 번째 NAT Gateway 삭제**:
-1. `week5-day4-nat-a` 선택
+**NAT Gateway 삭제**:
+1. `week5-day4-nat` 선택
 2. "Actions" 버튼 클릭
 3. "Delete NAT gateway" 선택
 4. 확인 창에서 "delete" 입력
 5. "Delete" 버튼 클릭
-
-**두 번째 NAT Gateway 삭제**:
-1. `week5-day4-nat-b` 선택
-2. 동일한 방법으로 삭제
 
 **⚠️ 주의**: NAT Gateway 삭제는 몇 분 소요됨 (완전히 삭제될 때까지 대기)
 
@@ -1051,15 +1018,11 @@ AWS Console → VPC → NAT gateways
 AWS Console → EC2 → Elastic IPs
 ```
 
-**첫 번째 EIP 해제**:
-1. `week5-day4-eip-a` 선택
+**EIP 해제**:
+1. `week5-day4-eip-nat` 선택
 2. "Actions" 버튼 클릭
 3. "Release Elastic IP addresses" 선택
 4. 확인 창에서 "Release" 클릭
-
-**두 번째 EIP 해제**:
-1. `week5-day4-eip-b` 선택
-2. 동일한 방법으로 해제
 
 #### 8. Route Tables 삭제
 
@@ -1069,16 +1032,12 @@ AWS Console → VPC → Route tables
 ```
 
 **삭제 순서**:
-1. **Private Route Table A 삭제**:
-   - `week5-day4-private-rt-a` 선택
+1. **Private Route Table 삭제**:
+   - `week5-day4-private-rt` 선택
    - "Actions" → "Delete route table"
    - 확인 창에서 "Delete" 클릭
 
-2. **Private Route Table B 삭제**:
-   - `week5-day4-private-rt-b` 선택
-   - 동일한 방법으로 삭제
-
-3. **Public Route Table 삭제**:
+2. **Public Route Table 삭제**:
    - `week5-day4-public-rt` 선택
    - 동일한 방법으로 삭제
 
@@ -1159,9 +1118,9 @@ AWS Console → VPC → Your VPCs
 - [ ] Target Group 삭제
 - [ ] Launch Template 삭제
 - [ ] Security Groups 삭제 (2개)
-- [ ] NAT Gateways 삭제 (2개)
-- [ ] Elastic IPs 해제 (2개)
-- [ ] Route Tables 삭제 (3개)
+- [ ] NAT Gateway 삭제 (1개)
+- [ ] Elastic IP 해제 (1개)
+- [ ] Route Tables 삭제 (2개)
 - [ ] Internet Gateway 분리 및 삭제
 - [ ] Subnets 삭제 (4개)
 - [ ] VPC 삭제
@@ -1176,10 +1135,10 @@ AWS Console → VPC → Your VPCs
 |--------|----------|------|-----------|
 | ALB | 50분 | $0.0225/hour | $0.019 |
 | EC2 t3.micro × 2 | 50분 | $0.0116/hour | $0.019 |
-| NAT Gateway × 2 | 50분 | $0.045/hour | $0.075 |
+| NAT Gateway × 1 | 50분 | $0.045/hour | $0.038 |
 | Data Processing (NAT) | 1GB | $0.045/GB | $0.045 |
-| Elastic IP × 2 | 50분 | $0.005/hour | $0.008 |
-| **합계** | | | **$0.166** |
+| Elastic IP × 1 | 50분 | $0.005/hour | $0.004 |
+| **합계** | | | **$0.125** |
 
 ### 실제 비용 확인
 **AWS Console 경로**:
@@ -1188,7 +1147,7 @@ AWS Console → Cost Explorer → Cost & Usage
 ```
 
 **비용 절약 팁**:
-- **NAT Gateway**: 가장 큰 비용 요소 ($0.045/hour × 2개)
+- **NAT Gateway**: 1개만 사용하여 비용 절감 ($0.045/hour → 절반)
 - **실습 시간 단축**: 50분 이내 완료로 비용 최소화
 - **즉시 정리**: 실습 완료 후 바로 리소스 삭제
 
