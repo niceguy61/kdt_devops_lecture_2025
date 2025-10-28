@@ -836,8 +836,12 @@ aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names week5-da
 
 #### 테스트 1: 웹 사이트 접근
 **방법**:
-1. ALB DNS 이름 복사
-2. 웹 브라우저에서 접근
+1. **ALB DNS 이름 확인**:
+   - AWS Console → EC2 → Load Balancers → week5-day4-alb
+   - **직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LoadBalancers:
+   - "DNS 이름" 복사 (예: week5-day4-alb-1234567890.ap-northeast-2.elb.amazonaws.com)
+
+2. 웹 브라우저에서 ALB DNS 주소로 접근
 3. 페이지 새로고침으로 로드밸런싱 확인
 
 **예상 결과**:
@@ -851,6 +855,7 @@ aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names week5-da
 ```
 AWS Console → EC2 → Target Groups → week5-day4-web-tg → Targets 탭
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#TargetGroups:
 
 **예상 결과**:
 - 2개 인스턴스 모두 "healthy" 상태
@@ -863,6 +868,7 @@ AWS Console → EC2 → Target Groups → week5-day4-web-tg → Targets 탭
 ```
 AWS Console → EC2 → Auto Scaling Groups → week5-day4-web-asg → Activity 탭
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#AutoScalingGroups:
 
 **예상 결과**:
 - "Successful" 상태의 인스턴스 생성 활동
