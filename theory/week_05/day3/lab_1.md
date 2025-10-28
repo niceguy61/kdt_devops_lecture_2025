@@ -91,6 +91,7 @@ graph TB
 ```
 AWS Console → VPC → Your VPCs
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#vpcs:
 
 **이미지 자리**: VPC 목록 화면
 <!-- 이미지 삽입 위치: step1_1_vpc_list.png -->
@@ -108,6 +109,7 @@ AWS Console → VPC → Your VPCs
 ```
 AWS Console → RDS → Subnet groups → Create DB subnet group
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-create:
 
 **이미지 자리**: DB Subnet Group 생성 화면
 <!-- 이미지 삽입 위치: step1_2_create_subnet_group.png -->
@@ -164,6 +166,7 @@ AWS Console → RDS → Subnet groups → week5-day3-db-subnet-group
 ```
 AWS Console → VPC → Security Groups → Create security group
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateSecurityGroup:
 
 **이미지 자리**: Security Group 생성 화면
 <!-- 이미지 삽입 위치: step2_1_create_sg.png -->
@@ -227,6 +230,7 @@ AWS Console → VPC → Security Groups → week5-day3-rds-sg
 ```
 AWS Console → RDS → Databases → Create database
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#launch-dbinstance:
 
 **이미지 자리**: RDS 생성 시작 화면
 <!-- 이미지 삽입 위치: step3_1_create_database.png -->
@@ -412,6 +416,7 @@ Storage: 20 GB gp3
 ```
 AWS Console → CloudWatch → Dashboards → Create dashboard
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/cloudwatch/home?region=ap-northeast-2#dashboards:
 
 **이미지 자리**: CloudWatch 대시보드 생성 화면
 <!-- 이미지 삽입 위치: step4_1_create_dashboard.png -->
@@ -440,6 +445,7 @@ AWS Console → CloudWatch → Dashboards → Create dashboard
 ```
 AWS Console → CloudWatch → Alarms → Create alarm
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/cloudwatch/home?region=ap-northeast-2#alarmsV2:create
 
 **이미지 자리**: 알람 생성 시작 화면
 <!-- 이미지 삽입 위치: step4_2_create_alarm.png -->
@@ -529,6 +535,7 @@ AWS Console → CloudWatch → Alarms
 ```
 AWS Console → RDS → Databases → week5-day3-postgres → Connectivity & security
 ```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#databases:
 
 **이미지 자리**: RDS Endpoint 확인 화면
 <!-- 이미지 삽입 위치: step5_1_rds_endpoint.png -->
