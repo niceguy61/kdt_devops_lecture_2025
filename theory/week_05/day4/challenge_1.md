@@ -505,11 +505,11 @@ AWS Console → EC2 → Security Groups
 소요 시간: [XX분]
 
 발견한 문제:
-1. ALB Security Group 포트 오류 (8080 → 80)
-2. EC2 Security Group 소스 오류 (0.0.0.0/0 → ALB SG)
-3. Target Group Health Check 경로 오류 (/health → /)
-4. Launch Template nginx 시작 안됨
-5. ASG 최소 용량 부족 (1 → 2)
+1. [발견한 문제 1]
+2. [발견한 문제 2]
+3. [발견한 문제 3]
+4. [발견한 문제 4]
+5. [발견한 문제 5]
 
 해결 방법:
 1. [간단한 설명]
