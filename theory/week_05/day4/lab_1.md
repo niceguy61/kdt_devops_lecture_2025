@@ -310,7 +310,7 @@ graph TB
 - Private Subnet 2개가 하나의 NAT Gateway 공유
 - 비용 절감을 위한 구성 (NAT Gateway 1개만 사용)
 
-**이미지 자리**: Step 1-10 Private Route Table 설정 완료 스크린샷
+**이미지 자리**: Step 1-9 Private Route Table 설정 완료 스크린샷
 
 ### ✅ Step 1 검증
 
