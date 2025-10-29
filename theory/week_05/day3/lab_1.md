@@ -560,7 +560,7 @@ ssh -i your-key.pem ec2-user@<bastion-public-ip>
 
 ```bash
 # PostgreSQL 클라이언트 설치
-sudo yum install -y postgresql15
+sudo yum install -y postgresql17
 
 # 버전 확인
 psql --version
