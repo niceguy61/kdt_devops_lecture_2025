@@ -144,12 +144,51 @@ Challenge: 프로덕션급 배포
 ```
 
 **최종 아키텍처**:
-```
-CloudFront → S3 (Frontend)
-         ↓
-       ALB → ASG (Backend)
-         ↓
-   RDS (Multi-AZ) + ElastiCache
+```mermaid
+graph TB
+    subgraph "사용자"
+        U[Users]
+    end
+    
+    subgraph "CDN & Frontend"
+        CF[CloudFront<br/>Global CDN]
+        S3[S3 Bucket<br/>React Frontend]
+    end
+    
+    subgraph "VPC - Multi-AZ"
+        ALB[Application<br/>Load Balancer]
+        
+        subgraph "Backend Tier"
+            ASG[Auto Scaling Group<br/>EC2 Instances]
+        end
+        
+        subgraph "Data Tier"
+            RDS[RDS PostgreSQL<br/>Multi-AZ]
+            REDIS[ElastiCache<br/>Redis]
+        end
+    end
+    
+    subgraph "Monitoring"
+        CW[CloudWatch<br/>Metrics & Logs]
+    end
+    
+    U --> CF
+    CF --> S3
+    CF --> ALB
+    ALB --> ASG
+    ASG --> RDS
+    ASG --> REDIS
+    ASG --> CW
+    RDS --> CW
+    
+    style U fill:#e3f2fd
+    style CF fill:#4caf50
+    style S3 fill:#ff9800
+    style ALB fill:#2196f3
+    style ASG fill:#9c27b0
+    style RDS fill:#f44336
+    style REDIS fill:#e91e63
+    style CW fill:#ff5722
 ```
 
 ---
