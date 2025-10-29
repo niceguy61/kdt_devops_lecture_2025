@@ -216,7 +216,6 @@ graph TB
     style REDIS_B fill:#e91e63
     style CW fill:#ff5722
 ```
-```
 
 ### 사용된 AWS 서비스
 - ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **CloudFront**: 글로벌 CDN
