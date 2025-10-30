@@ -1,620 +1,604 @@
-# Week 5 Day 5 Session 1: 배포 전략 수립 (09:00-09:50)
+# Week 5 Day 5 Session 1: MVP 구현과 Pain Point 발견
 
 <div align="center">
 
-**📋 마이그레이션 계획** • **🔄 서비스 매핑** • **💰 비용 추정** • **🎯 단계별 전략**
+**🎯 최소 MVP 구현** • **🔍 실제 문제 경험** • **💡 AWS 필요성 체감**
 
-*Docker Compose에서 AWS로의 체계적 마이그레이션*
+*Docker Compose로 최소 기능을 구현하고, 실제 사용하며 한계를 경험합니다*
 
 </div>
 
 ---
 
-## 🕘 세션 정보
+## 🕘 Session 정보
 **시간**: 09:00-09:50 (50분)
-**목표**: CloudMart 프로젝트의 AWS 마이그레이션 전략 수립
-**방식**: 이론 설명 + 아키텍처 설계
+**목표**: 최소 MVP 구현 및 실제 Pain Point 발견
+**방식**: 실습 중심 + 문제 경험 + 토론
 
-## 🎯 세션 목표
+## 🎯 Session 목표
 
 ### 📚 학습 목표
-- **이해 목표**: Docker Compose와 AWS 서비스 간 매핑 관계 이해
-- **적용 목표**: 단계별 마이그레이션 계획 수립 능력
-- **협업 목표**: 팀과 함께 최적의 배포 전략 도출
+- **이해 목표**: 최소 기능 제품(MVP)의 개념과 중요성
+- **적용 목표**: Docker Compose로 CloudMart MVP 구현
+- **경험 목표**: 실제 사용하며 로컬 환경의 한계 체감
 
 ### 🤔 왜 필요한가? (5분)
 
 **현실 문제 상황**:
-- 💼 **실무 시나리오**: "로컬에서 잘 돌아가는 앱을 실제 서비스로 배포하려면?"
-- 🏠 **일상 비유**: 집에서 요리 연습 → 실제 식당 오픈 (주방 설비, 재료 공급, 손님 대응)
-- ☁️ **AWS 아키텍처**: Docker Compose (1대 서버) → AWS (여러 서비스 조합)
-- 📊 **시장 동향**: Airbnb, Uber 등 모든 스타트업이 거치는 과정
+- 💼 **실무 시나리오**: "완벽한 시스템을 만들려다 출시가 늦어지고, 정작 사용자가 원하는 기능은 놓쳤다"
+- 🏠 **일상 비유**: 집을 지을 때 기초부터 완벽하게 하려다 1년이 걸리는 것보다, 임시 거처를 만들어 살면서 필요한 것을 파악하는 것이 현명
+- 🎯 **MVP 철학**: "빠르게 만들고, 실제로 사용하고, 문제를 발견하고, 개선한다"
 
-**Docker Compose vs AWS 비교**:
+**학습 전후 비교**:
 ```mermaid
-graph TB
-    subgraph "로컬 개발 (Docker Compose)"
-        A1[docker-compose.yml] --> B1[nginx 컨테이너]
-        A1 --> C1[backend 컨테이너]
-        A1 --> D1[postgres 컨테이너]
-        A1 --> E1[redis 컨테이너]
-        F1[1대 서버에서<br/>모든 것 실행]
-    end
+graph LR
+    A[학습 전<br/>완벽한 시스템 추구<br/>출시 지연] --> B[학습 후<br/>MVP로 빠른 검증<br/>실제 문제 해결]
     
-    subgraph "프로덕션 (AWS)"
-        A2[아키텍처 설계] --> B2[CloudFront + S3]
-        A2 --> C2[ALB + EC2 ASG]
-        A2 --> D2[RDS Multi-AZ]
-        A2 --> E2[ElastiCache]
-        F2[여러 서비스로<br/>분산 배포]
-    end
-    
-    style A1 fill:#fff3e0
-    style F1 fill:#ffebee
-    style A2 fill:#e8f5e8
-    style B2 fill:#e8f5e8
-    style C2 fill:#e8f5e8
-    style D2 fill:#e8f5e8
-    style E2 fill:#e8f5e8
-    style F2 fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#e8f5e8
 ```
+
+---
 
 ## 📖 핵심 개념 (35분)
 
-### 🔍 개념 1: CloudMart 현재 아키텍처 분석 (12분)
+### 🔍 개념 1: MVP (Minimum Viable Product) (10분)
 
-> **정의**: Docker Compose 기반 CloudMart의 구성 요소와 의존성 파악
+> **정의**: 최소한의 기능만으로 사용자에게 가치를 제공할 수 있는 제품
 
-**CloudMart Docker Compose 구조**:
+**CloudMart MVP의 핵심 기능**:
+```mermaid
+graph TB
+    subgraph "MVP 핵심 기능"
+        A[상품 목록 조회]
+        B[장바구니 추가]
+        C[주문 생성]
+        D[사용자 인증]
+    end
+    
+    subgraph "나중에 추가할 기능"
+        E[결제 시스템]
+        F[추천 알고리즘]
+        G[실시간 알림]
+        H[고급 검색]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    
+    style A fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#e8f5e8
+    style D fill:#e8f5e8
+    style E fill:#ffebee
+    style F fill:#ffebee
+    style G fill:#ffebee
+    style H fill:#ffebee
+```
+
+**MVP 선정 기준**:
+- ✅ **필수 기능**: 이것 없이는 서비스가 불가능
+- ✅ **사용자 가치**: 사용자가 실제로 사용할 기능
+- ✅ **빠른 구현**: 1-2일 내 구현 가능
+- ❌ **Nice to Have**: 있으면 좋지만 없어도 되는 기능
+
+### 🔍 개념 2: Docker Compose MVP 구현 (15분)
+
+**최소 아키텍처**:
+```mermaid
+architecture-beta
+    group compose(cloud)[Docker Compose]
+    
+    service frontend(server)[Frontend] in compose
+    service backend(server)[Backend] in compose
+    service db(database)[PostgreSQL] in compose
+    service cache(disk)[Redis] in compose
+    
+    frontend:R -- L:backend
+    backend:R -- L:db
+    backend:B -- T:cache
+```
+
+**docker-compose.yml**:
 ```yaml
-# docker-compose.yml (Week 1-4에서 개발)
 version: '3.8'
+
 services:
+  # 프론트엔드 - 정적 파일 서빙
   frontend:
-    image: cloudmart-frontend:latest
+    image: nginx:alpine
     ports:
-      - "3000:3000"
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
     depends_on:
       - backend
-  
+
+  # 백엔드 API
   backend:
-    image: cloudmart-backend:latest
+    image: node:18-alpine
     ports:
-      - "8080:8080"
+      - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:5432/cloudmart
-      REDIS_URL: redis://redis:6379
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=cloudmart
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    command: npm start
     depends_on:
       - postgres
       - redis
-  
+
+  # 데이터베이스
   postgres:
     image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cloudmart
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: cloudmart
-      POSTGRES_PASSWORD: password
-  
+    ports:
+      - "5432:5432"
+
+  # 캐시 및 세션 스토어
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:
   redis_data:
 ```
 
-**구성 요소 분석**:
+**핵심 포인트**:
+- **단순함**: 각 서비스 1개씩만
+- **로컬 개발**: 모든 포트 노출
+- **빠른 시작**: 복잡한 설정 없음
+- **데이터 영속성**: 볼륨으로 데이터 보존
+
+### 🔍 개념 3: Pain Point 발견 프로세스 (10분)
+
+**실제 사용 시나리오**:
 ```mermaid
-graph TB
-    subgraph "CloudMart 로컬 구조"
-        A[사용자] --> B[Frontend<br/>React 3000포트]
-        B --> C[Backend<br/>Node.js 8080포트]
-        C --> D[PostgreSQL<br/>5432포트]
-        C --> E[Redis<br/>6379포트]
-    end
+sequenceDiagram
+    participant S as 학생
+    participant F as Frontend
+    participant B as Backend
+    participant D as Database
     
-    subgraph "데이터 영속성"
-        D --> F[postgres_data<br/>볼륨]
-        E --> G[redis_data<br/>볼륨]
-    end
+    S->>F: 1. 상품 목록 조회
+    F->>B: API 요청
+    B->>D: 데이터 조회
+    D->>B: 결과 반환
+    B->>F: JSON 응답
+    F->>S: 화면 표시
     
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style C fill:#e8f5e8
-    style D fill:#ffebee
-    style E fill:#f3e5f5
-```
-
-**핵심 요구사항 파악**:
-- **Frontend**: 정적 파일 서빙 (HTML, CSS, JS)
-- **Backend**: API 서버 (Node.js/Express)
-- **Database**: 관계형 데이터베이스 (PostgreSQL)
-- **Cache**: 세션 & 캐싱 (Redis)
-- **Storage**: 데이터 영속성 (Volumes)
-
----
-
-### 🚨 Docker Compose → AWS 마이그레이션 Pain Points
-
-> **💡 기본 프로젝트의 핵심**: 이 Pain Points를 완벽하게 이해하고 극복하는 것이 목표입니다!
-
-**Pain Point 1: 네트워크 설정의 복잡도 증가**
-
-```yaml
-# ✅ Docker Compose (간단 - 자동 서비스 디스커버리)
-services:
-  backend:
-    depends_on:
-      - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:5432/cloudmart  # 서비스명으로 자동 연결
-```
-
-```bash
-# ❌ AWS (복잡 - 수동 엔드포인트 관리)
-# RDS 엔드포인트: cloudmart-db.c9akciq32.ap-northeast-2.rds.amazonaws.com
-# 보안 그룹 설정 필요 (Inbound/Outbound 규칙)
-# VPC 내부 통신 설정 필요 (Private Subnet)
-DATABASE_URL=postgresql://cloudmart-db.c9akciq32.ap-northeast-2.rds.amazonaws.com:5432/cloudmart
-```
-
-**극복 방법**:
-- ✅ **Parameter Store 활용**: 엔드포인트를 중앙 관리
-- ✅ **Service Discovery**: AWS Cloud Map 또는 Route 53 Private Hosted Zone
-- ✅ **환경별 설정 분리**: dev/staging/prod 환경 구분
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트에서 환경 변수 관리 전략 수립
-- 개발/스테이징/프로덕션 환경 분리 경험
-
----
-
-**Pain Point 2: 데이터 영속성 전략의 다양화**
-
-```yaml
-# ✅ Docker Compose (단순 - 로컬 볼륨)
-volumes:
-  postgres_data:  # 로컬 디스크에 자동 생성
-  redis_data:     # 재시작 시 데이터 유지
-```
-
-```bash
-# ❌ AWS (복잡 - 여러 스토리지 옵션)
-# RDS: 자동 백업 (7-35일), 스냅샷, Multi-AZ 복제
-# EBS: 볼륨 타입 선택 (gp3, io2, st1, sc1)
-# S3: 정적 파일, 백업, 로그 저장
-# 각각 다른 비용 구조와 성능 특성
-```
-
-**극복 방법**:
-- ✅ **백업 전략 수립**: 자동 백업 + 수동 스냅샷
-- ✅ **스토리지 계층화**: Hot(EBS) / Warm(S3) / Cold(Glacier)
-- ✅ **재해 복구 계획**: RTO/RPO 목표 설정
-
-**기본 프로젝트 적용**:
-- 데이터 백업 및 복구 시나리오 실습
-- 비용 효율적인 스토리지 전략 수립
-
----
-
-**Pain Point 3: 시크릿 관리의 보안 강화**
-
-```yaml
-# ✅ Docker Compose (간단 - 평문 저장)
-environment:
-  POSTGRES_PASSWORD: password  # .env 파일에 평문
-  REDIS_PASSWORD: redis123
-  API_KEY: abc123
-```
-
-```bash
-# ❌ AWS (복잡 - 암호화 및 접근 제어)
-# Systems Manager Parameter Store (무료, 기본 암호화)
-aws ssm put-parameter \
-  --name /cloudmart/db/password \
-  --value "xxx" \
-  --type SecureString
-
-# Secrets Manager (유료, 자동 로테이션)
-aws secretsmanager create-secret \
-  --name cloudmart/db \
-  --secret-string '{"password":"xxx"}'
-```
-
-**극복 방법**:
-- ✅ **시크릿 계층화**: 민감도에 따라 Parameter Store vs Secrets Manager
-- ✅ **IAM 역할 기반 접근**: EC2 인스턴스 프로파일 활용
-- ✅ **자동 로테이션**: 정기적인 비밀번호 변경
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트에서 시크릿 관리 Best Practice 적용
-- 보안 감사 및 컴플라이언스 체크
-
----
-
-**Pain Point 4: 로그 및 모니터링의 분산화**
-
-```bash
-# ✅ Docker Compose (간단 - 단일 서버)
-docker-compose logs -f backend  # 실시간 로그 확인
-docker stats                    # 리소스 사용량 확인
-```
-
-```bash
-# ❌ AWS (복잡 - 분산 환경)
-# CloudWatch Logs: 여러 EC2 인스턴스의 로그 통합
-# CloudWatch Metrics: CPU, 메모리, 네트워크 모니터링
-# X-Ray: 분산 추적 (마이크로서비스 간 호출 추적)
-# CloudWatch Alarms: 임계값 초과 시 알림
-```
-
-**극복 방법**:
-- ✅ **중앙 집중식 로깅**: CloudWatch Logs Insights 쿼리
-- ✅ **대시보드 구축**: CloudWatch Dashboard로 시각화
-- ✅ **알림 자동화**: SNS + Lambda로 Slack/Email 알림
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트 모니터링 대시보드 구축
-- 장애 알림 시스템 구현
-
----
-
-**Pain Point 5: 배포 프로세스의 복잡도 증가**
-
-```bash
-# ✅ Docker Compose (즉시 반영 - 1분)
-docker-compose down
-docker-compose up -d --build  # 빌드 + 배포 완료
-```
-
-```bash
-# ❌ AWS (단계적 프로세스 - 5-10분)
-# 1. 이미지 빌드 및 ECR 푸시 (2분)
-docker build -t cloudmart-backend .
-docker push xxx.dkr.ecr.ap-northeast-2.amazonaws.com/cloudmart-backend
-
-# 2. Launch Template 업데이트 (1분)
-aws ec2 create-launch-template-version --launch-template-id lt-xxx
-
-# 3. Auto Scaling Group 인스턴스 교체 (3-5분)
-aws autoscaling start-instance-refresh --auto-scaling-group-name cloudmart-asg
-
-# 4. ALB Health Check 통과 대기 (2분)
-# 5. 이전 인스턴스 종료 (1분)
-```
-
-**극복 방법**:
-- ✅ **Blue-Green 배포**: 무중단 배포 전략
-- ✅ **Canary 배포**: 점진적 트래픽 전환
-- ✅ **CI/CD 파이프라인**: GitHub Actions + CodeDeploy 자동화
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트에서 무중단 배포 전략 구현
-- CI/CD 파이프라인 구축 경험
-
----
-
-**Pain Point 6: 비용 관리의 필요성**
-
-```bash
-# ✅ Docker Compose (무료 - 로컬 개발)
-# 비용: $0 (전기세만 발생)
-# 리소스: 개발자 PC 사양에 의존
-```
-
-```bash
-# ❌ AWS (시간당 과금 - 프로덕션)
-# RDS (db.t3.micro): $0.017/hour
-# ElastiCache (cache.t3.micro): $0.017/hour
-# ALB: $0.025/hour
-# EC2 (t3.micro × 2): $0.010/hour × 2
-# NAT Gateway: $0.045/hour
-# 데이터 전송: $0.09/GB
-# ---
-# 합계: $0.124/hour = $89.28/month
-```
-
-**극복 방법**:
-- ✅ **비용 최적화**: Reserved Instances, Savings Plans
-- ✅ **리소스 스케줄링**: 개발 환경 야간/주말 자동 종료
-- ✅ **비용 알림**: AWS Budgets로 예산 초과 알림
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트 예산 관리 및 비용 최적화
-- FinOps 원칙 적용 경험
-
----
-
-**Pain Point 7: 고가용성 및 확장성 설계**
-
-```yaml
-# ✅ Docker Compose (단일 서버 - 단순)
-services:
-  backend:
-    # 1개 컨테이너만 실행
-    # 서버 다운 시 전체 서비스 중단
-    # 트래픽 증가 시 수동 스케일링
-```
-
-```bash
-# ❌ AWS (Multi-AZ 분산 - 복잡)
-# ALB: 여러 AZ에 트래픽 자동 분산
-# ASG: 최소 2개, 최대 10개 인스턴스 자동 확장
-# RDS: Multi-AZ 자동 장애 조치 (1-2분)
-# ElastiCache: 클러스터 모드로 샤딩
-# 복잡도 증가, 하지만 99.99% 가용성 달성
-```
-
-**극복 방법**:
-- ✅ **Multi-AZ 배포**: 단일 장애점 제거
-- ✅ **Auto Scaling 정책**: CPU/메모리 기반 자동 확장
-- ✅ **Health Check 최적화**: 빠른 장애 감지 및 복구
-
-**기본 프로젝트 적용**:
-- 팀 프로젝트에서 고가용성 아키텍처 설계
-- 장애 시나리오 테스트 및 복구 경험
-
----
-
-### 📊 Pain Points 종합 비교표
-
-| 항목 | Docker Compose | AWS | 난이도 | 기본 프로젝트 학습 목표 |
-|------|----------------|-----|--------|------------------------|
-| **네트워크** | 서비스명 자동 연결 | 엔드포인트 수동 설정 | ⭐⭐⭐ | 환경 변수 관리 전략 수립 |
-| **스토리지** | 로컬 볼륨 자동 생성 | EBS/S3 선택 및 설정 | ⭐⭐⭐⭐ | 백업 및 복구 전략 구현 |
-| **시크릿** | .env 평문 저장 | Parameter Store/Secrets Manager | ⭐⭐⭐⭐⭐ | 보안 Best Practice 적용 |
-| **로그** | docker logs 명령어 | CloudWatch 통합 설정 | ⭐⭐⭐⭐ | 모니터링 대시보드 구축 |
-| **배포** | 즉시 반영 (1분) | 단계적 롤링 (5-10분) | ⭐⭐⭐ | CI/CD 파이프라인 구축 |
-| **비용** | 무료 (로컬) | 시간당 과금 ($0.124/h) | ⭐⭐⭐⭐⭐ | FinOps 원칙 적용 |
-| **고가용성** | 단일 서버 | Multi-AZ 분산 | ⭐⭐⭐⭐⭐ | 고가용성 아키텍처 설계 |
-
----
-
-### 🎯 기본 프로젝트에서의 학습 목표
-
-**Week 5 (이론 + 실습)**:
-- ✅ Pain Points 이해 및 기본 극복 방법 학습
-- ✅ CloudMart 프로젝트 AWS 배포 경험
-
-**기본 프로젝트 (4주)**:
-- 🎯 **1주차**: Pain Points 1-3 극복 (네트워크, 스토리지, 시크릿)
-- 🎯 **2주차**: Pain Points 4-5 극복 (로그, 배포)
-- 🎯 **3주차**: Pain Points 6-7 극복 (비용, 고가용성)
-- 🎯 **4주차**: 팀 프로젝트 완성 및 더 나은 방법 탐구
-
-**💡 핵심 인사이트**:
-> "이 Pain Points를 극복하는 과정에서 더 나은 방법을 찾아내는 것이 진짜 목표입니다!"
-
-**예시 - 더 나은 방법 탐구**:
-- 💡 "Parameter Store 대신 Secrets Manager를 사용하면 자동 로테이션이 가능하다"
-- 💡 "NAT Gateway 비용이 비싸다면 VPC Endpoint를 사용하면 무료다"
-- 💡 "ALB 대신 CloudFront를 사용하면 글로벌 배포가 가능하다"
-- 💡 "EC2 대신 Fargate를 사용하면 서버 관리가 필요 없다"
-
-**심화 프로젝트 (5주)**:
-- 🚀 더 나은 방법을 실제로 적용하여 프로젝트 고도화
-- 🚀 Kubernetes, Terraform, GitOps 등 고급 기술 적용
-- 🚀 실무 수준의 프로덕션 환경 구축
-
----
-
-**💪 이제 이 Pain Points를 하나씩 극복해나가며 실력을 쌓아갑시다!**
-
-### 🔍 개념 2: AWS 서비스 매핑 전략 (12분)
-
-> **정의**: Docker Compose 구성 요소를 AWS 서비스로 1:1 매핑
-
-**서비스 매핑 테이블**:
-| Docker Compose | AWS 서비스 | 이유 |
-|----------------|------------|------|
-| **frontend** | S3 + CloudFront | 정적 파일은 S3, CDN으로 전 세계 배포 |
-| **backend** | EC2 + ALB + ASG | API 서버는 EC2, 로드밸런싱 + 자동 확장 |
-| **postgres** | RDS PostgreSQL | 관리형 DB, 자동 백업, Multi-AZ |
-| **redis** | ElastiCache Redis | 관리형 캐시, 고가용성 |
-| **volumes** | EBS + S3 | 블록 스토리지 + 객체 스토리지 |
-| **network** | VPC + Subnet | 네트워크 격리 및 보안 |
-
-**상세 매핑 다이어그램**:
-```mermaid
-graph TB
-    subgraph "Docker Compose"
-        DC1[frontend<br/>컨테이너]
-        DC2[backend<br/>컨테이너]
-        DC3[postgres<br/>컨테이너]
-        DC4[redis<br/>컨테이너]
-    end
+    Note over S,D: 동시 접속 10명 시 느려짐 체감
     
-    subgraph "AWS 서비스"
-        AWS1[S3 + CloudFront<br/>정적 호스팅]
-        AWS2[EC2 + ALB + ASG<br/>API 서버]
-        AWS3[RDS PostgreSQL<br/>Multi-AZ]
-        AWS4[ElastiCache Redis<br/>클러스터]
-    end
+    S->>F: 2. 장바구니 추가
+    F->>B: API 요청
+    B->>D: 데이터 저장
     
-    DC1 -.매핑.-> AWS1
-    DC2 -.매핑.-> AWS2
-    DC3 -.매핑.-> AWS3
-    DC4 -.매핑.-> AWS4
+    Note over S,D: 컨테이너 재시작 시 서비스 중단
     
-    style DC1 fill:#fff3e0
-    style DC2 fill:#fff3e0
-    style DC3 fill:#fff3e0
-    style DC4 fill:#fff3e0
-    style AWS1 fill:#e8f5e8
-    style AWS2 fill:#e8f5e8
-    style AWS3 fill:#e8f5e8
-    style AWS4 fill:#e8f5e8
+    S->>F: 3. 주문 생성
+    F->>B: API 요청
+    B->>D: 트랜잭션 처리
+    
+    Note over S,D: 에러 발생 시 원인 파악 어려움
 ```
 
-**매핑 시 고려사항**:
-- **Frontend**: 빌드 후 정적 파일만 S3에 업로드
-- **Backend**: Docker 이미지를 EC2에서 실행 또는 ECR 사용
-- **Database**: 데이터 마이그레이션 계획 필요
-- **Cache**: Redis 데이터는 휘발성이므로 마이그레이션 불필요
+**Pain Point 발견 체크리스트**:
+- [ ] **성능**: 동시 접속 시 응답 속도 저하
+- [ ] **가용성**: 배포 시 서비스 중단
+- [ ] **확장성**: 트래픽 증가 시 대응 불가
+- [ ] **안정성**: 데이터 손실 위험
+- [ ] **보안**: 비밀번호 하드코딩
+- [ ] **모니터링**: 문제 원인 파악 어려움
 
-### 🔍 개념 3: 단계별 마이그레이션 계획 (11분)
-
-> **정의**: 안전하고 체계적인 배포를 위한 단계별 전략
-
-**3단계 마이그레이션 전략**:
-```mermaid
-graph LR
-    A[Phase 1<br/>인프라 구축] --> B[Phase 2<br/>데이터 마이그레이션]
-    B --> C[Phase 3<br/>애플리케이션 배포]
-    
-    A --> A1[VPC, Subnet<br/>보안 그룹]
-    A --> A2[RDS, ElastiCache<br/>생성]
-    
-    B --> B1[DB 스키마<br/>생성]
-    B --> B2[데이터<br/>이관]
-    
-    C --> C1[Backend<br/>배포]
-    C --> C2[Frontend<br/>배포]
-    C --> C3[테스트 &<br/>검증]
-    
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#ffebee
-```
-
-**Phase 1: 인프라 구축 (20분)**
-```yaml
-Step 1: 네트워크 구성
-  - VPC 생성 (10.0.0.0/16)
-  - Public Subnet × 2 (AZ-A, AZ-B)
-  - Private Subnet × 2 (AZ-A, AZ-B)
-  - Internet Gateway, NAT Gateway
-
-Step 2: 데이터베이스 구성
-  - RDS PostgreSQL (db.t3.micro, Multi-AZ)
-  - ElastiCache Redis (cache.t3.micro)
-  - 보안 그룹 설정
-
-Step 3: 컴퓨팅 리소스
-  - ALB 생성
-  - Launch Template 생성
-  - Auto Scaling Group 설정
-```
-
-**Phase 2: 데이터 마이그레이션 (10분)**
-```bash
-# 1. 로컬 DB 덤프
-docker exec cloudmart-postgres pg_dump -U postgres cloudmart > cloudmart.sql
-
-# 2. AWS RDS로 복원
-psql -h cloudmart-db.xxxxx.ap-northeast-2.rds.amazonaws.com \
-     -U postgres -d cloudmart < cloudmart.sql
-
-# 3. 데이터 검증
-psql -h cloudmart-db.xxxxx.ap-northeast-2.rds.amazonaws.com \
-     -U postgres -d cloudmart -c "SELECT COUNT(*) FROM products;"
-```
-
-**Phase 3: 애플리케이션 배포 (20분)**
-```yaml
-Step 1: Backend 배포
-  - Docker 이미지 빌드
-  - ECR에 푸시 (선택)
-  - EC2 User Data로 배포
-  - 환경 변수 설정 (RDS, Redis 엔드포인트)
-
-Step 2: Frontend 배포
-  - React 앱 빌드 (npm run build)
-  - S3 버킷에 업로드
-  - CloudFront 배포 생성
-
-Step 3: 통합 테스트
-  - Frontend → Backend API 호출 테스트
-  - Backend → RDS 연결 테스트
-  - Backend → Redis 연결 테스트
-```
-
-**비용 추정**:
-```
-인프라 구축 (1시간):
-  - VPC, Subnet: $0 (무료)
-  - NAT Gateway: $0.045
-  - RDS (db.t3.micro): $0.017
-  - ElastiCache: $0.017
-  - ALB: $0.025
-  - EC2 (t3.micro × 2): $0.020
-  ---
-  시간당 합계: $0.124
-  
-Lab 1 (50분): $0.10
-Challenge (50분): $0.10
 ---
-Day 5 총 비용: $0.20 (학생당)
-```
 
 ## 💭 함께 생각해보기 (10분)
 
-### 🤝 페어 토론 (5분)
+### 🤝 페어 실습 (5분)
 
-**토론 주제**:
-1. **마이그레이션 우선순위**: "Frontend와 Backend 중 어느 것을 먼저 배포해야 할까요?"
-2. **데이터 안전성**: "데이터 마이그레이션 중 문제가 생기면 어떻게 대응할까요?"
-3. **비용 최적화**: "같은 기능을 더 저렴하게 구현할 방법이 있을까요?"
+**실습 주제**: "MVP 실행 및 문제 경험"
 
 **페어 활동 가이드**:
-- 👥 **자유 페어링**: 프로젝트 경험이 비슷한 사람끼리
-- 🔄 **역할 교대**: 3분씩 설명자/질문자 역할 바꾸기
-- 📝 **핵심 정리**: 마이그레이션 체크리스트 작성
+1. **MVP 실행** (2분):
+   ```bash
+   # CloudMart MVP 실행
+   cd cloudmart-mvp
+   docker-compose up -d
+   
+   # 상태 확인
+   docker-compose ps
+   curl http://localhost
+   ```
+
+2. **동시 접속 테스트** (2분):
+   ```bash
+   # 10명 동시 접속 시뮬레이션
+   for i in {1..10}; do
+     curl http://localhost/api/products &
+   done
+   wait
+   
+   # 응답 시간 측정
+   time curl http://localhost/api/products
+   ```
+
+3. **문제 경험** (1분):
+   ```bash
+   # 컨테이너 재시작
+   docker-compose restart backend
+   
+   # 이 순간 서비스 접근 시도
+   curl http://localhost/api/products
+   # 에러 발생 확인
+   ```
 
 ### 🎯 전체 공유 (5분)
 
-**인사이트 공유**:
-- 페어 토론에서 나온 마이그레이션 전략
-- 예상하지 못했던 고려사항
-- 실무에서 적용 가능한 팁
+**공유 질문**:
+1. **성능**: "동시 접속 시 얼마나 느려졌나요?"
+2. **가용성**: "재시작 시 서비스가 얼마나 중단되었나요?"
+3. **모니터링**: "에러 발생 시 원인을 어떻게 찾았나요?"
 
-**💡 이해도 체크 질문**:
-- ✅ "Docker Compose의 각 서비스가 AWS의 어떤 서비스로 매핑되나요?"
-- ✅ "마이그레이션을 3단계로 나눈 이유는 무엇인가요?"
-- ✅ "데이터 마이그레이션 시 가장 주의해야 할 점은 무엇인가요?"
+**예상 답변**:
+- "10명만 접속해도 응답이 2-3초 걸렸어요"
+- "재시작하는 동안 서비스가 완전히 멈췄어요"
+- "로그를 일일이 확인해야 해서 시간이 오래 걸렸어요"
+
+### 💡 이해도 체크 질문
+
+- ✅ "MVP의 핵심 기능 3가지를 말할 수 있나요?"
+- ✅ "Docker Compose의 한계를 3가지 이상 경험했나요?"
+- ✅ "왜 AWS가 필요한지 자신의 경험으로 설명할 수 있나요?"
+
+---
+
+## 🚨 실제 Pain Point 사례
+
+### Pain Point 1: 확장성 문제
+
+**상황**:
+```
+시간: 오후 2시 (점심시간 직후)
+동시 접속자: 10명
+증상: 응답 시간 200ms → 3000ms
+```
+
+**원인**:
+- 단일 백엔드 컨테이너
+- CPU/메모리 제한 없음 (호스트 리소스 공유)
+- 로드 밸런싱 없음
+
+**AWS 해결 방안**:
+```mermaid
+graph TB
+    subgraph "현재 (Docker Compose)"
+        A1[사용자 10명] --> B1[Backend 1개]
+        B1 --> C1[느린 응답]
+    end
+    
+    subgraph "AWS 마이그레이션 후"
+        A2[사용자 100명] --> B2[ALB]
+        B2 --> C2[Backend 1]
+        B2 --> C3[Backend 2]
+        B2 --> C4[Backend 3]
+        C2 --> D2[빠른 응답]
+        C3 --> D2
+        C4 --> D2
+    end
+    
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style C3 fill:#e8f5e8
+    style C4 fill:#e8f5e8
+    style D2 fill:#e8f5e8
+```
+
+**측정 가능한 지표**:
+- **현재**: 동시 접속 10명, 응답 시간 3초
+- **목표**: 동시 접속 100명, 응답 시간 200ms
+
+### Pain Point 2: 가용성 문제
+
+**상황**:
+```
+작업: 새 버전 배포
+방법: docker-compose restart
+다운타임: 30초
+영향: 모든 사용자 서비스 중단
+```
+
+**원인**:
+- 단일 인스턴스
+- 무중단 배포 불가
+- 헬스체크 없음
+
+**AWS 해결 방안**:
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant ALB as ALB
+    participant Old as 기존 인스턴스
+    participant New as 새 인스턴스
+    
+    U->>ALB: 요청
+    ALB->>Old: 라우팅
+    Old->>ALB: 응답
+    ALB->>U: 정상 서비스
+    
+    Note over New: 새 버전 배포
+    New->>ALB: 헬스체크 통과
+    
+    U->>ALB: 요청
+    ALB->>New: 라우팅 (점진적)
+    New->>ALB: 응답
+    ALB->>U: 무중단 서비스
+    
+    Note over Old: 기존 인스턴스 종료
+```
+
+**측정 가능한 지표**:
+- **현재**: 배포 시 30초 다운타임
+- **목표**: 배포 시 0초 다운타임 (무중단)
+
+### Pain Point 3: 데이터 안정성
+
+**상황**:
+```
+작업: docker-compose down
+결과: 볼륨 삭제 시 데이터 손실
+백업: 없음
+복구: 불가능
+```
+
+**원인**:
+- 로컬 볼륨만 사용
+- 자동 백업 없음
+- 재해 복구 계획 없음
+
+**AWS 해결 방안**:
+```mermaid
+graph TB
+    subgraph "현재 (Docker Compose)"
+        A1[PostgreSQL] --> B1[로컬 볼륨]
+        B1 --> C1[삭제 시 손실]
+    end
+    
+    subgraph "AWS 마이그레이션 후"
+        A2[RDS] --> B2[자동 백업]
+        A2 --> C2[Multi-AZ]
+        A2 --> D2[스냅샷]
+        B2 --> E2[복구 가능]
+        C2 --> E2
+        D2 --> E2
+    end
+    
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style D2 fill:#e8f5e8
+    style E2 fill:#e8f5e8
+```
+
+**측정 가능한 지표**:
+- **현재**: 백업 없음, 복구 불가
+- **목표**: 자동 백업, 35일 보관, 5분 내 복구
+
+### Pain Point 4: 보안 문제
+
+**상황**:
+```yaml
+# docker-compose.yml에 하드코딩
+environment:
+  - DB_PASSWORD=password  # 🚨 보안 위험
+  - API_KEY=secret123     # 🚨 코드 저장소에 노출
+```
+
+**원인**:
+- 환경변수 하드코딩
+- 시크릿 관리 시스템 없음
+- 코드 저장소에 비밀번호 노출
+
+**AWS 해결 방안**:
+```mermaid
+graph TB
+    subgraph "현재 (Docker Compose)"
+        A1[docker-compose.yml] --> B1[하드코딩된 비밀번호]
+        B1 --> C1[Git에 노출]
+    end
+    
+    subgraph "AWS 마이그레이션 후"
+        A2[애플리케이션] --> B2[Secrets Manager]
+        B2 --> C2[암호화된 저장]
+        B2 --> D2[자동 로테이션]
+        B2 --> E2[접근 제어]
+    end
+    
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style D2 fill:#e8f5e8
+    style E2 fill:#e8f5e8
+```
+
+**측정 가능한 지표**:
+- **현재**: 비밀번호 코드에 노출
+- **목표**: 암호화 저장, 자동 로테이션, 감사 로그
+
+### Pain Point 5: 모니터링 부재
+
+**상황**:
+```bash
+# 에러 발생 시 로그 확인
+docker-compose logs backend | grep ERROR
+docker-compose logs postgres | grep ERROR
+docker-compose logs redis | grep ERROR
+
+# 각 컨테이너마다 일일이 확인 필요
+# 전체 시스템 상태 파악 어려움
+```
+
+**원인**:
+- 로그 분산 (각 컨테이너)
+- 메트릭 수집 없음
+- 알림 시스템 없음
+- 대시보드 없음
+
+**AWS 해결 방안**:
+```mermaid
+graph TB
+    subgraph "현재 (Docker Compose)"
+        A1[Backend 로그] --> D1[수동 확인]
+        B1[DB 로그] --> D1
+        C1[Redis 로그] --> D1
+        D1 --> E1[원인 파악 어려움]
+    end
+    
+    subgraph "AWS 마이그레이션 후"
+        A2[Backend] --> D2[CloudWatch]
+        B2[RDS] --> D2
+        C2[ElastiCache] --> D2
+        D2 --> E2[통합 대시보드]
+        D2 --> F2[자동 알림]
+        D2 --> G2[이상 탐지]
+    end
+    
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style D1 fill:#ffebee
+    style E1 fill:#ffebee
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style D2 fill:#e8f5e8
+    style E2 fill:#e8f5e8
+    style F2 fill:#e8f5e8
+    style G2 fill:#e8f5e8
+```
+
+**측정 가능한 지표**:
+- **현재**: 문제 발견 시간 30분+
+- **목표**: 문제 발견 시간 1분 이내, 자동 알림
+
+---
+
+## 📝 Pain Point 문서화 템플릿
+
+### 🚨 Pain Point 기록 양식
+
+```markdown
+## 🚨 Pain Point N: [문제 제목]
+
+### 📝 상황
+- **언제**: [구체적인 시간과 상황]
+- **무엇**: [발생한 문제]
+- **영향**: [서비스에 미친 영향]
+
+### 🔍 원인 분석
+- **기술적 원인**: [Docker Compose의 한계]
+- **아키텍처 원인**: [단일 서버 구조의 문제]
+
+### 💡 AWS 해결 방안
+- **AWS 서비스**: [필요한 AWS 서비스]
+- **해결 방법**: [구체적인 해결 방법]
+- **기대 효과**: [개선 효과]
+
+### 📊 측정 가능한 지표
+- **현재**: [현재 상태의 수치]
+- **목표**: [AWS 마이그레이션 후 목표]
+```
+
+---
 
 ## 🔑 핵심 키워드
 
-### 🆕 새로운 용어
-- **마이그레이션 (Migration)**: 기존 시스템을 새로운 환경으로 이전하는 과정
-- **서비스 매핑 (Service Mapping)**: 로컬 구성 요소를 클라우드 서비스로 1:1 대응
-- **단계별 배포 (Phased Deployment)**: 위험을 줄이기 위한 점진적 배포 전략
+### 새로운 용어
+- **MVP (Minimum Viable Product)**: 최소 기능 제품 - 핵심 기능만으로 사용자에게 가치를 제공
+- **Pain Point**: 고통점 - 실제 사용 중 겪는 문제점
+- **Downtime**: 다운타임 - 서비스 중단 시간
 
-### 🔧 중요 개념
-- **인프라 우선 (Infrastructure First)**: 애플리케이션 배포 전 인프라 구축
-- **데이터 무결성 (Data Integrity)**: 마이그레이션 중 데이터 손실 방지
-- **롤백 계획 (Rollback Plan)**: 문제 발생 시 이전 상태로 복구하는 방법
+### 중요 개념
+- **빠른 검증**: 완벽함보다 빠른 출시와 피드백
+- **실제 경험**: 이론이 아닌 직접 겪은 문제
+- **측정 가능**: 개선 효과를 수치로 확인
 
-### 💼 실무 용어
-- **Lift and Shift**: 최소한의 변경으로 클라우드로 이전
-- **Re-architecting**: 클라우드 네이티브로 재설계
-- **Hybrid Deployment**: 일부는 로컬, 일부는 클라우드
+---
 
-## 📝 세션 마무리
+## 📝 Session 마무리
 
-### ✅ 오늘 세션 성과
-- **아키텍처 분석**: CloudMart Docker Compose 구조 완전 이해
-- **서비스 매핑**: AWS 서비스로의 1:1 매핑 전략 수립
-- **배포 계획**: 3단계 마이그레이션 로드맵 완성
+### ✅ 오늘 Session 성과
 
-### 🎯 다음 세션 준비
-- **Session 2 주제**: 인프라 구성 (VPC, RDS, ElastiCache)
-- **연결 내용**: 오늘 수립한 계획을 실제 AWS 인프라로 구현
-- **사전 생각**: "Multi-AZ 구성이 왜 중요한가요?"
+**학습 성과**:
+- [ ] MVP 개념 이해 및 CloudMart MVP 정의
+- [ ] Docker Compose로 MVP 구현 및 실행
+- [ ] 최소 5가지 Pain Point 실제 경험
+- [ ] 각 Pain Point별 AWS 해결 방안 이해
 
-### 🔗 실습 연계
-- **Lab 1**: 오늘 배운 마이그레이션 계획을 실제로 실행
-- **Challenge**: 프로덕션급 완성도로 전체 시스템 배포
+**경험 성과**:
+- [ ] 동시 접속 시 성능 저하 체감
+- [ ] 배포 시 서비스 중단 경험
+- [ ] 데이터 손실 위험 인식
+- [ ] 모니터링 부재로 인한 답답함
+- [ ] AWS 필요성 자연스럽게 체감
+
+### 🎯 다음 Session 준비
+
+**Session 2 예고**: "AWS 마이그레이션 전략 수립"
+- Pain Point별 AWS 서비스 매핑
+- 단계적 마이그레이션 계획
+- 비용 효율적 아키텍처 설계
+
+**준비사항**:
+- 오늘 발견한 Pain Point 정리
+- 가장 시급한 문제 우선순위 정하기
+- AWS 서비스 중 관심 있는 것 찾아보기
+
+---
+
+## 🔗 참고 자료
+
+### 📚 복습 자료
+- [MVP 개념 및 사례](https://aws.amazon.com/startups/start-building/how-to-build-an-mvp/)
+- [Docker Compose 공식 문서](https://docs.docker.com/compose/)
+
+### 📖 심화 학습
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+- [클라우드 마이그레이션 전략](https://aws.amazon.com/cloud-migration/)
 
 ---
 
 <div align="center">
 
-**📋 마이그레이션 계획 완료** • **🔄 서비스 매핑 이해** • **🎯 배포 준비 완료**
+**🎯 MVP 구현** • **🔍 문제 경험** • **💡 AWS 필요성 체감**
 
-*다음 세션에서는 실제 AWS 인프라를 구축해보겠습니다!*
+*완벽함보다 빠른 검증, 이론보다 실제 경험*
 
 </div>
