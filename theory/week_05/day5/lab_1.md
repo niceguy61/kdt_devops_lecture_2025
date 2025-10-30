@@ -890,47 +890,80 @@ https://<cloudfront-domain>/
 
 ## ✅ 전체 시스템 검증
 
-### 📋 통합 테스트
+### 📋 인프라 검증 (필수)
 
-#### 테스트 1: Frontend → Backend 연결
+#### 테스트 1: ALB Health Check 확인
+```
+AWS Console → EC2 → Target Groups → cloudmart-backend-tg
+→ Targets 탭 → Health status 확인
+```
+
+**예상 결과**: 
+- Status: `healthy`
+- Health check path: `/health`
+- Response: `{"status":"healthy","timestamp":"...","version":"1.0.0"}`
+
+**이미지 자리**: Target Group Health Check 결과
+
+#### 테스트 2: ALB를 통한 Backend 접근
+```bash
+# ALB DNS로 직접 접근
+curl http://<ALB-DNS>/health
+
+# 예상 응답
+{
+  "status": "healthy",
+  "timestamp": "2025-10-30T15:30:00.000Z",
+  "version": "1.0.0"
+}
+```
+
+**브라우저 테스트**:
+```
+http://<ALB-DNS>/health
+```
+
+**이미지 자리**: 브라우저에서 /health 응답 확인
+
+#### 테스트 3: Frontend 배포 확인
 ```
 브라우저에서 CloudFront URL 접속
-→ 개발자 도구 (F12) → Network 탭
-→ 페이지 새로고침
-→ API 호출 확인 (ALB DNS로 요청)
+→ CloudMart 메인 페이지 표시 확인
 ```
 
-**예상 결과**: Frontend가 ALB를 통해 Backend API 호출 성공
+**예상 결과**: S3에서 호스팅된 정적 페이지 정상 표시
 
-**이미지 자리**: 통합 테스트 결과
+**이미지 자리**: CloudFront를 통한 Frontend 접근
 
-#### 테스트 2: Backend → RDS 연결
-```
-EC2 → Instances → Backend 인스턴스 선택
-→ Connect → Session Manager
-→ 로그 확인:
-  sudo tail -f /var/log/cloudmart-backend.log
-```
+### 💡 선택적 검증 (심화)
 
-**예상 결과**: Backend가 RDS에 정상 연결
-
-#### 테스트 3: Backend → Redis 연결
-```
-브라우저에서 테스트:
-http://<ALB-DNS>/api/products
-→ 첫 번째 호출: Database에서 조회
-→ 두 번째 호출: Cache에서 조회 (빠른 응답)
+**RDS 연결 테스트** (선택):
+```bash
+# EC2에서 psql 설치 후 테스트
+sudo dnf install -y postgresql15
+psql -h <RDS-ENDPOINT> -U cloudmart_admin -d cloudmart
 ```
 
-**예상 결과**: Redis 캐싱 동작 확인
+**Redis 연결 테스트** (선택):
+```bash
+# EC2에서 redis-cli 설치 후 테스트
+sudo dnf install -y redis
+redis-cli -h <REDIS-ENDPOINT> ping
+```
+
+**💡 참고**: 
+- Lab 1의 목표는 **AWS 인프라 구축 검증**입니다
+- Backend 애플리케이션이 `/health`로 응답하면 인프라 구성 성공
+- 실제 DB 연동은 기본 프로젝트에서 구현합니다
 
 ### ✅ 최종 체크리스트
-- [ ] VPC 네트워크 구성 완료
-- [ ] RDS PostgreSQL Multi-AZ 실행 중
-- [ ] ElastiCache Redis 실행 중
+- [ ] VPC 네트워크 구성 완료 (Public/Private Subnet, NAT Gateway)
+- [ ] RDS PostgreSQL 생성 완료 (연결 테스트는 선택)
+- [ ] ElastiCache Redis 생성 완료 (연결 테스트는 선택)
 - [ ] ALB + ASG Backend 배포 완료
+- [ ] Target Group Health Check: `healthy` 상태
+- [ ] ALB를 통한 `/health` 엔드포인트 응답 확인
 - [ ] S3 + CloudFront Frontend 배포 완료
-- [ ] 전체 시스템 통합 테스트 성공
 
 ---
 
