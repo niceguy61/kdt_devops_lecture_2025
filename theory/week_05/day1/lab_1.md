@@ -857,96 +857,165 @@ ElastiCache → Redis clusters → [username]-redis 선택
 
 ---
 
-## 🛠️ Step 5: VPC Resource Map으로 아키텍처 검증 (예상 시간: 5분)
+## ✅ 전체 검증 체크리스트
 
-### 📋 이 단계에서 할 일
-- VPC Resource Map으로 전체 아키텍처 시각화
-- 리소스 연결 관계 확인
-- 설정 오류 자동 감지
+### ✅ 필수 Step 완료 (40분)
+- [ ] VPC 생성 (10.0.0.0/16)
+- [ ] DNS resolution 활성화
+- [ ] DNS hostnames 활성화
+- [ ] Public Subnet A (10.0.1.0/24, AZ-A)
+- [ ] Private Subnet A (10.0.11.0/24, AZ-A)
+- [ ] Public Subnet B (10.0.2.0/24, AZ-B)
+- [ ] Private Subnet B (10.0.12.0/24, AZ-B)
+- [ ] IGW 생성 및 VPC 연결
+- [ ] Public Route Table 생성
+- [ ] 0.0.0.0/0 → IGW 경로 추가
+- [ ] Public Subnet 2개 연결
 
-### 🔗 참조 개념
-- [Session 2: VPC 아키텍처](./session_2.md) - VPC 전체 구조
+### ✅ 선택 Step 완료 (20분) - Optional
+- [ ] DB Subnet Group 생성
+- [ ] RDS Security Group 생성
+- [ ] RDS PostgreSQL 17.6 생성
+- [ ] Cache Subnet Group 생성
+- [ ] Redis Security Group 생성
+- [ ] Redis 클러스터 생성
 
-### 📝 실습 절차
+---
 
-#### 5-1. VPC Resource Map 접근
+## 🧹 리소스 정리
 
+### ⚠️ 중요: 반드시 역순으로 삭제
+
+**삭제 순서**:
+```
+Step 6 (Redis) → Step 5 (RDS) → Step 4 (Route Table) → Step 3 (IGW) → Step 2 (Subnet) → Step 1 (VPC)
+```
+
+### 🗑️ 선택 Step 리소스 삭제 (Optional 실행한 경우)
+
+#### 1. Redis 클러스터 삭제
 **AWS Console 경로**:
 ```
-VPC → Your VPCs → [username]-vpc 선택 → Resource map 탭
+ElastiCache → Redis clusters → [username]-redis 선택 → Delete
 ```
 
-**직접 링크**:
-- [VPC Console - Your VPCs](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#vpcs:)
+**확인 사항**:
+- [ ] Redis 클러스터 삭제 완료
+- [ ] Cache Subnet Group 삭제
 
-**이미지 자리**: Step 5-1 Resource Map 화면
-
-**💡 VPC Resource Map이란?**:
-- AWS Console의 시각화 도구
-- VPC 내 모든 리소스와 연결 관계를 한눈에 표시
-- 설정 오류 자동 감지
-
-#### 5-2. 아키텍처 구조 확인
-
-**확인 항목**:
-
-**1. VPC 기본 정보**
-- VPC CIDR: 10.0.0.0/16
-- Availability Zone: 2개 (ap-northeast-2a, ap-northeast-2b)
-
-**2. Subnet 배치 및 색상**
-- ✅ Public Subnet A (녹색): 10.0.1.0/24, AZ-A
-- ✅ Public Subnet B (녹색): 10.0.2.0/24, AZ-B
-- ✅ Private Subnet A (파란색): 10.0.11.0/24, AZ-A
-- ✅ Private Subnet B (파란색): 10.0.12.0/24, AZ-B
-
-**💡 색상 의미**:
-- **녹색**: Public Subnet (IGW 경로 있음)
-- **파란색**: Private Subnet (IGW 경로 없음)
-
-**3. 연결 관계 (실선)**
-- Internet Gateway → Public Route Table
-- Public Route Table → Public Subnet A
-- Public Route Table → Public Subnet B
-- Main Route Table → Private Subnet A
-- Main Route Table → Private Subnet B
-
-**4. 트래픽 흐름 (점선)**
-- Public Subnet A → Internet Gateway
-- Public Subnet B → Internet Gateway
-
-**이미지 자리**: Step 5-2 아키텍처 구조
-
-#### 5-3. 상세 정보 확인
-
-**AWS Console에서**:
+#### 2. RDS 인스턴스 삭제
+**AWS Console 경로**:
 ```
-Resource map → Show details 클릭
+RDS → Databases → [username]-postgres 선택 → Actions → Delete
 ```
 
-**확인 가능한 정보**:
-- VPC CIDR 범위
-- Subnet CIDR 범위
-- Route Table 상세 경로
-- Internet Gateway 연결 상태
+**설정**:
+- Create final snapshot: ❌ 체크 해제
+- I acknowledge...: ✅ 체크
 
-**이미지 자리**: Step 5-3 상세 정보
+**확인 사항**:
+- [ ] RDS 인스턴스 삭제 완료
+- [ ] DB Subnet Group 삭제
 
-### ✅ Step 5 검증
+#### 3. Security Groups 삭제
+**AWS Console 경로**:
+```
+VPC → Security Groups → [username]-redis-sg, [username]-rds-sg 선택 → Actions → Delete
+```
 
-**정상 구성 확인**:
-- [ ] Public Subnet이 녹색으로 표시
-- [ ] Private Subnet이 파란색으로 표시
-- [ ] Internet Gateway 연결 확인 (실선)
-- [ ] Public Route Table → Public Subnets 연결 (실선)
-- [ ] Main Route Table → Private Subnets 연결 (실선)
-- [ ] Public Subnets → IGW 트래픽 흐름 (점선)
+### 🗑️ 필수 Step 리소스 삭제
 
-**⚠️ 오류 감지 (이런 경우 재확인 필요)**:
-- ❌ Private Subnet이 녹색으로 표시 (IGW 직접 연결 - 보안 위험)
-- ❌ Public Subnet이 파란색으로 표시 (IGW 경로 없음 - 외부 접속 불가)
-- ❌ Subnet이 Route Table에 연결되지 않음 (고립된 Subnet)
-- ❌ IGW가 VPC에 연결되지 않음 (외부 통신 불가)
+#### 4. Route Table 삭제
+**AWS Console 경로**:
+```
+VPC → Route Tables → [username]-public-rt 선택 → Actions → Delete route table
+```
+
+**⚠️ 주의**:
+- Main Route Table은 삭제하지 마세요 (VPC 삭제 시 자동 삭제)
+
+#### 5. Internet Gateway 삭제
+**AWS Console 경로**:
+```
+VPC → Internet Gateways → [username]-igw 선택 → Actions → Detach from VPC
+```
+
+**그 다음**:
+```
+Actions → Delete internet gateway
+```
+
+#### 6. Subnet 삭제
+**AWS Console 경로**:
+```
+VPC → Subnets → 4개 Subnet 모두 선택 → Actions → Delete subnet
+```
+
+#### 7. VPC 삭제
+**AWS Console 경로**:
+```
+VPC → Your VPCs → [username]-vpc 선택 → Actions → Delete VPC
+```
+
+### ✅ 정리 완료 확인
+
+**확인 명령어** (AWS CLI 사용 시):
+```bash
+aws ec2 describe-vpcs --region ap-northeast-2 --filters "Name=tag:Name,Values=[username]-vpc"
+```
+
+**예상 결과**:
+```json
+{
+    "Vpcs": []
+}
+```
+
+**✅ 최종 체크리스트**:
+- [ ] Redis 클러스터 삭제 (Optional)
+- [ ] RDS 인스턴스 삭제 (Optional)
+- [ ] Security Groups 삭제 (Optional)
+- [ ] Route Table 삭제
+- [ ] Internet Gateway 삭제
+- [ ] Subnet 4개 삭제
+- [ ] VPC 삭제
+- [ ] 비용 확인 (Cost Explorer)
+
+---
+
+## 💰 비용 확인
+
+### 예상 비용 계산
+
+**필수 Step**:
+| 리소스 | 사용 시간 | 단가 | 예상 비용 |
+|--------|----------|------|-----------|
+| VPC | 무제한 | 무료 | $0.00 |
+| Subnet | 무제한 | 무료 | $0.00 |
+| Internet Gateway | 무제한 | 무료 | $0.00 |
+| Route Table | 무제한 | 무료 | $0.00 |
+| **필수 합계** | | | **$0.00** |
+
+**선택 Step** (Optional 실행 시):
+| 리소스 | 사용 시간 | 단가 | 예상 비용 |
+|--------|----------|------|-----------|
+| RDS db.t3.micro | 1시간 | $0.017/hour | $0.017 |
+| Redis cache.t3.micro | 1시간 | $0.017/hour | $0.017 |
+| **선택 합계** | | | **$0.034** |
+
+**전체 합계**: $0.00 ~ $0.034 (선택 사항 포함 시)
+
+### 실제 비용 확인
+**AWS Console 경로**:
+```
+AWS Console → Cost Explorer → Cost & Usage
+```
+
+**이미지 자리**: 비용 확인 스크린샷
+
+---
+
+## 🔍 트러블슈팅
 
 **이미지 자리**: Step 5 검증 결과
 
