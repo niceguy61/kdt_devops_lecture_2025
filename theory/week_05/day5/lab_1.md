@@ -118,7 +118,7 @@ graph TB
 ### 📥 샘플 앱 다운로드
 
 **다운로드 링크**:
-- 🔗 [cloudmart-sample-app.tar.gz 다운로드](https://github.com/your-repo/releases/download/v1.0.0/cloudmart-sample-app.tar.gz)
+- 🔗 [cloudmart-sample-app.tar.gz 다운로드](https://github.com/niceguy61/kdt_devops_lecture_2025/blob/main/theory/week_05/day5/cloudmart-sample-app.tar.gz?raw=true)
 
 **압축 해제**:
 ```bash
