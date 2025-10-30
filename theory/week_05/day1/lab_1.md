@@ -355,212 +355,6 @@ VPC → Subnets → Filters에서 VPC 선택
 
 ---
 
-## 🛠️ Step 5: Internet Gateway 생성 및 연결 (예상 시간: 5분)
-
-### 📋 이 단계에서 할 일
-- Internet Gateway 생성
-- VPC에 연결
-
-### 🔗 참조 개념
-- [Session 2: VPC 아키텍처](./session_2.md) - Internet Gateway 역할
-
-### 📝 실습 절차
-
-#### 3-1. Internet Gateway 생성
-
-**AWS Console 경로**:
-```
-VPC → Internet Gateways → Create internet gateway
-```
-**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateInternetGateway:
-
-**설정 값**:
-| 항목 | 값 | 설명 |
-|------|-----|------|
-| **Name tag** | [username]-igw | Internet Gateway |
-
-**이미지 자리**: Step 3-1 IGW 생성
-
-#### 3-2. VPC에 연결
-
-**AWS Console 경로**:
-```
-Internet Gateways → [username]-igw 선택 → Actions → Attach to VPC
-```
-
-**설정 값**:
-| 항목 | 값 | 설명 |
-|------|-----|------|
-| **Available VPCs** | [username]-vpc | 위에서 생성한 VPC |
-
-**이미지 자리**: Step 3-2 VPC 연결
-
-**⚠️ 주의사항**:
-- 하나의 VPC에는 하나의 IGW만 연결 가능
-- IGW는 VPC에 연결되어야 작동
-
-### ✅ Step 3 검증
-
-**AWS Console에서 확인**:
-```
-VPC → Internet Gateways → [username]-igw 선택
-```
-
-**확인 항목**:
-| 항목 | 예상 값 |
-|------|---------|
-| **Internet gateway ID** | igw-xxxxx |
-| **State** | Attached |
-| **VPC ID** | vpc-xxxxx ([username]-vpc) |
-
-**이미지 자리**: Step 3 검증 결과
-
-**✅ 체크리스트**:
-- [ ] IGW ID 확인 (igw-xxxxx)
-- [ ] State가 "Attached" 확인
-- [ ] VPC ID 연결 확인
-
----
-
-## 🛠️ Step 6: Route Table 설정 (예상 시간: 10분)
-
-### 📋 이 단계에서 할 일
-- Public Route Table 생성
-- Public Route Table에 IGW 경로 추가
-- Public Subnet들을 Public Route Table에 연결
-- Private Route Table 확인 (기본 생성됨)
-
-### 🔗 참조 개념
-- [Session 2: VPC 아키텍처](./session_2.md) - Route Table 설정
-
-### 📝 실습 절차
-
-#### 4-1. Public Route Table 생성
-
-**AWS Console 경로**:
-```
-VPC → Route Tables → Create route table
-```
-**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateRouteTable:
-
-**설정 값**:
-| 항목 | 값 | 설명 |
-|------|-----|------|
-| **Name** | [username]-public-rt | Public Route Table |
-| **VPC** | [username]-vpc | 위에서 생성한 VPC |
-
-**이미지 자리**: Step 4-1 Public RT 생성
-
-#### 4-2. Internet Gateway 경로 추가
-
-**AWS Console 경로**:
-```
-Route Tables → [username]-public-rt 선택 → Routes 탭 → Edit routes
-```
-
-**설정 값**:
-| Destination | Target | 설명 |
-|-------------|--------|------|
-| 0.0.0.0/0 | [username]-igw | 모든 외부 트래픽을 IGW로 |
-
-**이미지 자리**: Step 4-2 IGW 경로 추가
-
-**💡 0.0.0.0/0의 의미**:
-- 모든 IP 주소 (인터넷 전체)
-- VPC 내부가 아닌 모든 트래픽을 IGW로 전달
-
-#### 4-3. Public Subnet 연결
-
-**AWS Console 경로**:
-```
-Route Tables → [username]-public-rt 선택 → Subnet associations 탭 → Edit subnet associations
-```
-
-**설정 값**:
-- ✅ [username]-public-a
-- ✅ [username]-public-b
-
-**이미지 자리**: Step 4-3 Subnet 연결
-
-#### 6-4. Private Route Table 확인
-
-**AWS Console 경로**:
-```
-VPC → Route Tables → Main route table 확인
-```
-
-**확인 사항**:
-- VPC 생성 시 자동으로 Main Route Table 생성됨
-- Private Subnet들은 자동으로 Main Route Table 사용
-- Main Route Table에는 IGW 경로 없음 (외부 접속 불가)
-
-**이미지 자리**: Step 6-4 Private RT 확인
-
-**💡 Main Route Table**:
-- VPC 생성 시 자동 생성
-- 명시적으로 연결하지 않은 Subnet은 Main RT 사용
-- Private Subnet용으로 사용 (IGW 경로 없음)
-
-**💡 VPC 내부 통신 (local 경로)**:
-- 모든 Route Table에는 자동으로 **local 경로** 생성됨
-- Destination: 10.0.0.0/16 (VPC CIDR)
-- Target: local
-- **의미**: VPC 내부 모든 Subnet 간 통신 가능
-  - Public ↔ Private 통신 가능
-  - Private ↔ Private 통신 가능
-  - Public ↔ Public 통신 가능
-- **차단 방법**: Security Group 또는 Network ACL로 제어 (Lab 2에서 학습)
-
-### ✅ Step 4 검증
-
-**AWS Console에서 확인**:
-```
-VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
-```
-
-**확인 항목 (Routes)**:
-| Destination | Target | Status |
-|-------------|--------|--------|
-| 10.0.0.0/16 | local | Active |
-| 0.0.0.0/0 | igw-xxxxx | Active |
-
-**Subnet associations 탭 확인**:
-| Subnet ID | Subnet 이름 |
-|-----------|-------------|
-| subnet-xxxxx | [username]-public-a |
-| subnet-yyyyy | [username]-public-b |
-
-**이미지 자리**: Step 4 검증 결과
-
-**✅ 체크리스트**:
-- [ ] Public Route Table 생성 확인
-- [ ] 0.0.0.0/0 → IGW 경로 확인
-- [ ] Public Subnet 2개 연결 확인
-- [ ] Private Subnet은 Main RT 사용 확인
-
----
-
-## 🎉 필수 Step 완료!
-
-**축하합니다!** VPC 네트워크 인프라 구축을 완료했습니다.
-
-### ✅ 완료된 구성
-- ✅ VPC (10.0.0.0/16)
-- ✅ Public Subnet 2개 (AZ-A, AZ-B)
-- ✅ Private Subnet 2개 (AZ-A, AZ-B)
-- ✅ Internet Gateway
-- ✅ Route Table (Public/Private)
-
-### 🔄 다음 선택
-
-**Option 1: 여기서 마무리** (40분 완료)
-- Lab 1 종료
-- 다음 Lab으로 이동
-
-**Option 2: 데이터베이스 구성 계속** (추가 20분)
-- Step 5: RDS PostgreSQL 17.6 구성
-- Step 6: ElastiCache Redis 구성
-- 완전한 3-Tier 아키텍처 완성
 
 ---
 
@@ -854,6 +648,215 @@ ElastiCache → Redis clusters → [username]-redis 선택
 - [ ] Redis Security Group 생성 확인
 - [ ] Redis 클러스터 Status "Available" 확인
 - [ ] Primary endpoint 주소 확인
+
+---
+
+## 🛠️ Step 5: Internet Gateway 생성 및 연결 (예상 시간: 5분)
+
+### 📋 이 단계에서 할 일
+- Internet Gateway 생성
+- VPC에 연결
+
+### 🔗 참조 개념
+- [Session 2: VPC 아키텍처](./session_2.md) - Internet Gateway 역할
+
+### 📝 실습 절차
+
+#### 3-1. Internet Gateway 생성
+
+**AWS Console 경로**:
+```
+VPC → Internet Gateways → Create internet gateway
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateInternetGateway:
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name tag** | [username]-igw | Internet Gateway |
+
+**이미지 자리**: Step 3-1 IGW 생성
+
+#### 3-2. VPC에 연결
+
+**AWS Console 경로**:
+```
+Internet Gateways → [username]-igw 선택 → Actions → Attach to VPC
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Available VPCs** | [username]-vpc | 위에서 생성한 VPC |
+
+**이미지 자리**: Step 3-2 VPC 연결
+
+**⚠️ 주의사항**:
+- 하나의 VPC에는 하나의 IGW만 연결 가능
+- IGW는 VPC에 연결되어야 작동
+
+### ✅ Step 3 검증
+
+**AWS Console에서 확인**:
+```
+VPC → Internet Gateways → [username]-igw 선택
+```
+
+**확인 항목**:
+| 항목 | 예상 값 |
+|------|---------|
+| **Internet gateway ID** | igw-xxxxx |
+| **State** | Attached |
+| **VPC ID** | vpc-xxxxx ([username]-vpc) |
+
+**이미지 자리**: Step 3 검증 결과
+
+**✅ 체크리스트**:
+- [ ] IGW ID 확인 (igw-xxxxx)
+- [ ] State가 "Attached" 확인
+- [ ] VPC ID 연결 확인
+
+---
+
+## 🛠️ Step 6: Route Table 설정 (예상 시간: 10분)
+
+### 📋 이 단계에서 할 일
+- Public Route Table 생성
+- Public Route Table에 IGW 경로 추가
+- Public Subnet들을 Public Route Table에 연결
+- Private Route Table 확인 (기본 생성됨)
+
+### 🔗 참조 개념
+- [Session 2: VPC 아키텍처](./session_2.md) - Route Table 설정
+
+### 📝 실습 절차
+
+#### 4-1. Public Route Table 생성
+
+**AWS Console 경로**:
+```
+VPC → Route Tables → Create route table
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#CreateRouteTable:
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name** | [username]-public-rt | Public Route Table |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
+
+**이미지 자리**: Step 4-1 Public RT 생성
+
+#### 4-2. Internet Gateway 경로 추가
+
+**AWS Console 경로**:
+```
+Route Tables → [username]-public-rt 선택 → Routes 탭 → Edit routes
+```
+
+**설정 값**:
+| Destination | Target | 설명 |
+|-------------|--------|------|
+| 0.0.0.0/0 | [username]-igw | 모든 외부 트래픽을 IGW로 |
+
+**이미지 자리**: Step 4-2 IGW 경로 추가
+
+**💡 0.0.0.0/0의 의미**:
+- 모든 IP 주소 (인터넷 전체)
+- VPC 내부가 아닌 모든 트래픽을 IGW로 전달
+
+#### 4-3. Public Subnet 연결
+
+**AWS Console 경로**:
+```
+Route Tables → [username]-public-rt 선택 → Subnet associations 탭 → Edit subnet associations
+```
+
+**설정 값**:
+- ✅ [username]-public-a
+- ✅ [username]-public-b
+
+**이미지 자리**: Step 4-3 Subnet 연결
+
+#### 6-4. Private Route Table 확인
+
+**AWS Console 경로**:
+```
+VPC → Route Tables → Main route table 확인
+```
+
+**확인 사항**:
+- VPC 생성 시 자동으로 Main Route Table 생성됨
+- Private Subnet들은 자동으로 Main Route Table 사용
+- Main Route Table에는 IGW 경로 없음 (외부 접속 불가)
+
+**이미지 자리**: Step 6-4 Private RT 확인
+
+**💡 Main Route Table**:
+- VPC 생성 시 자동 생성
+- 명시적으로 연결하지 않은 Subnet은 Main RT 사용
+- Private Subnet용으로 사용 (IGW 경로 없음)
+
+**💡 VPC 내부 통신 (local 경로)**:
+- 모든 Route Table에는 자동으로 **local 경로** 생성됨
+- Destination: 10.0.0.0/16 (VPC CIDR)
+- Target: local
+- **의미**: VPC 내부 모든 Subnet 간 통신 가능
+  - Public ↔ Private 통신 가능
+  - Private ↔ Private 통신 가능
+  - Public ↔ Public 통신 가능
+- **차단 방법**: Security Group 또는 Network ACL로 제어 (Lab 2에서 학습)
+
+### ✅ Step 4 검증
+
+**AWS Console에서 확인**:
+```
+VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
+```
+
+**확인 항목 (Routes)**:
+| Destination | Target | Status |
+|-------------|--------|--------|
+| 10.0.0.0/16 | local | Active |
+| 0.0.0.0/0 | igw-xxxxx | Active |
+
+**Subnet associations 탭 확인**:
+| Subnet ID | Subnet 이름 |
+|-----------|-------------|
+| subnet-xxxxx | [username]-public-a |
+| subnet-yyyyy | [username]-public-b |
+
+**이미지 자리**: Step 4 검증 결과
+
+**✅ 체크리스트**:
+- [ ] Public Route Table 생성 확인
+- [ ] 0.0.0.0/0 → IGW 경로 확인
+- [ ] Public Subnet 2개 연결 확인
+- [ ] Private Subnet은 Main RT 사용 확인
+
+---
+
+## 🎉 필수 Step 완료!
+
+**축하합니다!** VPC 네트워크 인프라 구축을 완료했습니다.
+
+### ✅ 완료된 구성
+- ✅ VPC (10.0.0.0/16)
+- ✅ Public Subnet 2개 (AZ-A, AZ-B)
+- ✅ Private Subnet 2개 (AZ-A, AZ-B)
+- ✅ Internet Gateway
+- ✅ Route Table (Public/Private)
+
+### 🔄 다음 선택
+
+**Option 1: 여기서 마무리** (40분 완료)
+- Lab 1 종료
+- 다음 Lab으로 이동
+
+**Option 2: 데이터베이스 구성 계속** (추가 20분)
+- Step 5: RDS PostgreSQL 17.6 구성
+- Step 6: ElastiCache Redis 구성
+- 완전한 3-Tier 아키텍처 완성
 
 ---
 
