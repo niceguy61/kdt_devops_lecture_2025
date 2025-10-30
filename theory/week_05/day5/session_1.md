@@ -135,6 +135,274 @@ graph TB
 - **Cache**: 세션 & 캐싱 (Redis)
 - **Storage**: 데이터 영속성 (Volumes)
 
+---
+
+### 🚨 Docker Compose → AWS 마이그레이션 Pain Points
+
+> **💡 기본 프로젝트의 핵심**: 이 Pain Points를 완벽하게 이해하고 극복하는 것이 목표입니다!
+
+**Pain Point 1: 네트워크 설정의 복잡도 증가**
+
+```yaml
+# ✅ Docker Compose (간단 - 자동 서비스 디스커버리)
+services:
+  backend:
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:5432/cloudmart  # 서비스명으로 자동 연결
+```
+
+```bash
+# ❌ AWS (복잡 - 수동 엔드포인트 관리)
+# RDS 엔드포인트: cloudmart-db.c9akciq32.ap-northeast-2.rds.amazonaws.com
+# 보안 그룹 설정 필요 (Inbound/Outbound 규칙)
+# VPC 내부 통신 설정 필요 (Private Subnet)
+DATABASE_URL=postgresql://cloudmart-db.c9akciq32.ap-northeast-2.rds.amazonaws.com:5432/cloudmart
+```
+
+**극복 방법**:
+- ✅ **Parameter Store 활용**: 엔드포인트를 중앙 관리
+- ✅ **Service Discovery**: AWS Cloud Map 또는 Route 53 Private Hosted Zone
+- ✅ **환경별 설정 분리**: dev/staging/prod 환경 구분
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트에서 환경 변수 관리 전략 수립
+- 개발/스테이징/프로덕션 환경 분리 경험
+
+---
+
+**Pain Point 2: 데이터 영속성 전략의 다양화**
+
+```yaml
+# ✅ Docker Compose (단순 - 로컬 볼륨)
+volumes:
+  postgres_data:  # 로컬 디스크에 자동 생성
+  redis_data:     # 재시작 시 데이터 유지
+```
+
+```bash
+# ❌ AWS (복잡 - 여러 스토리지 옵션)
+# RDS: 자동 백업 (7-35일), 스냅샷, Multi-AZ 복제
+# EBS: 볼륨 타입 선택 (gp3, io2, st1, sc1)
+# S3: 정적 파일, 백업, 로그 저장
+# 각각 다른 비용 구조와 성능 특성
+```
+
+**극복 방법**:
+- ✅ **백업 전략 수립**: 자동 백업 + 수동 스냅샷
+- ✅ **스토리지 계층화**: Hot(EBS) / Warm(S3) / Cold(Glacier)
+- ✅ **재해 복구 계획**: RTO/RPO 목표 설정
+
+**기본 프로젝트 적용**:
+- 데이터 백업 및 복구 시나리오 실습
+- 비용 효율적인 스토리지 전략 수립
+
+---
+
+**Pain Point 3: 시크릿 관리의 보안 강화**
+
+```yaml
+# ✅ Docker Compose (간단 - 평문 저장)
+environment:
+  POSTGRES_PASSWORD: password  # .env 파일에 평문
+  REDIS_PASSWORD: redis123
+  API_KEY: abc123
+```
+
+```bash
+# ❌ AWS (복잡 - 암호화 및 접근 제어)
+# Systems Manager Parameter Store (무료, 기본 암호화)
+aws ssm put-parameter \
+  --name /cloudmart/db/password \
+  --value "xxx" \
+  --type SecureString
+
+# Secrets Manager (유료, 자동 로테이션)
+aws secretsmanager create-secret \
+  --name cloudmart/db \
+  --secret-string '{"password":"xxx"}'
+```
+
+**극복 방법**:
+- ✅ **시크릿 계층화**: 민감도에 따라 Parameter Store vs Secrets Manager
+- ✅ **IAM 역할 기반 접근**: EC2 인스턴스 프로파일 활용
+- ✅ **자동 로테이션**: 정기적인 비밀번호 변경
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트에서 시크릿 관리 Best Practice 적용
+- 보안 감사 및 컴플라이언스 체크
+
+---
+
+**Pain Point 4: 로그 및 모니터링의 분산화**
+
+```bash
+# ✅ Docker Compose (간단 - 단일 서버)
+docker-compose logs -f backend  # 실시간 로그 확인
+docker stats                    # 리소스 사용량 확인
+```
+
+```bash
+# ❌ AWS (복잡 - 분산 환경)
+# CloudWatch Logs: 여러 EC2 인스턴스의 로그 통합
+# CloudWatch Metrics: CPU, 메모리, 네트워크 모니터링
+# X-Ray: 분산 추적 (마이크로서비스 간 호출 추적)
+# CloudWatch Alarms: 임계값 초과 시 알림
+```
+
+**극복 방법**:
+- ✅ **중앙 집중식 로깅**: CloudWatch Logs Insights 쿼리
+- ✅ **대시보드 구축**: CloudWatch Dashboard로 시각화
+- ✅ **알림 자동화**: SNS + Lambda로 Slack/Email 알림
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트 모니터링 대시보드 구축
+- 장애 알림 시스템 구현
+
+---
+
+**Pain Point 5: 배포 프로세스의 복잡도 증가**
+
+```bash
+# ✅ Docker Compose (즉시 반영 - 1분)
+docker-compose down
+docker-compose up -d --build  # 빌드 + 배포 완료
+```
+
+```bash
+# ❌ AWS (단계적 프로세스 - 5-10분)
+# 1. 이미지 빌드 및 ECR 푸시 (2분)
+docker build -t cloudmart-backend .
+docker push xxx.dkr.ecr.ap-northeast-2.amazonaws.com/cloudmart-backend
+
+# 2. Launch Template 업데이트 (1분)
+aws ec2 create-launch-template-version --launch-template-id lt-xxx
+
+# 3. Auto Scaling Group 인스턴스 교체 (3-5분)
+aws autoscaling start-instance-refresh --auto-scaling-group-name cloudmart-asg
+
+# 4. ALB Health Check 통과 대기 (2분)
+# 5. 이전 인스턴스 종료 (1분)
+```
+
+**극복 방법**:
+- ✅ **Blue-Green 배포**: 무중단 배포 전략
+- ✅ **Canary 배포**: 점진적 트래픽 전환
+- ✅ **CI/CD 파이프라인**: GitHub Actions + CodeDeploy 자동화
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트에서 무중단 배포 전략 구현
+- CI/CD 파이프라인 구축 경험
+
+---
+
+**Pain Point 6: 비용 관리의 필요성**
+
+```bash
+# ✅ Docker Compose (무료 - 로컬 개발)
+# 비용: $0 (전기세만 발생)
+# 리소스: 개발자 PC 사양에 의존
+```
+
+```bash
+# ❌ AWS (시간당 과금 - 프로덕션)
+# RDS (db.t3.micro): $0.017/hour
+# ElastiCache (cache.t3.micro): $0.017/hour
+# ALB: $0.025/hour
+# EC2 (t3.micro × 2): $0.010/hour × 2
+# NAT Gateway: $0.045/hour
+# 데이터 전송: $0.09/GB
+# ---
+# 합계: $0.124/hour = $89.28/month
+```
+
+**극복 방법**:
+- ✅ **비용 최적화**: Reserved Instances, Savings Plans
+- ✅ **리소스 스케줄링**: 개발 환경 야간/주말 자동 종료
+- ✅ **비용 알림**: AWS Budgets로 예산 초과 알림
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트 예산 관리 및 비용 최적화
+- FinOps 원칙 적용 경험
+
+---
+
+**Pain Point 7: 고가용성 및 확장성 설계**
+
+```yaml
+# ✅ Docker Compose (단일 서버 - 단순)
+services:
+  backend:
+    # 1개 컨테이너만 실행
+    # 서버 다운 시 전체 서비스 중단
+    # 트래픽 증가 시 수동 스케일링
+```
+
+```bash
+# ❌ AWS (Multi-AZ 분산 - 복잡)
+# ALB: 여러 AZ에 트래픽 자동 분산
+# ASG: 최소 2개, 최대 10개 인스턴스 자동 확장
+# RDS: Multi-AZ 자동 장애 조치 (1-2분)
+# ElastiCache: 클러스터 모드로 샤딩
+# 복잡도 증가, 하지만 99.99% 가용성 달성
+```
+
+**극복 방법**:
+- ✅ **Multi-AZ 배포**: 단일 장애점 제거
+- ✅ **Auto Scaling 정책**: CPU/메모리 기반 자동 확장
+- ✅ **Health Check 최적화**: 빠른 장애 감지 및 복구
+
+**기본 프로젝트 적용**:
+- 팀 프로젝트에서 고가용성 아키텍처 설계
+- 장애 시나리오 테스트 및 복구 경험
+
+---
+
+### 📊 Pain Points 종합 비교표
+
+| 항목 | Docker Compose | AWS | 난이도 | 기본 프로젝트 학습 목표 |
+|------|----------------|-----|--------|------------------------|
+| **네트워크** | 서비스명 자동 연결 | 엔드포인트 수동 설정 | ⭐⭐⭐ | 환경 변수 관리 전략 수립 |
+| **스토리지** | 로컬 볼륨 자동 생성 | EBS/S3 선택 및 설정 | ⭐⭐⭐⭐ | 백업 및 복구 전략 구현 |
+| **시크릿** | .env 평문 저장 | Parameter Store/Secrets Manager | ⭐⭐⭐⭐⭐ | 보안 Best Practice 적용 |
+| **로그** | docker logs 명령어 | CloudWatch 통합 설정 | ⭐⭐⭐⭐ | 모니터링 대시보드 구축 |
+| **배포** | 즉시 반영 (1분) | 단계적 롤링 (5-10분) | ⭐⭐⭐ | CI/CD 파이프라인 구축 |
+| **비용** | 무료 (로컬) | 시간당 과금 ($0.124/h) | ⭐⭐⭐⭐⭐ | FinOps 원칙 적용 |
+| **고가용성** | 단일 서버 | Multi-AZ 분산 | ⭐⭐⭐⭐⭐ | 고가용성 아키텍처 설계 |
+
+---
+
+### 🎯 기본 프로젝트에서의 학습 목표
+
+**Week 5 (이론 + 실습)**:
+- ✅ Pain Points 이해 및 기본 극복 방법 학습
+- ✅ CloudMart 프로젝트 AWS 배포 경험
+
+**기본 프로젝트 (4주)**:
+- 🎯 **1주차**: Pain Points 1-3 극복 (네트워크, 스토리지, 시크릿)
+- 🎯 **2주차**: Pain Points 4-5 극복 (로그, 배포)
+- 🎯 **3주차**: Pain Points 6-7 극복 (비용, 고가용성)
+- 🎯 **4주차**: 팀 프로젝트 완성 및 더 나은 방법 탐구
+
+**💡 핵심 인사이트**:
+> "이 Pain Points를 극복하는 과정에서 더 나은 방법을 찾아내는 것이 진짜 목표입니다!"
+
+**예시 - 더 나은 방법 탐구**:
+- 💡 "Parameter Store 대신 Secrets Manager를 사용하면 자동 로테이션이 가능하다"
+- 💡 "NAT Gateway 비용이 비싸다면 VPC Endpoint를 사용하면 무료다"
+- 💡 "ALB 대신 CloudFront를 사용하면 글로벌 배포가 가능하다"
+- 💡 "EC2 대신 Fargate를 사용하면 서버 관리가 필요 없다"
+
+**심화 프로젝트 (5주)**:
+- 🚀 더 나은 방법을 실제로 적용하여 프로젝트 고도화
+- 🚀 Kubernetes, Terraform, GitOps 등 고급 기술 적용
+- 🚀 실무 수준의 프로덕션 환경 구축
+
+---
+
+**💪 이제 이 Pain Points를 하나씩 극복해나가며 실력을 쌓아갑시다!**
+
 ### 🔍 개념 2: AWS 서비스 매핑 전략 (12분)
 
 > **정의**: Docker Compose 구성 요소를 AWS 서비스로 1:1 매핑
