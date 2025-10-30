@@ -12,92 +12,85 @@
 
 ## 🕘 Lab 정보
 **시간**: 14:00-14:50 (50분)
-**목표**: CloudMart 전체 인프라를 AWS에 배포하고 검증
+**목표**: AWS 인프라 구축 능력 검증 (Multi-AZ, ALB, ASG)
 **방식**: AWS Web Console 실습
-**예상 비용**: $0.50
+**예상 비용**: $0.20
 
 ## 🎯 학습 목표
-- [ ] Multi-AZ VPC 네트워크 구축
-- [ ] RDS PostgreSQL Multi-AZ 구성
-- [ ] ElastiCache Redis 클러스터 생성
-- [ ] ALB + ASG로 Backend 배포
-- [ ] S3 + CloudFront로 Frontend 배포
-- [ ] CloudWatch 모니터링 설정
+- [ ] Multi-AZ VPC 네트워크 구축 (Public/Private Subnet, NAT Gateway)
+- [ ] Internet Gateway 및 Route Table 설정
+- [ ] Security Group 체이닝 구성
+- [ ] ALB + Target Group 설정
+- [ ] Launch Template 및 Auto Scaling Group 구성
+- [ ] Health Check 동작 검증
 
 ---
 
 ## 🏗️ 구축할 아키텍처
 
-### 📐 최종 아키텍처
+### 📐 Lab 1 아키텍처 (인프라 검증용)
 ```mermaid
 graph TB
     subgraph "AWS Cloud (ap-northeast-2)"
-        CDN[CloudFront<br/>Global CDN]
-        S3[S3 Bucket<br/>Frontend React]
-        
         subgraph "VPC (10.0.0.0/16)"
+            IGW[Internet Gateway]
+            NAT[NAT Gateway]
+            
             subgraph "AZ-A (ap-northeast-2a)"
                 PUB_A[Public Subnet<br/>10.0.1.0/24]
-                ALB_A[Application<br/>Load Balancer]
-                
                 PRIV_A[Private Subnet<br/>10.0.11.0/24]
-                EC2_A[EC2 Auto Scaling<br/>Backend API]
-                RDS_PRIMARY[RDS Primary<br/>PostgreSQL]
-                REDIS_A[ElastiCache<br/>Redis]
+                EC2_A[EC2 Nginx<br/>/health API]
             end
             
             subgraph "AZ-B (ap-northeast-2b)"
                 PUB_B[Public Subnet<br/>10.0.2.0/24]
-                ALB_B[Application<br/>Load Balancer]
-                
                 PRIV_B[Private Subnet<br/>10.0.12.0/24]
-                EC2_B[EC2 Auto Scaling<br/>Backend API]
-                RDS_STANDBY[RDS Standby<br/>PostgreSQL]
-                REDIS_B[ElastiCache<br/>Redis]
+                EC2_B[EC2 Nginx<br/>/health API]
             end
+            
+            ALB[Application<br/>Load Balancer]
         end
     end
     
-    USER[사용자] --> CDN
-    CDN --> S3
-    USER --> ALB_A
-    USER --> ALB_B
+    USER[사용자] --> ALB
+    ALB --> PUB_A
+    ALB --> PUB_B
     
-    PUB_A --> ALB_A
-    PUB_B --> ALB_B
+    PUB_A --> EC2_A
+    PUB_B --> EC2_B
     
-    ALB_A --> EC2_A
-    ALB_B --> EC2_B
+    IGW --> PUB_A
+    IGW --> PUB_B
     
-    PRIV_A --> EC2_A
-    PRIV_A --> RDS_PRIMARY
-    PRIV_A --> REDIS_A
+    PRIV_A --> NAT
+    PRIV_B --> NAT
+    NAT --> IGW
     
-    PRIV_B --> EC2_B
-    PRIV_B --> RDS_STANDBY
-    PRIV_B --> REDIS_B
-    
-    EC2_A --> RDS_PRIMARY
-    EC2_B --> RDS_PRIMARY
-    EC2_A --> REDIS_A
-    EC2_B --> REDIS_B
-    
-    RDS_PRIMARY -.Multi-AZ<br/>Replication.-> RDS_STANDBY
-    REDIS_A -.Replication.-> REDIS_B
-    
-    style CDN fill:#ff9800
-    style S3 fill:#4caf50
-    style ALB_A fill:#2196f3
-    style ALB_B fill:#2196f3
-    style EC2_A fill:#9c27b0
-    style EC2_B fill:#9c27b0
-    style RDS_PRIMARY fill:#f44336
-    style RDS_STANDBY fill:#e91e63
-    style REDIS_A fill:#00bcd4
-    style REDIS_B fill:#00bcd4
+    style IGW fill:#ff9800
+    style NAT fill:#ff5722
+    style ALB fill:#2196f3
+    style EC2_A fill:#4caf50
+    style EC2_B fill:#4caf50
+    style PUB_A fill:#e3f2fd
+    style PUB_B fill:#e3f2fd
+    style PRIV_A fill:#fff3e0
+    style PRIV_B fill:#fff3e0
 ```
 
-**이미지 자리**: 최종 아키텍처 다이어그램
+**💡 간소화된 아키텍처**:
+- ✅ **VPC**: Multi-AZ 네트워크 구성 (Public/Private Subnet)
+- ✅ **NAT Gateway**: Private Subnet의 아웃바운드 트래픽
+- ✅ **ALB**: 로드 밸런싱 및 Health Check
+- ✅ **EC2 (Nginx)**: 간단한 `/health` API 응답
+- ❌ **RDS/Redis 제거**: 실제 DB 연동 불필요 (인프라 검증 목적)
+
+**🎯 Lab 1의 목표**:
+- AWS 인프라 구축 능력 검증
+- Multi-AZ 네트워크 설계
+- ALB + ASG 구성
+- Health Check 동작 확인
+
+**이미지 자리**: Lab 1 아키텍처 다이어그램
 
 ### 🔗 참조 Session
 **당일 Session**:
