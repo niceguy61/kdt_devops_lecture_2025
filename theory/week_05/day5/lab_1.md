@@ -195,6 +195,24 @@ VPC → Subnets → Create subnet
 
 **이미지 자리**: Subnet 생성 화면
 
+**⚠️ 중요: Public Subnet 설정**
+
+Public Subnet 생성 후 반드시 Public IP 자동 할당을 활성화해야 합니다:
+
+1. **cloudmart-public-a** 선택
+2. **Actions** → **Edit subnet settings**
+3. **Enable auto-assign public IPv4 address** 체크
+4. **Save** 클릭
+
+5. **cloudmart-public-b**도 동일하게 설정
+
+**이미지 자리**: Public IP 자동 할당 설정 화면
+
+**💡 왜 필요한가?**
+- EC2 인스턴스가 인터넷에 접근하려면 Public IP 필요
+- SSM Agent가 AWS Systems Manager와 통신하려면 인터넷 접근 필요
+- User Data 스크립트에서 외부 파일 다운로드 시 필요
+
 #### 1-3. Internet Gateway 생성
 
 **AWS Console 경로**:
@@ -494,14 +512,20 @@ EC2 → Security Groups → cloudmart-redis-sg
 ```yaml
 Name: cloudmart-backend-sg
 Inbound Rules:
-  - Type: HTTP (8080)
-    Source: cloudmart-alb-sg
+  - Type: Custom TCP
+    Port: 8080  # ⚠️ 애플리케이션 포트
+    Source: 0.0.0.0/0  # 또는 cloudmart-alb-sg
   - Type: SSH (22)
     Source: [Your IP]/32
 Outbound Rules:
   - Type: All traffic
     Destination: 0.0.0.0/0
 ```
+
+**💡 포트 8080을 사용하는 이유**:
+- Node.js 애플리케이션이 8080 포트에서 실행
+- 80 포트는 root 권한 필요 (보안상 비권장)
+- ALB가 80 → 8080으로 트래픽 전달
 
 **이미지 자리**: Backend Security Group
 
@@ -532,12 +556,12 @@ systemctl enable docker
 
 # CloudMart 샘플 앱 다운로드
 cd /home/ec2-user
-wget https://github.com/your-repo/releases/download/v1.0.0/cloudmart-sample-app.tar.gz
+wget https://github.com/niceguy61/kdt_devops_lecture_2025/blob/main/theory/week_05/day5/cloudmart-sample-app.tar.gz?raw=true -O cloudmart-sample-app.tar.gz
 tar -xzf cloudmart-sample-app.tar.gz
-cd cloudmart-sample-app/backend
+cd sample_app/backend  # ⚠️ 주의: 폴더명이 sample_app입니다
 
 # 환경 변수 설정
-export DATABASE_URL="postgresql://cloudmart_admin:password@<RDS-ENDPOINT>:5432/cloudmart"
+export DATABASE_URL="postgresql://cloudmart:CloudMart2024!@<RDS-ENDPOINT>:5432/postgres"
 export REDIS_URL="redis://<REDIS-ENDPOINT>:6379"
 export PORT=8080
 
@@ -545,6 +569,12 @@ export PORT=8080
 npm install --omit=dev
 nohup node server.js > /var/log/cloudmart-backend.log 2>&1 &
 ```
+
+**⚠️ User Data 작성 시 주의사항**:
+1. **RDS Endpoint**: Step 2에서 생성한 RDS 엔드포인트로 교체
+2. **Redis Endpoint**: Step 3에서 생성한 Redis 엔드포인트로 교체
+3. **GitHub URL**: `?raw=true` 파라미터 필수
+4. **폴더명**: 압축 해제 후 `sample_app` 폴더로 이동
 
 **이미지 자리**: Launch Template
 
@@ -568,9 +598,16 @@ Security group: cloudmart-alb-sg
 Target group:
   Name: cloudmart-backend-tg
   Protocol: HTTP
-  Port: 8080
+  Port: 8080  # ⚠️ 중요: 애플리케이션이 8080 포트에서 실행됨
   Health check path: /health
+  Health check port: traffic-port  # 8080 포트로 Health Check
 ```
+
+**⚠️ 포트 설정 주의사항**:
+- 애플리케이션은 **8080 포트**에서 실행
+- ALB는 **80 포트**로 요청 받음
+- Target Group은 **8080 포트**로 트래픽 전달
+- Security Group에서 **8080 포트** 허용 필수
 
 **이미지 자리**: ALB 생성
 
