@@ -476,13 +476,13 @@ graph TB
 **핵심 인사이트**:
 ```mermaid
 quadrantChart
-    title 기술 선택 매트릭스
-    x-axis 낮은 복잡도 --> 높은 복잡도
-    y-axis 낮은 비용 --> 높은 비용
-    quadrant-1 이상적
-    quadrant-2 비용 고려
-    quadrant-3 재검토 필요
-    quadrant-4 성능 중심
+    title Technology Selection Matrix
+    x-axis Low Complexity --> High Complexity
+    y-axis Low Cost --> High Cost
+    quadrant-1 Ideal Zone
+    quadrant-2 Cost Focused
+    quadrant-3 Review Needed
+    quadrant-4 Performance Focused
     
     Docker Compose: [0.3, 0.6]
     AWS Native: [0.7, 0.4]
