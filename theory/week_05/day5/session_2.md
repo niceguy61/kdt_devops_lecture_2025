@@ -359,27 +359,40 @@ services:
 
 #### 구성 A: Docker Compose + AWS IaaS
 ```mermaid
-architecture-beta
-    group aws(cloud)[AWS Cloud]
-    group vpc(cloud)[VPC] in aws
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "VPC"
+            subgraph "Public Subnet AZ-A"
+                EC2_1[EC2 + Docker Swarm]
+            end
+            subgraph "Public Subnet AZ-B"
+                EC2_2[EC2 + Docker Swarm]
+            end
+            subgraph "Private Subnet AZ-A"
+                EC2_3[EC2 + Docker Swarm]
+                DB_Master[PostgreSQL Master]
+            end
+            subgraph "Private Subnet AZ-B"
+                DB_Replica[PostgreSQL Replica]
+            end
+            
+            ALB[Application Load Balancer]
+        end
+    end
     
-    group public1(cloud)[Public Subnet AZ-A] in vpc
-    group public2(cloud)[Public Subnet AZ-B] in vpc
-    group private1(cloud)[Private Subnet AZ-A] in vpc
-    group private2(cloud)[Private Subnet AZ-B] in vpc
+    ALB --> EC2_1
+    ALB --> EC2_2
+    EC2_1 --> DB_Master
+    EC2_2 --> DB_Replica
+    EC2_3 --> DB_Master
+    DB_Master --> DB_Replica
     
-    service alb(internet)[ALB] in vpc
-    service ec2_1(server)[EC2 + Docker Swarm] in public1
-    service ec2_2(server)[EC2 + Docker Swarm] in public2
-    service ec2_3(server)[EC2 + Docker Swarm] in private1
-    service db_master(database)[PostgreSQL Master] in private1
-    service db_replica(database)[PostgreSQL Replica] in private2
-    
-    alb:R --> L:ec2_1
-    alb:R --> L:ec2_2
-    ec2_1:B --> T:db_master
-    ec2_2:B --> T:db_replica
-    ec2_3:B --> T:db_master
+    style ALB fill:#ff9800
+    style EC2_1 fill:#4caf50
+    style EC2_2 fill:#4caf50
+    style EC2_3 fill:#4caf50
+    style DB_Master fill:#2196f3
+    style DB_Replica fill:#2196f3
 ```
 
 **상세 구성**:
