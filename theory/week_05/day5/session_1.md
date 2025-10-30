@@ -210,66 +210,6 @@ sequenceDiagram
 
 ---
 
-## 💭 함께 생각해보기 (10분)
-
-### 🤝 페어 실습 (5분)
-
-**실습 주제**: "MVP 실행 및 문제 경험"
-
-**페어 활동 가이드**:
-1. **MVP 실행** (2분):
-   ```bash
-   # CloudMart MVP 실행
-   cd cloudmart-mvp
-   docker-compose up -d
-   
-   # 상태 확인
-   docker-compose ps
-   curl http://localhost
-   ```
-
-2. **동시 접속 테스트** (2분):
-   ```bash
-   # 10명 동시 접속 시뮬레이션
-   for i in {1..10}; do
-     curl http://localhost/api/products &
-   done
-   wait
-   
-   # 응답 시간 측정
-   time curl http://localhost/api/products
-   ```
-
-3. **문제 경험** (1분):
-   ```bash
-   # 컨테이너 재시작
-   docker-compose restart backend
-   
-   # 이 순간 서비스 접근 시도
-   curl http://localhost/api/products
-   # 에러 발생 확인
-   ```
-
-### 🎯 전체 공유 (5분)
-
-**공유 질문**:
-1. **성능**: "동시 접속 시 얼마나 느려졌나요?"
-2. **가용성**: "재시작 시 서비스가 얼마나 중단되었나요?"
-3. **모니터링**: "에러 발생 시 원인을 어떻게 찾았나요?"
-
-**예상 답변**:
-- "10명만 접속해도 응답이 2-3초 걸렸어요"
-- "재시작하는 동안 서비스가 완전히 멈췄어요"
-- "로그를 일일이 확인해야 해서 시간이 오래 걸렸어요"
-
-### 💡 이해도 체크 질문
-
-- ✅ "MVP의 핵심 기능 3가지를 말할 수 있나요?"
-- ✅ "Docker Compose의 한계를 3가지 이상 경험했나요?"
-- ✅ "왜 AWS가 필요한지 자신의 경험으로 설명할 수 있나요?"
-
----
-
 ## 🚨 실제 Pain Point 사례
 
 ### Pain Point 1: 확장성 문제
@@ -592,6 +532,66 @@ graph TB
 ### 📖 심화 학습
 - [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
 - [클라우드 마이그레이션 전략](https://aws.amazon.com/cloud-migration/)
+
+---
+
+## 💭 함께 생각해보기 (10분)
+
+### 🤝 페어 실습 (5분)
+
+**실습 주제**: "MVP 실행 및 문제 경험"
+
+**페어 활동 가이드**:
+1. **MVP 실행** (2분):
+   ```bash
+   # CloudMart MVP 실행
+   cd cloudmart-mvp
+   docker-compose up -d
+   
+   # 상태 확인
+   docker-compose ps
+   curl http://localhost
+   ```
+
+2. **동시 접속 테스트** (2분):
+   ```bash
+   # 10명 동시 접속 시뮬레이션
+   for i in {1..10}; do
+     curl http://localhost/api/products &
+   done
+   wait
+   
+   # 응답 시간 측정
+   time curl http://localhost/api/products
+   ```
+
+3. **문제 경험** (1분):
+   ```bash
+   # 컨테이너 재시작
+   docker-compose restart backend
+   
+   # 이 순간 서비스 접근 시도
+   curl http://localhost/api/products
+   # 에러 발생 확인
+   ```
+
+### 🎯 전체 공유 (5분)
+
+**공유 질문**:
+1. **성능**: "동시 접속 시 얼마나 느려졌나요?"
+2. **가용성**: "재시작 시 서비스가 얼마나 중단되었나요?"
+3. **모니터링**: "에러 발생 시 원인을 어떻게 찾았나요?"
+
+**예상 답변**:
+- "10명만 접속해도 응답이 2-3초 걸렸어요"
+- "재시작하는 동안 서비스가 완전히 멈췄어요"
+- "로그를 일일이 확인해야 해서 시간이 오래 걸렸어요"
+
+### 💡 이해도 체크 질문
+
+- ✅ "MVP의 핵심 기능 3가지를 말할 수 있나요?"
+- ✅ "Docker Compose의 한계를 3가지 이상 경험했나요?"
+- ✅ "왜 AWS가 필요한지 자신의 경험으로 설명할 수 있나요?"
 
 ---
 
