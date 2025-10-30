@@ -494,7 +494,7 @@ VPC → Route Tables → Main route table 확인
 - Private Subnet들은 자동으로 Main Route Table 사용
 - Main Route Table에는 IGW 경로 없음 (외부 접속 불가)
 
-**이미지 자리**: Step 4-4 Private RT 확인
+**이미지 자리**: Step 6-4 Private RT 확인
 
 **💡 Main Route Table**:
 - VPC 생성 시 자동 생성
@@ -596,7 +596,7 @@ RDS → Subnet groups → Create DB subnet group
 | **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
 | **Subnets** | [username]-private-a (10.0.11.0/24)<br/>[username]-private-b (10.0.12.0/24) | Private Subnet 2개 |
 
-**이미지 자리**: Step 5-1 DB Subnet Group 생성
+**이미지 자리**: Step 3-1 DB Subnet Group 생성
 
 **💡 왜 Private Subnet인가?**:
 - 데이터베이스는 외부 접근 불필요
@@ -622,7 +622,7 @@ VPC → Security Groups → Create security group
 |------|----------|------|--------|------|
 | PostgreSQL | TCP | 5432 | 10.0.0.0/16 | VPC 내부에서만 접근 |
 
-**이미지 자리**: Step 5-2 RDS Security Group
+**이미지 자리**: Step 3-2 RDS Security Group
 
 **💡 보안 팁**:
 - Source를 VPC CIDR (10.0.0.0/16)로 제한
@@ -691,7 +691,7 @@ RDS → Databases → Create database
 | **Backup retention period** | 1 day |
 | **Enable encryption** | ❌ 체크 해제 (실습용) |
 
-**이미지 자리**: Step 5-3 RDS 생성
+**이미지 자리**: Step 3-3 RDS 생성
 
 **⚠️ 주의사항**:
 - 생성 시간: 약 5-10분 소요
@@ -755,7 +755,7 @@ ElastiCache → Subnet groups → Create subnet group
 | **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
 | **Subnets** | [username]-private-a (10.0.11.0/24)<br/>[username]-private-b (10.0.12.0/24) | Private Subnet 2개 |
 
-**이미지 자리**: Step 6-1 Cache Subnet Group 생성
+**이미지 자리**: Step 4-1 Cache Subnet Group 생성
 
 #### 4-2. Redis Security Group 생성
 
@@ -776,7 +776,7 @@ VPC → Security Groups → Create security group
 |------|----------|------|--------|------|
 | Custom TCP | TCP | 6379 | 10.0.0.0/16 | VPC 내부에서만 접근 |
 
-**이미지 자리**: Step 6-2 Redis Security Group
+**이미지 자리**: Step 4-2 Redis Security Group
 
 #### 4-3. Redis 클러스터 생성
 
@@ -826,7 +826,7 @@ ElastiCache → Redis clusters → Create Redis cluster
 |------|-----|
 | **Enable automatic backups** | ❌ 체크 해제 (실습용) |
 
-**이미지 자리**: Step 6-3 Redis 생성
+**이미지 자리**: Step 4-3 Redis 생성
 
 **⚠️ 주의사항**:
 - 생성 시간: 약 5-10분 소요
@@ -1066,7 +1066,7 @@ The requested cache subnet group does not exist
 - Cache Subnet Group이 생성되지 않음
 
 **해결 방법**:
-- Step 6-1에서 Cache Subnet Group 먼저 생성
+- Step 4-1에서 Cache Subnet Group 먼저 생성
 - 생성 완료 후 Redis 클러스터 생성
 
 ---
