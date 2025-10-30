@@ -150,10 +150,10 @@ graph TB
     
     subgraph "CloudWatch Logs"
         B[Log Groups]
-        B --> C1[/aws/ec2/cloudmart-backend]
-        B --> C2[/aws/alb/cloudmart-alb]
-        B --> C3[/aws/rds/cloudmart-db]
-        B --> C4[/aws/lambda/cloudmart-functions]
+        B --> C1[`/aws/ec2/cloudmart-backend`]
+        B --> C2[`/aws/alb/cloudmart-alb`]
+        B --> C3[`/aws/rds/cloudmart-db`]
+        B --> C4[`/aws/lambda/cloudmart-functions`]
     end
     
     subgraph "로그 분석"
