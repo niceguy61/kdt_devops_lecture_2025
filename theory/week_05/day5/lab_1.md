@@ -88,6 +88,39 @@
 
 ---
 
+## 📦 사전 준비: CloudMart 샘플 앱 다운로드
+
+### 📥 샘플 앱 다운로드
+
+**다운로드 링크**:
+- 🔗 [cloudmart-sample-app.tar.gz 다운로드](https://github.com/your-repo/releases/download/v1.0.0/cloudmart-sample-app.tar.gz)
+
+**압축 해제**:
+```bash
+# 다운로드한 파일 압축 해제
+tar -xzf cloudmart-sample-app.tar.gz
+cd cloudmart-sample-app
+
+# 구조 확인
+ls -la
+# backend/     - Node.js API 서버
+# frontend/    - React 웹 애플리케이션
+# database/    - PostgreSQL 초기화 스크립트
+# README.md    - 사용 가이드
+```
+
+**포함된 내용**:
+- **Backend**: Node.js 22 + Express + PostgreSQL + Redis
+- **Frontend**: React 18 + 반응형 UI
+- **Database**: PostgreSQL 16 스키마 + 샘플 데이터 (20개 상품)
+
+**💡 Windows 사용자 또는 상세 가이드 필요 시**:
+- 📖 [CloudMart 샘플 앱 사용 가이드](./SAMPLE_APP_GUIDE.md) - WSL 설정, 로컬 테스트, 커스터마이징 방법
+
+**이미지 자리**: 샘플 앱 구조
+
+---
+
 ## 🛠️ Step 1: VPC 네트워크 구성 (10분)
 
 ### 📋 이 단계에서 할 일
@@ -104,6 +137,7 @@
 #### 1-1. VPC 생성
 
 **AWS Console 경로**:
+- 🔗 [VPC Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#vpcs:)
 ```
 AWS Console → VPC → Your VPCs → Create VPC
 ```
@@ -121,6 +155,7 @@ AWS Console → VPC → Your VPCs → Create VPC
 #### 1-2. Subnet 생성 (4개)
 
 **AWS Console 경로**:
+- 🔗 [Subnets Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#subnets:)
 ```
 VPC → Subnets → Create subnet
 ```
@@ -138,6 +173,7 @@ VPC → Subnets → Create subnet
 #### 1-3. Internet Gateway 생성
 
 **AWS Console 경로**:
+- 🔗 [Internet Gateways Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#igws:)
 ```
 VPC → Internet Gateways → Create internet gateway
 ```
@@ -151,6 +187,7 @@ VPC → Internet Gateways → Create internet gateway
 #### 1-4. NAT Gateway 생성
 
 **AWS Console 경로**:
+- 🔗 [NAT Gateways Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#NatGateways:)
 ```
 VPC → NAT Gateways → Create NAT gateway
 ```
@@ -190,13 +227,23 @@ Associated Subnets:
 
 ### ✅ Step 1 검증
 
-**검증 명령어**:
-```bash
-# VPC 확인
-aws ec2 describe-vpcs --filters "Name=tag:Name,Values=cloudmart-vpc"
+**AWS Console에서 확인**:
+```
+VPC → Your VPCs → cloudmart-vpc 선택
+→ Details 탭에서 CIDR 확인: 10.0.0.0/16
 
-# Subnet 확인
-aws ec2 describe-subnets --filters "Name=vpc-id,Values=<vpc-id>"
+VPC → Subnets → Filter by VPC: cloudmart-vpc
+→ 4개 Subnet 확인 (Public × 2, Private × 2)
+
+VPC → Internet Gateways → cloudmart-igw
+→ State: Attached
+
+VPC → NAT Gateways → cloudmart-nat-a
+→ State: Available
+
+VPC → Route Tables
+→ cloudmart-public-rt: 0.0.0.0/0 → IGW 확인
+→ cloudmart-private-rt: 0.0.0.0/0 → NAT GW 확인
 ```
 
 **이미지 자리**: 검증 결과
@@ -225,6 +272,7 @@ aws ec2 describe-subnets --filters "Name=vpc-id,Values=<vpc-id>"
 #### 2-1. DB Subnet Group 생성
 
 **AWS Console 경로**:
+- 🔗 [RDS Subnet Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-list:)
 ```
 RDS → Subnet groups → Create DB subnet group
 ```
@@ -239,6 +287,7 @@ RDS → Subnet groups → Create DB subnet group
 #### 2-2. Security Group 생성
 
 **AWS Console 경로**:
+- 🔗 [Security Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#SecurityGroups:)
 ```
 EC2 → Security Groups → Create security group
 ```
@@ -261,6 +310,7 @@ Outbound Rules:
 #### 2-3. RDS 인스턴스 생성
 
 **AWS Console 경로**:
+- 🔗 [RDS Databases Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#databases:)
 ```
 RDS → Databases → Create database
 ```
@@ -286,10 +336,18 @@ RDS → Databases → Create database
 
 ### ✅ Step 2 검증
 
-**검증**:
-```bash
-# RDS 상태 확인
-aws rds describe-db-instances --db-instance-identifier cloudmart-db
+**AWS Console에서 확인**:
+```
+RDS → Databases → cloudmart-db 선택
+→ Status: Available
+→ Multi-AZ: Yes
+→ Endpoint 복사 (나중에 사용)
+
+RDS → Subnet groups → cloudmart-db-subnet-group
+→ Subnets: 2개 확인
+
+EC2 → Security Groups → cloudmart-rds-sg
+→ Inbound rules: PostgreSQL (5432) 확인
 ```
 
 **이미지 자리**: RDS 생성 완료
@@ -317,6 +375,7 @@ aws rds describe-db-instances --db-instance-identifier cloudmart-db
 #### 3-1. Cache Subnet Group 생성
 
 **AWS Console 경로**:
+- 🔗 [ElastiCache Subnet Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/subnet-groups)
 ```
 ElastiCache → Subnet groups → Create subnet group
 ```
@@ -344,6 +403,7 @@ Inbound Rules:
 #### 3-3. Redis 클러스터 생성
 
 **AWS Console 경로**:
+- 🔗 [ElastiCache Redis Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/redis)
 ```
 ElastiCache → Redis clusters → Create
 ```
@@ -364,10 +424,19 @@ ElastiCache → Redis clusters → Create
 
 ### ✅ Step 3 검증
 
-**검증**:
-```bash
-# Redis 상태 확인
-aws elasticache describe-cache-clusters --cache-cluster-id cloudmart-redis
+**AWS Console에서 확인**:
+```
+ElastiCache → Redis clusters → cloudmart-redis 선택
+→ Status: Available
+→ Cluster mode: Disabled
+→ Number of nodes: 2 (Primary + Replica)
+→ Primary endpoint 복사 (나중에 사용)
+
+ElastiCache → Subnet groups → cloudmart-cache-subnet-group
+→ Subnets: 2개 확인
+
+EC2 → Security Groups → cloudmart-redis-sg
+→ Inbound rules: Custom TCP (6379) 확인
 ```
 
 **이미지 자리**: Redis 생성 완료
@@ -414,6 +483,7 @@ Outbound Rules:
 #### 4-2. Launch Template 생성
 
 **AWS Console 경로**:
+- 🔗 [Launch Templates Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LaunchTemplates:)
 ```
 EC2 → Launch Templates → Create launch template
 ```
@@ -431,20 +501,24 @@ IAM instance profile: [CloudMart-Backend-Role]
 User data:
 #!/bin/bash
 yum update -y
-yum install -y docker
+yum install -y docker nodejs npm
 systemctl start docker
 systemctl enable docker
 
-# RDS 및 Redis 엔드포인트 환경 변수
+# CloudMart 샘플 앱 다운로드
+cd /home/ec2-user
+wget https://github.com/your-repo/releases/download/v1.0.0/cloudmart-sample-app.tar.gz
+tar -xzf cloudmart-sample-app.tar.gz
+cd cloudmart-sample-app/backend
+
+# 환경 변수 설정
 export DATABASE_URL="postgresql://cloudmart_admin:password@<RDS-ENDPOINT>:5432/cloudmart"
 export REDIS_URL="redis://<REDIS-ENDPOINT>:6379"
+export PORT=8080
 
-# Backend 컨테이너 실행
-docker run -d \
-  -p 8080:8080 \
-  -e DATABASE_URL=$DATABASE_URL \
-  -e REDIS_URL=$REDIS_URL \
-  cloudmart/backend:latest
+# 의존성 설치 및 실행
+npm install --omit=dev
+nohup node server.js > /var/log/cloudmart-backend.log 2>&1 &
 ```
 
 **이미지 자리**: Launch Template
@@ -452,6 +526,7 @@ docker run -d \
 #### 4-3. ALB 생성
 
 **AWS Console 경로**:
+- 🔗 [Load Balancers Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LoadBalancers:)
 ```
 EC2 → Load Balancers → Create load balancer → Application Load Balancer
 ```
@@ -477,6 +552,7 @@ Target group:
 #### 4-4. Auto Scaling Group 생성
 
 **AWS Console 경로**:
+- 🔗 [Auto Scaling Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#AutoScalingGroups:)
 ```
 EC2 → Auto Scaling Groups → Create Auto Scaling group
 ```
@@ -503,16 +579,25 @@ Scaling policy:
 
 ### ✅ Step 4 검증
 
-**검증**:
-```bash
-# ALB DNS 확인
-aws elbv2 describe-load-balancers --names cloudmart-alb
+**AWS Console에서 확인**:
+```
+EC2 → Load Balancers → cloudmart-alb 선택
+→ State: Active
+→ DNS name 복사
+→ Listeners 탭: HTTP:80 확인
 
-# Target Health 확인
-aws elbv2 describe-target-health --target-group-arn <tg-arn>
+EC2 → Target Groups → cloudmart-backend-tg
+→ Targets 탭: 2개 인스턴스 Healthy 확인
 
-# API 테스트
-curl http://<ALB-DNS>/health
+EC2 → Auto Scaling Groups → cloudmart-backend-asg
+→ Desired: 2, Min: 2, Max: 4
+→ Instances 탭: 2개 인스턴스 InService 확인
+```
+
+**브라우저에서 테스트**:
+```
+http://<ALB-DNS>/health
+→ 예상 결과: {"status":"healthy"}
 ```
 
 **이미지 자리**: Backend 배포 완료
@@ -540,6 +625,7 @@ curl http://<ALB-DNS>/health
 #### 5-1. S3 버킷 생성
 
 **AWS Console 경로**:
+- 🔗 [S3 Buckets Console 바로가기](https://s3.console.aws.amazon.com/s3/buckets?region=ap-northeast-2)
 ```
 S3 → Buckets → Create bucket
 ```
@@ -557,18 +643,27 @@ Index document: index.html
 
 #### 5-2. Frontend 업로드
 
-**로컬에서 빌드**:
-```bash
-cd cloudmart-frontend
-npm run build
-aws s3 sync build/ s3://cloudmart-frontend-[unique-id]/
+**AWS Console에서 업로드**:
 ```
+S3 → Buckets → cloudmart-frontend-[unique-id] 선택
+→ Upload 버튼 클릭
+→ Add files 또는 Add folder
+→ cloudmart-sample-app/frontend 폴더의 모든 파일 선택
+→ Upload 버튼 클릭
+```
+
+**업로드 확인**:
+- index.html
+- styles.css
+- app.js
+- 기타 파일들이 모두 업로드되었는지 확인
 
 **이미지 자리**: S3 파일 업로드
 
 #### 5-3. CloudFront 배포
 
 **AWS Console 경로**:
+- 🔗 [CloudFront Distributions Console 바로가기](https://console.aws.amazon.com/cloudfront/v3/home#/distributions)
 ```
 CloudFront → Distributions → Create distribution
 ```
@@ -585,13 +680,20 @@ Default root object: index.html
 
 ### ✅ Step 5 검증
 
-**검증**:
-```bash
-# CloudFront URL 접속
-curl https://<cloudfront-domain>/
+**AWS Console에서 확인**:
+```
+S3 → Buckets → cloudmart-frontend-[unique-id]
+→ Objects 탭: 파일 업로드 확인
 
-# 브라우저에서 확인
-open https://<cloudfront-domain>/
+CloudFront → Distributions → 생성한 Distribution 선택
+→ Status: Deployed
+→ Distribution domain name 복사
+```
+
+**브라우저에서 테스트**:
+```
+https://<cloudfront-domain>/
+→ CloudMart 웹사이트 로딩 확인
 ```
 
 **이미지 자리**: Frontend 배포 완료
@@ -609,9 +711,11 @@ open https://<cloudfront-domain>/
 ### 📋 통합 테스트
 
 #### 테스트 1: Frontend → Backend 연결
-```bash
-# 브라우저에서 CloudFront URL 접속
-# API 호출 확인 (Network 탭)
+```
+브라우저에서 CloudFront URL 접속
+→ 개발자 도구 (F12) → Network 탭
+→ 페이지 새로고침
+→ API 호출 확인 (ALB DNS로 요청)
 ```
 
 **예상 결과**: Frontend가 ALB를 통해 Backend API 호출 성공
@@ -619,19 +723,21 @@ open https://<cloudfront-domain>/
 **이미지 자리**: 통합 테스트 결과
 
 #### 테스트 2: Backend → RDS 연결
-```bash
-# Backend 로그 확인
-aws logs tail /aws/ec2/cloudmart-backend --follow
-
-# DB 연결 확인
+```
+EC2 → Instances → Backend 인스턴스 선택
+→ Connect → Session Manager
+→ 로그 확인:
+  sudo tail -f /var/log/cloudmart-backend.log
 ```
 
 **예상 결과**: Backend가 RDS에 정상 연결
 
 #### 테스트 3: Backend → Redis 연결
-```bash
-# Redis 연결 테스트
-curl http://<ALB-DNS>/api/cache-test
+```
+브라우저에서 테스트:
+http://<ALB-DNS>/api/products
+→ 첫 번째 호출: Database에서 조회
+→ 두 번째 호출: Cache에서 조회 (빠른 응답)
 ```
 
 **예상 결과**: Redis 캐싱 동작 확인
