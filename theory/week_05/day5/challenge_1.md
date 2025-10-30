@@ -372,8 +372,6 @@ RDS (Database) + ElastiCache (Redis)
 ---
 
 
----
-
 ## 📚 참고 자료
 
 ### 학습 자료
