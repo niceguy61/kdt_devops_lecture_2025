@@ -24,12 +24,12 @@
 - 사전 준비 (Default VPC 삭제): 5분
 - Step 1 (VPC 생성): 5분
 - Step 2 (Subnet 생성): 15분
-- Step 3 (Internet Gateway): 5분
-- Step 4 (Route Table): 10분
+- Step 5 (Internet Gateway): 5분
+- Step 6 (Route Table): 10분
 
 ### 선택 Step (20분) - Optional
-- Step 5 (RDS PostgreSQL 17.6): 10분
-- Step 6 (ElastiCache Redis): 10분
+- Step 3 (RDS PostgreSQL 17.6): 10분
+- Step 4 (ElastiCache Redis): 10분
 
 ## 🎯 학습 목표
 
@@ -355,7 +355,7 @@ VPC → Subnets → Filters에서 VPC 선택
 
 ---
 
-## 🛠️ Step 3: Internet Gateway 생성 및 연결 (예상 시간: 5분)
+## 🛠️ Step 5: Internet Gateway 생성 및 연결 (예상 시간: 5분)
 
 ### 📋 이 단계에서 할 일
 - Internet Gateway 생성
@@ -422,7 +422,7 @@ VPC → Internet Gateways → [username]-igw 선택
 
 ---
 
-## 🛠️ Step 4: Route Table 설정 (예상 시간: 10분)
+## 🛠️ Step 6: Route Table 설정 (예상 시간: 10분)
 
 ### 📋 이 단계에서 할 일
 - Public Route Table 생성
@@ -482,7 +482,7 @@ Route Tables → [username]-public-rt 선택 → Subnet associations 탭 → Edi
 
 **이미지 자리**: Step 4-3 Subnet 연결
 
-#### 4-4. Private Route Table 확인
+#### 6-4. Private Route Table 확인
 
 **AWS Console 경로**:
 ```
@@ -564,7 +564,7 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 
 ---
 
-## 🗄️ Step 5 (Optional): RDS PostgreSQL 17.6 구성 (예상 시간: 10분)
+## 🗄️ Step 3 (Optional): RDS PostgreSQL 17.6 구성 (예상 시간: 10분)
 
 ### ⚠️ 선택 사항 안내
 이 Step은 **선택 사항**입니다. 시간이 부족하거나 데이터베이스가 필요 없다면 건너뛰어도 됩니다.
@@ -579,7 +579,7 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 
 ### 📝 실습 절차
 
-#### 5-1. DB Subnet Group 생성
+#### 3-1. DB Subnet Group 생성
 
 **AWS Console 경로**:
 ```
@@ -603,7 +603,7 @@ RDS → Subnet groups → Create DB subnet group
 - 보안을 위해 Private Subnet에 배치
 - 애플리케이션 서버만 접근 가능
 
-#### 5-2. RDS Security Group 생성
+#### 3-2. RDS Security Group 생성
 
 **AWS Console 경로**:
 ```
@@ -629,7 +629,7 @@ VPC → Security Groups → Create security group
 - 외부 인터넷에서 직접 접근 불가
 - 나중에 EC2 Security Group으로 더 제한 가능
 
-#### 5-3. RDS PostgreSQL 17.6 생성
+#### 3-3. RDS PostgreSQL 17.6 생성
 
 **AWS Console 경로**:
 ```
@@ -698,7 +698,7 @@ RDS → Databases → Create database
 - Status가 "Available"이 될 때까지 대기
 - 비용: 약 $0.017/hour (Free tier 750시간/월)
 
-### ✅ Step 5 검증
+### ✅ Step 3 검증
 
 **AWS Console에서 확인**:
 ```
@@ -723,7 +723,7 @@ RDS → Databases → [username]-postgres 선택
 
 ---
 
-## ⚡ Step 6 (Optional): ElastiCache Redis 구성 (예상 시간: 10분)
+## ⚡ Step 4 (Optional): ElastiCache Redis 구성 (예상 시간: 10분)
 
 ### ⚠️ 선택 사항 안내
 이 Step도 **선택 사항**입니다. 캐시가 필요 없다면 건너뛰어도 됩니다.
@@ -738,7 +738,7 @@ RDS → Databases → [username]-postgres 선택
 
 ### 📝 실습 절차
 
-#### 6-1. Cache Subnet Group 생성
+#### 4-1. Cache Subnet Group 생성
 
 **AWS Console 경로**:
 ```
@@ -757,7 +757,7 @@ ElastiCache → Subnet groups → Create subnet group
 
 **이미지 자리**: Step 6-1 Cache Subnet Group 생성
 
-#### 6-2. Redis Security Group 생성
+#### 4-2. Redis Security Group 생성
 
 **AWS Console 경로**:
 ```
@@ -778,7 +778,7 @@ VPC → Security Groups → Create security group
 
 **이미지 자리**: Step 6-2 Redis Security Group
 
-#### 6-3. Redis 클러스터 생성
+#### 4-3. Redis 클러스터 생성
 
 **AWS Console 경로**:
 ```
@@ -833,7 +833,7 @@ ElastiCache → Redis clusters → Create Redis cluster
 - Status가 "Available"이 될 때까지 대기
 - 비용: 약 $0.017/hour
 
-### ✅ Step 6 검증
+### ✅ Step 4 검증
 
 **AWS Console에서 확인**:
 ```
@@ -1017,58 +1017,115 @@ AWS Console → Cost Explorer → Cost & Usage
 
 ## 🔍 트러블슈팅
 
-**이미지 자리**: Step 5 검증 결과
-
-**💡 Resource Map 활용 팁**:
-- 아키텍처 문서화: 스크린샷으로 저장하여 문서화
-- 오류 진단: 색상과 연결선으로 빠른 문제 파악
-- 팀 공유: 시각적 자료로 팀원과 소통
-
----
-
-## ✅ 전체 검증 체크리스트
-
-### ✅ 사전 준비 완료
-- [ ] Default VPC 삭제 확인
-- [ ] VPC 목록 비어있음 확인
-
-### ✅ VPC 구성 완료
-- [ ] VPC 생성 (10.0.0.0/16)
-- [ ] DNS resolution 활성화
-- [ ] DNS hostnames 활성화
-
-### ✅ Subnet 구성 완료
-- [ ] Public Subnet A (10.0.1.0/24, AZ-A)
-- [ ] Private Subnet A (10.0.11.0/24, AZ-A)
-- [ ] Public Subnet B (10.0.2.0/24, AZ-B)
-- [ ] Private Subnet B (10.0.12.0/24, AZ-B)
-
-### ✅ Internet Gateway 구성 완료
-- [ ] IGW 생성
-- [ ] VPC에 연결
-- [ ] State "Attached" 확인
-
-### ✅ Route Table 구성 완료
-- [ ] Public Route Table 생성
-- [ ] 0.0.0.0/0 → IGW 경로 추가
-- [ ] Public Subnet 2개 연결
-- [ ] Private Subnet Main RT 사용 확인
-
-### ✅ VPC Resource Map 검증 완료
-- [ ] Public Subnet 녹색 표시 확인
-- [ ] Private Subnet 파란색 표시 확인
-- [ ] IGW 연결 관계 확인 (실선)
-- [ ] Route Table 연결 확인 (실선)
-- [ ] 트래픽 흐름 확인 (점선)
-- [ ] 설정 오류 없음 확인
-
----
-
-## 🔍 트러블슈팅
-
 ### 문제 1: Subnet CIDR 블록 중복 오류
 **증상**:
 ```
+The CIDR '10.0.1.0/24' conflicts with another subnet
+```
+
+**원인**:
+- 동일한 CIDR 블록을 중복 사용
+
+**해결 방법**:
+- 각 Subnet마다 고유한 CIDR 블록 사용
+- 10.0.1.0/24, 10.0.2.0/24, 10.0.11.0/24, 10.0.12.0/24
+
+### 문제 2: IGW를 VPC에 연결할 수 없음
+**증상**:
+```
+Resource has a dependent object
+```
+
+**원인**:
+- 이미 다른 IGW가 연결되어 있음
+
+**해결 방법**:
+- 하나의 VPC에는 하나의 IGW만 연결 가능
+- 기존 IGW 확인 및 제거
+
+### 문제 3: RDS 생성 실패 (Optional)
+**증상**:
+```
+DB Subnet Group doesn't meet availability zone coverage requirement
+```
+
+**원인**:
+- DB Subnet Group에 2개 이상의 AZ가 없음
+
+**해결 방법**:
+- DB Subnet Group에 최소 2개 AZ의 Subnet 포함
+- Private Subnet A (AZ-A) + Private Subnet B (AZ-B)
+
+### 문제 4: Redis 생성 실패 (Optional)
+**증상**:
+```
+The requested cache subnet group does not exist
+```
+
+**원인**:
+- Cache Subnet Group이 생성되지 않음
+
+**해결 방법**:
+- Step 6-1에서 Cache Subnet Group 먼저 생성
+- 생성 완료 후 Redis 클러스터 생성
+
+---
+
+## 💡 Lab 회고
+
+### 🤝 페어 회고 (5분)
+1. **가장 어려웠던 부분**: 
+   - CIDR 블록 설계?
+   - Route Table 설정?
+   - Optional Step (RDS/Redis)?
+
+2. **새로 배운 점**:
+   - VPC 네트워크 구조 이해
+   - Multi-AZ 고가용성 개념
+   - DB Subnet Group의 필요성 (Optional)
+
+3. **실무 적용 아이디어**:
+   - 프로젝트에 어떻게 활용할 수 있을까?
+
+### 📊 학습 성과
+
+**필수 Step 완료 시**:
+- **기술적 성취**: VPC 네트워크 인프라 완전 구축
+- **이해도 향상**: CIDR, Subnet, IGW, Route Table 개념
+- **다음 Lab 준비**: EC2 배포를 위한 네트워크 준비 완료
+
+**선택 Step 완료 시** (추가):
+- **기술적 성취**: 3-Tier 아키텍처 완성 (Network + Database)
+- **이해도 향상**: RDS, ElastiCache, Subnet Group 개념
+- **실무 연계**: 실제 프로덕션 환경과 유사한 구성
+
+---
+
+## 🔗 관련 자료
+
+### 📚 Session 복습
+- [Session 1: AWS 기초 개념](./session_1.md)
+- [Session 2: VPC 아키텍처](./session_2.md)
+
+### 📖 AWS 공식 문서
+- [VPC 사용자 가이드](https://docs.aws.amazon.com/vpc/latest/userguide/)
+- [Subnet 설계](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html)
+- [Route Table](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
+- [RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html) (Optional)
+- [ElastiCache Redis](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/) (Optional)
+
+### 🎯 다음 Lab
+- [Lab 2: EC2 + ALB + ASG 배포](./lab_2.md) - VPC 위에 Backend 애플리케이션 배포
+
+---
+
+<div align="center">
+
+**✅ Lab 1 완료** • **🌐 네트워크 준비 완료** • **🗄️ DB 구성 완료 (Optional)** • **💻 다음은 EC2 배포**
+
+*VPC 인프라 구축 성공! 이제 EC2를 배포할 준비가 되었습니다.*
+
+</div>
 The CIDR '10.0.1.0/24' conflicts with another subnet
 ```
 
