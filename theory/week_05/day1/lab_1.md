@@ -888,7 +888,7 @@ ElastiCache → Redis clusters → [username]-redis 선택
 
 **삭제 순서**:
 ```
-Step 6 (Redis) → Step 5 (RDS) → Step 4 (Route Table) → Step 3 (IGW) → Step 2 (Subnet) → Step 1 (VPC)
+Step 4 (Redis) → Step 3 (RDS) → Step 6 (Route Table) → Step 5 (IGW) → Step 2 (Subnet) → Step 1 (VPC)
 ```
 
 ### 🗑️ 선택 Step 리소스 삭제 (Optional 실행한 경우)
