@@ -105,6 +105,110 @@ graph TB
 
 ---
 
+**Docker Compose + DB Replication (단일 서버 - 고급 개발)**:
+```mermaid
+graph TB
+    subgraph "단일 서버 (localhost)"
+        USER[사용자<br/>localhost:3000]
+        
+        subgraph "Docker Network (bridge)"
+            FRONT[frontend<br/>컨테이너<br/>3000:3000]
+            BACK[backend<br/>컨테이너<br/>8080:8080]
+            
+            subgraph "PostgreSQL Replication"
+                DB_PRIMARY[postgres-primary<br/>컨테이너<br/>5432:5432<br/>Read/Write]
+                DB_REPLICA[postgres-replica<br/>컨테이너<br/>5433:5432<br/>Read Only]
+                
+                DB_PRIMARY -.Streaming<br/>Replication.-> DB_REPLICA
+            end
+            
+            CACHE[redis<br/>컨테이너<br/>6379:6379]
+        end
+        
+        VOL1[postgres_primary_data<br/>볼륨]
+        VOL2[postgres_replica_data<br/>볼륨]
+        VOL3[redis_data<br/>볼륨]
+    end
+    
+    USER --> FRONT
+    FRONT --> BACK
+    BACK -->|Write| DB_PRIMARY
+    BACK -->|Read| DB_REPLICA
+    BACK --> CACHE
+    DB_PRIMARY --> VOL1
+    DB_REPLICA --> VOL2
+    CACHE --> VOL3
+    
+    style USER fill:#e3f2fd
+    style FRONT fill:#fff3e0
+    style BACK fill:#e8f5e8
+    style DB_PRIMARY fill:#ffebee
+    style DB_REPLICA fill:#f3e5f5
+    style CACHE fill:#e1f5fe
+    style VOL1 fill:#e0f2f1
+    style VOL2 fill:#e0f2f1
+    style VOL3 fill:#e0f2f1
+```
+
+**docker-compose.yml 예시**:
+```yaml
+version: '3.8'
+services:
+  postgres-primary:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cloudmart
+      # Replication 설정
+      POSTGRES_REPLICATION_MODE: master
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: replicator_password
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    command: |
+      postgres -c wal_level=replica 
+               -c max_wal_senders=3 
+               -c max_replication_slots=3
+
+  postgres-replica:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      # Replica 설정
+      POSTGRES_MASTER_SERVICE_HOST: postgres-primary
+      POSTGRES_REPLICATION_MODE: slave
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: replicator_password
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    depends_on:
+      - postgres-primary
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:
+```
+
+**특징**:
+- ✅ **읽기 성능 향상**: Read Replica로 읽기 부하 분산
+- ✅ **데이터 복제**: Primary 장애 시 Replica로 수동 전환 가능
+- ✅ **개발 환경 테스트**: Replication 동작 로컬 테스트 가능
+- ⚠️ **여전히 단일 서버**: 서버 다운 시 Primary/Replica 모두 중단
+- ⚠️ **수동 장애 조치**: 자동 failover 없음 (수동으로 Replica를 Primary로 승격)
+- ⚠️ **복잡도 증가**: 설정 및 관리 복잡
+- ❌ **진짜 고가용성 아님**: 물리적으로 같은 서버에 있어 의미 제한적
+
+**💡 핵심 한계**:
+> Docker Compose로 DB Replication을 구현해도 **물리적으로 같은 서버**에 있기 때문에, 서버 자체가 다운되면 Primary와 Replica가 모두 중단됩니다. 진정한 고가용성을 위해서는 **물리적으로 분리된 서버**(AWS Multi-AZ)가 필요합니다!
+
+---
+
 **AWS Multi-AZ (프로덕션 - 고가용성)**:
 
 **CloudMart VPC 설계**:
