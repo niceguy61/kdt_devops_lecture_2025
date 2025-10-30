@@ -1,8 +1,8 @@
-# Week 5 Day 1 Lab 1: VPC 네트워크 인프라 구축 (14:00-14:50)
+# Week 5 Day 1 Lab 1: VPC 네트워크 인프라 구축 (14:00-15:00)
 
 <div align="center">
 
-**🌐 VPC 생성** • **🏗️ Multi-AZ Subnet** • **🚪 Internet Gateway** • **🗺️ Route Table**
+**🌐 VPC 생성** • **🏗️ Multi-AZ Subnet** • **🚪 Internet Gateway** • **🗺️ Route Table** • **🗄️ RDS (Optional)** • **⚡ Redis (Optional)**
 
 *AWS 네트워크의 기초를 직접 구축하기*
 
@@ -11,24 +11,37 @@
 ---
 
 ## 🕘 Lab 정보
-**시간**: 14:00-14:50 (50분)
-**목표**: VPC부터 Route Table까지 완전한 네트워크 인프라 구축
+**시간**: 14:00-15:00 (60분)
+**목표**: VPC 네트워크 인프라 구축 + 선택적 데이터베이스 구성
 **방식**: AWS Web Console 실습
-**예상 비용**: $0.00 (VPC 자체는 무료)
+**예상 비용**: 
+- 필수 Step: $0.00 (VPC 무료)
+- 선택 Step: ~$0.20 (RDS + Redis 1시간)
 
 **⏱️ 시간 배분**:
+
+### 필수 Step (40분)
 - 사전 준비 (Default VPC 삭제): 5분
 - Step 1 (VPC 생성): 5분
 - Step 2 (Subnet 생성): 15분
 - Step 3 (Internet Gateway): 5분
 - Step 4 (Route Table): 10분
-- Step 5 (검증 및 정리): 10분
+
+### 선택 Step (20분) - Optional
+- Step 5 (RDS PostgreSQL 17.6): 10분
+- Step 6 (ElastiCache Redis): 10분
 
 ## 🎯 학습 목표
+
+### 필수 목표
 - [ ] VPC CIDR 블록 설계 및 생성
 - [ ] Multi-AZ Subnet 구성 (Public/Private)
 - [ ] Internet Gateway 생성 및 연결
 - [ ] Route Table 설정 및 Subnet 연결
+
+### 선택 목표 (Optional)
+- [ ] RDS PostgreSQL 17.6 구성 (DB Subnet Group 포함)
+- [ ] ElastiCache Redis 구성 (Cache Subnet Group 포함)
 
 ---
 
