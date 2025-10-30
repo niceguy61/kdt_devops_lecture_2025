@@ -62,19 +62,36 @@ graph TB
 > **정의**: 여러 가용 영역에 걸쳐 고가용성을 보장하는 네트워크 아키텍처
 
 **CloudMart VPC 설계**:
-```
-VPC: 10.0.0.0/16 (65,536개 IP)
-├── AZ-A (ap-northeast-2a)
-│   ├── Public Subnet: 10.0.1.0/24 (256개 IP)
-│   │   └── ALB, NAT Gateway
-│   └── Private Subnet: 10.0.11.0/24 (256개 IP)
-│       └── EC2 Backend, RDS Primary, ElastiCache
-│
-└── AZ-B (ap-northeast-2b)
-    ├── Public Subnet: 10.0.2.0/24 (256개 IP)
-    │   └── ALB, NAT Gateway (선택)
-    └── Private Subnet: 10.0.12.0/24 (256개 IP)
-        └── EC2 Backend, RDS Standby, ElastiCache
+```mermaid
+graph TB
+    VPC[VPC: 10.0.0.0/16<br/>65,536개 IP]
+    
+    VPC --> AZA[AZ-A<br/>ap-northeast-2a]
+    VPC --> AZB[AZ-B<br/>ap-northeast-2b]
+    
+    AZA --> PUB1[Public Subnet<br/>10.0.1.0/24<br/>256개 IP]
+    AZA --> PRIV1[Private Subnet<br/>10.0.11.0/24<br/>256개 IP]
+    
+    AZB --> PUB2[Public Subnet<br/>10.0.2.0/24<br/>256개 IP]
+    AZB --> PRIV2[Private Subnet<br/>10.0.12.0/24<br/>256개 IP]
+    
+    PUB1 --> RES1[ALB<br/>NAT Gateway]
+    PRIV1 --> RES2[EC2 Backend<br/>RDS Primary<br/>ElastiCache]
+    
+    PUB2 --> RES3[ALB<br/>NAT Gateway]
+    PRIV2 --> RES4[EC2 Backend<br/>RDS Standby<br/>ElastiCache]
+    
+    style VPC fill:#4caf50
+    style AZA fill:#e3f2fd
+    style AZB fill:#e3f2fd
+    style PUB1 fill:#fff3e0
+    style PUB2 fill:#fff3e0
+    style PRIV1 fill:#e8f5e8
+    style PRIV2 fill:#e8f5e8
+    style RES1 fill:#ffebee
+    style RES2 fill:#f3e5f5
+    style RES3 fill:#ffebee
+    style RES4 fill:#f3e5f5
 ```
 
 **네트워크 구성 다이어그램**:
