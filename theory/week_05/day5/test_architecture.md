@@ -1,50 +1,66 @@
-# Architecture-Beta 테스트
+# Architecture-Beta AWS Logos 테스트
 
-## 기본 테스트
+## AWS 실제 로고 아이콘 테스트
 
 ```mermaid
 architecture-beta
-    group cloud(cloud)[AWS Cloud]
+    group cloud(logos:aws)[AWS Cloud]
     
-    service s3(disk)[S3] in cloud
-    service ec2(server)[EC2] in cloud
-    service rds(database)[RDS] in cloud
+    service s3(logos:aws-s3)[S3 Frontend] in cloud
+    service cf(logos:aws-cloudfront)[CloudFront] in cloud
+    service alb(logos:aws-elastic-load-balancing)[ALB] in cloud
+    service ec2(logos:aws-ec2)[EC2 Backend] in cloud
+    service rds(logos:aws-rds)[RDS Database] in cloud
+    service redis(logos:aws-elasticache)[ElastiCache] in cloud
     
-    s3:R -- L:ec2
+    cf:R -- L:s3
+    cf:B -- T:alb
+    alb:R -- L:ec2
     ec2:R -- L:rds
+    ec2:B -- T:redis
 ```
 
-## AWS 아이콘 테스트
+## CloudMart 아키텍처 (AWS Logos)
 
 ```mermaid
 architecture-beta
-    group aws(cloud)[AWS Cloud]
+    group aws(logos:aws)[AWS Cloud ap-northeast-2]
     
-    service frontend(disk)[S3 Frontend] in aws
-    service backend(server)[EC2 Backend] in aws
-    service db(database)[RDS Database] in aws
-    service cache(disk)[ElastiCache] in aws
+    service route53(logos:aws-route-53)[Route 53] in aws
+    service cloudfront(logos:aws-cloudfront)[CloudFront] in aws
+    service s3(logos:aws-s3)[S3 Bucket] in aws
     
-    frontend:R -- L:backend
-    backend:R -- L:db
-    backend:B -- T:cache
+    group vpc(cloud)[VPC 10.0.0.0/16] in aws
+    
+    service alb(logos:aws-elastic-load-balancing)[ALB] in vpc
+    service ec2(logos:aws-ec2)[EC2 ASG] in vpc
+    service rds(logos:aws-rds)[RDS Multi-AZ] in vpc
+    service elasticache(logos:aws-elasticache)[Redis Cluster] in vpc
+    
+    service cloudwatch(logos:aws-cloudwatch)[CloudWatch] in aws
+    service sns(logos:aws-sns)[SNS] in aws
+    
+    route53:R -- L:cloudfront
+    cloudfront:R -- L:s3
+    cloudfront:B -- T:alb
+    alb:R -- L:ec2
+    ec2:R -- L:rds
+    ec2:B -- T:elasticache
+    ec2:T -- B:cloudwatch
+    cloudwatch:R -- L:sns
 ```
 
-## 복잡한 구조 테스트
+## 가능한 AWS 서비스 로고들
 
-```mermaid
-architecture-beta
-    group cloud(cloud)[AWS Cloud]
-    
-    group vpc(cloud)[VPC] in cloud
-    
-    service alb(server)[ALB] in vpc
-    service ec2_1(server)[EC2 A] in vpc
-    service ec2_2(server)[EC2 B] in vpc
-    service rds(database)[RDS] in vpc
-    
-    alb:R -- L:ec2_1
-    alb:R -- L:ec2_2
-    ec2_1:B -- T:rds
-    ec2_2:B -- T:rds
-```
+- `logos:aws` - AWS 로고
+- `logos:aws-s3` - S3
+- `logos:aws-ec2` - EC2
+- `logos:aws-rds` - RDS
+- `logos:aws-lambda` - Lambda
+- `logos:aws-cloudfront` - CloudFront
+- `logos:aws-route-53` - Route 53
+- `logos:aws-elastic-load-balancing` - ELB/ALB
+- `logos:aws-elasticache` - ElastiCache
+- `logos:aws-cloudwatch` - CloudWatch
+- `logos:aws-sns` - SNS
+- `logos:aws-vpc` - VPC
