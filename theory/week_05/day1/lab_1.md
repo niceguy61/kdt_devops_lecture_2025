@@ -540,6 +540,323 @@ VPC → Route Tables → [username]-public-rt 선택 → Routes 탭
 
 ---
 
+## 🎉 필수 Step 완료!
+
+**축하합니다!** VPC 네트워크 인프라 구축을 완료했습니다.
+
+### ✅ 완료된 구성
+- ✅ VPC (10.0.0.0/16)
+- ✅ Public Subnet 2개 (AZ-A, AZ-B)
+- ✅ Private Subnet 2개 (AZ-A, AZ-B)
+- ✅ Internet Gateway
+- ✅ Route Table (Public/Private)
+
+### 🔄 다음 선택
+
+**Option 1: 여기서 마무리** (40분 완료)
+- Lab 1 종료
+- 다음 Lab으로 이동
+
+**Option 2: 데이터베이스 구성 계속** (추가 20분)
+- Step 5: RDS PostgreSQL 17.6 구성
+- Step 6: ElastiCache Redis 구성
+- 완전한 3-Tier 아키텍처 완성
+
+---
+
+## 🗄️ Step 5 (Optional): RDS PostgreSQL 17.6 구성 (예상 시간: 10분)
+
+### ⚠️ 선택 사항 안내
+이 Step은 **선택 사항**입니다. 시간이 부족하거나 데이터베이스가 필요 없다면 건너뛰어도 됩니다.
+
+### 📋 이 단계에서 할 일
+- DB Subnet Group 생성
+- RDS Security Group 생성
+- RDS PostgreSQL 17.6 인스턴스 생성
+
+### 🔗 참조 개념
+- [Session 3: RDS 기초](../day3/session_1.md) - RDS 아키텍처 (Day 3에서 학습 예정)
+
+### 📝 실습 절차
+
+#### 5-1. DB Subnet Group 생성
+
+**AWS Console 경로**:
+```
+RDS → Subnet groups → Create DB subnet group
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#create-db-subnet-group:
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name** | [username]-db-subnet-group | DB Subnet Group 이름 |
+| **Description** | DB subnet group for [username] | 설명 |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
+| **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
+| **Subnets** | [username]-private-a (10.0.11.0/24)<br/>[username]-private-b (10.0.12.0/24) | Private Subnet 2개 |
+
+**이미지 자리**: Step 5-1 DB Subnet Group 생성
+
+**💡 왜 Private Subnet인가?**:
+- 데이터베이스는 외부 접근 불필요
+- 보안을 위해 Private Subnet에 배치
+- 애플리케이션 서버만 접근 가능
+
+#### 5-2. RDS Security Group 생성
+
+**AWS Console 경로**:
+```
+VPC → Security Groups → Create security group
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Security group name** | [username]-rds-sg | RDS Security Group |
+| **Description** | Security group for RDS | 설명 |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
+
+**Inbound rules**:
+| Type | Protocol | Port | Source | 설명 |
+|------|----------|------|--------|------|
+| PostgreSQL | TCP | 5432 | 10.0.0.0/16 | VPC 내부에서만 접근 |
+
+**이미지 자리**: Step 5-2 RDS Security Group
+
+**💡 보안 팁**:
+- Source를 VPC CIDR (10.0.0.0/16)로 제한
+- 외부 인터넷에서 직접 접근 불가
+- 나중에 EC2 Security Group으로 더 제한 가능
+
+#### 5-3. RDS PostgreSQL 17.6 생성
+
+**AWS Console 경로**:
+```
+RDS → Databases → Create database
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#launch-dbinstance:
+
+**설정 값**:
+
+**Engine options**:
+| 항목 | 값 |
+|------|-----|
+| **Engine type** | PostgreSQL |
+| **Engine Version** | PostgreSQL 17.6-R1 |
+
+**Templates**:
+| 항목 | 값 |
+|------|-----|
+| **Templates** | Free tier |
+
+**Settings**:
+| 항목 | 값 |
+|------|-----|
+| **DB instance identifier** | [username]-postgres |
+| **Master username** | postgres |
+| **Master password** | YourPassword123! |
+| **Confirm password** | YourPassword123! |
+
+**Instance configuration**:
+| 항목 | 값 |
+|------|-----|
+| **DB instance class** | db.t3.micro |
+
+**Storage**:
+| 항목 | 값 |
+|------|-----|
+| **Storage type** | General Purpose SSD (gp3) |
+| **Allocated storage** | 20 GiB |
+| **Enable storage autoscaling** | ❌ 체크 해제 |
+
+**Connectivity**:
+| 항목 | 값 |
+|------|-----|
+| **VPC** | [username]-vpc |
+| **DB subnet group** | [username]-db-subnet-group |
+| **Public access** | No |
+| **VPC security group** | [username]-rds-sg |
+| **Availability Zone** | No preference |
+
+**Database authentication**:
+| 항목 | 값 |
+|------|-----|
+| **Database authentication** | Password authentication |
+
+**Additional configuration**:
+| 항목 | 값 |
+|------|-----|
+| **Initial database name** | mydb |
+| **Backup retention period** | 1 day |
+| **Enable encryption** | ❌ 체크 해제 (실습용) |
+
+**이미지 자리**: Step 5-3 RDS 생성
+
+**⚠️ 주의사항**:
+- 생성 시간: 약 5-10분 소요
+- Status가 "Available"이 될 때까지 대기
+- 비용: 약 $0.017/hour (Free tier 750시간/월)
+
+### ✅ Step 5 검증
+
+**AWS Console에서 확인**:
+```
+RDS → Databases → [username]-postgres 선택
+```
+
+**확인 항목**:
+| 항목 | 예상 값 |
+|------|---------|
+| **Status** | Available |
+| **Engine** | PostgreSQL 17.6-R1 |
+| **Endpoint** | [username]-postgres.xxxxx.ap-northeast-2.rds.amazonaws.com |
+| **Port** | 5432 |
+
+**이미지 자리**: Step 5 검증 결과
+
+**✅ 체크리스트**:
+- [ ] DB Subnet Group 생성 확인
+- [ ] RDS Security Group 생성 확인
+- [ ] RDS 인스턴스 Status "Available" 확인
+- [ ] Endpoint 주소 확인
+
+---
+
+## ⚡ Step 6 (Optional): ElastiCache Redis 구성 (예상 시간: 10분)
+
+### ⚠️ 선택 사항 안내
+이 Step도 **선택 사항**입니다. 캐시가 필요 없다면 건너뛰어도 됩니다.
+
+### 📋 이 단계에서 할 일
+- Cache Subnet Group 생성
+- Redis Security Group 생성
+- Redis 클러스터 생성
+
+### 🔗 참조 개념
+- [Session 3: ElastiCache](../day3/session_2.md) - Redis 아키텍처 (Day 3에서 학습 예정)
+
+### 📝 실습 절차
+
+#### 6-1. Cache Subnet Group 생성
+
+**AWS Console 경로**:
+```
+ElastiCache → Subnet groups → Create subnet group
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/subnet-groups/create
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name** | [username]-cache-subnet-group | Cache Subnet Group 이름 |
+| **Description** | Cache subnet group for [username] | 설명 |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
+| **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
+| **Subnets** | [username]-private-a (10.0.11.0/24)<br/>[username]-private-b (10.0.12.0/24) | Private Subnet 2개 |
+
+**이미지 자리**: Step 6-1 Cache Subnet Group 생성
+
+#### 6-2. Redis Security Group 생성
+
+**AWS Console 경로**:
+```
+VPC → Security Groups → Create security group
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Security group name** | [username]-redis-sg | Redis Security Group |
+| **Description** | Security group for Redis | 설명 |
+| **VPC** | [username]-vpc | 위에서 생성한 VPC |
+
+**Inbound rules**:
+| Type | Protocol | Port | Source | 설명 |
+|------|----------|------|--------|------|
+| Custom TCP | TCP | 6379 | 10.0.0.0/16 | VPC 내부에서만 접근 |
+
+**이미지 자리**: Step 6-2 Redis Security Group
+
+#### 6-3. Redis 클러스터 생성
+
+**AWS Console 경로**:
+```
+ElastiCache → Redis clusters → Create Redis cluster
+```
+**직접 링크**: https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/redis/create
+
+**설정 값**:
+
+**Cluster settings**:
+| 항목 | 값 |
+|------|-----|
+| **Cluster mode** | Disabled |
+| **Cluster name** | [username]-redis |
+| **Description** | Redis cluster for [username] |
+
+**Location**:
+| 항목 | 값 |
+|------|-----|
+| **AWS Cloud** | 선택 |
+
+**Cluster settings**:
+| 항목 | 값 |
+|------|-----|
+| **Engine version** | 7.1 (최신 버전) |
+| **Port** | 6379 |
+| **Parameter group** | default.redis7 |
+| **Node type** | cache.t3.micro |
+| **Number of replicas** | 0 |
+
+**Subnet group settings**:
+| 항목 | 값 |
+|------|-----|
+| **Subnet group** | [username]-cache-subnet-group |
+
+**Security**:
+| 항목 | 값 |
+|------|-----|
+| **Security groups** | [username]-redis-sg |
+| **Encryption at rest** | ❌ 체크 해제 (실습용) |
+| **Encryption in-transit** | ❌ 체크 해제 (실습용) |
+
+**Backup**:
+| 항목 | 값 |
+|------|-----|
+| **Enable automatic backups** | ❌ 체크 해제 (실습용) |
+
+**이미지 자리**: Step 6-3 Redis 생성
+
+**⚠️ 주의사항**:
+- 생성 시간: 약 5-10분 소요
+- Status가 "Available"이 될 때까지 대기
+- 비용: 약 $0.017/hour
+
+### ✅ Step 6 검증
+
+**AWS Console에서 확인**:
+```
+ElastiCache → Redis clusters → [username]-redis 선택
+```
+
+**확인 항목**:
+| 항목 | 예상 값 |
+|------|---------|
+| **Status** | Available |
+| **Engine version** | 7.1 |
+| **Primary endpoint** | [username]-redis.xxxxx.cache.amazonaws.com:6379 |
+
+**이미지 자리**: Step 6 검증 결과
+
+**✅ 체크리스트**:
+- [ ] Cache Subnet Group 생성 확인
+- [ ] Redis Security Group 생성 확인
+- [ ] Redis 클러스터 Status "Available" 확인
+- [ ] Primary endpoint 주소 확인
+
+---
+
 ## 🛠️ Step 5: VPC Resource Map으로 아키텍처 검증 (예상 시간: 5분)
 
 ### 📋 이 단계에서 할 일
