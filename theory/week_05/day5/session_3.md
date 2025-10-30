@@ -65,6 +65,7 @@ graph TB
         GRAFANA[Grafana<br/>대시보드<br/>3000포트]
         PROMETHEUS[Prometheus<br/>메트릭 수집<br/>9090포트]
         LOKI[Loki<br/>로그 수집<br/>3100포트]
+        JAEGER[Jaeger<br/>분산 추적<br/>16686포트]
         ALERTMANAGER[AlertManager<br/>알림<br/>9093포트]
     end
     
@@ -72,6 +73,7 @@ graph TB
         NODE_EXP1[Node Exporter<br/>시스템 메트릭]
         CADVISOR1[cAdvisor<br/>컨테이너 메트릭]
         PROMTAIL1[Promtail<br/>로그 수집]
+        JAEGER_AGENT1[Jaeger Agent<br/>트레이스 수집]
         APP1[애플리케이션<br/>컨테이너들]
     end
     
@@ -79,12 +81,14 @@ graph TB
         NODE_EXP2[Node Exporter<br/>시스템 메트릭]
         CADVISOR2[cAdvisor<br/>컨테이너 메트릭]
         PROMTAIL2[Promtail<br/>로그 수집]
+        JAEGER_AGENT2[Jaeger Agent<br/>트레이스 수집]
         APP2[애플리케이션<br/>컨테이너들]
     end
     
     subgraph "AWS S3"
         S3_METRICS[S3 Bucket<br/>메트릭 백업]
         S3_LOGS[S3 Bucket<br/>로그 백업]
+        S3_TRACES[S3 Bucket<br/>트레이스 백업]
     end
     
     NODE_EXP1 --> PROMETHEUS
@@ -95,48 +99,238 @@ graph TB
     PROMTAIL1 --> LOKI
     PROMTAIL2 --> LOKI
     
+    APP1 --> JAEGER_AGENT1
+    APP2 --> JAEGER_AGENT2
+    JAEGER_AGENT1 --> JAEGER
+    JAEGER_AGENT2 --> JAEGER
+    
     PROMETHEUS --> GRAFANA
     LOKI --> GRAFANA
+    JAEGER --> GRAFANA
     PROMETHEUS --> ALERTMANAGER
     
     PROMETHEUS -.백업.-> S3_METRICS
     LOKI -.백업.-> S3_LOGS
+    JAEGER -.백업.-> S3_TRACES
     
     ALERTMANAGER -.알림.-> SLACK[Slack/Email]
     
     style GRAFANA fill:#ff9800
     style PROMETHEUS fill:#e8f5e8
     style LOKI fill:#e3f2fd
+    style JAEGER fill:#9c27b0
     style ALERTMANAGER fill:#ffebee
     style S3_METRICS fill:#fce4ec
     style S3_LOGS fill:#fce4ec
+    style S3_TRACES fill:#fce4ec
 ```
 
 **Docker Compose 모니터링 스택 구성**:
 - ✅ **Prometheus**: 메트릭 수집 (CPU, 메모리, 디스크, 네트워크)
 - ✅ **Grafana**: 시각화 대시보드
 - ✅ **Loki**: 로그 수집 및 검색
+- ✅ **Jaeger**: 분산 추적 (마이크로서비스 간 호출 추적) 🆕
 - ✅ **AlertManager**: Slack/Email 알림
 - ✅ **Node Exporter**: 시스템 메트릭
 - ✅ **cAdvisor**: 컨테이너 메트릭
 - ✅ **Promtail**: 로그 수집 에이전트
+- ✅ **Jaeger Agent**: 트레이스 수집 에이전트 🆕
 - ✅ **S3 백업**: 30일 보관
 
-**💡 Docker vs AWS 모니터링 비교**:
-| 항목 | Docker 모니터링 스택 | AWS CloudWatch |
-|------|---------------------|----------------|
-| **메트릭 수집** | Prometheus (수동 설정) | 자동 수집 |
-| **로그 수집** | Loki + Promtail (수동) | 자동 수집 |
-| **대시보드** | Grafana (직접 구축) | 기본 제공 |
-| **알림** | AlertManager (수동 설정) | CloudWatch Alarms |
+**Jaeger 분산 추적 예시**:
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant Frontend as Frontend
+    participant Backend as Backend API
+    participant Auth as Auth Service
+    participant DB as PostgreSQL
+    participant Cache as Redis
+    
+    User->>Frontend: 1. 상품 조회 요청
+    Note over Frontend: Trace ID: abc123<br/>Span ID: span-1
+    
+    Frontend->>Backend: 2. API 호출
+    Note over Backend: Trace ID: abc123<br/>Span ID: span-2<br/>Parent: span-1
+    
+    Backend->>Auth: 3. 인증 확인
+    Note over Auth: Trace ID: abc123<br/>Span ID: span-3<br/>Parent: span-2
+    Auth-->>Backend: 4. 인증 성공 (15ms)
+    
+    Backend->>Cache: 5. 캐시 조회
+    Note over Cache: Trace ID: abc123<br/>Span ID: span-4<br/>Parent: span-2
+    Cache-->>Backend: 6. 캐시 미스 (5ms)
+    
+    Backend->>DB: 7. DB 조회
+    Note over DB: Trace ID: abc123<br/>Span ID: span-5<br/>Parent: span-2
+    DB-->>Backend: 8. 데이터 반환 (120ms)
+    
+    Backend->>Cache: 9. 캐시 저장
+    Cache-->>Backend: 10. 저장 완료 (3ms)
+    
+    Backend-->>Frontend: 11. 응답 (143ms)
+    Frontend-->>User: 12. 화면 표시 (150ms)
+    
+    Note over User,Cache: 전체 요청: 150ms<br/>가장 느린 구간: DB 조회 (120ms)
+```
+
+**모니터링 서버 - docker-compose.yml (Jaeger 추가)**:
+```yaml
+version: '3.8'
+services:
+  # 기존 서비스들...
+  
+  # Jaeger All-in-One (개발/테스트용)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"   # Zipkin compact
+      - "6831:6831/udp"   # Jaeger compact
+      - "6832:6832/udp"   # Jaeger binary
+      - "5778:5778"       # Config
+      - "16686:16686"     # UI
+      - "14268:14268"     # Collector HTTP
+      - "14250:14250"     # Collector gRPC
+      - "9411:9411"       # Zipkin compatible
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+    volumes:
+      - jaeger_data:/badger
+    networks:
+      - monitoring
+
+  # Grafana에 Jaeger 데이터소스 추가
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-jaeger-datasource
+    # ... 기존 설정 ...
+
+volumes:
+  jaeger_data:
+```
+
+**서버 1/2 - Jaeger Agent 추가**:
+```yaml
+version: '3.8'
+services:
+  # 기존 애플리케이션 서비스들...
+  
+  # Jaeger Agent (각 서버에 배치)
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+    environment:
+      - REPORTER_GRPC_HOST_PORT=192.168.1.100:14250  # 모니터링 서버 IP
+    networks:
+      - monitoring
+```
+
+**애플리케이션에 Jaeger 연동 (Node.js 예시)**:
+```javascript
+// backend/src/tracing.js
+const { initTracer } = require('jaeger-client');
+
+function initJaeger(serviceName) {
+  const config = {
+    serviceName: serviceName,
+    sampler: {
+      type: 'const',
+      param: 1, // 모든 요청 추적 (프로덕션에서는 0.1 등으로 조정)
+    },
+    reporter: {
+      logSpans: true,
+      agentHost: process.env.JAEGER_AGENT_HOST || 'jaeger-agent',
+      agentPort: 6832,
+    },
+  };
+  
+  const options = {
+    logger: {
+      info: msg => console.log('INFO', msg),
+      error: msg => console.log('ERROR', msg),
+    },
+  };
+  
+  return initTracer(config, options);
+}
+
+module.exports = initJaeger;
+```
+
+```javascript
+// backend/src/app.js
+const express = require('express');
+const initJaeger = require('./tracing');
+const opentracing = require('opentracing');
+
+const tracer = initJaeger('cloudmart-backend');
+opentracing.initGlobalTracer(tracer);
+
+const app = express();
+
+// 미들웨어: 모든 요청에 트레이스 추가
+app.use((req, res, next) => {
+  const span = tracer.startSpan(`${req.method} ${req.path}`);
+  req.span = span;
+  
+  res.on('finish', () => {
+    span.setTag('http.status_code', res.statusCode);
+    span.finish();
+  });
+  
+  next();
+});
+
+// API 엔드포인트
+app.get('/api/products', async (req, res) => {
+  const parentSpan = req.span;
+  
+  // DB 조회 트레이스
+  const dbSpan = tracer.startSpan('db_query', { childOf: parentSpan });
+  const products = await db.query('SELECT * FROM products');
+  dbSpan.finish();
+  
+  // 캐시 저장 트레이스
+  const cacheSpan = tracer.startSpan('cache_set', { childOf: parentSpan });
+  await redis.set('products', JSON.stringify(products));
+  cacheSpan.finish();
+  
+  res.json(products);
+});
+```
+
+**💡 Docker vs AWS 모니터링 비교 (Jaeger 포함)**:
+| 항목 | Docker 모니터링 스택 | AWS CloudWatch + X-Ray |
+|------|---------------------|------------------------|
+| **메트릭 수집** | Prometheus (수동 설정) | CloudWatch (자동) |
+| **로그 수집** | Loki + Promtail (수동) | CloudWatch Logs (자동) |
+| **분산 추적** | Jaeger (수동 설정) 🆕 | X-Ray (자동) |
+| **대시보드** | Grafana (직접 구축) | CloudWatch Dashboard |
+| **알림** | AlertManager (수동) | CloudWatch Alarms |
 | **백업** | S3 Sync 스크립트 | 자동 보관 |
 | **설정 복잡도** | 매우 높음 | 낮음 (자동) |
-| **비용** | 서버 + 스토리지 | 메트릭/로그당 |
+| **비용** | 서버 + 스토리지 | 메트릭/로그/트레이스당 |
 | **커스터마이징** | 완전한 제어 | 제한적 |
 | **관리 부담** | 매우 높음 | 낮음 (관리형) |
 
+**🎯 Jaeger의 장점**:
+- ✅ **마이크로서비스 추적**: Frontend → Backend → Auth → DB 전체 흐름 시각화
+- ✅ **성능 병목 발견**: 어느 구간이 느린지 정확히 파악 (DB 조회 120ms)
+- ✅ **에러 추적**: 어느 서비스에서 에러가 발생했는지 즉시 확인
+- ✅ **의존성 분석**: 서비스 간 호출 관계 시각화
+- ✅ **Grafana 통합**: Grafana에서 메트릭 + 로그 + 트레이스 통합 조회
+
 **🎯 핵심 인사이트**:
-> "Docker Compose로 Prometheus + Grafana + Loki 모니터링 스택을 구축할 수 있지만, 설정/관리/유지보수의 복잡도가 매우 높습니다. AWS CloudWatch는 이 모든 것을 자동으로 제공하며, 추가 설정 없이 즉시 사용 가능합니다. **관리형 서비스의 진정한 가치는 복잡도 제거입니다!**"
+> "Docker Compose로 Prometheus + Grafana + Loki + **Jaeger** 모니터링 스택을 구축할 수 있지만, 설정/관리/유지보수의 복잡도가 매우 높습니다. AWS CloudWatch + **X-Ray**는 이 모든 것을 자동으로 제공하며, 추가 설정 없이 즉시 사용 가능합니다. **관리형 서비스의 진정한 가치는 복잡도 제거입니다!**"
 
 ---
 
