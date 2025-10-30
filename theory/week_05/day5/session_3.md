@@ -56,6 +56,90 @@ graph TB
 
 ## 📖 핵심 개념 (35분)
 
+### 🔄 Docker Compose vs AWS 모니터링 비교
+
+**Docker Compose 멀티 서버 + 모니터링 스택 🔍**:
+```mermaid
+graph TB
+    subgraph "모니터링 서버 (별도)"
+        GRAFANA[Grafana<br/>대시보드<br/>3000포트]
+        PROMETHEUS[Prometheus<br/>메트릭 수집<br/>9090포트]
+        LOKI[Loki<br/>로그 수집<br/>3100포트]
+        ALERTMANAGER[AlertManager<br/>알림<br/>9093포트]
+    end
+    
+    subgraph "서버 1 (AZ-A)"
+        NODE_EXP1[Node Exporter<br/>시스템 메트릭]
+        CADVISOR1[cAdvisor<br/>컨테이너 메트릭]
+        PROMTAIL1[Promtail<br/>로그 수집]
+        APP1[애플리케이션<br/>컨테이너들]
+    end
+    
+    subgraph "서버 2 (AZ-B)"
+        NODE_EXP2[Node Exporter<br/>시스템 메트릭]
+        CADVISOR2[cAdvisor<br/>컨테이너 메트릭]
+        PROMTAIL2[Promtail<br/>로그 수집]
+        APP2[애플리케이션<br/>컨테이너들]
+    end
+    
+    subgraph "AWS S3"
+        S3_METRICS[S3 Bucket<br/>메트릭 백업]
+        S3_LOGS[S3 Bucket<br/>로그 백업]
+    end
+    
+    NODE_EXP1 --> PROMETHEUS
+    NODE_EXP2 --> PROMETHEUS
+    CADVISOR1 --> PROMETHEUS
+    CADVISOR2 --> PROMETHEUS
+    
+    PROMTAIL1 --> LOKI
+    PROMTAIL2 --> LOKI
+    
+    PROMETHEUS --> GRAFANA
+    LOKI --> GRAFANA
+    PROMETHEUS --> ALERTMANAGER
+    
+    PROMETHEUS -.백업.-> S3_METRICS
+    LOKI -.백업.-> S3_LOGS
+    
+    ALERTMANAGER -.알림.-> SLACK[Slack/Email]
+    
+    style GRAFANA fill:#ff9800
+    style PROMETHEUS fill:#e8f5e8
+    style LOKI fill:#e3f2fd
+    style ALERTMANAGER fill:#ffebee
+    style S3_METRICS fill:#fce4ec
+    style S3_LOGS fill:#fce4ec
+```
+
+**Docker Compose 모니터링 스택 구성**:
+- ✅ **Prometheus**: 메트릭 수집 (CPU, 메모리, 디스크, 네트워크)
+- ✅ **Grafana**: 시각화 대시보드
+- ✅ **Loki**: 로그 수집 및 검색
+- ✅ **AlertManager**: Slack/Email 알림
+- ✅ **Node Exporter**: 시스템 메트릭
+- ✅ **cAdvisor**: 컨테이너 메트릭
+- ✅ **Promtail**: 로그 수집 에이전트
+- ✅ **S3 백업**: 30일 보관
+
+**💡 Docker vs AWS 모니터링 비교**:
+| 항목 | Docker 모니터링 스택 | AWS CloudWatch |
+|------|---------------------|----------------|
+| **메트릭 수집** | Prometheus (수동 설정) | 자동 수집 |
+| **로그 수집** | Loki + Promtail (수동) | 자동 수집 |
+| **대시보드** | Grafana (직접 구축) | 기본 제공 |
+| **알림** | AlertManager (수동 설정) | CloudWatch Alarms |
+| **백업** | S3 Sync 스크립트 | 자동 보관 |
+| **설정 복잡도** | 매우 높음 | 낮음 (자동) |
+| **비용** | 서버 + 스토리지 | 메트릭/로그당 |
+| **커스터마이징** | 완전한 제어 | 제한적 |
+| **관리 부담** | 매우 높음 | 낮음 (관리형) |
+
+**🎯 핵심 인사이트**:
+> "Docker Compose로 Prometheus + Grafana + Loki 모니터링 스택을 구축할 수 있지만, 설정/관리/유지보수의 복잡도가 매우 높습니다. AWS CloudWatch는 이 모든 것을 자동으로 제공하며, 추가 설정 없이 즉시 사용 가능합니다. **관리형 서비스의 진정한 가치는 복잡도 제거입니다!**"
+
+---
+
 ### 🔍 개념 1: CloudWatch 메트릭 & 알람 (12분)
 
 > **정의**: AWS 리소스의 성능 지표를 수집하고 임계값 초과 시 알림을 보내는 서비스
