@@ -282,6 +282,213 @@ maxmemory-policy allkeys-lru
 
 ---
 
+**Docker Compose 멀티 서버 (직접 구현하는 Multi-AZ) 🚀**:
+```mermaid
+graph TB
+    subgraph "인터넷"
+        USER[사용자]
+        LB[HAProxy/Nginx<br/>로드 밸런서<br/>별도 서버]
+    end
+    
+    subgraph "서버 1 (AZ-A 역할)"
+        subgraph "Docker Network 1"
+            FRONT1[frontend<br/>컨테이너]
+            BACK1[backend<br/>컨테이너]
+            DB_PRIMARY[postgres-primary<br/>Read/Write]
+            REDIS1[redis-master<br/>Read/Write]
+        end
+        VOL1A[postgres_data]
+        VOL1B[redis_data]
+        S3_SYNC1[S3 Sync<br/>Cron Job]
+    end
+    
+    subgraph "서버 2 (AZ-B 역할)"
+        subgraph "Docker Network 2"
+            FRONT2[frontend<br/>컨테이너]
+            BACK2[backend<br/>컨테이너]
+            DB_REPLICA[postgres-replica<br/>Read Only]
+            REDIS2[redis-replica<br/>Read Only]
+        end
+        VOL2A[postgres_data]
+        VOL2B[redis_data]
+        S3_SYNC2[S3 Sync<br/>Cron Job]
+    end
+    
+    subgraph "AWS S3 (백업)"
+        S3[S3 Bucket<br/>cloudmart-backup]
+    end
+    
+    USER --> LB
+    LB -->|Round Robin| FRONT1
+    LB -->|Round Robin| FRONT2
+    
+    FRONT1 --> BACK1
+    FRONT2 --> BACK2
+    
+    BACK1 -->|Write| DB_PRIMARY
+    BACK1 -->|Read| DB_REPLICA
+    BACK2 -->|Write| DB_PRIMARY
+    BACK2 -->|Read| DB_REPLICA
+    
+    DB_PRIMARY -.Streaming<br/>Replication.-> DB_REPLICA
+    REDIS1 -.Replication.-> REDIS2
+    
+    DB_PRIMARY --> VOL1A
+    REDIS1 --> VOL1B
+    DB_REPLICA --> VOL2A
+    REDIS2 --> VOL2B
+    
+    VOL1A --> S3_SYNC1
+    VOL1B --> S3_SYNC1
+    VOL2A --> S3_SYNC2
+    VOL2B --> S3_SYNC2
+    
+    S3_SYNC1 --> S3
+    S3_SYNC2 --> S3
+    
+    style USER fill:#e3f2fd
+    style LB fill:#4caf50
+    style FRONT1 fill:#fff3e0
+    style FRONT2 fill:#fff3e0
+    style BACK1 fill:#e8f5e8
+    style BACK2 fill:#e8f5e8
+    style DB_PRIMARY fill:#ffebee
+    style DB_REPLICA fill:#f3e5f5
+    style REDIS1 fill:#e1f5fe
+    style REDIS2 fill:#e1f5fe
+    style S3 fill:#fce4ec
+```
+
+**서버 1 (Primary) - docker-compose.yml**:
+```yaml
+version: '3.8'
+services:
+  backend:
+    image: cloudmart-backend:latest
+    environment:
+      # Primary DB (Write)
+      DATABASE_WRITE_URL: postgresql://postgres-primary:5432/cloudmart
+      # Replica DB (Read) - 서버 2의 IP
+      DATABASE_READ_URL: postgresql://192.168.1.102:5432/cloudmart
+      # Redis Master
+      REDIS_MASTER_URL: redis://redis-master:6379
+      # Redis Replica - 서버 2의 IP
+      REDIS_REPLICA_URL: redis://192.168.1.102:6379
+
+  postgres-primary:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_REPLICATION_MODE: master
+    command: |
+      postgres -c wal_level=replica 
+               -c max_wal_senders=3 
+               -c listen_addresses='*'
+
+  redis-master:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --save 900 1
+
+  # S3 백업 (매 시간)
+  s3-backup:
+    image: amazon/aws-cli
+    volumes:
+      - postgres_data:/backup/postgres:ro
+      - redis_data:/backup/redis:ro
+    command: |
+      sh -c "while true; do
+        tar -czf /tmp/backup_$(date +%Y%m%d_%H%M%S).tar.gz /backup
+        aws s3 cp /tmp/backup_*.tar.gz s3://cloudmart-backup/server1/
+        rm /tmp/backup_*.tar.gz
+        sleep 3600
+      done"
+```
+
+**서버 2 (Replica) - docker-compose.yml**:
+```yaml
+version: '3.8'
+services:
+  backend:
+    image: cloudmart-backend:latest
+    environment:
+      # Primary DB (Write) - 서버 1의 IP
+      DATABASE_WRITE_URL: postgresql://192.168.1.101:5432/cloudmart
+      # Replica DB (Read)
+      DATABASE_READ_URL: postgresql://postgres-replica:5432/cloudmart
+      # Redis Master - 서버 1의 IP
+      REDIS_MASTER_URL: redis://192.168.1.101:6379
+      # Redis Replica
+      REDIS_REPLICA_URL: redis://redis-replica:6379
+
+  postgres-replica:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_REPLICATION_MODE: slave
+      POSTGRES_MASTER_SERVICE_HOST: 192.168.1.101  # 서버 1 IP
+
+  redis-replica:
+    image: redis:7-alpine
+    command: redis-server --replicaof 192.168.1.101 6379
+
+  # S3 백업 (매 시간)
+  s3-backup:
+    image: amazon/aws-cli
+    volumes:
+      - postgres_data:/backup/postgres:ro
+      - redis_data:/backup/redis:ro
+    command: |
+      sh -c "while true; do
+        tar -czf /tmp/backup_$(date +%Y%m%d_%H%M%S).tar.gz /backup
+        aws s3 cp /tmp/backup_*.tar.gz s3://cloudmart-backup/server2/
+        rm /tmp/backup_*.tar.gz
+        sleep 3600
+      done"
+```
+
+**HAProxy 로드 밸런서 (별도 서버)**:
+```conf
+# haproxy.cfg
+frontend http_front
+    bind *:80
+    default_backend http_back
+
+backend http_back
+    balance roundrobin
+    option httpchk GET /health
+    server server1 192.168.1.101:3000 check
+    server server2 192.168.1.102:3000 check
+```
+
+**특징**:
+- ✅ **진짜 Multi-AZ**: 물리적으로 분리된 2대 서버
+- ✅ **자동 로드 밸런싱**: HAProxy로 트래픽 분산
+- ✅ **DB Replication**: Primary(서버1) → Replica(서버2)
+- ✅ **Redis Replication**: Master(서버1) → Replica(서버2)
+- ✅ **S3 백업**: 매 시간 자동 백업, 양쪽 서버 모두
+- ✅ **읽기 부하 분산**: Write는 Primary, Read는 Replica
+- ✅ **서버 1 다운 시**: 서버 2로 트래픽 자동 전환 (HAProxy)
+- ⚠️ **수동 Failover**: Primary DB 다운 시 Replica를 수동으로 Primary로 승격
+- ⚠️ **네트워크 설정**: 서버 간 방화벽 설정 필요
+- ⚠️ **복잡도 매우 높음**: 설정, 관리, 모니터링 복잡
+
+**💡 이제 AWS Multi-AZ와 거의 비슷해졌습니다!**
+
+**하지만 여전한 차이점**:
+| 항목 | Docker 멀티 서버 | AWS Multi-AZ |
+|------|------------------|--------------|
+| **장애 조치** | 수동 (Replica 승격) | 자동 (1-2분) |
+| **로드 밸런서** | HAProxy 직접 관리 | ALB 관리형 |
+| **백업** | S3 Sync 스크립트 | RDS 자동 백업 |
+| **모니터링** | 직접 구축 필요 | CloudWatch 통합 |
+| **보안** | 방화벽 직접 설정 | Security Group |
+| **확장** | 수동 서버 추가 | Auto Scaling |
+| **관리 부담** | 매우 높음 | 낮음 (관리형) |
+| **비용** | 서버 + 관리 인력 | 서비스 비용만 |
+
+**🎯 핵심 인사이트**:
+> "Docker Compose로 멀티 서버 구성이 가능하지만, 설정/관리/모니터링의 복잡도가 매우 높습니다. AWS Multi-AZ는 이 모든 것을 관리형 서비스로 제공하여 개발자가 비즈니스 로직에 집중할 수 있게 합니다. **이것이 바로 클라우드의 가치입니다!**"
+
+---
+
 **AWS Multi-AZ (프로덕션 - 고가용성)**:
 
 **CloudMart VPC 설계**:
