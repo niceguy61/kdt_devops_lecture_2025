@@ -40,6 +40,8 @@ graph TB
                 PUB_A[Public Subnet<br/>10.0.1.0/24]
                 PRIV_A[Private Subnet<br/>10.0.11.0/24]
                 EC2_A[EC2 Nginx<br/>/health API]
+                RDS_A[RDS PostgreSQL<br/>선택사항]
+                REDIS_A[ElastiCache Redis<br/>선택사항]
             end
             
             subgraph "AZ-B (ap-northeast-2b)"
@@ -66,23 +68,34 @@ graph TB
     PRIV_B --> NAT
     NAT --> IGW
     
+    EC2_A -.선택적 연결.-> RDS_A
+    EC2_A -.선택적 연결.-> REDIS_A
+    
     style IGW fill:#ff9800
     style NAT fill:#ff5722
     style ALB fill:#2196f3
     style EC2_A fill:#4caf50
     style EC2_B fill:#4caf50
+    style RDS_A fill:#f44336,stroke-dasharray: 5 5
+    style REDIS_A fill:#00bcd4,stroke-dasharray: 5 5
     style PUB_A fill:#e3f2fd
     style PUB_B fill:#e3f2fd
     style PRIV_A fill:#fff3e0
     style PRIV_B fill:#fff3e0
 ```
 
-**💡 간소화된 아키텍처**:
+**💡 아키텍처 구성**:
+
+**필수 구성** (40분):
 - ✅ **VPC**: Multi-AZ 네트워크 구성 (Public/Private Subnet)
 - ✅ **NAT Gateway**: Private Subnet의 아웃바운드 트래픽
 - ✅ **ALB**: 로드 밸런싱 및 Health Check
 - ✅ **EC2 (Nginx)**: 간단한 `/health` API 응답
-- ❌ **RDS/Redis 제거**: 실제 DB 연동 불필요 (인프라 검증 목적)
+
+**선택적 구성** (시간 여유 시, 20분):
+- 📚 **RDS PostgreSQL**: 데이터베이스 구성 연습
+- 📚 **ElastiCache Redis**: 캐시 서버 구성 연습
+- 💡 실제 연결은 하지 않고 생성만 연습
 
 **🎯 Lab 1의 목표**:
 - AWS 인프라 구축 능력 검증
