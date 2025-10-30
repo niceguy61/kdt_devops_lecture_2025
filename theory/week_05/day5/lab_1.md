@@ -628,8 +628,7 @@ Name: cloudmart-backend-sg
 VPC: cloudmart-vpc
 Description: Security group for Backend EC2 instances
 Inbound Rules:
-  - Type: Custom TCP
-    Port: 8080
+  - Type: HTTP (80)
     Source: cloudmart-alb-sg
     Description: Allow from ALB only
 Outbound Rules:
@@ -637,10 +636,10 @@ Outbound Rules:
     Destination: 0.0.0.0/0
 ```
 
-**💡 포트 8080을 사용하는 이유**:
-- Node.js 애플리케이션이 8080 포트에서 실행
-- 80 포트는 root 권한 필요 (보안상 비권장)
-- ALB가 80 → 8080으로 트래픽 전달
+**💡 포트 80을 사용하는 이유**:
+- Nginx가 기본 HTTP 포트(80)에서 실행
+- ALB가 80 → 80으로 트래픽 전달
+- 간단한 정적 JSON 응답으로 인프라 검증
 
 **💡 ALB SG만 허용하는 이유**:
 - Backend는 ALB를 통해서만 접근 가능 (보안 강화)
@@ -665,40 +664,52 @@ Instance type: t3.micro
 Key pair: [Your key pair]
 Network: cloudmart-vpc
 Security group: cloudmart-backend-sg
-IAM instance profile: [CloudMart-Backend-Role]
 
 User data:
 #!/bin/bash
 yum update -y
-yum install -y docker nodejs npm
-systemctl start docker
-systemctl enable docker
+yum install -y nginx
 
-# CloudMart 샘플 앱 다운로드
-cd /home/ec2-user
-wget https://github.com/niceguy61/kdt_devops_lecture_2025/blob/main/theory/week_05/day5/cloudmart-sample-app.tar.gz?raw=true -O cloudmart-sample-app.tar.gz
-tar -xzf cloudmart-sample-app.tar.gz
-cd sample_app/backend  # ⚠️ 주의: 폴더명이 sample_app입니다
+# /health 엔드포인트 설정
+cat > /usr/share/nginx/html/health << 'EOF'
+{"status":"healthy","timestamp":"2025-10-30T15:30:00.000Z","version":"1.0.0"}
+EOF
 
-# 환경 변수 설정
-export DATABASE_URL="postgresql://cloudmart:CloudMart2024!@<RDS-ENDPOINT>:5432/postgres"
-export REDIS_URL="redis://<REDIS-ENDPOINT>:6379"
-export PORT=8080
+# Nginx 설정
+cat > /etc/nginx/conf.d/health.conf << 'EOF'
+server {
+    listen 80;
+    
+    location /health {
+        default_type application/json;
+        alias /usr/share/nginx/html/health;
+    }
+    
+    location / {
+        return 200 'CloudMart Backend - Lab 1 Infrastructure Test';
+        add_header Content-Type text/plain;
+    }
+}
+EOF
 
-# 의존성 설치 및 실행
-npm install --omit=dev
-nohup node server.js > /var/log/cloudmart-backend.log 2>&1 &
+# 기본 설정 비활성화
+rm -f /etc/nginx/conf.d/default.conf
+
+# Nginx 시작
+systemctl start nginx
+systemctl enable nginx
 ```
 
-**⚠️ User Data 작성 시 주의사항**:
-1. **RDS Endpoint**: Step 2에서 생성한 RDS 엔드포인트로 교체
-2. **Redis Endpoint**: Step 3에서 생성한 Redis 엔드포인트로 교체
-3. **GitHub URL**: `?raw=true` 파라미터 필수
-4. **폴더명**: 압축 해제 후 `sample_app` 폴더로 이동
+**💡 간소화된 User Data**:
+- ✅ Nginx만 설치 (Docker, Node.js 불필요)
+- ✅ `/health` 정적 JSON 파일
+- ✅ 80 포트 사용 (8080 → 80)
+- ✅ 즉시 실행 가능 (빌드/설치 시간 없음)
+- ✅ 인프라 검증에 충분
 
 **이미지 자리**: Launch Template
 
-#### 4-3. ALB 생성
+#### 4-4. ALB 생성
 
 **AWS Console 경로**:
 - 🔗 [Load Balancers Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LoadBalancers:)
@@ -718,20 +729,20 @@ Security group: cloudmart-alb-sg
 Target group:
   Name: cloudmart-backend-tg
   Protocol: HTTP
-  Port: 8080  # ⚠️ 중요: 애플리케이션이 8080 포트에서 실행됨
+  Port: 80
   Health check path: /health
-  Health check port: traffic-port  # 8080 포트로 Health Check
+  Health check port: traffic-port
 ```
 
-**⚠️ 포트 설정 주의사항**:
-- 애플리케이션은 **8080 포트**에서 실행
-- ALB는 **80 포트**로 요청 받음
-- Target Group은 **8080 포트**로 트래픽 전달
-- Security Group에서 **8080 포트** 허용 필수
+**💡 간소화된 포트 설정**:
+- ALB: **80 포트**로 요청 받음
+- Target Group: **80 포트**로 트래픽 전달
+- Backend (Nginx): **80 포트**에서 실행
+- Security Group: **80 포트** 허용
 
 **이미지 자리**: ALB 생성
 
-#### 4-4. Auto Scaling Group 생성
+#### 4-5. Auto Scaling Group 생성
 
 **AWS Console 경로**:
 - 🔗 [Auto Scaling Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#AutoScalingGroups:)
@@ -744,7 +755,7 @@ EC2 → Auto Scaling Groups → Create Auto Scaling group
 Name: cloudmart-backend-asg
 Launch template: cloudmart-backend-template
 VPC: cloudmart-vpc
-Subnets: cloudmart-private-a, cloudmart-private-b
+Subnets: cloudmart-public-a, cloudmart-public-b
 Load balancer: cloudmart-alb
 Target group: cloudmart-backend-tg
 
