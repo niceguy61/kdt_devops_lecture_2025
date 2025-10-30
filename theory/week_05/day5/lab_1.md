@@ -413,14 +413,20 @@ EC2 → Security Groups → Create security group
 ```yaml
 Name: cloudmart-rds-sg
 VPC: cloudmart-vpc
+Description: Security group for RDS PostgreSQL
 Inbound Rules:
   - Type: PostgreSQL (5432)
-    Source: cloudmart-backend-sg (나중에 생성)
-    Description: Backend access only
+    Source: 10.0.0.0/16
+    Description: Allow from VPC
 Outbound Rules:
   - Type: All traffic
     Destination: 0.0.0.0/0
 ```
+
+**💡 왜 VPC CIDR을 허용하나요?**
+- Backend EC2 인스턴스가 VPC 내부에서 RDS에 접근
+- Security Group 체이닝 대신 CIDR 사용으로 순서 문제 해결
+- Private Subnet의 모든 리소스가 접근 가능
 
 **이미지 자리**: RDS Security Group
 
@@ -506,14 +512,27 @@ ElastiCache → Subnet groups → Create subnet group
 
 #### 3-2. Security Group 생성
 
+**AWS Console 경로**:
+- 🔗 [Security Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#SecurityGroups:)
+
 **설정**:
 ```yaml
 Name: cloudmart-redis-sg
+VPC: cloudmart-vpc
+Description: Security group for ElastiCache Redis
 Inbound Rules:
-  - Type: Custom TCP (6379)
-    Source: cloudmart-backend-sg
-    Description: Backend access only
+  - Type: Custom TCP
+    Port: 6379
+    Source: 10.0.0.0/16
+    Description: Allow from VPC
+Outbound Rules:
+  - Type: All traffic
+    Destination: 0.0.0.0/0
 ```
+
+**💡 왜 VPC CIDR을 허용하나요?**
+- Backend EC2 인스턴스가 VPC 내부에서 Redis에 접근
+- Security Group 체이닝 대신 CIDR 사용으로 순서 문제 해결
 
 **이미지 자리**: Redis Security Group
 
@@ -580,17 +599,39 @@ EC2 → Security Groups → cloudmart-redis-sg
 
 ### 📝 실습 절차
 
-#### 4-1. Backend Security Group
+#### 4-1. ALB Security Group 생성
+
+**AWS Console 경로**:
+- 🔗 [Security Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#SecurityGroups:)
+
+**설정**:
+```yaml
+Name: cloudmart-alb-sg
+VPC: cloudmart-vpc
+Description: Security group for Application Load Balancer
+Inbound Rules:
+  - Type: HTTP (80)
+    Source: 0.0.0.0/0
+    Description: Allow HTTP from internet
+Outbound Rules:
+  - Type: All traffic
+    Destination: 0.0.0.0/0
+```
+
+**이미지 자리**: ALB Security Group
+
+#### 4-2. Backend Security Group 생성
 
 **설정**:
 ```yaml
 Name: cloudmart-backend-sg
+VPC: cloudmart-vpc
+Description: Security group for Backend EC2 instances
 Inbound Rules:
   - Type: Custom TCP
-    Port: 8080  # ⚠️ 애플리케이션 포트
-    Source: 0.0.0.0/0  # 또는 cloudmart-alb-sg
-  - Type: SSH (22)
-    Source: [Your IP]/32
+    Port: 8080
+    Source: cloudmart-alb-sg
+    Description: Allow from ALB only
 Outbound Rules:
   - Type: All traffic
     Destination: 0.0.0.0/0
@@ -601,9 +642,14 @@ Outbound Rules:
 - 80 포트는 root 권한 필요 (보안상 비권장)
 - ALB가 80 → 8080으로 트래픽 전달
 
+**💡 ALB SG만 허용하는 이유**:
+- Backend는 ALB를 통해서만 접근 가능 (보안 강화)
+- 직접 인터넷 노출 방지
+- ALB가 Health Check도 수행
+
 **이미지 자리**: Backend Security Group
 
-#### 4-2. Launch Template 생성
+#### 4-3. Launch Template 생성
 
 **AWS Console 경로**:
 - 🔗 [Launch Templates Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#LaunchTemplates:)
