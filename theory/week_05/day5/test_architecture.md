@@ -22,7 +22,7 @@ architecture-beta
     group vpc(cloud)[VPC] in cloud
     
     service alb(server)[ALB] in vpc
-    service ec2(server)[EC2] in vpc
+    service ec2(logos:aws-lambda)[EC2] in vpc
     service rds(database)[RDS] in vpc
     
     alb:R -- L:ec2
