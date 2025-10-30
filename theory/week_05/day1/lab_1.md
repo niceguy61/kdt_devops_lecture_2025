@@ -18,10 +18,11 @@
 
 **⏱️ 시간 배분**:
 - 사전 준비 (Default VPC 삭제): 5분
-- Step 1 (VPC 생성): 10분
+- Step 1 (VPC 생성): 5분
 - Step 2 (Subnet 생성): 15분
-- Step 3 (IGW 생성): 10분
-- Step 4 (Route Table 설정): 10분
+- Step 3 (Internet Gateway): 5분
+- Step 4 (Route Table): 10분
+- Step 5 (검증 및 정리): 10분
 
 ## 🎯 학습 목표
 - [ ] VPC CIDR 블록 설계 및 생성
@@ -154,7 +155,7 @@ VPC → Your VPCs → Actions → Create default VPC
 
 ---
 
-## 🛠️ Step 1: VPC 생성 (예상 시간: 10분)
+## 🛠️ Step 1: VPC 생성 (예상 시간: 5분)
 
 ### 📋 이 단계에서 할 일
 - VPC CIDR 블록 설계
@@ -341,7 +342,7 @@ VPC → Subnets → Filters에서 VPC 선택
 
 ---
 
-## 🛠️ Step 3: Internet Gateway 생성 및 연결 (예상 시간: 10분)
+## 🛠️ Step 3: Internet Gateway 생성 및 연결 (예상 시간: 5분)
 
 ### 📋 이 단계에서 할 일
 - Internet Gateway 생성
@@ -408,7 +409,7 @@ VPC → Internet Gateways → [username]-igw 선택
 
 ---
 
-## 🛠️ Step 4: Route Table 설정 (예상 시간: 15분)
+## 🛠️ Step 4: Route Table 설정 (예상 시간: 10분)
 
 ### 📋 이 단계에서 할 일
 - Public Route Table 생성
