@@ -88,7 +88,7 @@ graph TB
         ALB[Application Load Balancer<br/>Multi-AZ 분산]
     end
     
-    subgraph "Web Tier (Multi-AZ)"
+    subgraph "Web Tier Multi-AZ"
         ASG[Auto Scaling Group<br/>Min: 3, Max: 50]
         EC2_1[EC2-1<br/>Ghost CMS]
         EC2_2[EC2-2<br/>Ghost CMS]
@@ -100,7 +100,7 @@ graph TB
     end
     
     subgraph "Database Tier"
-        RDS_W[RDS MySQL<br/>Primary (Write)]
+        RDS_W[RDS MySQL<br/>Primary Write]
         RDS_R1[RDS Read Replica 1<br/>ap-northeast-2a]
         RDS_R2[RDS Read Replica 2<br/>ap-northeast-2b]
         RDS_R3[RDS Read Replica 3<br/>ap-northeast-2c]
