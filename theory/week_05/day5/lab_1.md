@@ -185,26 +185,57 @@ AWS Console → VPC → Your VPCs → Create VPC
 VPC → Subnets → Create subnet
 ```
 
-**설정 값**:
-| Subnet 이름 | AZ | CIDR | 타입 |
-|-------------|-----|------|------|
-| cloudmart-public-a | ap-northeast-2a | 10.0.1.0/24 | Public |
-| cloudmart-public-b | ap-northeast-2b | 10.0.2.0/24 | Public |
-| cloudmart-private-a | ap-northeast-2a | 10.0.11.0/24 | Private |
-| cloudmart-private-b | ap-northeast-2b | 10.0.12.0/24 | Private |
+**1-2-1. Public Subnet A 생성**:
+1. **Create subnet** 클릭
+2. 설정:
+   - VPC: cloudmart-vpc
+   - Subnet name: `cloudmart-public-a`
+   - Availability Zone: `ap-northeast-2a`
+   - IPv4 CIDR block: `10.0.1.0/24`
+3. **Create subnet** 클릭
 
-**이미지 자리**: Subnet 생성 화면
+**1-2-2. Public Subnet B 생성**:
+1. **Create subnet** 클릭
+2. 설정:
+   - VPC: cloudmart-vpc
+   - Subnet name: `cloudmart-public-b`
+   - Availability Zone: `ap-northeast-2b`
+   - IPv4 CIDR block: `10.0.2.0/24`
+3. **Create subnet** 클릭
 
-**⚠️ 중요: Public Subnet 설정**
+**1-2-3. Private Subnet A 생성**:
+1. **Create subnet** 클릭
+2. 설정:
+   - VPC: cloudmart-vpc
+   - Subnet name: `cloudmart-private-a`
+   - Availability Zone: `ap-northeast-2a`
+   - IPv4 CIDR block: `10.0.11.0/24`
+3. **Create subnet** 클릭
 
-Public Subnet 생성 후 반드시 Public IP 자동 할당을 활성화해야 합니다:
+**1-2-4. Private Subnet B 생성**:
+1. **Create subnet** 클릭
+2. 설정:
+   - VPC: cloudmart-vpc
+   - Subnet name: `cloudmart-private-b`
+   - Availability Zone: `ap-northeast-2b`
+   - IPv4 CIDR block: `10.0.12.0/24`
+3. **Create subnet** 클릭
 
+**이미지 자리**: 4개 Subnet 생성 완료 화면
+
+**1-2-5. Public Subnet에 Public IP 자동 할당 활성화** ⚠️ **필수**:
+
+**cloudmart-public-a 설정**:
 1. **cloudmart-public-a** 선택
 2. **Actions** → **Edit subnet settings**
 3. **Enable auto-assign public IPv4 address** 체크
 4. **Save** 클릭
 
-5. **cloudmart-public-b**도 동일하게 설정
+**cloudmart-public-b 설정**:
+1. **cloudmart-public-b** 선택
+2. **Actions** → **Edit subnet settings**
+3. **Enable auto-assign public IPv4 address** 체크
+4. **Save** 클릭
 
 **이미지 자리**: Public IP 자동 할당 설정 화면
 
@@ -212,6 +243,14 @@ Public Subnet 생성 후 반드시 Public IP 자동 할당을 활성화해야 �
 - EC2 인스턴스가 인터넷에 접근하려면 Public IP 필요
 - SSM Agent가 AWS Systems Manager와 통신하려면 인터넷 접근 필요
 - User Data 스크립트에서 외부 파일 다운로드 시 필요
+
+**📊 생성된 Subnet 요약**:
+| Subnet | AZ | CIDR | 타입 | Public IP 자동 할당 |
+|--------|-----|------|------|---------------------|
+| cloudmart-public-a | ap-northeast-2a | 10.0.1.0/24 | Public | ✅ 활성화 |
+| cloudmart-public-b | ap-northeast-2b | 10.0.2.0/24 | Public | ✅ 활성화 |
+| cloudmart-private-a | ap-northeast-2a | 10.0.11.0/24 | Private | ❌ 비활성화 |
+| cloudmart-private-b | ap-northeast-2b | 10.0.12.0/24 | Private | ❌ 비활성화 |
 
 #### 1-3. Internet Gateway 생성
 
@@ -244,29 +283,64 @@ VPC → NAT Gateways → Create NAT gateway
 
 #### 1-5. Route Table 설정
 
-**Public Route Table**:
+**AWS Console 경로**:
+- 🔗 [Route Tables Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/vpc/home?region=ap-northeast-2#RouteTables:)
 ```
-Name: cloudmart-public-rt
-Routes:
-  - 10.0.0.0/16 → local
-  - 0.0.0.0/0 → cloudmart-igw
-Associated Subnets:
-  - cloudmart-public-a
-  - cloudmart-public-b
+VPC → Route Tables → Create route table
 ```
 
-**Private Route Table**:
-```
-Name: cloudmart-private-rt
-Routes:
-  - 10.0.0.0/16 → local
-  - 0.0.0.0/0 → cloudmart-nat-a
-Associated Subnets:
-  - cloudmart-private-a
-  - cloudmart-private-b
-```
+**1-5-1. Public Route Table 생성**:
+| 항목 | 값 |
+|------|-----|
+| Name | cloudmart-public-rt |
+| VPC | cloudmart-vpc |
 
-**이미지 자리**: Route Table 설정 화면
+**Routes 추가**:
+1. **Edit routes** 클릭
+2. **Add route** 클릭
+   - Destination: `0.0.0.0/0`
+   - Target: Internet Gateway → `cloudmart-igw`
+3. **Save changes**
+
+**Subnet Associations**:
+1. **Subnet associations** 탭
+2. **Edit subnet associations**
+3. 선택:
+   - ✅ cloudmart-public-a
+   - ✅ cloudmart-public-b
+4. **Save associations**
+
+**이미지 자리**: Public Route Table 설정
+
+**1-5-2. Private Route Table 생성**:
+| 항목 | 값 |
+|------|-----|
+| Name | cloudmart-private-rt |
+| VPC | cloudmart-vpc |
+
+**Routes 추가**:
+1. **Edit routes** 클릭
+2. **Add route** 클릭
+   - Destination: `0.0.0.0/0`
+   - Target: NAT Gateway → `cloudmart-nat-a`
+3. **Save changes**
+
+**⚠️ 중요**: NAT Gateway가 `available` 상태가 될 때까지 기다린 후 Route 추가
+
+**Subnet Associations**:
+1. **Subnet associations** 탭
+2. **Edit subnet associations**
+3. 선택:
+   - ✅ cloudmart-private-a
+   - ✅ cloudmart-private-b
+4. **Save associations**
+
+**이미지 자리**: Private Route Table 설정
+
+**💡 Private Subnet의 인터넷 접근**:
+- Private Subnet의 리소스(RDS, Redis)는 직접 인터넷 접근 불가
+- NAT Gateway를 통해 아웃바운드 트래픽만 가능 (패키지 업데이트 등)
+- 인바운드 트래픽은 VPC 내부에서만 가능 (보안 강화)
 
 ### ✅ Step 1 검증
 
