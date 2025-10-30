@@ -367,19 +367,22 @@ VPC → Route Tables
 
 ---
 
-## 🛠️ Step 2: RDS PostgreSQL 구성 (10분)
+## 🛠️ Step 2: ALB + ASG Backend 배포 (30분)
 
 ### 📋 이 단계에서 할 일
-- DB Subnet Group 생성
-- RDS PostgreSQL Multi-AZ 생성
-- Security Group 설정
+- ALB Security Group 생성
+- Backend Security Group 생성
+- Launch Template 생성 (Nginx)
+- ALB 및 Target Group 생성
+- Auto Scaling Group 생성
 
 ### 🔗 참조 개념
-- [Session 2: 인프라 구성](./session_2.md) - RDS Multi-AZ
+- [Day 4 Session 1: ELB](../day4/session_1.md) - ALB 설정
+- [Day 4 Session 2: Auto Scaling](../day4/session_2.md) - ASG 구성
 
 ### 📝 실습 절차
 
-#### 2-1. DB Subnet Group 생성
+#### 2-1. ALB Security Group 생성
 
 **AWS Console 경로**:
 - 🔗 [RDS Subnet Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-list:)
