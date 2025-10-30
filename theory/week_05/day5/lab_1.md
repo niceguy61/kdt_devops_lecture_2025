@@ -351,22 +351,22 @@ VPC → Route Tables
 
 ---
 
-## 🛠️ Step 2: ALB + ASG Backend 배포 (30분)
+## 🗄️ Step 2 (Optional): RDS PostgreSQL 17.6 구성 (10분)
+
+### ⚠️ 선택 사항 안내
+이 Step은 **선택 사항**입니다. 시간이 부족하거나 데이터베이스가 필요 없다면 **Step 4로 건너뛰세요**.
 
 ### 📋 이 단계에서 할 일
-- ALB Security Group 생성
-- Backend Security Group 생성
-- Launch Template 생성 (Nginx)
-- ALB 및 Target Group 생성
-- Auto Scaling Group 생성
+- DB Subnet Group 생성
+- RDS Security Group 생성
+- RDS PostgreSQL 17.6 인스턴스 생성
 
 ### 🔗 참조 개념
-- [Day 4 Session 1: ELB](../day4/session_1.md) - ALB 설정
-- [Day 4 Session 2: Auto Scaling](../day4/session_2.md) - ASG 구성
+- [Day 3 Session 1: RDS 기초](../day3/session_1.md) - RDS 아키텍처
 
 ### 📝 실습 절차
 
-#### 2-1. ALB Security Group 생성
+#### 2-1. DB Subnet Group 생성
 
 **AWS Console 경로**:
 - 🔗 [RDS Subnet Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-list:)
@@ -374,43 +374,50 @@ VPC → Route Tables
 RDS → Subnet groups → Create DB subnet group
 ```
 
-**설정**:
-- Name: cloudmart-db-subnet-group
-- VPC: cloudmart-vpc
-- Subnets: cloudmart-private-a, cloudmart-private-b
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name** | cloudmart-db-subnet-group | DB Subnet Group 이름 |
+| **Description** | DB subnet group for CloudMart | 설명 |
+| **VPC** | cloudmart-vpc | 위에서 생성한 VPC |
+| **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
+| **Subnets** | cloudmart-private-a (10.0.11.0/24)<br/>cloudmart-private-b (10.0.12.0/24) | Private Subnet 2개 |
 
-**이미지 자리**: DB Subnet Group 생성
+**이미지 자리**: Step 2-1 DB Subnet Group 생성
 
-#### 2-2. Security Group 생성
+**💡 왜 Private Subnet인가?**:
+- 데이터베이스는 외부 접근 불필요
+- 보안을 위해 Private Subnet에 배치
+- 애플리케이션 서버만 접근 가능
+
+#### 2-2. RDS Security Group 생성
 
 **AWS Console 경로**:
 - 🔗 [Security Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#SecurityGroups:)
 ```
-EC2 → Security Groups → Create security group
+VPC → Security Groups → Create security group
 ```
 
-**설정**:
-```yaml
-Name: cloudmart-rds-sg
-VPC: cloudmart-vpc
-Description: Security group for RDS PostgreSQL
-Inbound Rules:
-  - Type: PostgreSQL (5432)
-    Source: 10.0.0.0/16
-    Description: Allow from VPC
-Outbound Rules:
-  - Type: All traffic
-    Destination: 0.0.0.0/0
-```
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Security group name** | cloudmart-rds-sg | RDS Security Group |
+| **Description** | Security group for RDS PostgreSQL | 설명 |
+| **VPC** | cloudmart-vpc | 위에서 생성한 VPC |
 
-**💡 왜 VPC CIDR을 허용하나요?**
-- Backend EC2 인스턴스가 VPC 내부에서 RDS에 접근
-- Security Group 체이닝 대신 CIDR 사용으로 순서 문제 해결
-- Private Subnet의 모든 리소스가 접근 가능
+**Inbound rules**:
+| Type | Protocol | Port | Source | 설명 |
+|------|----------|------|--------|------|
+| PostgreSQL | TCP | 5432 | 10.0.0.0/16 | VPC 내부에서만 접근 |
 
-**이미지 자리**: RDS Security Group
+**이미지 자리**: Step 2-2 RDS Security Group
 
-#### 2-3. RDS 인스턴스 생성
+**💡 보안 팁**:
+- Source를 VPC CIDR (10.0.0.0/16)로 제한
+- 외부 인터넷에서 직접 접근 불가
+- 나중에 EC2 Security Group으로 더 제한 가능
+
+#### 2-3. RDS PostgreSQL 17.6 생성
 
 **AWS Console 경로**:
 - 🔗 [RDS Databases Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#databases:)
@@ -419,59 +426,102 @@ RDS → Databases → Create database
 ```
 
 **설정 값**:
+
+**Engine options**:
 | 항목 | 값 |
 |------|-----|
-| Engine | PostgreSQL 15 |
-| Template | Free tier |
-| DB instance identifier | cloudmart-db |
-| Master username | cloudmart_admin |
-| Master password | [강력한 비밀번호] |
-| DB instance class | db.t3.micro |
-| Storage | 20 GB gp3 |
-| Multi-AZ | Enabled |
-| VPC | cloudmart-vpc |
-| Subnet group | cloudmart-db-subnet-group |
-| Public access | No |
-| Security group | cloudmart-rds-sg |
-| Initial database | cloudmart |
+| **Engine type** | PostgreSQL |
+| **Engine Version** | PostgreSQL 17.6-R1 |
 
-**이미지 자리**: RDS 생성 화면
+**Templates**:
+| 항목 | 값 |
+|------|-----|
+| **Templates** | Free tier |
+
+**Settings**:
+| 항목 | 값 |
+|------|-----|
+| **DB instance identifier** | cloudmart-postgres |
+| **Master username** | cloudmart_admin |
+| **Master password** | YourPassword123! |
+| **Confirm password** | YourPassword123! |
+
+**Instance configuration**:
+| 항목 | 값 |
+|------|-----|
+| **DB instance class** | db.t3.micro |
+
+**Storage**:
+| 항목 | 값 |
+|------|-----|
+| **Storage type** | General Purpose SSD (gp3) |
+| **Allocated storage** | 20 GiB |
+| **Enable storage autoscaling** | ❌ 체크 해제 |
+
+**Connectivity**:
+| 항목 | 값 |
+|------|-----|
+| **VPC** | cloudmart-vpc |
+| **DB subnet group** | cloudmart-db-subnet-group |
+| **Public access** | No |
+| **VPC security group** | cloudmart-rds-sg |
+| **Availability Zone** | No preference |
+
+**Database authentication**:
+| 항목 | 값 |
+|------|-----|
+| **Database authentication** | Password authentication |
+
+**Additional configuration**:
+| 항목 | 값 |
+|------|-----|
+| **Initial database name** | cloudmart |
+| **Backup retention period** | 1 day |
+| **Enable encryption** | ❌ 체크 해제 (실습용) |
+
+**이미지 자리**: Step 2-3 RDS 생성
+
+**⚠️ 주의사항**:
+- 생성 시간: 약 5-10분 소요
+- Status가 "Available"이 될 때까지 대기
+- 비용: 약 $0.017/hour (Free tier 750시간/월)
 
 ### ✅ Step 2 검증
 
 **AWS Console에서 확인**:
 ```
-RDS → Databases → cloudmart-db 선택
-→ Status: Available
-→ Multi-AZ: Yes
-→ Endpoint 복사 (나중에 사용)
-
-RDS → Subnet groups → cloudmart-db-subnet-group
-→ Subnets: 2개 확인
-
-EC2 → Security Groups → cloudmart-rds-sg
-→ Inbound rules: PostgreSQL (5432) 확인
+RDS → Databases → cloudmart-postgres 선택
 ```
 
-**이미지 자리**: RDS 생성 완료
+**확인 항목**:
+| 항목 | 예상 값 |
+|------|---------|
+| **Status** | Available |
+| **Engine** | PostgreSQL 17.6-R1 |
+| **Endpoint** | cloudmart-postgres.xxxxx.ap-northeast-2.rds.amazonaws.com |
+| **Port** | 5432 |
+
+**이미지 자리**: Step 2 검증 결과
 
 **✅ 체크리스트**:
-- [ ] DB Subnet Group 생성 완료
-- [ ] RDS Security Group 생성 완료
-- [ ] RDS 인스턴스 생성 완료 (Multi-AZ)
-- [ ] 상태: Available
+- [ ] DB Subnet Group 생성 확인
+- [ ] RDS Security Group 생성 확인
+- [ ] RDS 인스턴스 Status "Available" 확인
+- [ ] Endpoint 주소 확인
 
 ---
+## ⚡ Step 3 (Optional): ElastiCache Redis 구성 (10분)
 
-## 🛠️ Step 3: ElastiCache Redis 구성 (10분)
+### ⚠️ 선택 사항 안내
+이 Step도 **선택 사항**입니다. 캐시가 필요 없다면 **Step 4로 건너뛰세요**.
 
 ### 📋 이 단계에서 할 일
 - Cache Subnet Group 생성
-- ElastiCache Redis 클러스터 생성
-- Security Group 설정
+- Redis Security Group 생성
+- Redis 클러스터 생성
 
 ### 🔗 참조 개념
-- [Session 2: 인프라 구성](./session_2.md) - ElastiCache Redis
+- [Day 3 Session 2: ElastiCache](../day3/session_2.md) - Redis 아키텍처
 
 ### 📝 실습 절차
 
@@ -483,88 +533,116 @@ EC2 → Security Groups → cloudmart-rds-sg
 ElastiCache → Subnet groups → Create subnet group
 ```
 
-**설정**:
-- Name: cloudmart-cache-subnet-group
-- VPC: cloudmart-vpc
-- Subnets: cloudmart-private-a, cloudmart-private-b
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Name** | cloudmart-cache-subnet-group | Cache Subnet Group 이름 |
+| **Description** | Cache subnet group for CloudMart | 설명 |
+| **VPC** | cloudmart-vpc | 위에서 생성한 VPC |
+| **Availability Zones** | ap-northeast-2a, ap-northeast-2b | 2개 AZ 선택 |
+| **Subnets** | cloudmart-private-a (10.0.11.0/24)<br/>cloudmart-private-b (10.0.12.0/24) | Private Subnet 2개 |
 
-**이미지 자리**: Cache Subnet Group
+**이미지 자리**: Step 3-1 Cache Subnet Group 생성
 
-#### 3-2. Security Group 생성
+#### 3-2. Redis Security Group 생성
 
 **AWS Console 경로**:
-- 🔗 [Security Groups Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#SecurityGroups:)
-
-**설정**:
-```yaml
-Name: cloudmart-redis-sg
-VPC: cloudmart-vpc
-Description: Security group for ElastiCache Redis
-Inbound Rules:
-  - Type: Custom TCP
-    Port: 6379
-    Source: 10.0.0.0/16
-    Description: Allow from VPC
-Outbound Rules:
-  - Type: All traffic
-    Destination: 0.0.0.0/0
+```
+VPC → Security Groups → Create security group
 ```
 
-**💡 왜 VPC CIDR을 허용하나요?**
-- Backend EC2 인스턴스가 VPC 내부에서 Redis에 접근
-- Security Group 체이닝 대신 CIDR 사용으로 순서 문제 해결
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| **Security group name** | cloudmart-redis-sg | Redis Security Group |
+| **Description** | Security group for Redis | 설명 |
+| **VPC** | cloudmart-vpc | 위에서 생성한 VPC |
 
-**이미지 자리**: Redis Security Group
+**Inbound rules**:
+| Type | Protocol | Port | Source | 설명 |
+|------|----------|------|--------|------|
+| Custom TCP | TCP | 6379 | 10.0.0.0/16 | VPC 내부에서만 접근 |
+
+**이미지 자리**: Step 3-2 Redis Security Group
 
 #### 3-3. Redis 클러스터 생성
 
 **AWS Console 경로**:
-- 🔗 [ElastiCache Redis Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/redis)
+- 🔗 [ElastiCache Redis Clusters Console 바로가기](https://ap-northeast-2.console.aws.amazon.com/elasticache/home?region=ap-northeast-2#/redis)
 ```
-ElastiCache → Redis clusters → Create
+ElastiCache → Redis clusters → Create Redis cluster
 ```
 
-**설정**:
+**설정 값**:
+
+**Cluster settings**:
 | 항목 | 값 |
 |------|-----|
-| Cluster mode | Disabled |
-| Name | cloudmart-redis |
-| Engine version | 7.0 |
-| Node type | cache.t3.micro |
-| Number of replicas | 1 |
-| Multi-AZ | Enabled |
-| Subnet group | cloudmart-cache-subnet-group |
-| Security group | cloudmart-redis-sg |
+| **Cluster mode** | Disabled |
+| **Cluster name** | cloudmart-redis |
+| **Description** | Redis cluster for CloudMart |
 
-**이미지 자리**: Redis 생성 화면
+**Location**:
+| 항목 | 값 |
+|------|-----|
+| **AWS Cloud** | 선택 |
+
+**Cluster settings**:
+| 항목 | 값 |
+|------|-----|
+| **Engine version** | 7.1 (최신 버전) |
+| **Port** | 6379 |
+| **Parameter group** | default.redis7 |
+| **Node type** | cache.t3.micro |
+| **Number of replicas** | 0 |
+
+**Subnet group settings**:
+| 항목 | 값 |
+|------|-----|
+| **Subnet group** | cloudmart-cache-subnet-group |
+
+**Security**:
+| 항목 | 값 |
+|------|-----|
+| **Security groups** | cloudmart-redis-sg |
+| **Encryption at rest** | ❌ 체크 해제 (실습용) |
+| **Encryption in-transit** | ❌ 체크 해제 (실습용) |
+
+**Backup**:
+| 항목 | 값 |
+|------|-----|
+| **Enable automatic backups** | ❌ 체크 해제 (실습용) |
+
+**이미지 자리**: Step 3-3 Redis 생성
+
+**⚠️ 주의사항**:
+- 생성 시간: 약 5-10분 소요
+- Status가 "Available"이 될 때까지 대기
+- 비용: 약 $0.017/hour
 
 ### ✅ Step 3 검증
 
 **AWS Console에서 확인**:
 ```
 ElastiCache → Redis clusters → cloudmart-redis 선택
-→ Status: Available
-→ Cluster mode: Disabled
-→ Number of nodes: 2 (Primary + Replica)
-→ Primary endpoint 복사 (나중에 사용)
-
-ElastiCache → Subnet groups → cloudmart-cache-subnet-group
-→ Subnets: 2개 확인
-
-EC2 → Security Groups → cloudmart-redis-sg
-→ Inbound rules: Custom TCP (6379) 확인
 ```
 
-**이미지 자리**: Redis 생성 완료
+**확인 항목**:
+| 항목 | 예상 값 |
+|------|---------|
+| **Status** | Available |
+| **Engine version** | 7.1 |
+| **Primary endpoint** | cloudmart-redis.xxxxx.cache.amazonaws.com:6379 |
+
+**이미지 자리**: Step 3 검증 결과
 
 **✅ 체크리스트**:
-- [ ] Cache Subnet Group 생성 완료
-- [ ] Redis Security Group 생성 완료
-- [ ] Redis 클러스터 생성 완료
-- [ ] 상태: Available
+- [ ] Cache Subnet Group 생성 확인
+- [ ] Redis Security Group 생성 확인
+- [ ] Redis 클러스터 Status "Available" 확인
+- [ ] Primary endpoint 주소 확인
 
 ---
-
 ## 🛠️ Step 4: ALB + ASG Backend 배포 (15분)
 
 ### 📋 이 단계에서 할 일
