@@ -61,6 +61,52 @@ graph TB
 
 > **정의**: 여러 가용 영역에 걸쳐 고가용성을 보장하는 네트워크 아키텍처
 
+**🔄 Docker Compose vs AWS 아키텍처 비교**:
+
+**Docker Compose (단일 서버 - 로컬 개발)**:
+```mermaid
+graph TB
+    subgraph "단일 서버 (localhost)"
+        USER[사용자<br/>localhost:3000]
+        
+        subgraph "Docker Network (bridge)"
+            FRONT[frontend<br/>컨테이너<br/>3000:3000]
+            BACK[backend<br/>컨테이너<br/>8080:8080]
+            DB[postgres<br/>컨테이너<br/>5432:5432]
+            CACHE[redis<br/>컨테이너<br/>6379:6379]
+        end
+        
+        VOL1[postgres_data<br/>볼륨]
+        VOL2[redis_data<br/>볼륨]
+    end
+    
+    USER --> FRONT
+    FRONT --> BACK
+    BACK --> DB
+    BACK --> CACHE
+    DB --> VOL1
+    CACHE --> VOL2
+    
+    style USER fill:#e3f2fd
+    style FRONT fill:#fff3e0
+    style BACK fill:#e8f5e8
+    style DB fill:#ffebee
+    style CACHE fill:#f3e5f5
+    style VOL1 fill:#e0f2f1
+    style VOL2 fill:#e0f2f1
+```
+
+**특징**:
+- ✅ **간단**: 모든 것이 한 서버에서 실행
+- ✅ **빠른 개발**: docker-compose up 한 번으로 전체 환경 구축
+- ❌ **단일 장애점**: 서버 다운 시 전체 서비스 중단
+- ❌ **확장 불가**: 트래픽 증가 시 대응 어려움
+- ❌ **보안 취약**: 모든 포트가 localhost에 노출
+
+---
+
+**AWS Multi-AZ (프로덕션 - 고가용성)**:
+
 **CloudMart VPC 설계**:
 ```mermaid
 graph TB
@@ -93,6 +139,33 @@ graph TB
     style RES3 fill:#ffebee
     style RES4 fill:#f3e5f5
 ```
+
+**특징**:
+- ✅ **고가용성**: AZ 하나가 다운되어도 서비스 지속
+- ✅ **자동 확장**: Auto Scaling으로 트래픽 대응
+- ✅ **보안 강화**: Private Subnet으로 DB/Cache 격리
+- ✅ **관리형 서비스**: RDS, ElastiCache 자동 백업/패치
+- ❌ **복잡도 증가**: 설정 및 관리 복잡
+- ❌ **비용 발생**: 시간당 $0.124 (월 $89.28)
+
+---
+
+**📊 상세 비교표**:
+
+| 항목 | Docker Compose | AWS Multi-AZ | 차이점 |
+|------|----------------|--------------|--------|
+| **네트워크** | 단일 bridge 네트워크 | VPC + Multi-AZ Subnet | 격리 및 분산 |
+| **Frontend** | 1개 컨테이너 (3000포트) | S3 + CloudFront (글로벌 CDN) | 정적 파일 최적화 |
+| **Backend** | 1개 컨테이너 (8080포트) | ALB + EC2 ASG (2-10개) | 로드밸런싱 + 자동 확장 |
+| **Database** | 1개 컨테이너 (5432포트) | RDS Multi-AZ (Primary + Standby) | 자동 장애 조치 |
+| **Cache** | 1개 컨테이너 (6379포트) | ElastiCache 클러스터 | 고가용성 캐시 |
+| **스토리지** | 로컬 볼륨 (postgres_data) | EBS + 자동 백업 | 데이터 영속성 보장 |
+| **가용성** | 단일 서버 (99% 미만) | Multi-AZ (99.99%) | 4배 향상 |
+| **확장성** | 수동 (서버 업그레이드) | 자동 (ASG) | 트래픽 대응 |
+| **비용** | $0 (로컬) | $89.28/월 | 프로덕션 비용 |
+| **배포 시간** | 1분 (docker-compose up) | 5-10분 (롤링 배포) | 안정성 우선 |
+
+---
 
 **네트워크 구성 다이어그램**:
 ```mermaid
