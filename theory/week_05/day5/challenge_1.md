@@ -1,10 +1,10 @@
-# Week 5 Day 5 Challenge: 프로덕션급 CloudMart 배포 (15:00-15:50)
+# Week 5 Day 5 Challenge 1: 프로젝트 계획서 작성 (15:00-15:50)
 
 <div align="center">
 
-**🏆 최종 도전** • **🚀 프로덕션급** • **📊 완전한 운영** • **🔐 엔터프라이즈 보안**
+**📋 프로젝트 정의** • **🏗️ 아키텍처 설계** • **📊 기능 명세** • **🎯 구현 범위**
 
-*Lab 1을 넘어 실제 운영 가능한 완전한 시스템 구축*
+*다음 주 프로젝트를 위한 완벽한 준비*
 
 </div>
 
@@ -12,557 +12,542 @@
 
 ## 🕘 Challenge 정보
 **시간**: 15:00-15:50 (50분)
-**목표**: 프로덕션급 완성도로 CloudMart 전체 시스템 완성
-**방식**: Lab 1 기반 고도화 + 추가 기능 구현
-**예상 비용**: $0.80
+**목표**: 팀 프로젝트 계획서 작성 및 구현 범위 정의
+**방식**: 팀별 협업 작업
+**제출물**: 프로젝트 계획서 문서 + 아키텍처 다이어그램
 
 ## 🎯 Challenge 목표
 
 ### 📚 학습 목표
-- Lab 1의 기본 인프라를 프로덕션급으로 고도화
-- 모니터링, 로깅, 알람 시스템 완전 구축
-- 백업 및 재해 복구 전략 실제 구현
-- 보안 강화 및 비용 최적화
+- 프로젝트 요구사항을 구체적으로 정의
+- Docker Compose 기반 아키텍처 설계
+- 기능 목록을 상세하게 분류 및 우선순위 설정
+- AWS 마이그레이션 전략 사전 계획
 
-### 🛠️ 구현 목표
-- 완전한 고가용성 (Multi-AZ + Auto Scaling)
-- 종합 모니터링 대시보드
-- 자동화된 백업 시스템
-- 엔터프라이즈급 보안 설정
-
----
-
-## 🚨 Challenge 시나리오: "CloudMart 프로덕션 런칭"
-
-### 📖 배경 상황
-**시나리오**: 
-CloudMart가 드디어 정식 서비스를 시작합니다. 예상 사용자는 일 1만 명, 피크 시간대에는 동시 접속자 1,000명이 예상됩니다. 투자자들은 99.9% 가용성과 완벽한 보안을 요구하고 있습니다.
-
-**긴급도**: 🔴 **Critical** - 내일 오픈 예정
-**영향도**: 💰 **High** - 회사의 미래가 걸림
-**제한시간**: ⏰ **50분**
-
-**요구사항**:
-1. **고가용성**: 어떤 AZ가 장애 나도 서비스 계속
-2. **자동 확장**: 트래픽 증가 시 자동으로 서버 추가
-3. **모니터링**: 실시간 대시보드 + 알람
-4. **백업**: 데이터 손실 방지 (RPO < 5분)
-5. **보안**: 최소 권한 + 암호화 + 감사 로그
-6. **비용**: $0.80 이하로 구현
+### 🛠️ 실무 역량
+- 프로젝트 기획 및 문서화 능력
+- 아키텍처 설계 및 시각화
+- 팀 협업 및 역할 분담
+- 기술 스택 선정 및 정당화
 
 ---
 
-## 🏗️ 프로덕션급 아키텍처
+## 📋 프로젝트 계획서 양식
 
-### 📐 고도화된 아키텍처
+### 📄 제출 양식
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud - ap-northeast-2"
-        subgraph "Global Services"
-            R53[Route 53<br/>DNS + Health Check]
-            CF[CloudFront<br/>CDN + WAF]
-            S3[S3 Bucket<br/>Frontend + Versioning]
-        end
-        
-        subgraph "VPC 10.0.0.0/16 + Flow Logs"
-            subgraph "AZ-A ap-northeast-2a"
-                subgraph "Public Subnet A"
-                    ALB_A[ALB<br/>SSL Certificate]
-                    NAT_A[NAT Gateway A]
-                end
-                
-                subgraph "Private Subnet A"
-                    EC2_A[EC2 ASG<br/>IAM Role<br/>CloudWatch Agent]
-                    RDS_A[RDS Primary<br/>Encrypted<br/>Auto Backup]
-                    REDIS_A[Redis Primary<br/>Encrypted]
-                end
-            end
-            
-            subgraph "AZ-B ap-northeast-2b"
-                subgraph "Public Subnet B"
-                    ALB_B[ALB<br/>SSL Certificate]
-                    NAT_B[NAT Gateway B]
-                end
-                
-                subgraph "Private Subnet B"
-                    EC2_B[EC2 ASG<br/>IAM Role<br/>CloudWatch Agent]
-                    RDS_B[RDS Standby<br/>Encrypted<br/>Auto Backup]
-                    REDIS_B[Redis Replica<br/>Encrypted]
-                end
-            end
-        end
-        
-        subgraph "Monitoring & Security"
-            CW[CloudWatch<br/>Metrics + Logs + Alarms]
-            SNS[SNS<br/>Email/SMS Notifications]
-            CT[CloudTrail<br/>Audit Logs]
-        end
-    end
-    
-    R53 --> CF
-    CF --> S3
-    CF --> ALB_A
-    CF --> ALB_B
-    
-    ALB_A --> EC2_A
-    ALB_B --> EC2_B
-    
-    EC2_A --> RDS_A
-    EC2_B --> RDS_A
-    EC2_A --> REDIS_A
-    EC2_B --> REDIS_A
-    
-    RDS_A -.Replication.-> RDS_B
-    REDIS_A -.Replication.-> REDIS_B
-    
-    EC2_A --> CW
-    EC2_B --> CW
-    RDS_A --> CW
-    REDIS_A --> CW
-    
-    CW --> SNS
-    
-    style R53 fill:#ff9800
-    style CF fill:#ff9800
-    style S3 fill:#4caf50
-    style ALB_A fill:#2196f3
-    style ALB_B fill:#2196f3
-    style EC2_A fill:#9c27b0
-    style EC2_B fill:#9c27b0
-    style RDS_A fill:#f44336
-    style RDS_B fill:#f44336
-    style REDIS_A fill:#e91e63
-    style REDIS_B fill:#e91e63
-    style CW fill:#ff5722
-    style SNS fill:#ff5722
-    style CT fill:#607d8b
-```
+다음 양식에 맞춰 프로젝트 계획서를 작성하세요.
 
-**Lab 1 대비 추가 사항**:
-- ✅ Route 53 DNS + Health Check
-- ✅ CloudFront WAF (보안)
-- ✅ S3 Versioning + Lifecycle
-- ✅ VPC Flow Logs
-- ✅ 2개 AZ에 각각 NAT Gateway (고가용성)
-- ✅ SSL/TLS 인증서
-- ✅ CloudWatch Agent (상세 메트릭)
-- ✅ RDS/Redis 암호화
-- ✅ 자동 백업 설정
-- ✅ CloudWatch 알람 + SNS
-- ✅ CloudTrail 감사 로그
+**파일명**: `[팀명]_프로젝트_계획서.md` (예: `team1_프로젝트_계획서.md`)
+
+**제출 위치**: 각 팀 GitHub Repository의 `docs/` 폴더
 
 ---
 
-## 🛠️ Challenge 구현 단계
+## 📝 프로젝트 계획서 템플릿
 
-### Phase 1: Lab 1 기반 인프라 (10분)
+```markdown
+# [프로젝트명] 계획서
 
-**전제 조건**: Lab 1 완료 상태
+## 📌 프로젝트 개요
 
-**추가 작업**:
-1. **NAT Gateway 추가** (AZ-B)
-   - 고가용성을 위해 각 AZ에 NAT Gateway 배치
-   - Private Route Table 분리 (AZ별)
+### 프로젝트명
+- **한글명**: [프로젝트 한글 이름]
+- **영문명**: [프로젝트 영문 이름]
+- **버전**: v1.0.0
 
-2. **Security Group 강화**
-   - 최소 권한 원칙 적용
-   - 불필요한 포트 모두 차단
-   - IP 화이트리스트 적용
+### 프로젝트 설명
+[프로젝트에 대한 간단한 설명 (2-3문장)]
 
-3. **IAM Role 세밀화**
-   - EC2 Instance Role 최소 권한
-   - RDS 접근 권한만 부여
-   - CloudWatch Logs 쓰기 권한
+### 프로젝트 목표
+- 목표 1: [구체적인 목표]
+- 목표 2: [구체적인 목표]
+- 목표 3: [구체적인 목표]
 
----
-
-### Phase 2: 모니터링 & 알람 구축 (15분)
-
-#### 2-1. CloudWatch 대시보드 생성
-
-**AWS Console 경로**:
-```
-CloudWatch → Dashboards → Create dashboard
-```
-
-**대시보드 구성**:
-```yaml
-Dashboard Name: CloudMart-Production
-
-Widgets:
-  1. ALB Metrics:
-     - RequestCount
-     - TargetResponseTime
-     - HealthyHostCount
-     - UnHealthyHostCount
-  
-  2. EC2 Metrics:
-     - CPUUtilization (모든 인스턴스)
-     - NetworkIn/Out
-     - StatusCheckFailed
-  
-  3. RDS Metrics:
-     - CPUUtilization
-     - DatabaseConnections
-     - ReadLatency / WriteLatency
-     - FreeStorageSpace
-  
-  4. ElastiCache Metrics:
-     - CPUUtilization
-     - CacheHits / CacheMisses
-     - NetworkBytesIn/Out
-  
-  5. Custom Metrics:
-     - API Response Time (from logs)
-     - Error Rate
-     - Active Users
-```
-
-**이미지 자리**: CloudWatch 대시보드
-
-#### 2-2. CloudWatch 알람 설정
-
-**필수 알람 5개**:
-```yaml
-# 1. EC2 CPU 과부하
-Alarm: CloudMart-EC2-HighCPU
-Metric: CPUUtilization
-Threshold: > 80% for 2 periods (10분)
-Action: SNS → Email/SMS
-
-# 2. RDS 연결 수 초과
-Alarm: CloudMart-RDS-HighConnections
-Metric: DatabaseConnections
-Threshold: > 80
-Action: SNS → Email
-
-# 3. ALB 응답 시간 지연
-Alarm: CloudMart-ALB-SlowResponse
-Metric: TargetResponseTime
-Threshold: > 1 second for 3 periods
-Action: SNS → Email + Auto Scaling
-
-# 4. Unhealthy Hosts
-Alarm: CloudMart-UnhealthyHosts
-Metric: UnHealthyHostCount
-Threshold: >= 1
-Action: SNS → Email (즉시)
-
-# 5. RDS 저장 공간 부족
-Alarm: CloudMart-RDS-LowStorage
-Metric: FreeStorageSpace
-Threshold: < 2 GB
-Action: SNS → Email
-```
-
-**이미지 자리**: CloudWatch 알람 설정
-
-#### 2-3. CloudWatch Logs 설정
-
-**Log Groups 생성**:
-```yaml
-/aws/ec2/cloudmart-backend:
-  Retention: 7 days
-  Metric Filters:
-    - ErrorCount: [ERROR]
-    - SlowQuery: { $.query_time > 1 }
-
-/aws/alb/cloudmart-alb:
-  Retention: 30 days
-  S3 Export: Enabled (장기 보관)
-
-/aws/rds/cloudmart-db:
-  Retention: 7 days
-  Slow Query Log: Enabled
-```
-
-**이미지 자리**: CloudWatch Logs
+### 타겟 사용자
+- 주요 사용자: [누가 사용하는가?]
+- 사용 시나리오: [어떤 상황에서 사용하는가?]
 
 ---
 
-### Phase 3: 백업 & 재해 복구 (10분)
+## 🏗️ 아키텍처 설계
 
-#### 3-1. RDS 자동 백업 설정
+### Docker Compose 기반 아키텍처
 
-**AWS Console 경로**:
+**아키텍처 다이어그램**:
+- 📎 첨부 파일: `architecture_diagram.png` 또는 `architecture_diagram.drawio`
+- 🔗 온라인 링크: [Draw.io / Excalidraw / PPT 링크]
+
+**권장 도구**:
+- [Draw.io](https://app.diagrams.net/)
+- [Excalidraw](https://excalidraw.com/)
+- PowerPoint / Google Slides
+- Mermaid (Markdown 내 작성 가능)
+
+**아키텍처 다이어그램 포함 요소**:
 ```
-RDS → Databases → cloudmart-db → Modify
+필수 포함 사항:
+- [ ] 모든 서비스 컨테이너 (Frontend, Backend, Database 등)
+- [ ] 서비스 간 통신 방향 (화살표)
+- [ ] 포트 번호 (예: 3000, 8080, 5432)
+- [ ] 네트워크 구성 (Docker Network)
+- [ ] 볼륨 마운트 (데이터 영속성)
+- [ ] 외부 접근 경로 (사용자 → 서비스)
 ```
 
-**백업 설정**:
+### 서비스 구성 요소
+
+#### Frontend
+| 항목 | 내용 |
+|------|------|
+| **기술 스택** | React / Vue / Angular / Next.js 등 |
+| **포트** | 3000 (예시) |
+| **주요 기능** | UI/UX, 사용자 인터랙션 |
+| **외부 의존성** | Backend API |
+
+#### Backend
+| 항목 | 내용 |
+|------|------|
+| **기술 스택** | Node.js / Spring Boot / Django / FastAPI 등 |
+| **포트** | 8080 (예시) |
+| **주요 기능** | 비즈니스 로직, API 제공 |
+| **외부 의존성** | Database, Cache (선택) |
+
+#### Database
+| 항목 | 내용 |
+|------|------|
+| **기술 스택** | PostgreSQL / MySQL / MongoDB 등 |
+| **포트** | 5432 / 3306 / 27017 (예시) |
+| **데이터 영속성** | Docker Volume 사용 |
+| **초기 데이터** | 있음 / 없음 |
+
+#### 기타 서비스 (선택 사항)
+| 서비스 | 기술 스택 | 포트 | 용도 |
+|--------|----------|------|------|
+| Cache | Redis | 6379 | 세션, 캐싱 |
+| Message Queue | RabbitMQ / Kafka | 5672 / 9092 | 비동기 처리 |
+| 기타 | - | - | - |
+
+### Docker Compose 구성
+
 ```yaml
-Automated Backup:
-  Backup Retention: 7 days
-  Backup Window: 03:00-04:00 (새벽)
-  Copy to Another Region: ap-northeast-1 (도쿄)
+# docker-compose.yml 예시 (실제 파일은 프로젝트 루트에 위치)
 
-Point-in-Time Recovery:
-  Enabled: Yes
-  Granularity: 5 minutes
+version: '3.8'
 
-Manual Snapshot:
-  Create Now: cloudmart-db-snapshot-day5
-  Retention: 30 days
+services:
+  frontend:
+    image: [이미지명]
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    image: [이미지명]
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+    depends_on:
+      - database
+    networks:
+      - app-network
+
+  database:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mydb
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
 ```
-
-**이미지 자리**: RDS 백업 설정
-
-#### 3-2. S3 Versioning & Lifecycle
-
-**S3 버킷 설정**:
-```yaml
-Versioning: Enabled
-
-Lifecycle Rules:
-  Rule 1: Archive Old Versions
-    - Current Version: Keep
-    - Previous Versions: Move to Glacier after 30 days
-    - Delete after 90 days
-  
-  Rule 2: Incomplete Multipart Uploads
-    - Delete after 7 days
-```
-
-**이미지 자리**: S3 Versioning
-
-#### 3-3. EBS 스냅샷 자동화
-
-**AWS Backup 설정**:
-```yaml
-Backup Plan: CloudMart-Daily-Backup
-Resources: All EC2 volumes with tag "Backup=true"
-Schedule: Daily at 02:00
-Retention: 7 days
-```
-
-**이미지 자리**: AWS Backup
 
 ---
 
-### Phase 4: 보안 강화 (10분)
+## 🎯 기능 명세
 
-#### 4-1. 암호화 설정
+### 핵심 기능 목록
 
-**RDS 암호화**:
-```yaml
-Storage Encryption: Enabled (KMS)
-Encryption at Rest: AES-256
-Encryption in Transit: SSL/TLS Required
-```
+**우선순위 분류**:
+- **P0 (필수)**: 프로젝트의 핵심 기능, 반드시 구현
+- **P1 (중요)**: 사용자 경험 향상, 가능하면 구현
+- **P2 (선택)**: 추가 기능, 시간 여유 시 구현
 
-**ElastiCache 암호화**:
-```yaml
-Encryption at Rest: Enabled
-Encryption in Transit: Enabled
-Auth Token: Enabled
-```
+#### 기능 1: [기능명]
+| 항목 | 내용 |
+|------|------|
+| **우선순위** | P0 / P1 / P2 |
+| **설명** | [기능에 대한 상세 설명] |
+| **사용자 스토리** | "사용자는 [행동]을 통해 [목적]을 달성한다" |
+| **API 엔드포인트** | `POST /api/[endpoint]` |
+| **요청 예시** | `{ "key": "value" }` |
+| **응답 예시** | `{ "status": "success" }` |
+| **예상 소요 시간** | X일 |
+| **담당자** | [팀원 이름] |
 
-**S3 암호화**:
-```yaml
-Default Encryption: Enabled (SSE-S3)
-Bucket Policy: Enforce HTTPS only
-```
+#### 기능 2: [기능명]
+[동일한 형식으로 반복]
 
-**이미지 자리**: 암호화 설정
+#### 기능 3: [기능명]
+[동일한 형식으로 반복]
 
-#### 4-2. CloudTrail 감사 로그
+### 기능 목록 요약표
 
-**AWS Console 경로**:
-```
-CloudTrail → Trails → Create trail
-```
-
-**설정**:
-```yaml
-Trail Name: CloudMart-Audit-Trail
-Apply to All Regions: Yes
-Management Events: Read/Write
-Data Events: S3 bucket (cloudmart-frontend)
-Log File Validation: Enabled
-S3 Bucket: cloudmart-audit-logs
-```
-
-**이미지 자리**: CloudTrail 설정
-
-#### 4-3. VPC Flow Logs
-
-**VPC Flow Logs 설정**:
-```yaml
-VPC: cloudmart-vpc
-Filter: All (Accept + Reject)
-Destination: CloudWatch Logs
-Log Group: /aws/vpc/cloudmart-flow-logs
-Retention: 7 days
-```
-
-**이미지 자리**: VPC Flow Logs
+| 번호 | 기능명 | 우선순위 | 담당자 | 예상 소요 | 상태 |
+|------|--------|----------|--------|-----------|------|
+| 1 | [기능 1] | P0 | [이름] | 2일 | 대기 |
+| 2 | [기능 2] | P0 | [이름] | 3일 | 대기 |
+| 3 | [기능 3] | P1 | [이름] | 1일 | 대기 |
+| 4 | [기능 4] | P2 | [이름] | 2일 | 대기 |
 
 ---
 
-### Phase 5: 최종 검증 & 최적화 (5분)
+## 📡 API 명세
 
-#### 5-1. 부하 테스트
+### API 엔드포인트 목록
 
-**간단한 부하 테스트**:
-```bash
-# Apache Bench로 부하 테스트
-ab -n 1000 -c 100 http://<ALB-DNS>/api/products
+#### 인증 관련
+| Method | Endpoint | 설명 | 요청 Body | 응답 |
+|--------|----------|------|-----------|------|
+| POST | `/api/auth/register` | 회원가입 | `{ "email", "password" }` | `{ "userId", "token" }` |
+| POST | `/api/auth/login` | 로그인 | `{ "email", "password" }` | `{ "token" }` |
+| POST | `/api/auth/logout` | 로그아웃 | - | `{ "status": "success" }` |
 
-# 결과 확인
-# - Requests per second
-# - Time per request
-# - Failed requests
+#### 비즈니스 로직 관련
+| Method | Endpoint | 설명 | 요청 Body | 응답 |
+|--------|----------|------|-----------|------|
+| GET | `/api/[resource]` | 목록 조회 | - | `[{ "id", "name" }]` |
+| GET | `/api/[resource]/:id` | 상세 조회 | - | `{ "id", "name", "details" }` |
+| POST | `/api/[resource]` | 생성 | `{ "name", "data" }` | `{ "id", "status" }` |
+| PUT | `/api/[resource]/:id` | 수정 | `{ "name", "data" }` | `{ "status" }` |
+| DELETE | `/api/[resource]/:id` | 삭제 | - | `{ "status" }` |
+
+### API 부하 테스트 준비
+
+**강사 부하 테스트를 위한 정보**:
+- **테스트 대상 API**: [가장 중요한 API 3-5개 선정]
+- **예상 TPS**: [초당 요청 수 예상치]
+- **테스트 시나리오**: [사용자 행동 시나리오]
+
+**예시**:
 ```
+1. 로그인 API: POST /api/auth/login
+   - 예상 TPS: 100
+   - 시나리오: 동시 100명 로그인
 
-**CloudWatch에서 확인**:
-- CPU 사용률 증가
-- Auto Scaling 동작 (필요시)
-- 응답 시간 유지
-
-**이미지 자리**: 부하 테스트 결과
-
-#### 5-2. 장애 시뮬레이션
-
-**시나리오 1: EC2 인스턴스 종료**:
-```bash
-# 1개 인스턴스 수동 종료
-aws ec2 terminate-instances --instance-ids <instance-id>
-
-# 확인 사항:
-# - ALB가 Unhealthy로 표시
-# - ASG가 새 인스턴스 자동 생성
-# - 서비스 중단 없음
+2. 상품 조회 API: GET /api/products
+   - 예상 TPS: 500
+   - 시나리오: 메인 페이지 접속 시 호출
 ```
-
-**시나리오 2: RDS Failover 테스트**:
-```bash
-# RDS Failover 수동 실행
-aws rds reboot-db-instance \
-  --db-instance-identifier cloudmart-db \
-  --force-failover
-
-# 확인 사항:
-# - 1-2분 내 Standby로 전환
-# - 애플리케이션 자동 재연결
-# - 데이터 손실 없음
-```
-
-**이미지 자리**: 장애 시뮬레이션
 
 ---
 
-## 🎯 성공 기준
+## 💻 기술 스택
 
-### 📊 기능적 요구사항
-- [ ] **고가용성**: 1개 AZ 장애 시에도 서비스 정상
-- [ ] **자동 확장**: CPU 70% 초과 시 자동 스케일링
-- [ ] **모니터링**: 실시간 대시보드 + 5개 알람 동작
-- [ ] **백업**: RDS 자동 백업 + S3 버전 관리
-- [ ] **보안**: 암호화 + CloudTrail + VPC Flow Logs
+### Frontend
+- **프레임워크**: [React / Vue / Angular / Next.js]
+- **상태 관리**: [Redux / Vuex / Zustand]
+- **스타일링**: [Tailwind CSS / Material-UI / Styled-components]
+- **기타**: [TypeScript / ESLint / Prettier]
 
-### ⏱️ 성능 요구사항
-- [ ] **응답 시간**: 평균 < 500ms, P95 < 1s
-- [ ] **가용성**: 99.9% (연간 8.76시간 다운타임)
-- [ ] **확장성**: 동시 접속자 1,000명 처리
-- [ ] **복구 시간**: RTO < 5분, RPO < 5분
+### Backend
+- **프레임워크**: [Node.js + Express / Spring Boot / Django / FastAPI]
+- **ORM**: [Prisma / TypeORM / Sequelize / JPA / Django ORM]
+- **인증**: [JWT / OAuth2 / Passport.js]
+- **기타**: [TypeScript / Swagger / Jest]
 
-### 🔒 보안 요구사항
-- [ ] **암호화**: 저장 데이터 + 전송 데이터 모두 암호화
-- [ ] **접근 제어**: 최소 권한 원칙 적용
-- [ ] **감사 로그**: 모든 API 호출 기록
-- [ ] **네트워크**: Private Subnet에 민감 리소스 배치
+### Database
+- **RDBMS**: [PostgreSQL / MySQL]
+- **NoSQL**: [MongoDB / Redis] (선택)
+- **마이그레이션**: [Prisma Migrate / Flyway / Alembic]
 
-### 💰 비용 요구사항
-- [ ] **예산 준수**: $0.80 이하
-- [ ] **비용 최적화**: 프리티어 최대 활용
-- [ ] **리소스 정리**: 실습 후 즉시 삭제
+### DevOps (Week 1-4 학습 내용)
+- **컨테이너**: Docker, Docker Compose
+- **오케스트레이션**: Kubernetes (Week 3)
+- **CI/CD**: GitHub Actions (예정)
+- **모니터링**: Prometheus, Grafana (Week 4)
+
+### 클라우드 (Week 5 학습 예정)
+- **AWS 서비스**: [다음 섹션에서 계획]
 
 ---
 
-## 🏆 평가 기준
+## ☁️ AWS 마이그레이션 계획
 
-### 점수 배분 (100점 만점)
-```yaml
-아키텍처 설계 (30점):
-  - Multi-AZ 구성: 10점
-  - 보안 설계: 10점
-  - 확장성 고려: 10점
+### Docker Compose → AWS 서비스 매핑
 
-고가용성 구현 (30점):
-  - Auto Scaling 동작: 10점
-  - RDS Multi-AZ: 10점
-  - 장애 복구 테스트: 10점
+| Docker Compose | AWS 서비스 | 이유 |
+|----------------|-----------|------|
+| Frontend Container | **S3 + CloudFront** 또는 **ECS** | 정적 파일 호스팅 또는 컨테이너 실행 |
+| Backend Container | **ECS** 또는 **EC2 + ALB** | 컨테이너 오케스트레이션 |
+| Database Container | **RDS** (PostgreSQL/MySQL) | 관리형 데이터베이스 |
+| Redis Container | **ElastiCache** | 관리형 캐시 |
+| Docker Network | **VPC + Subnet** | 네트워크 격리 |
+| Docker Volume | **EBS** 또는 **EFS** | 데이터 영속성 |
+| Load Balancer | **ALB** (Application Load Balancer) | 로드 밸런싱 |
 
-모니터링 (20점):
-  - 대시보드 구성: 10점
-  - 알람 설정: 10점
+### 예상 AWS 아키텍처
 
-보안 설정 (20점):
-  - 암호화: 7점
-  - IAM 정책: 7점
-  - 감사 로그: 6점
+```
+사용자
+  ↓
+CloudFront (CDN)
+  ↓
+ALB (Load Balancer)
+  ↓
+ECS (Backend Containers)
+  ↓
+RDS (Database) + ElastiCache (Redis)
 ```
 
-### 등급 기준
-- **S등급 (90-100점)**: 프로덕션 즉시 배포 가능
-- **A등급 (80-89점)**: 일부 개선 후 배포 가능
-- **B등급 (70-79점)**: 추가 작업 필요
-- **C등급 (60-69점)**: 재검토 필요
+**아키텍처 다이어그램**: [AWS 아키텍처 다이어그램 첨부 또는 링크]
 
 ---
 
-## 🧹 Challenge 정리
+## ⚠️ Pain Points 및 최적화 전략
 
-**정리 순서**:
+### 예상 Pain Points
+
+#### 1. [Pain Point 1: 예시 - 데이터베이스 성능]
+**문제**:
+- 대량의 데이터 조회 시 응답 속도 저하
+- 복잡한 JOIN 쿼리로 인한 병목
+
+**해결 방안**:
+- Redis 캐싱 도입 (자주 조회되는 데이터)
+- 인덱스 최적화
+- 쿼리 최적화 (N+1 문제 해결)
+
+**AWS 최적화**:
+- RDS Read Replica 사용 (읽기 부하 분산)
+- ElastiCache Redis 활용
+
+#### 2. [Pain Point 2: 예시 - 트래픽 급증]
+**문제**:
+- 특정 시간대 트래픽 급증 (예: 이벤트 시작 시)
+- 서버 과부하로 인한 서비스 중단
+
+**해결 방안**:
+- 수평 확장 (컨테이너 복제)
+- 로드 밸런싱
+
+**AWS 최적화**:
+- Auto Scaling Group 설정
+- ALB를 통한 트래픽 분산
+
+#### 3. [Pain Point 3: 직접 작성]
+**문제**:
+- [팀 프로젝트의 예상 문제점]
+
+**해결 방안**:
+- [Docker Compose 환경에서의 해결책]
+
+**AWS 최적화**:
+- [AWS 서비스를 활용한 해결책]
+
+### 최적화 체크리스트
+
+- [ ] 데이터베이스 쿼리 최적화
+- [ ] 캐싱 전략 수립
+- [ ] API 응답 시간 목표 설정 (예: < 200ms)
+- [ ] 에러 핸들링 및 로깅
+- [ ] 보안 취약점 점검
+- [ ] 부하 테스트 시나리오 작성
+
+---
+
+## 👥 팀 구성 및 역할 분담
+
+### 팀원 정보
+
+| 이름 | 역할 | 담당 영역 | GitHub |
+|------|------|-----------|--------|
+| [이름1] | 팀장, Backend | 인증, API 설계 | @username1 |
+| [이름2] | Frontend | UI/UX, 상태 관리 | @username2 |
+| [이름3] | Backend | 비즈니스 로직, DB | @username3 |
+| [이름4] | DevOps | Docker, CI/CD | @username4 |
+| [이름5] | Full-stack | 전체 지원 | @username5 |
+
+### 주차별 계획
+
+#### Week 6: 기본 기능 구현
+- [ ] 프로젝트 초기 설정 (Docker Compose)
+- [ ] 데이터베이스 스키마 설계
+- [ ] 기본 CRUD API 구현
+- [ ] Frontend 기본 페이지 구현
+
+#### Week 7: 핵심 기능 구현
+- [ ] P0 기능 완성
+- [ ] P1 기능 시작
+- [ ] API 통합 테스트
+
+#### Week 8: 고급 기능 및 최적화
+- [ ] P1 기능 완성
+- [ ] P2 기능 (시간 여유 시)
+- [ ] 성능 최적화
+- [ ] 부하 테스트
+
+#### Week 9: AWS 마이그레이션
+- [ ] AWS 인프라 구축
+- [ ] Docker Compose → AWS 마이그레이션
+- [ ] 모니터링 및 로깅 설정
+- [ ] 최종 테스트
+
+---
+
+## 📊 프로젝트 일정
+
+### 마일스톤
+
+| 마일스톤 | 날짜 | 목표 | 완료 기준 |
+|----------|------|------|-----------|
+| M1: 프로젝트 계획 | Week 5 Day 5 | 계획서 작성 완료 | 이 문서 제출 |
+| M2: 개발 환경 구축 | Week 6 Day 1 | Docker Compose 실행 | 모든 컨테이너 정상 실행 |
+| M3: 기본 기능 완성 | Week 6 Day 5 | P0 기능 50% | API 동작 확인 |
+| M4: 핵심 기능 완성 | Week 7 Day 5 | P0 기능 100% | 전체 기능 통합 테스트 |
+| M5: 최적화 완료 | Week 8 Day 5 | 성능 최적화 | 부하 테스트 통과 |
+| M6: AWS 배포 | Week 9 Day 5 | 프로덕션 배포 | AWS 환경에서 정상 동작 |
+
+---
+
+## 📚 참고 자료
+
+### 학습 자료
+- Week 1-2: Docker 기초 및 심화
+- Week 3: Kubernetes
+- Week 4: Cloud Native (Service Mesh, GitOps, FinOps)
+- Week 5: AWS 인프라 구축
+
+### 외부 참고 자료
+- [프로젝트 관련 공식 문서 링크]
+- [참고한 오픈소스 프로젝트]
+- [기술 블로그 글]
+
+---
+
+## ✅ 제출 체크리스트
+
+### 필수 항목
+- [ ] 프로젝트 개요 작성 완료
+- [ ] 아키텍처 다이어그램 첨부 (Docker Compose 기반)
+- [ ] 기능 명세 상세 작성 (최소 5개 이상)
+- [ ] API 엔드포인트 목록 작성
+- [ ] 기술 스택 선정 및 이유 명시
+- [ ] AWS 마이그레이션 계획 수립
+- [ ] Pain Points 및 최적화 전략 (최소 3개)
+- [ ] 팀 역할 분담 명확히 정의
+- [ ] 주차별 계획 수립
+
+### 권장 항목
+- [ ] Docker Compose 파일 작성
+- [ ] API 부하 테스트 시나리오
+- [ ] 데이터베이스 ERD 다이어그램
+- [ ] 화면 설계 (Wireframe)
+
+---
+
+## 📤 제출 방법
+
+### 제출 위치
 ```
-1. CloudTrail Trail 삭제
-2. CloudWatch 알람 삭제
-3. CloudWatch 대시보드 삭제
-4. AWS Backup Plan 삭제
-5. RDS 스냅샷 삭제
-6. (Lab 1 정리 절차 동일)
+GitHub Repository: [팀 Repository URL]
+└── docs/
+    ├── [팀명]_프로젝트_계획서.md          # 이 문서
+    ├── architecture_diagram.png           # 아키텍처 다이어그램
+    ├── aws_architecture_diagram.png       # AWS 아키텍처 (선택)
+    └── erd_diagram.png                    # ERD (선택)
 ```
 
-**이미지 자리**: 정리 완료
+### 제출 기한
+- **마감**: Week 5 Day 5 (오늘) 18:00까지
+- **제출 방법**: GitHub Repository에 Push 후 강사에게 링크 공유
 
 ---
 
-## 💡 Challenge 회고
+## 🎤 발표 준비 (선택 사항)
 
-### 🤝 팀 회고 (15분)
-1. **가장 어려웠던 부분**: 
-2. **프로덕션급 구현의 차이점**:
-3. **실무 적용 시 추가 고려사항**:
-4. **Week 5 전체 학습 소감**:
+### 발표 자료 (5분)
+다음 주 월요일 간단한 프로젝트 소개 발표를 진행할 수 있습니다.
 
-### 📊 학습 성과
-- **기술적 성취**: 프로덕션급 CloudMart 완성
-- **실무 역량**: 고가용성 + 모니터링 + 보안 통합 구현
-- **Week 5 완료**: AWS 핵심 서비스 실무 활용 능력 습득
+**발표 내용**:
+1. 프로젝트 소개 (1분)
+2. 아키텍처 설명 (2분)
+3. 핵심 기능 소개 (1분)
+4. 기술 스택 및 이유 (1분)
+
+**발표 자료 형식**: PPT, PDF, 또는 Markdown
 
 ---
 
-## 🎉 Week 5 완료!
+## 💡 작성 팁
 
-### 🏆 달성한 것들
-- [ ] AWS 핵심 서비스 (VPC, EC2, RDS, S3, ALB) 마스터
-- [ ] Docker Compose → AWS 마이그레이션 완료
-- [ ] 고가용성 아키텍처 설계 및 구현
-- [ ] 프로덕션급 모니터링 및 보안 구축
-- [ ] CloudMart 프로젝트 AWS 배포 완성
+### 좋은 계획서의 특징
+- ✅ **구체적**: 모호한 표현 대신 명확한 수치와 기준
+- ✅ **실현 가능**: 4주 내 완성 가능한 범위
+- ✅ **우선순위 명확**: P0/P1/P2 분류로 집중할 기능 선정
+- ✅ **역할 분담 명확**: 각 팀원의 책임 영역 정의
+- ✅ **확장 가능**: AWS 마이그레이션을 고려한 설계
 
-### 🚀 다음 단계
-- **Terraform 특강**: Infrastructure as Code
-- **기본 프로젝트**: 4주간 팀 프로젝트
-- **심화 프로젝트**: 5주간 전문화 트랙
+### 피해야 할 것
+- ❌ 너무 많은 기능 (4주 내 완성 불가능)
+- ❌ 모호한 표현 ("대충", "적당히", "나중에")
+- ❌ 역할 분담 없음 (모두가 모든 것을 함)
+- ❌ 기술 스택 선정 이유 없음
+
+---
+
+## 🔗 참고 예시
+
+### 예시 프로젝트: "CloudMart"
+
+**프로젝트 개요**:
+- 온라인 쇼핑몰 플랫폼
+- 사용자: 일반 소비자 및 판매자
+- 목표: 간편한 상품 구매 및 판매 경험 제공
+
+**핵심 기능**:
+1. 회원가입/로그인 (P0)
+2. 상품 목록 조회 (P0)
+3. 상품 상세 조회 (P0)
+4. 장바구니 (P1)
+5. 주문/결제 (P1)
+6. 리뷰 작성 (P2)
+
+**기술 스택**:
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Cache: Redis
+
+**Docker Compose 구성**:
+- frontend (React)
+- backend (Node.js)
+- database (PostgreSQL)
+- cache (Redis)
 
 ---
 
 <div align="center">
 
-**🎉 Week 5 완료!** • **🏆 CloudMart 프로덕션 배포 성공** • **🚀 다음 여정 준비**
+**📋 완벽한 계획** • **🏗️ 명확한 설계** • **🎯 실현 가능한 범위** • **👥 효율적인 협업**
 
-*5일간의 AWS 집중 과정을 완주하신 것을 축하합니다!*
+*다음 주 프로젝트 성공을 위한 첫 걸음!*
 
 </div>
+```
