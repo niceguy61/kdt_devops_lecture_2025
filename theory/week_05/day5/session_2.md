@@ -190,10 +190,83 @@ services:
     depends_on:
       - postgres-primary
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    # Redis 고급 백업 설정
+
 volumes:
   postgres_primary_data:
   postgres_replica_data:
+  redis_data:
 ```
+
+**redis.conf (고급 백업 설정)**:
+```conf
+# RDB (스냅샷) 백업 설정
+save 900 1      # 900초(15분) 동안 1개 이상 키 변경 시 저장
+save 300 10     # 300초(5분) 동안 10개 이상 키 변경 시 저장
+save 60 10000   # 60초(1분) 동안 10000개 이상 키 변경 시 저장
+
+# RDB 파일 설정
+dbfilename dump.rdb
+dir /data
+
+# RDB 압축 (CPU vs 디스크 트레이드오프)
+rdbcompression yes
+rdbchecksum yes
+
+# AOF (Append Only File) 백업 설정
+appendonly yes
+appendfilename "appendonly.aof"
+
+# AOF 동기화 정책
+# always: 모든 쓰기마다 fsync (가장 안전, 가장 느림)
+# everysec: 1초마다 fsync (권장, 균형)
+# no: OS에 맡김 (가장 빠름, 가장 위험)
+appendfsync everysec
+
+# AOF 재작성 (파일 크기 최적화)
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+
+# 백업 중 쓰기 허용
+no-appendfsync-on-rewrite no
+
+# 메모리 정책
+maxmemory 256mb
+maxmemory-policy allkeys-lru
+```
+
+**백업 전략 비교**:
+
+| 백업 방식 | RDB (스냅샷) | AOF (로그) | RDB + AOF (권장) |
+|----------|--------------|------------|------------------|
+| **백업 방식** | 특정 시점 전체 스냅샷 | 모든 쓰기 명령 로그 | 두 방식 병행 |
+| **복구 속도** | 빠름 (바이너리) | 느림 (명령 재실행) | RDB 먼저, AOF로 보완 |
+| **데이터 손실** | 마지막 스냅샷 이후 손실 | 최대 1초 손실 (everysec) | 최소화 (1초 이내) |
+| **파일 크기** | 작음 (압축) | 큼 (텍스트 로그) | 중간 (AOF 재작성) |
+| **CPU 사용** | 낮음 (주기적) | 높음 (지속적) | 중간 |
+| **사용 사례** | 백업/복제 | 데이터 무결성 중요 | 프로덕션 권장 |
+
+**💡 고급 백업 전략의 장점**:
+- ✅ **RDB**: 빠른 복구, 작은 파일 크기, 주기적 백업
+- ✅ **AOF**: 데이터 무결성, 최소 손실 (1초), 명령 재실행 가능
+- ✅ **RDB + AOF**: 두 방식의 장점 결합, 프로덕션 권장
+- ✅ **자동 재작성**: AOF 파일 크기 최적화
+- ✅ **메모리 정책**: LRU로 메모리 관리
+
+**💡 하지만 여전히 한계**:
+- ⚠️ **단일 서버**: 서버 다운 시 백업 파일도 접근 불가
+- ⚠️ **수동 복구**: 백업 파일을 수동으로 복원해야 함
+- ⚠️ **복구 시간**: RDB 로드 + AOF 재실행 시간 소요
+- ❌ **자동 장애 조치 없음**: ElastiCache처럼 자동 failover 불가
+
 
 **특징**:
 - ✅ **읽기 성능 향상**: Read Replica로 읽기 부하 분산
