@@ -56,6 +56,737 @@ graph TB
 
 ## 📖 핵심 개념 (35분)
 
+### 🔄 Docker Compose vs AWS 보안 비교 (DevSecOps)
+
+**Docker Compose + SAST/DAST 파이프라인 🔐**:
+```mermaid
+graph TB
+    subgraph "개발 단계 (로컬)"
+        DEV[개발자<br/>코드 작성]
+        GIT[Git Push]
+    end
+    
+    subgraph "CI/CD 파이프라인 (GitHub Actions)"
+        SAST1[SonarQube<br/>정적 분석]
+        SAST2[Trivy<br/>컨테이너 스캔]
+        SAST3[Snyk<br/>의존성 스캔]
+        BUILD[Docker Build]
+        PUSH[ECR Push]
+    end
+    
+    subgraph "배포 단계"
+        DEPLOY[서버 배포]
+        DAST1[OWASP ZAP<br/>동적 분석]
+        DAST2[Nikto<br/>웹 취약점 스캔]
+    end
+    
+    subgraph "운영 단계"
+        RUNTIME[Falco<br/>런타임 보안]
+        MONITOR[보안 모니터링]
+    end
+    
+    subgraph "보안 리포트"
+        S3[S3 Bucket<br/>스캔 결과 저장]
+        SLACK[Slack 알림<br/>취약점 발견 시]
+    end
+    
+    DEV --> GIT
+    GIT --> SAST1
+    GIT --> SAST2
+    GIT --> SAST3
+    
+    SAST1 --> BUILD
+    SAST2 --> BUILD
+    SAST3 --> BUILD
+    
+    BUILD --> PUSH
+    PUSH --> DEPLOY
+    
+    DEPLOY --> DAST1
+    DEPLOY --> DAST2
+    
+    DAST1 --> RUNTIME
+    DAST2 --> RUNTIME
+    RUNTIME --> MONITOR
+    
+    SAST1 -.결과.-> S3
+    SAST2 -.결과.-> S3
+    SAST3 -.결과.-> S3
+    DAST1 -.결과.-> S3
+    DAST2 -.결과.-> S3
+    
+    S3 -.알림.-> SLACK
+    
+    style SAST1 fill:#e8f5e8
+    style SAST2 fill:#e8f5e8
+    style SAST3 fill:#e8f5e8
+    style DAST1 fill:#fff3e0
+    style DAST2 fill:#fff3e0
+    style RUNTIME fill:#ffebee
+    style S3 fill:#e3f2fd
+```
+
+**SAST (Static Application Security Testing) - 정적 분석**:
+```yaml
+# .github/workflows/security-scan.yml
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. SonarQube - 코드 품질 및 보안 취약점
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      
+      # 2. Trivy - 컨테이너 이미지 취약점 (상세 스캔)
+      - name: Build Docker Image
+        run: docker build -t cloudmart-backend:${{ github.sha }} .
+      
+      - name: Trivy Image Scan (Full Report)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cloudmart-backend:${{ github.sha }}'
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+          vuln-type: 'os,library'
+          scanners: 'vuln,secret,config'
+      
+      - name: Trivy Critical/High Only
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cloudmart-backend:${{ github.sha }}'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'  # CRITICAL/HIGH 발견 시 빌드 실패
+      
+      # 3. Trivy - Dockerfile 보안 검사
+      - name: Trivy Dockerfile Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: './Dockerfile'
+          format: 'sarif'
+          output: 'trivy-dockerfile.sarif'
+      
+      # 4. Trivy - 파일시스템 스캔 (시크릿 탐지)
+      - name: Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'secret'
+          format: 'json'
+          output: 'trivy-secrets.json'
+      
+      # 5. Snyk - 의존성 취약점
+      - name: Snyk Security Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      
+      # 6. 결과를 S3에 업로드
+      - name: Upload Scan Results to S3
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          aws s3 cp trivy-results.json s3://cloudmart-security/sast/trivy/${TIMESTAMP}/
+          aws s3 cp trivy-dockerfile.sarif s3://cloudmart-security/sast/dockerfile/${TIMESTAMP}/
+          aws s3 cp trivy-secrets.json s3://cloudmart-security/sast/secrets/${TIMESTAMP}/
+          aws s3 cp snyk-results.json s3://cloudmart-security/sast/snyk/${TIMESTAMP}/
+      
+      # 7. Trivy 결과 분석 및 리포트 생성
+      - name: Generate Security Report
+        run: |
+          python3 scripts/analyze-trivy-results.py \
+            --input trivy-results.json \
+            --output security-report.html
+          aws s3 cp security-report.html s3://cloudmart-security/reports/${TIMESTAMP}/
+      
+      # 8. 취약점 발견 시 Slack 알림
+      - name: Slack Notification
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚨 보안 취약점 발견!
+            - Repository: ${{ github.repository }}
+            - Branch: ${{ github.ref }}
+            - Commit: ${{ github.sha }}
+            - 상세 리포트: s3://cloudmart-security/reports/${TIMESTAMP}/security-report.html
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+**Trivy 스캔 결과 예시**:
+```json
+{
+  "Results": [
+    {
+      "Target": "cloudmart-backend:latest (alpine 3.18.4)",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2023-12345",
+          "PkgName": "openssl",
+          "InstalledVersion": "3.0.10-r0",
+          "FixedVersion": "3.0.12-r0",
+          "Severity": "CRITICAL",
+          "Title": "OpenSSL Remote Code Execution",
+          "Description": "A critical vulnerability in OpenSSL...",
+          "References": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-12345"
+          ]
+        },
+        {
+          "VulnerabilityID": "CVE-2023-67890",
+          "PkgName": "curl",
+          "InstalledVersion": "8.1.2-r0",
+          "FixedVersion": "8.4.0-r0",
+          "Severity": "HIGH",
+          "Title": "curl Buffer Overflow"
+        }
+      ]
+    },
+    {
+      "Target": "Node.js Dependencies",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2023-11111",
+          "PkgName": "express",
+          "InstalledVersion": "4.17.1",
+          "FixedVersion": "4.18.2",
+          "Severity": "MEDIUM",
+          "Title": "Express.js Path Traversal"
+        }
+      ]
+    }
+  ],
+  "Secrets": [
+    {
+      "Target": "Dockerfile",
+      "Secrets": [
+        {
+          "RuleID": "aws-access-key-id",
+          "Category": "AWS",
+          "Severity": "CRITICAL",
+          "Title": "AWS Access Key",
+          "Match": "AKIAIOSFODNN7EXAMPLE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Trivy 스캔 유형별 상세**:
+
+**1. 이미지 취약점 스캔**:
+```bash
+# OS 패키지 취약점
+trivy image --vuln-type os cloudmart-backend:latest
+
+# 애플리케이션 라이브러리 취약점
+trivy image --vuln-type library cloudmart-backend:latest
+
+# 전체 스캔 (OS + Library)
+trivy image cloudmart-backend:latest
+```
+
+**2. Dockerfile 보안 검사**:
+```bash
+# Dockerfile 베스트 프랙티스 검사
+trivy config Dockerfile
+
+# 검출 항목:
+# - USER root 사용 (보안 위험)
+# - COPY --chown 미사용
+# - 불필요한 패키지 설치
+# - 최신 베이스 이미지 미사용
+```
+
+**3. 시크릿 탐지**:
+```bash
+# 코드 내 하드코딩된 시크릿 탐지
+trivy fs --scanners secret .
+
+# 검출 항목:
+# - AWS Access Key
+# - API Keys
+# - Private Keys
+# - Passwords
+# - JWT Tokens
+```
+
+**4. 설정 파일 검사**:
+```bash
+# Kubernetes YAML 보안 검사
+trivy config k8s/
+
+# Docker Compose 보안 검사
+trivy config docker-compose.yml
+```
+
+---
+
+**AWS ECR Image Scanning (자동화)**:
+
+**ECR 스캔 활성화**:
+```bash
+# 1. ECR 리포지토리 생성 시 스캔 활성화
+aws ecr create-repository \
+  --repository-name cloudmart-backend \
+  --image-scanning-configuration scanOnPush=true \
+  --encryption-configuration encryptionType=KMS
+
+# 2. 기존 리포지토리에 스캔 활성화
+aws ecr put-image-scanning-configuration \
+  --repository-name cloudmart-backend \
+  --image-scanning-configuration scanOnPush=true
+
+# 3. Enhanced Scanning (Inspector 통합) 활성화
+aws ecr put-registry-scanning-configuration \
+  --scan-type ENHANCED \
+  --rules '[
+    {
+      "scanFrequency": "CONTINUOUS_SCAN",
+      "repositoryFilters": [
+        {"filter": "cloudmart-*", "filterType": "WILDCARD"}
+      ]
+    }
+  ]'
+```
+
+**ECR 스캔 결과 조회**:
+```bash
+# 이미지 스캔 결과 조회
+aws ecr describe-image-scan-findings \
+  --repository-name cloudmart-backend \
+  --image-id imageTag=latest
+
+# 결과 예시:
+{
+  "imageScanFindings": {
+    "findings": [
+      {
+        "name": "CVE-2023-12345",
+        "severity": "CRITICAL",
+        "uri": "https://nvd.nist.gov/vuln/detail/CVE-2023-12345",
+        "attributes": [
+          {
+            "key": "package_name",
+            "value": "openssl"
+          },
+          {
+            "key": "package_version",
+            "value": "3.0.10"
+          }
+        ]
+      }
+    ],
+    "findingSeverityCounts": {
+      "CRITICAL": 2,
+      "HIGH": 5,
+      "MEDIUM": 12,
+      "LOW": 8
+    }
+  }
+}
+```
+
+**ECR 스캔 자동 알림 (EventBridge + SNS)**:
+```yaml
+# CloudFormation 템플릿
+Resources:
+  # ECR 스캔 완료 이벤트 규칙
+  ECRScanEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.ecr
+        detail-type:
+          - ECR Image Scan
+        detail:
+          scan-status:
+            - COMPLETE
+          finding-severity-counts:
+            CRITICAL:
+              - { "numeric": [ ">", 0 ] }
+      Targets:
+        - Arn: !Ref SecurityAlertTopic
+          Id: ECRScanAlert
+
+  # SNS 토픽 (Slack 알림)
+  SecurityAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref SlackWebhookURL
+          Protocol: https
+
+  # Lambda 함수 (상세 알림 생성)
+  ECRScanAlertFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.11
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          
+          def handler(event, context):
+              detail = event['detail']
+              repo = detail['repository-name']
+              tag = detail['image-tags'][0]
+              findings = detail['finding-severity-counts']
+              
+              message = f"""
+              🚨 ECR 이미지 스캔 완료
+              
+              Repository: {repo}
+              Tag: {tag}
+              
+              취약점 발견:
+              - CRITICAL: {findings.get('CRITICAL', 0)}
+              - HIGH: {findings.get('HIGH', 0)}
+              - MEDIUM: {findings.get('MEDIUM', 0)}
+              
+              상세 확인: https://console.aws.amazon.com/ecr/repositories/{repo}
+              """
+              
+              # Slack 알림 전송
+              # ... (생략)
+```
+
+**💡 Trivy vs ECR Scan 상세 비교**:
+
+| 기능 | Trivy (Docker Compose) | ECR Image Scanning |
+|------|------------------------|-------------------|
+| **스캔 시점** | CI/CD 파이프라인 (수동 트리거) | 이미지 푸시 시 자동 |
+| **스캔 범위** | OS + Library + Secret + Config | OS + Library (Basic)<br/>OS + Library + Language (Enhanced) |
+| **취약점 DB** | Trivy DB (매일 업데이트) | AWS CVE Database |
+| **Dockerfile 검사** | ✅ 지원 | ❌ 미지원 |
+| **시크릿 탐지** | ✅ 지원 (AWS Key, API Key 등) | ❌ 미지원 |
+| **설정 파일 검사** | ✅ 지원 (K8s, Docker Compose) | ❌ 미지원 |
+| **지속적 스캔** | ❌ 수동 재실행 필요 | ✅ Enhanced Scanning (자동) |
+| **통합 대시보드** | 직접 구축 (S3 + Grafana) | Security Hub 자동 통합 |
+| **알림** | GitHub Actions + Slack (수동) | EventBridge + SNS (자동) |
+| **비용** | 무료 (오픈소스) | Basic: 무료<br/>Enhanced: $0.09/이미지/월 |
+| **설정 복잡도** | 중간 (GitHub Actions 설정) | 낮음 (클릭 한 번) |
+| **커스터마이징** | 매우 높음 (모든 옵션 제어) | 제한적 |
+| **오프라인 사용** | ✅ 가능 | ❌ 불가능 (AWS 전용) |
+
+**Trivy의 장점**:
+- ✅ **포괄적 스캔**: OS, Library, Secret, Config 모두 검사
+- ✅ **Dockerfile 검사**: 보안 베스트 프랙티스 검증
+- ✅ **시크릿 탐지**: 하드코딩된 API Key, Password 발견
+- ✅ **무료**: 오픈소스, 무제한 사용
+- ✅ **유연성**: CI/CD 어디서든 사용 가능
+
+**ECR Scan의 장점**:
+- ✅ **자동화**: 이미지 푸시 시 자동 스캔
+- ✅ **지속적 스캔**: Enhanced Scanning으로 새 취약점 자동 탐지
+- ✅ **통합**: Security Hub, Inspector와 자동 통합
+- ✅ **관리 불필요**: AWS가 DB 업데이트 및 스캔 관리
+- ✅ **규정 준수**: AWS 규정 준수 프레임워크 통합
+
+**🎯 Best Practice: 두 가지 모두 사용!**
+
+```yaml
+# .github/workflows/image-security.yml
+name: Image Security Scan
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 빌드 전 Dockerfile 검사 (Trivy)
+      - name: Scan Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: './Dockerfile'
+      
+      # 2. 이미지 빌드
+      - name: Build Image
+        run: docker build -t cloudmart-backend:${{ github.sha }} .
+      
+      # 3. 빌드 후 이미지 스캔 (Trivy - 상세)
+      - name: Trivy Full Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cloudmart-backend:${{ github.sha }}'
+          format: 'json'
+          scanners: 'vuln,secret,config'
+          exit-code: '1'  # CRITICAL 발견 시 중단
+      
+      # 4. ECR 푸시 (자동 스캔 트리거)
+      - name: Push to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
+          docker tag cloudmart-backend:${{ github.sha }} $ECR_REGISTRY/cloudmart-backend:${{ github.sha }}
+          docker push $ECR_REGISTRY/cloudmart-backend:${{ github.sha }}
+      
+      # 5. ECR 스캔 결과 대기 및 확인
+      - name: Wait for ECR Scan
+        run: |
+          sleep 60  # ECR 스캔 완료 대기
+          aws ecr describe-image-scan-findings \
+            --repository-name cloudmart-backend \
+            --image-id imageTag=${{ github.sha }}
+```
+
+**결론**:
+- **개발 단계**: Trivy로 빠른 피드백 (Dockerfile, Secret, Config)
+- **배포 단계**: ECR Scan으로 자동 검증 및 지속적 모니터링
+- **운영 단계**: Security Hub로 통합 관리
+
+---
+
+**DAST (Dynamic Application Security Testing) - 동적 분석**:
+```yaml
+# .github/workflows/dast-scan.yml
+name: DAST Scan
+
+on:
+  deployment_status:
+
+jobs:
+  dast:
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'success'
+    
+    steps:
+      # 1. OWASP ZAP - 웹 애플리케이션 취약점 스캔
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.7.0
+        with:
+          target: 'https://cloudmart.example.com'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+      
+      # 2. Nikto - 웹 서버 취약점 스캔
+      - name: Nikto Scan
+        run: |
+          docker run --rm \
+            -v $(pwd):/tmp \
+            sullo/nikto \
+            -h https://cloudmart.example.com \
+            -o /tmp/nikto-results.json \
+            -Format json
+      
+      # 3. 결과를 S3에 업로드
+      - name: Upload to S3
+        run: |
+          aws s3 cp zap-results.json s3://cloudmart-security/dast/$(date +%Y%m%d)/
+          aws s3 cp nikto-results.json s3://cloudmart-security/dast/$(date +%Y%m%d)/
+      
+      # 4. 취약점 발견 시 Slack 알림
+      - name: Slack Notification
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: '🚨 운영 환경에서 보안 취약점 발견! DAST 스캔 결과를 확인하세요.'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+**런타임 보안 (Falco)**:
+```yaml
+# docker-compose.yml (각 서버)
+version: '3.8'
+services:
+  # 기존 애플리케이션 서비스들...
+  
+  # Falco - 런타임 보안 모니터링
+  falco:
+    image: falcosecurity/falco:latest
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - /dev:/host/dev
+      - /proc:/host/proc:ro
+      - /boot:/host/boot:ro
+      - /lib/modules:/host/lib/modules:ro
+      - /usr:/host/usr:ro
+      - ./falco/falco.yaml:/etc/falco/falco.yaml
+      - ./falco/rules:/etc/falco/rules.d
+    environment:
+      - FALCO_GRPC_ENABLED=true
+      - FALCO_GRPC_BIND_ADDRESS=0.0.0.0:5060
+    ports:
+      - "5060:5060"
+```
+
+**Falco 보안 규칙 예시**:
+```yaml
+# falco/rules/custom-rules.yaml
+- rule: Unauthorized Process in Container
+  desc: Detect unauthorized process execution
+  condition: >
+    spawned_process and
+    container and
+    not proc.name in (node, npm, sh, bash)
+  output: >
+    Unauthorized process started in container
+    (user=%user.name command=%proc.cmdline container=%container.name)
+  priority: WARNING
+
+- rule: Write to Sensitive Directory
+  desc: Detect writes to sensitive directories
+  condition: >
+    open_write and
+    container and
+    fd.name startswith /etc
+  output: >
+    Write to sensitive directory
+    (user=%user.name file=%fd.name container=%container.name)
+  priority: ERROR
+
+- rule: Outbound Connection to Suspicious IP
+  desc: Detect connections to known malicious IPs
+  condition: >
+    outbound and
+    fd.sip in (suspicious_ips)
+  output: >
+    Suspicious outbound connection
+    (user=%user.name ip=%fd.sip container=%container.name)
+  priority: CRITICAL
+```
+
+**💡 Docker vs AWS 보안 비교**:
+| 항목 | Docker + SAST/DAST | AWS 보안 서비스 |
+|------|-------------------|-----------------|
+| **SAST (정적 분석)** | SonarQube, Trivy, Snyk (수동 설정) | CodeGuru, Inspector (자동) |
+| **DAST (동적 분석)** | OWASP ZAP, Nikto (수동 설정) | Inspector, Penetration Testing |
+| **컨테이너 스캔** | Trivy, Clair (수동) | ECR Image Scanning (자동) |
+| **의존성 스캔** | Snyk, Dependabot (수동) | Inspector (자동) |
+| **런타임 보안** | Falco (수동 설정) | GuardDuty (자동) |
+| **네트워크 보안** | iptables, 방화벽 (수동) | Security Groups, NACL (관리형) |
+| **시크릿 관리** | Vault, 환경변수 (수동) | Secrets Manager (관리형) |
+| **규정 준수** | 수동 감사 | Config, Security Hub (자동) |
+| **위협 탐지** | 수동 로그 분석 | GuardDuty, Macie (자동) |
+| **설정 복잡도** | 매우 높음 | 낮음 (자동) |
+| **비용** | 도구 라이선스 + 인력 | 서비스 사용량당 |
+
+**AWS 보안 서비스 상세**:
+
+**1. AWS CodeGuru (SAST)**:
+```yaml
+# buildspec.yml
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      # CodeGuru Reviewer 자동 실행
+      - echo "CodeGuru Reviewer analyzing code..."
+  build:
+    commands:
+      - docker build -t cloudmart-backend .
+  post_build:
+    commands:
+      # CodeGuru Security 스캔
+      - aws codeguru-security create-scan --scan-name cloudmart-scan
+```
+
+**2. Amazon Inspector (컨테이너 + 인프라 스캔)**:
+```bash
+# ECR 이미지 자동 스캔 (푸시 시 자동 실행)
+aws ecr put-image-scanning-configuration \
+  --repository-name cloudmart-backend \
+  --image-scanning-configuration scanOnPush=true
+
+# EC2 인스턴스 자동 스캔
+aws inspector2 enable \
+  --resource-types EC2 ECR
+```
+
+**3. AWS GuardDuty (런타임 위협 탐지)**:
+```bash
+# GuardDuty 활성화 (자동 위협 탐지)
+aws guardduty create-detector --enable
+
+# 의심스러운 활동 자동 탐지:
+# - 비정상적인 API 호출
+# - 알려진 악성 IP 통신
+# - 크립토마이닝 활동
+# - 권한 상승 시도
+```
+
+**4. AWS Security Hub (통합 보안 대시보드)**:
+```bash
+# Security Hub 활성화
+aws securityhub enable-security-hub
+
+# 자동으로 통합되는 서비스:
+# - GuardDuty (위협 탐지)
+# - Inspector (취약점 스캔)
+# - Macie (데이터 보안)
+# - IAM Access Analyzer (권한 분석)
+# - Config (규정 준수)
+```
+
+**보안 파이프라인 비교**:
+
+**Docker Compose 방식**:
+```
+개발 → Git Push → GitHub Actions
+  ↓
+SAST (SonarQube, Trivy, Snyk) - 수동 설정
+  ↓
+Docker Build → ECR Push
+  ↓
+서버 배포
+  ↓
+DAST (OWASP ZAP, Nikto) - 수동 실행
+  ↓
+Falco 런타임 모니터링 - 수동 설정
+  ↓
+S3 결과 저장 + Slack 알림 - 수동 설정
+```
+
+**AWS 방식**:
+```
+개발 → Git Push → CodePipeline
+  ↓
+CodeGuru (SAST) - 자동 실행
+  ↓
+Docker Build → ECR Push
+  ↓
+Inspector (이미지 스캔) - 자동 실행
+  ↓
+ECS/EC2 배포
+  ↓
+Inspector (인프라 스캔) - 자동 실행
+  ↓
+GuardDuty (런타임 위협 탐지) - 자동 실행
+  ↓
+Security Hub (통합 대시보드) - 자동 통합
+  ↓
+EventBridge → SNS/Lambda - 자동 알림
+```
+
+**🎯 핵심 인사이트**:
+> "Docker Compose + GitHub Actions로 SAST/DAST 파이프라인을 구축할 수 있지만, 각 도구를 개별적으로 설정하고 통합해야 하는 복잡도가 매우 높습니다. AWS는 CodeGuru, Inspector, GuardDuty, Security Hub를 통해 **자동화된 DevSecOps 파이프라인**을 제공하며, 모든 보안 이벤트가 하나의 대시보드에 통합됩니다. **보안은 자동화되어야 효과적입니다!**"
+
+---
+
 ### 🔍 개념 1: IAM 정책 & 역할 설계 (12분)
 
 > **정의**: AWS 리소스에 대한 접근 권한을 세밀하게 제어하는 서비스
