@@ -416,20 +416,27 @@ graph TB
 
 #### 구성 B: AWS Native (ECS + RDS + ElastiCache)
 ```mermaid
-architecture-beta
-    group aws(cloud)[AWS Cloud]
-    group vpc(cloud)[VPC] in aws
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "VPC"
+            ALB[Application Load Balancer]
+            ECS[ECS Fargate Tasks]
+            RDS[RDS Multi-AZ]
+            ElastiCache[ElastiCache Redis]
+            CloudWatch[CloudWatch]
+        end
+    end
     
-    service alb(internet)[ALB] in vpc
-    service ecs(server)[ECS Fargate] in vpc
-    service rds(database)[RDS Multi-AZ] in vpc
-    service elasticache(disk)[ElastiCache] in vpc
-    service cloudwatch(disk)[CloudWatch] in vpc
+    ALB --> ECS
+    ECS --> RDS
+    ECS --> ElastiCache
+    ECS --> CloudWatch
     
-    alb:R --> L:ecs
-    ecs:R --> L:rds
-    ecs:B --> T:elasticache
-    ecs:T --> B:cloudwatch
+    style ALB fill:#ff9800
+    style ECS fill:#4caf50
+    style RDS fill:#2196f3
+    style ElastiCache fill:#9c27b0
+    style CloudWatch fill:#ff5722
 ```
 
 **상세 구성**:
