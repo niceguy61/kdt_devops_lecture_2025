@@ -873,6 +873,123 @@ app.get('/api/orders', async (req, res) => {
 - ✅ **최적화된 성능**: AWS 최적화된 추적 성능
 - ✅ **간단한 설정**: 환경변수만으로 설정 완료
 
+### Pain Point 6: DORA Metrics 측정의 어려움
+
+**상황**: DevOps 팀 성과 측정 및 개선
+```bash
+# 현재: 수동으로 DORA 메트릭 계산
+
+# 1. Deployment Frequency (배포 빈도)
+git log --oneline --since="1 month ago" --grep="deploy" | wc -l
+# 결과: 12회 (수동 계산, 부정확할 수 있음)
+
+# 2. Lead Time for Changes (변경 리드타임)
+# 커밋 시간 → 배포 시간 수동 계산
+git log --format="%H %ct %s" --since="1 month ago" | grep deploy
+docker logs deployment_container | grep "deployment completed"
+# 결과: 평균 4시간 (수동 추적, 시간 소모)
+
+# 3. Change Failure Rate (변경 실패율)
+# 롤백 횟수 / 전체 배포 횟수 수동 집계
+grep "rollback" deployment.log | wc -l
+echo "scale=2; $(grep "rollback" deployment.log | wc -l) / 12 * 100" | bc
+# 결과: 16.67% (수동 집계, 누락 가능성)
+
+# 4. Time to Restore Service (서비스 복구 시간)
+# 장애 발생 → 복구 완료 시간 수동 기록
+grep -A1 "service down" incident.log | grep "service restored"
+# 결과: 평균 45분 (사람이 기록, 부정확)
+
+# 월간 DORA 리포트 작성
+echo "이번 달 DORA 메트릭 정리하는데 4시간 걸렸다..."
+```
+
+**문제점**:
+- ❌ **수동 측정**: 모든 지표를 사람이 직접 계산 (월 4시간 소요)
+- ❌ **부정확성**: 사람의 실수, 데이터 누락 가능성
+- ❌ **일관성 부족**: 팀원마다 측정 기준이 다름
+- ❌ **실시간성 부족**: 월말에야 지표 확인 가능
+- ❌ **개선 지연**: 문제를 늦게 발견하여 개선 지연
+
+**Four Keys (Google 오픈소스) 해결**:
+```bash
+# 자동 DORA 메트릭 수집 및 대시보드
+docker-compose -f observability-with-dora.yml up -d
+
+# GitHub 연동 설정
+export GITHUB_TOKEN=your_github_token
+export PROJECT_ID=cloudmart
+
+# Four Keys 대시보드 접속
+open http://localhost:8080
+
+# 실시간 DORA 메트릭 확인
+curl http://localhost:8080/api/dora-metrics
+```
+
+**Four Keys 자동 수집 결과**:
+```json
+{
+  "deploymentFrequency": {
+    "value": 15,
+    "period": "monthly",
+    "trend": "+25% vs last month"
+  },
+  "leadTimeForChanges": {
+    "value": "2.3 hours",
+    "p50": "1.5 hours",
+    "p95": "6.2 hours"
+  },
+  "changeFailureRate": {
+    "value": "8.3%",
+    "trend": "-50% vs last month"
+  },
+  "timeToRestoreService": {
+    "value": "23 minutes",
+    "p50": "15 minutes",
+    "p95": "45 minutes"
+  }
+}
+```
+
+**효과**:
+- ✅ **자동 데이터 수집**: GitHub API 연동으로 자동 수집
+- ✅ **실시간 대시보드**: 언제든 현재 상태 확인 가능
+- ✅ **표준화된 측정**: Google 표준 DORA 측정 방식
+- ✅ **시간 절약**: 월 4시간 → 0시간 (완전 자동화)
+- ✅ **정확한 데이터**: API 기반 정확한 데이터 수집
+
+**AWS CodePipeline + CloudWatch 해결**:
+```yaml
+# AWS에서 DORA 메트릭 자동 수집
+DORA_Metrics:
+  DeploymentFrequency:
+    Source: CodePipeline 실행 횟수
+    Automation: CloudWatch Events 자동 집계
+    
+  LeadTimeForChanges:
+    Source: CodeCommit 푸시 → CodePipeline 완료 시간
+    Automation: X-Ray 분산 추적 자동 계산
+    
+  ChangeFailureRate:
+    Source: CodePipeline 실패율
+    Automation: CloudWatch 메트릭 자동 계산
+    
+  TimeToRestoreService:
+    Source: CloudWatch 알람 → 복구 시간
+    Automation: 실시간 자동 측정 및 알림
+```
+
+**측정 비교**:
+| 항목 | Docker Compose + 수동 | Four Keys | AWS Native |
+|------|---------------------|-----------|------------|
+| **설정 시간** | 0분 (측정 안 함) | 30분 | 2시간 |
+| **월 운영 시간** | 4시간 (수동 계산) | 0분 | 0분 |
+| **데이터 정확도** | 70% (사람 실수) | 95% | 99% |
+| **실시간성** | 없음 (월말 확인) | 실시간 | 실시간 |
+| **비용** | $0 | $0 | $50/월 |
+| **개선 속도** | 느림 (월 1회) | 빠름 (실시간) | 매우 빠름 |
+
 ---
 
 ## 🔄 "그래서 언제 AWS로 갈아타야 하나?"
