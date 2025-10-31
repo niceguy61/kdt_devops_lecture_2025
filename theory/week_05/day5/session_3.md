@@ -1,664 +1,1029 @@
-# Week 5 Day 5 Session 3: 모니터링 & 로깅 (11:00-11:50)
+# Week 5 Day 5 Session 3: Docker Compose 완전체 - 관측성까지
 
 <div align="center">
 
-**📊 CloudWatch** • **📝 로그 분석** • **🔍 분산 추적** • **🚨 알람 설정**
+**🔍 완전한 관측성** • **🛠️ 직접 구축** • **💡 Pain Point 경험**
 
-*프로덕션 환경의 완전한 관측성 구축*
+*처음부터 좋은 걸 쓰면 왜 좋은지 모른다. Docker Compose로 직접 구축해봐야 AWS의 진짜 가치를 안다.*
 
 </div>
 
 ---
 
-## 🕘 세션 정보
+## 🕘 Session 정보
 **시간**: 11:00-11:50 (50분)
-**목표**: CloudMart 운영을 위한 종합 모니터링 및 로깅 시스템 구축
-**방식**: 이론 설명 + 실무 사례
+**목표**: Docker Compose로 완전한 관측성 스택 구축 및 Pain Point 경험
+**방식**: 실습 중심 + 문제 경험 + AWS 전환 시점 판단
 
-## 🎯 세션 목표
+## 🎯 Session 목표
 
 ### 📚 학습 목표
-- **이해 목표**: CloudWatch 메트릭, 로그, 알람의 역할과 중요성 이해
-- **적용 목표**: 실무 모니터링 대시보드 구성 및 알람 설정 방법 습득
-- **협업 목표**: 팀과 함께 장애 대응 프로세스 수립
+- **이해 목표**: 관측성 3대 요소 (Metrics, Logs, Traces) 완전 이해
+- **구축 목표**: Docker Compose로 Prometheus + Grafana + Jaeger + APM 스택 구축
+- **경험 목표**: 직접 구축하며 운영의 복잡함과 AWS Managed Service 필요성 체감
 
 ### 🤔 왜 필요한가? (5분)
 
 **현실 문제 상황**:
-- 💼 **실무 시나리오**: "새벽 3시에 서버가 죽었는데 아무도 몰랐어요. 어떻게 해야 하나요?"
-- 🏠 **일상 비유**: 자동차 계기판 (속도, 연료, 엔진 온도) → 문제 발생 전 미리 알림
-- ☁️ **AWS 아키텍처**: CloudWatch로 모든 리소스 실시간 모니터링 + 알람
-- 📊 **시장 동향**: Netflix는 초당 수백만 개의 메트릭 수집 및 분석
+- 💼 **실무 시나리오**: "신입이 처음부터 Kubernetes + CloudWatch 쓰자고 하는데, 왜 필요한지 설명 못함"
+- 🏠 **일상 비유**: 요리를 배울 때 처음부터 고급 주방기구를 쓰면 기본기를 모르게 되는 것처럼
+- 🎯 **학습 철학**: "Pain First, Solution Second" - 문제를 먼저 경험해야 해결책의 가치를 안다
+- 📊 **실무 현실**: 많은 개발자가 Managed Service를 쓰면서도 왜 비싼지, 뭐가 좋은지 모름
 
-**모니터링 없음 vs 있음 비교**:
+**학습 전후 비교**:
 ```mermaid
-graph TB
-    subgraph "모니터링 없음 (위험)"
-        A1[서버 장애 발생] --> B1[사용자 불만 접수]
-        B1 --> C1[개발자 확인]
-        C1 --> D1[원인 파악 어려움]
-        D1 --> E1[복구 지연<br/>수시간 소요]
-    end
+graph LR
+    A[학습 전<br/>AWS가 좋다고 하니까<br/>무작정 사용] --> B[학습 후<br/>직접 구축해봤으니<br/>AWS 가치 정확히 인식]
     
-    subgraph "모니터링 있음 (안전)"
-        A2[서버 부하 증가] --> B2[CloudWatch 알람]
-        B2 --> C2[즉시 개발자 알림]
-        C2 --> D2[로그로 원인 파악]
-        D2 --> E2[신속 대응<br/>수분 내 복구]
-    end
-    
-    style A1 fill:#ffebee
-    style E1 fill:#ffebee
-    style A2 fill:#fff3e0
-    style B2 fill:#e8f5e8
-    style E2 fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#e8f5e8
 ```
+
+---
 
 ## 📖 핵심 개념 (35분)
 
-### 🔄 Docker Compose vs AWS 모니터링 비교
+### 🔍 개념 1: "왜 처음부터 좋은 걸 쓰면 안 되는가?" (10분)
 
-**Docker Compose 멀티 서버 + 모니터링 스택 🔍**:
+> **정의**: 기술 학습에서 "Pain First" 원칙 - 문제를 먼저 경험해야 해결책의 진짜 가치를 이해할 수 있다
+
+**실제 대화 사례**:
+```
+신입 개발자: "처음부터 Kubernetes + CloudWatch 쓰면 되잖아요?"
+시니어: "그럼 왜 그게 필요한지 알아?"
+신입: "...더 좋으니까요?"
+시니어: "뭐가 어떻게 좋은데?"
+신입: "...잘 모르겠어요"
+```
+
+**문제점 분석**:
 ```mermaid
 graph TB
-    subgraph "모니터링 서버 (별도)"
-        GRAFANA[Grafana<br/>대시보드<br/>3000포트]
-        PROMETHEUS[Prometheus<br/>메트릭 수집<br/>9090포트]
-        LOKI[Loki<br/>로그 수집<br/>3100포트]
-        JAEGER[Jaeger<br/>분산 추적<br/>16686포트]
-        ALERTMANAGER[AlertManager<br/>알림<br/>9093포트]
+    subgraph "잘못된 학습 순서"
+        A1[Managed Service 바로 사용]
+        B1[편리함만 경험]
+        C1[왜 필요한지 모름]
+        D1[문제 발생 시 대응 불가]
     end
     
-    subgraph "서버 1 (AZ-A)"
-        NODE_EXP1[Node Exporter<br/>시스템 메트릭]
-        CADVISOR1[cAdvisor<br/>컨테이너 메트릭]
-        PROMTAIL1[Promtail<br/>로그 수집]
-        JAEGER_AGENT1[Jaeger Agent<br/>트레이스 수집]
-        APP1[애플리케이션<br/>컨테이너들]
+    subgraph "올바른 학습 순서"
+        A2[직접 구축]
+        B2[Pain Point 경험]
+        C2[해결책 탐색]
+        D2[Managed Service 가치 체감]
     end
     
-    subgraph "서버 2 (AZ-B)"
-        NODE_EXP2[Node Exporter<br/>시스템 메트릭]
-        CADVISOR2[cAdvisor<br/>컨테이너 메트릭]
-        PROMTAIL2[Promtail<br/>로그 수집]
-        JAEGER_AGENT2[Jaeger Agent<br/>트레이스 수집]
-        APP2[애플리케이션<br/>컨테이너들]
-    end
+    A1 --> B1 --> C1 --> D1
+    A2 --> B2 --> C2 --> D2
     
-    subgraph "AWS S3"
-        S3_METRICS[S3 Bucket<br/>메트릭 백업]
-        S3_LOGS[S3 Bucket<br/>로그 백업]
-        S3_TRACES[S3 Bucket<br/>트레이스 백업]
-    end
-    
-    NODE_EXP1 --> PROMETHEUS
-    NODE_EXP2 --> PROMETHEUS
-    CADVISOR1 --> PROMETHEUS
-    CADVISOR2 --> PROMETHEUS
-    
-    PROMTAIL1 --> LOKI
-    PROMTAIL2 --> LOKI
-    
-    APP1 --> JAEGER_AGENT1
-    APP2 --> JAEGER_AGENT2
-    JAEGER_AGENT1 --> JAEGER
-    JAEGER_AGENT2 --> JAEGER
-    
-    PROMETHEUS --> GRAFANA
-    LOKI --> GRAFANA
-    JAEGER --> GRAFANA
-    PROMETHEUS --> ALERTMANAGER
-    
-    PROMETHEUS -.백업.-> S3_METRICS
-    LOKI -.백업.-> S3_LOGS
-    JAEGER -.백업.-> S3_TRACES
-    
-    ALERTMANAGER -.알림.-> SLACK[Slack/Email]
-    
-    style GRAFANA fill:#ff9800
-    style PROMETHEUS fill:#e8f5e8
-    style LOKI fill:#e3f2fd
-    style JAEGER fill:#9c27b0
-    style ALERTMANAGER fill:#ffebee
-    style S3_METRICS fill:#fce4ec
-    style S3_LOGS fill:#fce4ec
-    style S3_TRACES fill:#fce4ec
+    style A1 fill:#ffebee
+    style B1 fill:#ffebee
+    style C1 fill:#ffebee
+    style D1 fill:#ffebee
+    style A2 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C2 fill:#e8f5e8
+    style D2 fill:#e8f5e8
 ```
 
-**Docker Compose 모니터링 스택 구성**:
-- ✅ **Prometheus**: 메트릭 수집 (CPU, 메모리, 디스크, 네트워크)
-- ✅ **Grafana**: 시각화 대시보드
-- ✅ **Loki**: 로그 수집 및 검색
-- ✅ **Jaeger**: 분산 추적 (마이크로서비스 간 호출 추적) 🆕
-- ✅ **AlertManager**: Slack/Email 알림
-- ✅ **Node Exporter**: 시스템 메트릭
-- ✅ **cAdvisor**: 컨테이너 메트릭
-- ✅ **Promtail**: 로그 수집 에이전트
-- ✅ **Jaeger Agent**: 트레이스 수집 에이전트 🆕
-- ✅ **S3 백업**: 30일 보관
+**학습 철학**:
+- 🎯 **Pain First**: 문제를 먼저 경험해야 해결책의 가치를 안다
+- 🔧 **Build First**: 직접 만들어봐야 Managed Service의 편리함을 안다
+- 💡 **Understand Why**: 왜 필요한지 알아야 제대로 활용할 수 있다
+- 📊 **Cost Awareness**: 직접 구축해봐야 비용의 합리성을 판단할 수 있다
 
-**Jaeger 분산 추적 예시**:
+**실무 적용**:
+- ✅ **주니어 교육**: 먼저 직접 구축 경험 → 이후 Managed Service 도입
+- ✅ **기술 선택**: 문제를 명확히 정의 → 해결책 비교 → 최적 선택
+- ✅ **비용 정당화**: 직접 구축 비용 vs Managed Service 비용 비교 가능
+
+### 🔍 개념 2: Docker Compose 관측성 완전체 스택 (15분)
+
+**관측성 3대 요소 (Observability)**:
 ```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant Frontend as Frontend
-    participant Backend as Backend API
-    participant Auth as Auth Service
-    participant DB as PostgreSQL
-    participant Cache as Redis
+graph TB
+    subgraph "관측성 3대 요소"
+        A[Metrics<br/>메트릭]
+        B[Logs<br/>로그]
+        C[Traces<br/>분산 추적]
+    end
     
-    User->>Frontend: 1. 상품 조회 요청
-    Note over Frontend: Trace ID: abc123<br/>Span ID: span-1
+    subgraph "Docker Compose 구현"
+        D[Prometheus<br/>+ Grafana]
+        E[Loki<br/>+ Promtail]
+        F[Jaeger<br/>+ APM]
+    end
     
-    Frontend->>Backend: 2. API 호출
-    Note over Backend: Trace ID: abc123<br/>Span ID: span-2<br/>Parent: span-1
+    A --> D
+    B --> E
+    C --> F
     
-    Backend->>Auth: 3. 인증 확인
-    Note over Auth: Trace ID: abc123<br/>Span ID: span-3<br/>Parent: span-2
-    Auth-->>Backend: 4. 인증 성공 (15ms)
-    
-    Backend->>Cache: 5. 캐시 조회
-    Note over Cache: Trace ID: abc123<br/>Span ID: span-4<br/>Parent: span-2
-    Cache-->>Backend: 6. 캐시 미스 (5ms)
-    
-    Backend->>DB: 7. DB 조회
-    Note over DB: Trace ID: abc123<br/>Span ID: span-5<br/>Parent: span-2
-    DB-->>Backend: 8. 데이터 반환 (120ms)
-    
-    Backend->>Cache: 9. 캐시 저장
-    Cache-->>Backend: 10. 저장 완료 (3ms)
-    
-    Backend-->>Frontend: 11. 응답 (143ms)
-    Frontend-->>User: 12. 화면 표시 (150ms)
-    
-    Note over User,Cache: 전체 요청: 150ms<br/>가장 느린 구간: DB 조회 (120ms)
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#ffebee
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#ffebee
 ```
 
-**모니터링 서버 - docker-compose.yml (Jaeger 추가)**:
+**완전한 관측성 스택 구성**:
+
 ```yaml
+# observability-stack.yml
 version: '3.8'
+
 services:
-  # 기존 서비스들...
-  
-  # Jaeger All-in-One (개발/테스트용)
+  # 1. Metrics (메트릭) - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.path=/prometheus'
+
+  # 2. Logs (로그) - Loki
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # 3. Traces (분산 추적) - Jaeger
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "5775:5775/udp"   # Zipkin compact
-      - "6831:6831/udp"   # Jaeger compact
-      - "6832:6832/udp"   # Jaeger binary
-      - "5778:5778"       # Config
-      - "16686:16686"     # UI
-      - "14268:14268"     # Collector HTTP
-      - "14250:14250"     # Collector gRPC
-      - "9411:9411"       # Zipkin compatible
+      - "16686:16686"  # UI
+      - "14268:14268"  # HTTP collector
+      - "6831:6831/udp"  # UDP collector
     environment:
-      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
-      - SPAN_STORAGE_TYPE=badger
-      - BADGER_EPHEMERAL=false
-      - BADGER_DIRECTORY_VALUE=/badger/data
-      - BADGER_DIRECTORY_KEY=/badger/key
-    volumes:
-      - jaeger_data:/badger
-    networks:
-      - monitoring
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
 
-  # Grafana에 Jaeger 데이터소스 추가
+  # 통합 대시보드 - Grafana
   grafana:
     image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
     environment:
-      - GF_INSTALL_PLUGINS=grafana-jaeger-datasource
-    # ... 기존 설정 ...
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+  # APM (Application Performance Monitoring) - 무료!
+  apm-server:
+    image: elastic/apm-server:7.17.0
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./config/apm-server.yml:/usr/share/apm-server/apm-server.yml
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: elasticsearch:7.17.0
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  # 메트릭 수집기들
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+
+  # 로그 수집 (Promtail)
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./config/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+
+  # 알림 (AlertManager)
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
 
 volumes:
-  jaeger_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  elasticsearch_data:
+  alertmanager_data:
 ```
 
-**서버 1/2 - Jaeger Agent 추가**:
+**각 컴포넌트 역할**:
+- **Prometheus**: 메트릭 수집 및 저장 (CPU, 메모리, 응답시간 등)
+- **Grafana**: 통합 대시보드 및 시각화
+- **Loki**: 로그 수집 및 저장 (구조화되지 않은 로그)
+- **Jaeger**: 분산 추적 (마이크로서비스 간 요청 흐름)
+- **APM Server**: 애플리케이션 성능 모니터링
+- **AlertManager**: 알림 및 경고 관리
+
+**AWS 대응 서비스**:
+| Docker Compose | AWS Managed | 월 비용 비교 |
+|----------------|-------------|-------------|
+| Prometheus + Grafana | CloudWatch | $0 vs $100+ |
+| Loki + Promtail | CloudWatch Logs | $0 vs $50+ |
+| Jaeger | X-Ray | $0 vs $30+ |
+| APM Server | Application Insights | $0 vs $200+ |
+| **총합** | **$0** | **$380+** |
+
+### 🔍 개념 3: 실제 애플리케이션 연동 (10분)
+
+**CloudMart 애플리케이션에 관측성 추가**:
+
 ```yaml
+# cloudmart-with-observability.yml
 version: '3.8'
+
 services:
-  # 기존 애플리케이션 서비스들...
-  
-  # Jaeger Agent (각 서버에 배치)
-  jaeger-agent:
-    image: jaegertracing/jaeger-agent:latest
+  # 메인 애플리케이션
+  backend:
+    image: cloudmart/backend:latest
     ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
+      - "3000:3000"
     environment:
-      - REPORTER_GRPC_HOST_PORT=192.168.1.100:14250  # 모니터링 서버 IP
-    networks:
-      - monitoring
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      # 관측성 설정
+      - PROMETHEUS_ENDPOINT=http://prometheus:9090
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - APM_SERVER_URL=http://apm-server:8200
+      - LOKI_ENDPOINT=http://loki:3100
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+      - jaeger
+      - loki
+      - apm-server
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=3000"
+      - "prometheus.io/path=/metrics"
+
+  frontend:
+    image: cloudmart/frontend:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cloudmart
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./logs/postgres:/var/log/postgresql
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9187"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+      - ./logs/redis:/var/log/redis
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9121"
+
+  # PostgreSQL Exporter (메트릭 수집)
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://user:password@postgres:5432/cloudmart?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+
+  # Redis Exporter (메트릭 수집)
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: cloudmart-observability
 ```
 
-**애플리케이션에 Jaeger 연동 (Node.js 예시)**:
-```javascript
-// backend/src/tracing.js
-const { initTracer } = require('jaeger-client');
-
-function initJaeger(serviceName) {
-  const config = {
-    serviceName: serviceName,
-    sampler: {
-      type: 'const',
-      param: 1, // 모든 요청 추적 (프로덕션에서는 0.1 등으로 조정)
-    },
-    reporter: {
-      logSpans: true,
-      agentHost: process.env.JAEGER_AGENT_HOST || 'jaeger-agent',
-      agentPort: 6832,
-    },
-  };
-  
-  const options = {
-    logger: {
-      info: msg => console.log('INFO', msg),
-      error: msg => console.log('ERROR', msg),
-    },
-  };
-  
-  return initTracer(config, options);
-}
-
-module.exports = initJaeger;
-```
+**애플리케이션 코드 수정 예시**:
 
 ```javascript
-// backend/src/app.js
+// backend/app.js - 관측성 라이브러리 추가
 const express = require('express');
-const initJaeger = require('./tracing');
-const opentracing = require('opentracing');
+const prometheus = require('prom-client');
+const jaeger = require('jaeger-client');
+const apm = require('elastic-apm-node');
 
-const tracer = initJaeger('cloudmart-backend');
-opentracing.initGlobalTracer(tracer);
+// APM 초기화
+apm.start({
+  serviceName: 'cloudmart-backend',
+  serverUrl: process.env.APM_SERVER_URL
+});
+
+// Prometheus 메트릭 설정
+const httpRequestDuration = new prometheus.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+const httpRequestTotal = new prometheus.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+// Jaeger 트레이싱 설정
+const tracer = jaeger.initTracer({
+  serviceName: 'cloudmart-backend',
+  sampler: { type: 'const', param: 1 }
+});
 
 const app = express();
 
-// 미들웨어: 모든 요청에 트레이스 추가
+// 메트릭 수집 미들웨어
 app.use((req, res, next) => {
-  const span = tracer.startSpan(`${req.method} ${req.path}`);
-  req.span = span;
+  const start = Date.now();
   
   res.on('finish', () => {
-    span.setTag('http.status_code', res.statusCode);
-    span.finish();
+    const duration = (Date.now() - start) / 1000;
+    const labels = {
+      method: req.method,
+      route: req.route?.path || req.path,
+      status_code: res.statusCode
+    };
+    
+    httpRequestDuration.observe(labels, duration);
+    httpRequestTotal.inc(labels);
   });
   
   next();
 });
 
-// API 엔드포인트
-app.get('/api/products', async (req, res) => {
-  const parentSpan = req.span;
-  
-  // DB 조회 트레이스
-  const dbSpan = tracer.startSpan('db_query', { childOf: parentSpan });
-  const products = await db.query('SELECT * FROM products');
-  dbSpan.finish();
-  
-  // 캐시 저장 트레이스
-  const cacheSpan = tracer.startSpan('cache_set', { childOf: parentSpan });
-  await redis.set('products', JSON.stringify(products));
-  cacheSpan.finish();
-  
-  res.json(products);
+// 메트릭 엔드포인트
+app.get('/metrics', (req, res) => {
+  res.set('Content-Type', prometheus.register.contentType);
+  res.end(prometheus.register.metrics());
+});
+
+// 헬스체크 엔드포인트
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 ```
 
-**💡 Docker vs AWS 모니터링 비교 (Jaeger 포함)**:
-| 항목 | Docker 모니터링 스택 | AWS CloudWatch + X-Ray |
-|------|---------------------|------------------------|
-| **메트릭 수집** | Prometheus (수동 설정) | CloudWatch (자동) |
-| **로그 수집** | Loki + Promtail (수동) | CloudWatch Logs (자동) |
-| **분산 추적** | Jaeger (수동 설정) 🆕 | X-Ray (자동) |
-| **대시보드** | Grafana (직접 구축) | CloudWatch Dashboard |
-| **알림** | AlertManager (수동) | CloudWatch Alarms |
-| **백업** | S3 Sync 스크립트 | 자동 보관 |
-| **설정 복잡도** | 매우 높음 | 낮음 (자동) |
-| **비용** | 서버 + 스토리지 | 메트릭/로그/트레이스당 |
-| **커스터마이징** | 완전한 제어 | 제한적 |
-| **관리 부담** | 매우 높음 | 낮음 (관리형) |
-
-**🎯 Jaeger의 장점**:
-- ✅ **마이크로서비스 추적**: Frontend → Backend → Auth → DB 전체 흐름 시각화
-- ✅ **성능 병목 발견**: 어느 구간이 느린지 정확히 파악 (DB 조회 120ms)
-- ✅ **에러 추적**: 어느 서비스에서 에러가 발생했는지 즉시 확인
-- ✅ **의존성 분석**: 서비스 간 호출 관계 시각화
-- ✅ **Grafana 통합**: Grafana에서 메트릭 + 로그 + 트레이스 통합 조회
-
-**🎯 핵심 인사이트**:
-> "Docker Compose로 Prometheus + Grafana + Loki + **Jaeger** 모니터링 스택을 구축할 수 있지만, 설정/관리/유지보수의 복잡도가 매우 높습니다. AWS CloudWatch + **X-Ray**는 이 모든 것을 자동으로 제공하며, 추가 설정 없이 즉시 사용 가능합니다. **관리형 서비스의 진정한 가치는 복잡도 제거입니다!**"
-
 ---
 
-### 🔍 개념 1: CloudWatch 메트릭 & 알람 (12분)
+## 🚨 구축하면서 경험하는 Pain Points
 
-> **정의**: AWS 리소스의 성능 지표를 수집하고 임계값 초과 시 알림을 보내는 서비스
+### Pain Point 1: 설정 복잡도 폭발
 
-**CloudWatch 메트릭 계층 구조**:
-```mermaid
-graph TB
-    subgraph "CloudWatch 메트릭"
-        A[Namespace<br/>AWS/EC2, AWS/RDS]
-        A --> B1[Metric Name<br/>CPUUtilization]
-        A --> B2[Metric Name<br/>NetworkIn]
-        A --> B3[Metric Name<br/>DiskReadOps]
-        
-        B1 --> C1[Dimensions<br/>InstanceId=i-xxx]
-        B2 --> C2[Dimensions<br/>InstanceId=i-yyy]
-        
-        C1 --> D1[Datapoints<br/>시간별 값]
-        C2 --> D2[Datapoints<br/>시간별 값]
-    end
-    
-    style A fill:#4caf50
-    style B1 fill:#e8f5e8
-    style B2 fill:#e8f5e8
-    style B3 fill:#e8f5e8
-```
-
-**CloudMart 핵심 메트릭**:
+**상황**: Prometheus 설정 파일 작성
 ```yaml
-EC2 메트릭:
-  - CPUUtilization: CPU 사용률 (%)
-  - NetworkIn/Out: 네트워크 트래픽 (Bytes)
-  - StatusCheckFailed: 상태 체크 실패 횟수
+# config/prometheus.yml - 실제로 작성해야 하는 설정
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert-rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
   
-RDS 메트릭:
-  - CPUUtilization: CPU 사용률
-  - DatabaseConnections: 활성 연결 수
-  - FreeStorageSpace: 남은 저장 공간
-  - ReadLatency/WriteLatency: 읽기/쓰기 지연 시간
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
   
-ALB 메트릭:
-  - RequestCount: 요청 수
-  - TargetResponseTime: 응답 시간
-  - HealthyHostCount: 정상 호스트 수
-  - UnHealthyHostCount: 비정상 호스트 수
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
   
-ElastiCache 메트릭:
-  - CPUUtilization: CPU 사용률
-  - CacheHits/CacheMisses: 캐시 히트/미스
-  - NetworkBytesIn/Out: 네트워크 트래픽
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+  
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+  
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
 ```
 
-**알람 설정 예시**:
-```yaml
-# 1. EC2 CPU 과부하 알람
-Alarm Name: CloudMart-EC2-HighCPU
-Metric: CPUUtilization
-Threshold: > 80% for 2 consecutive periods (10분)
-Action: SNS 알림 → 개발자 이메일/SMS
+**문제점**:
+- ❌ **복잡한 설정**: 각 서비스마다 수동 설정 필요
+- ❌ **서비스 디스커버리**: 새 서비스 추가 시 설정 파일 수정
+- ❌ **메트릭 선택**: 어떤 메트릭을 수집할지 판단 어려움
+- ❌ **성능 튜닝**: scrape_interval, retention 등 최적화 필요
 
-# 2. RDS 연결 수 초과 알람
-Alarm Name: CloudMart-RDS-HighConnections
-Metric: DatabaseConnections
-Threshold: > 80 connections
-Action: SNS 알림 + Auto Scaling 트리거
+**AWS CloudWatch 해결**:
+- ✅ **자동 설정**: 서비스 배포 시 자동 메트릭 수집
+- ✅ **서비스 디스커버리**: 새 서비스 자동 감지
+- ✅ **추천 메트릭**: AWS가 권장하는 핵심 메트릭 자동 수집
+- ✅ **자동 최적화**: 성능과 비용 자동 최적화
 
-# 3. ALB 응답 시간 지연 알람
-Alarm Name: CloudMart-ALB-SlowResponse
-Metric: TargetResponseTime
-Threshold: > 1 second for 3 consecutive periods
-Action: SNS 알림 + Lambda 자동 복구
+### Pain Point 2: 대시보드 구성의 어려움
 
-# 4. ElastiCache 메모리 부족 알람
-Alarm Name: CloudMart-Redis-LowMemory
-Metric: DatabaseMemoryUsagePercentage
-Threshold: > 90%
-Action: SNS 알림 + 캐시 플러시
-```
-
-### 🔍 개념 2: CloudWatch Logs 중앙화 (12분)
-
-> **정의**: 모든 애플리케이션 및 시스템 로그를 중앙에서 수집, 저장, 분석하는 서비스
-
-**로그 수집 아키텍처**:
-```mermaid
-graph TB
-    subgraph "로그 소스"
-        A1[EC2 Backend<br/>애플리케이션 로그]
-        A2[ALB<br/>액세스 로그]
-        A3[RDS<br/>슬로우 쿼리 로그]
-        A4[Lambda<br/>함수 로그]
-    end
-    
-    subgraph "CloudWatch Logs"
-        B[Log Groups]
-        B --> C1[`/aws/ec2/cloudmart-backend`]
-        B --> C2[`/aws/alb/cloudmart-alb`]
-        B --> C3[`/aws/rds/cloudmart-db`]
-        B --> C4[`/aws/lambda/cloudmart-functions`]
-    end
-    
-    subgraph "로그 분석"
-        D[CloudWatch Insights<br/>쿼리 및 분석]
-        E[CloudWatch Alarms<br/>로그 기반 알람]
-        F[S3 Export<br/>장기 보관]
-    end
-    
-    A1 --> C1
-    A2 --> C2
-    A3 --> C3
-    A4 --> C4
-    
-    C1 --> D
-    C2 --> D
-    C3 --> D
-    C4 --> D
-    
-    D --> E
-    D --> F
-    
-    style B fill:#4caf50
-    style D fill:#e8f5e8
-```
-
-**CloudMart 로그 구성**:
-```yaml
-Log Groups:
-  /aws/ec2/cloudmart-backend:
-    Retention: 7 days
-    Logs:
-      - Application logs (console.log)
-      - Error logs (console.error)
-      - Access logs (HTTP requests)
-    
-  /aws/alb/cloudmart-alb:
-    Retention: 30 days
-    Logs:
-      - Request/Response logs
-      - Client IP, User-Agent
-      - Response time, Status code
-    
-  /aws/rds/cloudmart-db:
-    Retention: 7 days
-    Logs:
-      - Slow query logs (> 1 second)
-      - Error logs
-      - General logs (선택적)
-```
-
-**CloudWatch Logs Insights 쿼리 예시**:
-```sql
--- 1. 최근 1시간 에러 로그 검색
-fields @timestamp, @message
-| filter @message like /ERROR/
-| sort @timestamp desc
-| limit 100
-
--- 2. API 응답 시간 분석
-fields @timestamp, request_time
-| filter request_time > 1000
-| stats avg(request_time), max(request_time), count() by bin(5m)
-
--- 3. 특정 사용자 활동 추적
-fields @timestamp, user_id, action
-| filter user_id = "user123"
-| sort @timestamp desc
-
--- 4. 에러율 계산
-fields @timestamp
-| stats count(*) as total,
-        sum(status_code >= 500) as errors
-        by bin(5m)
-| fields errors / total * 100 as error_rate
-```
-
-**로그 기반 알람**:
-```yaml
-# 에러 로그 급증 알람
-Metric Filter:
-  Pattern: [ERROR]
-  Metric Name: ErrorCount
-  Alarm:
-    Threshold: > 10 errors in 5 minutes
-    Action: SNS 알림
-
-# 슬로우 쿼리 알람
-Metric Filter:
-  Pattern: { $.query_time > 1 }
-  Metric Name: SlowQueryCount
-  Alarm:
-    Threshold: > 5 slow queries in 10 minutes
-    Action: SNS 알림 + DBA 호출
-```
-
-### 🔍 개념 3: AWS X-Ray 분산 추적 (11분)
-
-> **정의**: 마이크로서비스 간 요청 흐름을 추적하고 병목 지점을 찾는 서비스
-
-**X-Ray 추적 흐름**:
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant CF as CloudFront
-    participant ALB as ALB
-    participant Backend as Backend API
-    participant RDS as RDS
-    participant Redis as ElastiCache
-    
-    User->>CF: 1. 상품 조회 요청
-    Note over CF: Trace ID 생성
-    CF->>ALB: 2. 요청 전달 (Trace ID)
-    ALB->>Backend: 3. 라우팅 (Trace ID)
-    
-    Backend->>Redis: 4. 캐시 확인 (50ms)
-    Redis-->>Backend: 5. 캐시 미스
-    
-    Backend->>RDS: 6. DB 쿼리 (200ms)
-    RDS-->>Backend: 7. 데이터 반환
-    
-    Backend->>Redis: 8. 캐시 저장 (10ms)
-    Backend-->>ALB: 9. 응답 (260ms)
-    ALB-->>CF: 10. 응답 전달
-    CF-->>User: 11. 최종 응답 (280ms)
-    
-    Note over User,Redis: X-Ray가 전체 흐름 추적<br/>병목: RDS 쿼리 (200ms)
-```
-
-**X-Ray 세그먼트 구조**:
+**상황**: Grafana 대시보드 생성
 ```json
 {
-  "trace_id": "1-5f8a1234-abcd1234efgh5678ijkl",
-  "id": "abcd1234",
-  "name": "CloudMart-Backend",
-  "start_time": 1602789600.0,
-  "end_time": 1602789600.28,
-  "subsegments": [
-    {
-      "name": "Redis-Cache-Check",
-      "start_time": 1602789600.05,
-      "end_time": 1602789600.10,
-      "namespace": "remote"
-    },
-    {
-      "name": "RDS-Query",
-      "start_time": 1602789600.10,
-      "end_time": 1602789600.30,
-      "namespace": "remote",
-      "sql": {
-        "query": "SELECT * FROM products WHERE id = $1"
+  "dashboard": {
+    "title": "CloudMart Monitoring",
+    "panels": [
+      {
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(cpu_usage_total[5m]) * 100",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph", 
+        "targets": [
+          {
+            "expr": "(memory_usage_bytes / memory_limit_bytes) * 100",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      },
+      {
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{route}}"
+          }
+        ]
       }
-    }
-  ]
+    ]
+  }
 }
 ```
 
-**X-Ray 활용 사례**:
-- **성능 병목 발견**: 어느 구간이 느린지 시각적으로 확인
-- **에러 추적**: 에러가 발생한 정확한 위치 파악
-- **의존성 맵**: 서비스 간 호출 관계 시각화
-- **SLA 모니터링**: 응답 시간 목표 달성 여부 확인
+**문제점**:
+- ❌ **PromQL 학습**: 복잡한 쿼리 언어 습득 필요
+- ❌ **차트 선택**: 어떤 시각화가 적합한지 판단 어려움
+- ❌ **임계값 설정**: 알람 기준 설정의 어려움
+- ❌ **대시보드 관리**: 버전 관리 및 공유 복잡
 
-## 💭 함께 생각해보기 (10분)
+**AWS CloudWatch 해결**:
+- ✅ **미리 만들어진 대시보드**: 서비스별 권장 대시보드 제공
+- ✅ **간단한 쿼리**: GUI 기반 메트릭 선택
+- ✅ **추천 임계값**: 서비스별 권장 알람 임계값
+- ✅ **자동 관리**: 대시보드 버전 관리 자동화
 
-### 🤝 페어 토론 (5분)
+### Pain Point 3: 알림 설정의 복잡함
 
-**토론 주제**:
-1. **알람 임계값**: "CPU 80%에서 알람을 보내는 게 적절할까요? 더 낮춰야 할까요?"
-2. **로그 보관 기간**: "로그를 얼마나 오래 보관해야 할까요? 비용은?"
-3. **분산 추적**: "X-Ray 없이도 문제를 찾을 수 있을까요?"
+**상황**: AlertManager 알림 규칙 작성
+```yaml
+# config/alert-rules.yml
+groups:
+  - name: cloudmart-alerts
+    rules:
+    - alert: HighCPUUsage
+      expr: rate(cpu_usage_total[5m]) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on {{ $labels.instance }}"
+        description: "CPU usage is above 80% for more than 5 minutes"
 
-**페어 활동 가이드**:
-- 👥 **자유 페어링**: 운영 경험이 있는 사람끼리
-- 🔄 **역할 교대**: 3분씩 설명자/질문자 역할 바꾸기
-- 📝 **핵심 정리**: 모니터링 체크리스트 작성
+    - alert: HighMemoryUsage
+      expr: (memory_usage_bytes / memory_limit_bytes) * 100 > 85
+      for: 3m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High memory usage on {{ $labels.instance }}"
 
-### 🎯 전체 공유 (5분)
+    - alert: HTTPErrorRate
+      expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High HTTP error rate"
 
-**인사이트 공유**:
-- 페어 토론에서 나온 모니터링 전략
-- 실무에서 겪은 장애 대응 경험
-- 효과적인 알람 설정 방법
+    - alert: DatabaseConnectionFailed
+      expr: up{job="postgres"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Database connection failed"
+```
 
-**💡 이해도 체크 질문**:
-- ✅ "CloudWatch 메트릭과 로그의 차이는 무엇인가요?"
-- ✅ "로그 기반 알람은 언제 유용한가요?"
-- ✅ "X-Ray로 어떤 문제를 해결할 수 있나요?"
+**문제점**:
+- ❌ **임계값 설정**: 언제 알림을 보낼지 기준 모호
+- ❌ **알림 피로도**: 너무 많은 알림으로 인한 피로
+- ❌ **채널 연동**: Slack, 이메일 등 다양한 채널 설정 복잡
+- ❌ **알림 그룹화**: 관련 알림들의 그룹화 어려움
+
+**AWS CloudWatch 해결**:
+- ✅ **지능형 알림**: 머신러닝 기반 이상 탐지
+- ✅ **SNS 통합**: 이메일, SMS, Slack 원클릭 연동
+- ✅ **알림 그룹화**: 관련 알림 자동 그룹화
+- ✅ **알림 억제**: 중복 알림 자동 억제
+
+### Pain Point 4: 로그 분석의 어려움
+
+**상황**: 로그 검색 및 분석
+```yaml
+# config/loki-config.yml
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+limits_config:
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+```
+
+**문제점**:
+- ❌ **로그 포맷 표준화**: 각 서비스마다 다른 로그 형식
+- ❌ **대용량 처리**: 로그 양이 많아질 때 성능 저하
+- ❌ **검색 성능**: 복잡한 쿼리 시 응답 시간 증가
+- ❌ **보관 정책**: 디스크 용량 관리 및 로그 순환 정책
+
+**AWS CloudWatch Logs 해결**:
+- ✅ **자동 파싱**: 로그 포맷 자동 인식 및 파싱
+- ✅ **무제한 확장**: 로그 양에 관계없이 일정한 성능
+- ✅ **빠른 검색**: 인덱싱 기반 고속 검색
+- ✅ **자동 보관**: 설정 기반 자동 보관 정책
+
+### Pain Point 5: 분산 추적의 복잡함
+
+**상황**: 마이크로서비스 간 요청 추적
+```javascript
+// 각 서비스마다 추가해야 하는 추적 코드
+const opentracing = require('opentracing');
+const jaeger = require('jaeger-client');
+
+// Jaeger 초기화
+const config = {
+  serviceName: 'cloudmart-backend',
+  sampler: { type: 'const', param: 1 },
+  reporter: { logSpans: true }
+};
+const tracer = jaeger.initTracer(config);
+
+// 각 API 호출마다 추가
+app.get('/api/products', async (req, res) => {
+  const span = tracer.startSpan('get_products');
+  
+  try {
+    // 데이터베이스 호출
+    const dbSpan = tracer.startSpan('db_query', { childOf: span });
+    const products = await db.query('SELECT * FROM products');
+    dbSpan.finish();
+    
+    // Redis 호출
+    const cacheSpan = tracer.startSpan('cache_set', { childOf: span });
+    await redis.set('products', JSON.stringify(products));
+    cacheSpan.finish();
+    
+    res.json(products);
+  } catch (error) {
+    span.setTag('error', true);
+    span.log({ event: 'error', message: error.message });
+    res.status(500).json({ error: error.message });
+  } finally {
+    span.finish();
+  }
+});
+
+// 다른 서비스 호출 시 트레이스 ID 전파
+const axios = require('axios');
+app.get('/api/orders', async (req, res) => {
+  const span = tracer.startSpan('get_orders');
+  
+  // 트레이스 컨텍스트 수동 전파
+  const headers = {};
+  tracer.inject(span, opentracing.FORMAT_HTTP_HEADERS, headers);
+  
+  const response = await axios.get('http://payment-service/payments', { headers });
+  
+  span.finish();
+  res.json(response.data);
+});
+```
+
+**문제점**:
+- ❌ **코드 침투성**: 모든 서비스에 추적 코드 추가 필요
+- ❌ **수동 전파**: 트레이스 ID 수동 전파 구현
+- ❌ **성능 오버헤드**: 추적으로 인한 성능 영향
+- ❌ **복잡한 설정**: 샘플링, 리포터 등 세부 설정
+
+**AWS X-Ray 해결**:
+- ✅ **SDK 자동 계측**: 최소한의 코드 변경으로 추적
+- ✅ **자동 전파**: 트레이스 ID 자동 전파
+- ✅ **최적화된 성능**: AWS 최적화된 추적 성능
+- ✅ **간단한 설정**: 환경변수만으로 설정 완료
+
+---
+
+## 🔄 "그래서 언제 AWS로 갈아타야 하나?"
+
+### 전환 시점 판단 기준
+
+```mermaid
+graph TB
+    A[현재 상황 평가] --> B{팀 규모}
+    B -->|1-3명| C[Docker Compose 유지]
+    B -->|4-10명| D{트래픽 규모}
+    B -->|10명+| E[AWS 전환 고려]
+    
+    D -->|DAU < 1만| F[Docker Compose 유지]
+    D -->|DAU 1-10만| G{운영 부담}
+    D -->|DAU 10만+| H[AWS 전환 필요]
+    
+    G -->|감당 가능| I[Docker Compose 유지]
+    G -->|부담됨| J[점진적 AWS 전환]
+    
+    C --> K[비용 최우선]
+    F --> L[학습 중심]
+    I --> M[현상 유지]
+    E --> N[효율성 추구]
+    H --> O[확장성 필수]
+    J --> P[단계적 전환]
+    
+    style C fill:#e8f5e8
+    style F fill:#e8f5e8
+    style I fill:#e8f5e8
+    style M fill:#e8f5e8
+    style E fill:#ffebee
+    style H fill:#ffebee
+    style O fill:#ffebee
+    style J fill:#fff3e0
+    style P fill:#fff3e0
+```
+
+### 점진적 전환 전략
+
+**Phase 1: 모니터링만 AWS (1-2주)**
+```yaml
+현재 유지:
+- Docker Compose 애플리케이션
+- 로컬 데이터베이스
+- 기존 배포 프로세스
+
+AWS 도입:
+- CloudWatch Agent 설치
+- 기본 메트릭 수집
+- 간단한 알람 설정
+
+효과:
+- 운영 부담 20% 감소
+- 비용 증가 $50/월
+- 학습 곡선 낮음
+```
+
+**Phase 2: 로그 중앙화 (2-3주)**
+```yaml
+추가 도입:
+- CloudWatch Logs
+- 로그 그룹 설정
+- 로그 인사이트 활용
+
+효과:
+- 로그 분석 시간 50% 단축
+- 비용 증가 $30/월
+- 문제 해결 속도 향상
+```
+
+**Phase 3: 데이터베이스 전환 (4-6주)**
+```yaml
+전환 대상:
+- PostgreSQL → RDS
+- Redis → ElastiCache
+
+효과:
+- 백업/복구 자동화
+- 비용 증가 $200/월
+- 운영 부담 40% 감소
+```
+
+**Phase 4: 컴퓨팅 전환 (6-8주)**
+```yaml
+전환 대상:
+- Docker Compose → ECS/EKS
+- 수동 스케일링 → Auto Scaling
+
+효과:
+- 확장성 확보
+- 비용 증가 $300/월
+- 가용성 99.9% → 99.95%
+```
+
+**Phase 5: 완전 전환 (8-12주)**
+```yaml
+최종 상태:
+- 모든 인프라 AWS Native
+- 완전 자동화
+- 통합 모니터링
+
+효과:
+- 운영 부담 80% 감소
+- 총 비용 증가 $600/월
+- 개발 생산성 2배 향상
+```
+
+### 전환 ROI 계산
+
+**비용 분석**:
+| 항목 | Docker Compose | AWS Native | 차이 |
+|------|---------------|------------|------|
+| **인프라 비용** | $500/월 | $1,100/월 | +$600 |
+| **운영 인력** | 1명 × $5,000 | 0.2명 × $5,000 | -$4,000 |
+| **다운타임 비용** | 43분/월 × $1,000 | 22분/월 × $1,000 | -$350 |
+| **개발 생산성** | 기준 | +50% 효율 | +$2,000 |
+| **월 순이익** | - | **+$1,050** | - |
+
+**전환 시점 결정 요소**:
+- ✅ **월 순이익 > $1,000**: 즉시 전환 권장
+- ⚠️ **월 순이익 $0-1,000**: 점진적 전환
+- ❌ **월 순이익 < $0**: 현상 유지
+
+---
+
+## 🎯 결론: "경험이 최고의 스승"
+
+### 핵심 메시지
+
+> **"Docker Compose로 직접 구축해본 사람만이 AWS Managed Service의 진짜 가치를 안다. 처음부터 좋은 걸 쓰면 왜 좋은지 모른다."**
+
+### 학습 순서의 중요성
+
+```mermaid
+sequenceDiagram
+    participant 개발자 as 개발자
+    participant Docker as Docker Compose
+    participant Pain as Pain Points
+    participant AWS as AWS Services
+    participant 가치 as 가치 인식
+    
+    개발자->>Docker: 1. 직접 구축
+    Docker->>Pain: 2. 문제 경험
+    Pain->>AWS: 3. 해결책 탐색
+    AWS->>가치: 4. 진짜 가치 체감
+    
+    Note over 개발자,가치: "아, 이래서 비싼 거구나!"
+```
+
+### 실무 적용 가이드
+
+**주니어 개발자 교육**:
+1. **1-2개월**: Docker Compose로 완전한 스택 구축
+2. **3-4개월**: 실제 운영하며 Pain Point 경험
+3. **5-6개월**: AWS Managed Service 도입 및 비교
+4. **결과**: AWS 서비스의 가치를 정확히 이해하는 개발자
+
+**기술 선택 프로세스**:
+1. **문제 정의**: 현재 겪고 있는 구체적 문제
+2. **직접 구축**: 오픈소스로 해결책 구현
+3. **Pain Point 수집**: 운영하며 어려운 점 정리
+4. **Managed Service 검토**: 비용 대비 효과 분석
+5. **점진적 전환**: 단계별 마이그레이션
+
+**비용 정당화**:
+- ✅ **Before**: Docker Compose 운영 비용 정확히 측정
+- ✅ **After**: AWS 전환 후 비용 및 효과 측정
+- ✅ **ROI**: 투자 대비 효과를 수치로 증명
+- ✅ **의사결정**: 데이터 기반 합리적 선택
+
+---
 
 ## 🔑 핵심 키워드
 
-### 🆕 새로운 용어
-- **Observability (관측성)**: 시스템 내부 상태를 외부에서 파악할 수 있는 능력
-- **Metric (메트릭)**: 시스템 성능을 나타내는 수치 데이터
-- **Trace (추적)**: 요청이 시스템을 통과하는 전체 경로
+### 새로운 용어
+- **Observability**: 관측성 - 시스템 내부 상태를 외부에서 관찰할 수 있는 능력
+- **Pain First**: 페인 퍼스트 - 문제를 먼저 경험하는 학습 방법론
+- **ROI (Return on Investment)**: 투자 대비 수익률
 
-### 🔧 중요 개념
-- **Log Aggregation**: 여러 소스의 로그를 중앙에서 수집
-- **Metric Filter**: 로그에서 특정 패턴을 찾아 메트릭으로 변환
-- **Service Map**: 서비스 간 의존성을 시각화한 맵
+### 중요 개념
+- **3대 관측성**: Metrics, Logs, Traces
+- **점진적 전환**: 단계별 마이그레이션 전략
+- **비용 정당화**: 기술 선택의 경제적 근거
 
-### 💼 실무 용어
-- **SLI (Service Level Indicator)**: 서비스 수준 지표 (응답 시간, 가용성 등)
-- **SLO (Service Level Objective)**: 서비스 수준 목표 (99.9% 가용성)
-- **SLA (Service Level Agreement)**: 서비스 수준 계약 (고객과의 약속)
+### 실무 용어
+- **Code Instrumentation**: 코드 계측 - 모니터링을 위한 코드 추가
+- **Service Discovery**: 서비스 디스커버리 - 서비스 자동 발견
+- **Alert Fatigue**: 알림 피로도 - 과도한 알림으로 인한 피로
 
-## 📝 세션 마무리
+---
 
-### ✅ 오늘 세션 성과
-- **메트릭 이해**: CloudWatch 메트릭 및 알람 설정 방법 습득
-- **로그 분석**: 중앙화된 로그 시스템 구축 및 쿼리 방법 학습
-- **분산 추적**: X-Ray를 통한 성능 병목 발견 방법 이해
+## 📝 Session 마무리
 
-### 🎯 다음 세션 준비
-- **Session 4 주제**: 보안 & 백업 (IAM, 백업 전략)
-- **연결 내용**: 모니터링으로 발견한 문제를 보안과 백업으로 예방
-- **사전 생각**: "데이터가 손실되면 어떻게 복구할까요?"
+### ✅ 오늘 Session 성과
 
-### 🔗 실습 연계
-- **Lab 1**: CloudWatch 대시보드 구성 및 알람 설정
-- **Challenge**: 완전한 모니터링 시스템 구축
+**구축 성과**:
+- [ ] Docker Compose로 완전한 관측성 스택 구축 (Prometheus + Grafana + Jaeger + APM)
+- [ ] 실제 애플리케이션에 모니터링 연동
+- [ ] 5가지 주요 Pain Point 직접 경험
+- [ ] AWS 전환 시점 판단 기준 습득
+
+**인식 변화**:
+- [ ] "처음부터 좋은 걸 쓰면 안 되는 이유" 체감
+- [ ] Docker Compose의 한계와 AWS의 가치 정확히 인식
+- [ ] 기술 선택 시 비용 대비 효과 고려 습관
+- [ ] 점진적 전환의 중요성 이해
+
+### 🎯 다음 Session 준비
+
+**Session 4 예고**: "CloudMart AWS 마이그레이션 실전"
+- 실제 CloudMart를 AWS로 단계별 마이그레이션
+- 각 단계별 비용 및 효과 측정
+- 최종 아키텍처 완성
+
+**준비사항**:
+- 오늘 구축한 관측성 스택 유지
+- Pain Point 목록 정리 및 우선순위 설정
+- AWS 계정 및 권한 확인
+
+---
+
+## 🔗 참고 자료
+
+### 📚 복습 자료
+- [Prometheus 공식 문서](https://prometheus.io/docs/)
+- [Grafana 대시보드 갤러리](https://grafana.com/grafana/dashboards/)
+- [Jaeger 분산 추적 가이드](https://www.jaegertracing.io/docs/)
+
+### 📖 심화 학습
+- [관측성 베스트 프랙티스](https://sre.google/sre-book/monitoring-distributed-systems/)
+- [Docker Compose 프로덕션 가이드](https://docs.docker.com/compose/production/)
+
+### 💡 실무 참고
+- [AWS 마이그레이션 전략](https://aws.amazon.com/cloud-migration/)
+- [기술 부채 관리 방법론](https://martinfowler.com/bliki/TechnicalDebt.html)
+
+---
+
+## 💭 함께 생각해보기 (10분)
+
+### 🤝 페어 실습 (5분)
+
+**실습 주제**: "관측성 스택 구축 및 Pain Point 경험"
+
+**페어 활동 가이드**:
+1. **기본 스택 실행** (2분):
+   ```bash
+   # 관측성 스택 실행
+   cd observability-stack
+   docker-compose up -d prometheus grafana
+   
+   # 접속 확인
+   curl http://localhost:9090  # Prometheus
+   curl http://localhost:3000  # Grafana (admin/admin)
+   ```
+
+2. **설정 파일 작성** (2분):
+   ```bash
+   # Prometheus 설정 확인
+   cat config/prometheus.yml
+   
+   # 새 서비스 추가 시도
+   # → 설정 파일 수정 필요성 체감
+   ```
+
+3. **대시보드 생성 시도** (1분):
+   ```bash
+   # Grafana에서 대시보드 생성
+   # → PromQL 쿼리 작성의 어려움 체감
+   ```
+
+### 🎯 전체 공유 (5분)
+
+**공유 질문**:
+1. **설정 복잡도**: "Prometheus 설정이 얼마나 복잡했나요?"
+2. **학습 곡선**: "PromQL 쿼리 작성이 어려웠나요?"
+3. **AWS 가치**: "이제 CloudWatch가 왜 비싼지 이해되나요?"
+
+**예상 답변**:
+- "설정 파일 하나 만드는데 30분 걸렸어요"
+- "PromQL 문법이 SQL보다 어려워요"
+- "이제 CloudWatch 비용이 합리적으로 느껴져요"
+
+### 💡 이해도 체크 질문
+
+- ✅ "관측성 3대 요소를 설명할 수 있나요?"
+- ✅ "Docker Compose 관측성 스택의 한계를 3가지 이상 말할 수 있나요?"
+- ✅ "언제 AWS로 전환해야 하는지 판단 기준을 설명할 수 있나요?"
 
 ---
 
 <div align="center">
 
-**📊 모니터링 완료** • **📝 로그 분석 준비** • **🔍 관측성 확보**
+**🔍 완전한 관측성** • **🛠️ 직접 구축 경험** • **💡 AWS 가치 체감**
 
-*다음 세션에서는 보안과 백업 전략을 수립해보겠습니다!*
+*경험이 최고의 스승 - 직접 해봐야 진짜 가치를 안다*
 
 </div>
