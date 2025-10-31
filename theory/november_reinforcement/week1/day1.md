@@ -86,6 +86,11 @@ graph LR
 ### 🏗️ 3-Tier 아키텍처 이해 (15분)
 
 #### 전통적인 웹 애플리케이션 구조
+
+**실제 서비스 아이콘을 사용한 아키텍처**:
+![Docker Compose 3-Tier Architecture](../../../generated-diagrams/w1d1_3tier_architecture.png)
+
+**Mermaid 다이어그램 (GitHub 렌더링용)**:
 ```mermaid
 graph TB
     subgraph "Presentation Tier"
@@ -146,6 +151,9 @@ graph TB
 
 ### 🐳 Docker Compose 핵심 개념 (15분)
 
+**WordPress 스택 구조**:
+![WordPress Stack](../../../generated-diagrams/w1d1_wordpress_stack.png)
+
 #### docker-compose.yml 구조
 ```yaml
 version: '3.8'
@@ -184,6 +192,11 @@ volumes:
 #### 주요 구성 요소 설명
 
 **Docker Compose 네트워크 구조**:
+
+**실제 네트워크 통신 구조**:
+![Docker Network Communication](../../../generated-diagrams/w1d1_network_communication.png)
+
+**상세 네트워크 다이어그램**:
 ```mermaid
 graph TB
     subgraph "Docker Host"
