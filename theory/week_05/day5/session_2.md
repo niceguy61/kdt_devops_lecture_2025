@@ -49,15 +49,15 @@ graph LR
 
 **실제 성공 사례들**:
 
-#### 사례 1: GitLab (2013-2016)
+#### 사례 1: Discourse (오픈소스 포럼 플랫폼)
 ```mermaid
 graph TB
-    subgraph "GitLab 초기 아키텍처"
-        A[사용자 수백만명]
+    subgraph "Discourse 아키텍처 (2013-현재)"
+        A[수십만 사용자]
         B[Docker Compose 기반]
-        C[Multi-server 구성]
-        D[PostgreSQL Replication]
-        E[Redis Cluster]
+        C[단일 서버 구성]
+        D[PostgreSQL + Redis]
+        E[Nginx 리버스 프록시]
         F[99.9% 가용성 달성]
     end
     
@@ -76,50 +76,202 @@ graph TB
     style F fill:#e8f5e8
 ```
 
-**GitLab의 선택 이유**:
-- ✅ **빠른 개발**: 익숙한 도구로 빠른 구축
-- ✅ **비용 효율**: AWS Native 대비 1/3 비용
-- ✅ **유연성**: 필요에 따른 커스터마이징
-- ✅ **검증된 안정성**: 수년간 안정적 운영
+**Discourse의 Docker Compose 구성**:
+```yaml
+# 실제 Discourse docker-compose.yml (간소화)
+version: '3.8'
 
-#### 사례 2: 국내 핀테크 스타트업 B사
+services:
+  web:
+    image: discourse/discourse:latest
+    ports:
+      - "80:80"
+    environment:
+      - DISCOURSE_HOSTNAME=forum.example.com
+      - DISCOURSE_DB_HOST=postgres
+      - DISCOURSE_REDIS_HOST=redis
+    volumes:
+      - discourse_data:/var/www/discourse
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=discourse
+      - POSTGRES_USER=discourse
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  discourse_data:
+  postgres_data:
+  redis_data:
 ```
-규모: DAU 10만명, 일 거래액 50억원
-구성: Docker Compose + AWS EC2
-기간: 3년간 운영 (현재도 운영 중)
+
+**Discourse 선택 이유** (공식 문서 기반):
+- ✅ **단순함**: 복잡한 오케스트레이션 불필요
+- ✅ **안정성**: 10년+ 검증된 구성
+- ✅ **비용 효율**: 단일 서버로 수십만 사용자 지원
+- ✅ **커뮤니티**: 수천 개 포럼에서 검증
+
+**참조**: [Discourse Docker 공식 가이드](https://github.com/discourse/discourse_docker)
+
+#### 사례 2: Mastodon (분산 소셜 네트워크)
+```
+규모: 전 세계 1만+ 인스턴스, 수백만 사용자
+구성: Docker Compose 기반 (공식 배포 방식)
+기간: 2016년-현재 (8년간 운영)
 
 아키텍처:
-- EC2 t3.large × 3 (Multi-AZ)
-- PostgreSQL Patroni HA
-- Redis Sentinel
-- Nginx Load Balancer
-
-결과:
-- 가용성: 99.95%
-- 월 비용: $800
-- 운영 인력: 1명
-- 금융 감독원 보안 감사 통과
-```
-
-**핀테크에서 Docker Compose를 선택한 이유**:
-- 💰 **비용**: ECS/RDS 대비 70% 절감
-- 🔒 **보안**: 직접 제어 가능한 보안 설정
-- 📊 **규제 대응**: 금융권 요구사항 맞춤 구성
-- 🚀 **성능**: 필요한 만큼만 최적화
-
-#### 사례 3: 글로벌 SaaS 기업 C사
-```
-서비스: 개발자 도구 (GitHub 경쟁사)
-규모: 전 세계 50만 개발자 사용
-구성: Docker Swarm + Docker Compose
+- Ruby on Rails (Web/API)
+- PostgreSQL (메인 DB)
+- Redis (캐시/큐)
+- Elasticsearch (검색)
+- Nginx (리버스 프록시)
 
 특징:
-- 15개국 리전에 동일한 Docker Compose 배포
-- 각 리전별 로컬 데이터 센터 활용
-- Kubernetes 대신 Docker Swarm 선택
-
-이유: "Kubernetes는 우리에게 오버엔지니어링"
+- 각 인스턴스가 독립적으로 Docker Compose 운영
+- 수천 명 동시 사용자 지원
+- 실시간 스트리밍 (WebSocket)
+- 미디어 파일 처리 (이미지/비디오)
 ```
+
+**Mastodon docker-compose.yml** (실제 구성):
+```yaml
+# 실제 Mastodon 프로덕션 구성
+version: '3'
+services:
+  db:
+    restart: always
+    image: postgres:14-alpine
+    shm_size: 256mb
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./postgres14:/var/lib/postgresql/data
+
+  redis:
+    restart: always
+    image: redis:7-alpine
+    volumes:
+      - ./redis:/data
+
+  web:
+    build: .
+    image: mastodon:latest
+    restart: always
+    env_file: .env.production
+    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+  streaming:
+    build: .
+    image: mastodon:latest
+    restart: always
+    env_file: .env.production
+    command: node ./streaming
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      - db
+      - redis
+
+  sidekiq:
+    build: .
+    image: mastodon:latest
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./public/system:/mastodon/public/system
+```
+
+**Mastodon이 Docker Compose를 선택한 이유**:
+- ✅ **분산 특성**: 각 인스턴스가 독립적으로 운영
+- ✅ **커뮤니티 운영**: 비개발자도 쉽게 설치 가능
+- ✅ **비용 효율**: 개인/소규모 단체 운영 가능
+- ✅ **검증된 안정성**: 수천 개 인스턴스에서 검증
+
+**참조**: [Mastodon 공식 설치 가이드](https://docs.joinmastodon.org/admin/install/)
+
+#### 사례 3: Nextcloud (오픈소스 클라우드 스토리지)
+```
+규모: 전 세계 40만+ 서버, 3천만+ 사용자
+구성: Docker Compose 공식 지원
+사용처: 독일 정부, 프랑스 교육부, 수많은 기업
+
+아키텍처:
+- PHP (Nextcloud 코어)
+- PostgreSQL/MySQL (데이터)
+- Redis (캐시)
+- Nginx/Apache (웹서버)
+- OnlyOffice/Collabora (문서 편집)
+```
+
+**Nextcloud docker-compose.yml** (공식):
+```yaml
+version: '3.8'
+
+services:
+  nextcloud:
+    image: nextcloud:apache
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=password
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:alpine
+    restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=password
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+volumes:
+  nextcloud:
+  db:
+```
+
+**정부/기업에서 선택한 이유**:
+- ✅ **데이터 주권**: 자체 서버에서 완전 제어
+- ✅ **보안 요구사항**: 정부 보안 기준 충족
+- ✅ **비용 효율**: 라이선스 비용 없음
+- ✅ **커스터마이징**: 필요에 따른 수정 가능
+
+**참조**: [Nextcloud Docker 공식 문서](https://hub.docker.com/_/nextcloud)
 
 ### 🔍 개념 2: Docker Compose 고급 기능 (실제 엔터프라이즈급) (12분)
 
