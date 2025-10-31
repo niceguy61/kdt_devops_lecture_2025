@@ -99,6 +99,129 @@ graph TB
 
 ### 🔍 개념 2: Docker Compose 관측성 완전체 스택 (15분)
 
+**AWS IaaS 기반 Docker Compose 아키텍처**:
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "VPC (10.0.0.0/16)"
+            subgraph "Public Subnet AZ-A (10.0.1.0/24)"
+                ALB[Application Load Balancer]
+                EC2_1[EC2 Instance 1<br/>Docker Compose Stack]
+            end
+            subgraph "Public Subnet AZ-B (10.0.2.0/24)"
+                EC2_2[EC2 Instance 2<br/>Docker Compose Stack]
+            end
+            subgraph "Private Subnet AZ-A (10.0.11.0/24)"
+                EC2_3[EC2 Instance 3<br/>Monitoring Stack]
+            end
+            
+            IGW[Internet Gateway]
+        end
+    end
+    
+    Users[사용자] --> IGW
+    IGW --> ALB
+    ALB --> EC2_1
+    ALB --> EC2_2
+    EC2_1 -.-> EC2_3
+    EC2_2 -.-> EC2_3
+    
+    style Users fill:#e3f2fd
+    style IGW fill:#ff9800
+    style ALB fill:#4caf50
+    style EC2_1 fill:#2196f3
+    style EC2_2 fill:#2196f3
+    style EC2_3 fill:#9c27b0
+```
+
+**각 EC2 인스턴스 구성**:
+
+**EC2 Instance 1 & 2 (애플리케이션)**:
+```yaml
+# cloudmart-app.yml (각 EC2에 배포)
+version: '3.8'
+
+services:
+  frontend:
+    image: cloudmart/frontend:latest
+    ports:
+      - "80:80"
+    labels:
+      - "prometheus.io/scrape=true"
+
+  backend:
+    image: cloudmart/backend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PROMETHEUS_ENDPOINT=http://10.0.11.10:9090
+      - JAEGER_ENDPOINT=http://10.0.11.10:14268
+    labels:
+      - "prometheus.io/scrape=true"
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cloudmart
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+**EC2 Instance 3 (모니터링 전용)**:
+```yaml
+# monitoring-stack.yml (Private Subnet)
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+```
+
+**네트워크 구성의 장점**:
+- ✅ **보안**: 모니터링 스택을 Private Subnet에 격리
+- ✅ **성능**: 애플리케이션과 모니터링 분리로 성능 영향 최소화
+- ✅ **확장성**: 각 EC2를 독립적으로 스케일링 가능
+- ✅ **가용성**: Multi-AZ 배치로 고가용성 확보
+
 **관측성 3대 요소 (Observability)**:
 ```mermaid
 graph TB
