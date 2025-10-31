@@ -252,7 +252,7 @@ graph TB
 **완전한 관측성 스택 구성**:
 
 ```yaml
-# observability-stack.yml
+# observability-with-dora.yml
 version: '3.8'
 
 services:
@@ -290,6 +290,27 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
       - SPAN_STORAGE_TYPE=memory
+
+  # 4. DORA Metrics - Four Keys (Google 오픈소스)
+  fourkeys:
+    image: gcr.io/fourkeys-project/fourkeys:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - PROJECT_ID=cloudmart
+      - DATABASE_URL=postgresql://fourkeys:fourkeys@fourkeys-db:5432/fourkeys
+    depends_on:
+      - fourkeys-db
+
+  fourkeys-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=fourkeys
+      - POSTGRES_USER=fourkeys
+      - POSTGRES_PASSWORD=fourkeys
+    volumes:
+      - fourkeys_data:/var/lib/postgresql/data
 
   # 통합 대시보드 - Grafana
   grafana:
@@ -374,6 +395,7 @@ volumes:
   grafana_data:
   elasticsearch_data:
   alertmanager_data:
+  fourkeys_data:
 ```
 
 **각 컴포넌트 역할**:
