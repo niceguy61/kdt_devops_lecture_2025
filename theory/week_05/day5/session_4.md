@@ -1,1348 +1,895 @@
-# Week 5 Day 5 Session 4: DevSecOps & 백업 전략 (12:00-12:50)
+# Week 5 Day 5 Session 4: CloudMart AWS 마이그레이션 실전
 
 <div align="center">
 
-**🔐 SAST/DAST** • **🛡️ 이미지 보안** • **🔒 IAM 정책** • **💾 백업 & 복구**
+**🔄 점진적 마이그레이션** • **📊 효과 측정** • **🎯 데이터 기반 의사결정**
 
-*프로덕션 환경의 자동화된 보안 파이프라인과 비즈니스 연속성*
+*한 번에 다 바꾸지 말고, 단계별로 전환하면서 각 단계의 효과를 측정하자*
 
 </div>
 
 ---
 
-## 🕘 세션 정보
+## 🕘 Session 정보
 **시간**: 12:00-12:50 (50분)
-**목표**: CloudMart의 DevSecOps 파이프라인 구축 및 재해 복구 계획 수립
-**방식**: 이론 설명 + 자동화 전략
+**목표**: CloudMart를 AWS로 점진적 마이그레이션하며 각 단계의 ROI 측정
+**방식**: 4단계 실습 + 효과 측정 + 의사결정
 
-## 🎯 세션 목표
+## 🎯 Session 목표
 
 ### 📚 학습 목표
-- **이해 목표**: SAST/DAST 보안 파이프라인과 IAM 정책의 역할 이해
-- **적용 목표**: 자동화된 보안 스캔 및 최소 권한 원칙 적용 방법 습득
-- **협업 목표**: 팀과 함께 DevSecOps 문화 및 재해 복구 시나리오 수립
+- **실전 목표**: CloudMart를 실제로 AWS로 단계별 마이그레이션
+- **측정 목표**: 각 단계별 비용, 성능, 운영 효과 정량적 측정
+- **판단 목표**: 언제 멈출지, 언제 다음 단계로 갈지 데이터 기반 의사결정
 
 ### 🤔 왜 필요한가? (5분)
 
 **현실 문제 상황**:
-- 💼 **실무 시나리오**: "배포 후 CRITICAL 취약점이 발견되어 긴급 롤백했어요. 어떻게 사전에 막을 수 있나요?"
-- 🏠 **일상 비유**: 집 짓기 전 설계 검토 + 시공 중 품질 검사 + 입주 후 보안 점검 → 다층 보안
-- ☁️ **AWS 아키텍처**: SAST (코드 분석) + 이미지 스캔 (컨테이너) + DAST (실행 환경) + IAM (접근 제어)
-- 📊 **시장 동향**: 2024년 데이터 유출 평균 피해액 $4.45M, 평균 탐지 시간 277일 (IBM 보고서)
+- 💼 **실무 시나리오**: "CTO가 모든 걸 AWS로 바꾸라고 하는데, 한 번에 다 바꿔야 하나?"
+- 🏠 **일상 비유**: 집 리모델링할 때 한 번에 다 뜯어고치면 살 곳이 없어지는 것처럼
+- 🎯 **마이그레이션 철학**: "Big Bang은 위험하다. 점진적 전환이 안전하다"
+- 📊 **실무 현실**: 성공하는 마이그레이션의 90%는 점진적 접근
 
-**보안 없음 vs DevSecOps 비교**:
+**학습 전후 비교**:
 ```mermaid
-graph TB
-    subgraph "보안 없음 (위험)"
-        A1[코드 작성] --> B1[즉시 배포]
-        B1 --> C1[취약점 발견<br/>배포 후]
-        C1 --> D1[긴급 롤백<br/>서비스 중단]
-        D1 --> E1[고객 이탈<br/>평판 손상]
-    end
+graph LR
+    A[학습 전<br/>한 번에 전체 마이그레이션<br/>높은 위험] --> B[학습 후<br/>단계별 점진적 전환<br/>낮은 위험, 높은 성공률]
     
-    subgraph "DevSecOps (안전)"
-        A2[코드 작성] --> B2[SAST 스캔<br/>자동 검증]
-        B2 --> C2[이미지 스캔<br/>취약점 차단]
-        C2 --> D2[DAST 스캔<br/>실행 환경 검증]
-        D2 --> E2[안전한 배포<br/>지속적 모니터링]
-    end
-    
-    style A1 fill:#fff3e0
-    style C1 fill:#ffebee
-    style E1 fill:#ffebee
-    style B2 fill:#e8f5e8
-    style C2 fill:#e8f5e8
-    style D2 fill:#e8f5e8
-    style E2 fill:#e8f5e8
+    style A fill:#ffebee
+    style B fill:#e8f5e8
 ```
+
+---
 
 ## 📖 핵심 개념 (35분)
 
-### 🔄 Docker Compose vs AWS 보안 비교 (DevSecOps)
+### 🔍 개념 1: 점진적 마이그레이션 전략 (10분)
 
-**Docker Compose + SAST/DAST 파이프라인 🔐**:
+> **정의**: 시스템을 한 번에 전환하지 않고, 단계별로 나누어 위험을 최소화하면서 점진적으로 마이그레이션하는 전략
+
+**마이그레이션 접근법 비교**:
 ```mermaid
 graph TB
-    subgraph "개발 단계 (로컬)"
-        DEV[개발자<br/>코드 작성]
-        GIT[Git Push]
+    subgraph "Big Bang 접근법 (위험)"
+        A1[현재 시스템] --> A2[전체 중단]
+        A2 --> A3[AWS 전환]
+        A3 --> A4[새 시스템 가동]
+        A4 --> A5[문제 발생 시<br/>전체 롤백]
     end
     
-    subgraph "CI/CD 파이프라인 (GitHub Actions)"
-        SAST1[SonarQube<br/>정적 분석]
-        SAST2[Trivy<br/>컨테이너 스캔]
-        SAST3[Snyk<br/>의존성 스캔]
-        BUILD[Docker Build]
-        PUSH[ECR Push]
+    subgraph "점진적 접근법 (안전)"
+        B1[현재 시스템] --> B2[Phase 1<br/>모니터링만]
+        B2 --> B3[Phase 2<br/>DB 전환]
+        B3 --> B4[Phase 3<br/>스케일링]
+        B4 --> B5[Phase 4<br/>컨테이너]
+        B5 --> B6[각 단계별<br/>효과 검증]
     end
     
-    subgraph "배포 단계"
-        DEPLOY[서버 배포]
-        DAST1[OWASP ZAP<br/>동적 분석]
-        DAST2[Nikto<br/>웹 취약점 스캔]
-    end
-    
-    subgraph "운영 단계"
-        RUNTIME[Falco<br/>런타임 보안]
-        MONITOR[보안 모니터링]
-    end
-    
-    subgraph "보안 리포트"
-        S3[S3 Bucket<br/>스캔 결과 저장]
-        SLACK[Slack 알림<br/>취약점 발견 시]
-    end
-    
-    DEV --> GIT
-    GIT --> SAST1
-    GIT --> SAST2
-    GIT --> SAST3
-    
-    SAST1 --> BUILD
-    SAST2 --> BUILD
-    SAST3 --> BUILD
-    
-    BUILD --> PUSH
-    PUSH --> DEPLOY
-    
-    DEPLOY --> DAST1
-    DEPLOY --> DAST2
-    
-    DAST1 --> RUNTIME
-    DAST2 --> RUNTIME
-    RUNTIME --> MONITOR
-    
-    SAST1 -.결과.-> S3
-    SAST2 -.결과.-> S3
-    SAST3 -.결과.-> S3
-    DAST1 -.결과.-> S3
-    DAST2 -.결과.-> S3
-    
-    S3 -.알림.-> SLACK
-    
-    style SAST1 fill:#e8f5e8
-    style SAST2 fill:#e8f5e8
-    style SAST3 fill:#e8f5e8
-    style DAST1 fill:#fff3e0
-    style DAST2 fill:#fff3e0
-    style RUNTIME fill:#ffebee
-    style S3 fill:#e3f2fd
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style A3 fill:#ffebee
+    style A4 fill:#ffebee
+    style A5 fill:#ffebee
+    style B1 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style B3 fill:#e8f5e8
+    style B4 fill:#e8f5e8
+    style B5 fill:#e8f5e8
+    style B6 fill:#e8f5e8
 ```
 
-**SAST (Static Application Security Testing) - 정적 분석**:
-```yaml
-# .github/workflows/security-scan.yml
-name: Security Scan
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  sast:
-    runs-on: ubuntu-latest
-    steps:
-      # 1. SonarQube - 코드 품질 및 보안 취약점
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      
-      # 2. Trivy - 컨테이너 이미지 취약점 (상세 스캔)
-      - name: Build Docker Image
-        run: docker build -t cloudmart-backend:${{ github.sha }} .
-      
-      - name: Trivy Image Scan (Full Report)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'cloudmart-backend:${{ github.sha }}'
-          format: 'json'
-          output: 'trivy-results.json'
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          vuln-type: 'os,library'
-          scanners: 'vuln,secret,config'
-      
-      - name: Trivy Critical/High Only
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'cloudmart-backend:${{ github.sha }}'
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'  # CRITICAL/HIGH 발견 시 빌드 실패
-      
-      # 3. Trivy - Dockerfile 보안 검사
-      - name: Trivy Dockerfile Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'config'
-          scan-ref: './Dockerfile'
-          format: 'sarif'
-          output: 'trivy-dockerfile.sarif'
-      
-      # 4. Trivy - 파일시스템 스캔 (시크릿 탐지)
-      - name: Trivy Filesystem Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          scanners: 'secret'
-          format: 'json'
-          output: 'trivy-secrets.json'
-      
-      # 5. Snyk - 의존성 취약점
-      - name: Snyk Security Scan
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-      
-      # 6. 결과를 S3에 업로드
-      - name: Upload Scan Results to S3
-        run: |
-          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          aws s3 cp trivy-results.json s3://cloudmart-security/sast/trivy/${TIMESTAMP}/
-          aws s3 cp trivy-dockerfile.sarif s3://cloudmart-security/sast/dockerfile/${TIMESTAMP}/
-          aws s3 cp trivy-secrets.json s3://cloudmart-security/sast/secrets/${TIMESTAMP}/
-          aws s3 cp snyk-results.json s3://cloudmart-security/sast/snyk/${TIMESTAMP}/
-      
-      # 7. Trivy 결과 분석 및 리포트 생성
-      - name: Generate Security Report
-        run: |
-          python3 scripts/analyze-trivy-results.py \
-            --input trivy-results.json \
-            --output security-report.html
-          aws s3 cp security-report.html s3://cloudmart-security/reports/${TIMESTAMP}/
-      
-      # 8. 취약점 발견 시 Slack 알림
-      - name: Slack Notification
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: |
-            🚨 보안 취약점 발견!
-            - Repository: ${{ github.repository }}
-            - Branch: ${{ github.ref }}
-            - Commit: ${{ github.sha }}
-            - 상세 리포트: s3://cloudmart-security/reports/${TIMESTAMP}/security-report.html
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-```
-
-**Trivy 스캔 결과 예시**:
-```json
-{
-  "Results": [
-    {
-      "Target": "cloudmart-backend:latest (alpine 3.18.4)",
-      "Vulnerabilities": [
-        {
-          "VulnerabilityID": "CVE-2023-12345",
-          "PkgName": "openssl",
-          "InstalledVersion": "3.0.10-r0",
-          "FixedVersion": "3.0.12-r0",
-          "Severity": "CRITICAL",
-          "Title": "OpenSSL Remote Code Execution",
-          "Description": "A critical vulnerability in OpenSSL...",
-          "References": [
-            "https://nvd.nist.gov/vuln/detail/CVE-2023-12345"
-          ]
-        },
-        {
-          "VulnerabilityID": "CVE-2023-67890",
-          "PkgName": "curl",
-          "InstalledVersion": "8.1.2-r0",
-          "FixedVersion": "8.4.0-r0",
-          "Severity": "HIGH",
-          "Title": "curl Buffer Overflow"
-        }
-      ]
-    },
-    {
-      "Target": "Node.js Dependencies",
-      "Vulnerabilities": [
-        {
-          "VulnerabilityID": "CVE-2023-11111",
-          "PkgName": "express",
-          "InstalledVersion": "4.17.1",
-          "FixedVersion": "4.18.2",
-          "Severity": "MEDIUM",
-          "Title": "Express.js Path Traversal"
-        }
-      ]
-    }
-  ],
-  "Secrets": [
-    {
-      "Target": "Dockerfile",
-      "Secrets": [
-        {
-          "RuleID": "aws-access-key-id",
-          "Category": "AWS",
-          "Severity": "CRITICAL",
-          "Title": "AWS Access Key",
-          "Match": "AKIAIOSFODNN7EXAMPLE"
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Trivy 스캔 유형별 상세**:
-
-**1. 이미지 취약점 스캔**:
-```bash
-# OS 패키지 취약점
-trivy image --vuln-type os cloudmart-backend:latest
-
-# 애플리케이션 라이브러리 취약점
-trivy image --vuln-type library cloudmart-backend:latest
-
-# 전체 스캔 (OS + Library)
-trivy image cloudmart-backend:latest
-```
-
-**2. Dockerfile 보안 검사**:
-```bash
-# Dockerfile 베스트 프랙티스 검사
-trivy config Dockerfile
-
-# 검출 항목:
-# - USER root 사용 (보안 위험)
-# - COPY --chown 미사용
-# - 불필요한 패키지 설치
-# - 최신 베이스 이미지 미사용
-```
-
-**3. 시크릿 탐지**:
-```bash
-# 코드 내 하드코딩된 시크릿 탐지
-trivy fs --scanners secret .
-
-# 검출 항목:
-# - AWS Access Key
-# - API Keys
-# - Private Keys
-# - Passwords
-# - JWT Tokens
-```
-
-**4. 설정 파일 검사**:
-```bash
-# Kubernetes YAML 보안 검사
-trivy config k8s/
-
-# Docker Compose 보안 검사
-trivy config docker-compose.yml
-```
-
----
-
-**AWS ECR Image Scanning (자동화)**:
-
-**ECR 스캔 활성화**:
-```bash
-# 1. ECR 리포지토리 생성 시 스캔 활성화
-aws ecr create-repository \
-  --repository-name cloudmart-backend \
-  --image-scanning-configuration scanOnPush=true \
-  --encryption-configuration encryptionType=KMS
-
-# 2. 기존 리포지토리에 스캔 활성화
-aws ecr put-image-scanning-configuration \
-  --repository-name cloudmart-backend \
-  --image-scanning-configuration scanOnPush=true
-
-# 3. Enhanced Scanning (Inspector 통합) 활성화
-aws ecr put-registry-scanning-configuration \
-  --scan-type ENHANCED \
-  --rules '[
-    {
-      "scanFrequency": "CONTINUOUS_SCAN",
-      "repositoryFilters": [
-        {"filter": "cloudmart-*", "filterType": "WILDCARD"}
-      ]
-    }
-  ]'
-```
-
-**ECR 스캔 결과 조회**:
-```bash
-# 이미지 스캔 결과 조회
-aws ecr describe-image-scan-findings \
-  --repository-name cloudmart-backend \
-  --image-id imageTag=latest
-
-# 결과 예시:
-{
-  "imageScanFindings": {
-    "findings": [
-      {
-        "name": "CVE-2023-12345",
-        "severity": "CRITICAL",
-        "uri": "https://nvd.nist.gov/vuln/detail/CVE-2023-12345",
-        "attributes": [
-          {
-            "key": "package_name",
-            "value": "openssl"
-          },
-          {
-            "key": "package_version",
-            "value": "3.0.10"
-          }
-        ]
-      }
-    ],
-    "findingSeverityCounts": {
-      "CRITICAL": 2,
-      "HIGH": 5,
-      "MEDIUM": 12,
-      "LOW": 8
-    }
-  }
-}
-```
-
-**ECR 스캔 자동 알림 (EventBridge + SNS)**:
-```yaml
-# CloudFormation 템플릿
-Resources:
-  # ECR 스캔 완료 이벤트 규칙
-  ECRScanEventRule:
-    Type: AWS::Events::Rule
-    Properties:
-      EventPattern:
-        source:
-          - aws.ecr
-        detail-type:
-          - ECR Image Scan
-        detail:
-          scan-status:
-            - COMPLETE
-          finding-severity-counts:
-            CRITICAL:
-              - { "numeric": [ ">", 0 ] }
-      Targets:
-        - Arn: !Ref SecurityAlertTopic
-          Id: ECRScanAlert
-
-  # SNS 토픽 (Slack 알림)
-  SecurityAlertTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-        - Endpoint: !Ref SlackWebhookURL
-          Protocol: https
-
-  # Lambda 함수 (상세 알림 생성)
-  ECRScanAlertFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Runtime: python3.11
-      Handler: index.handler
-      Code:
-        ZipFile: |
-          import json
-          import boto3
-          
-          def handler(event, context):
-              detail = event['detail']
-              repo = detail['repository-name']
-              tag = detail['image-tags'][0]
-              findings = detail['finding-severity-counts']
-              
-              message = f"""
-              🚨 ECR 이미지 스캔 완료
-              
-              Repository: {repo}
-              Tag: {tag}
-              
-              취약점 발견:
-              - CRITICAL: {findings.get('CRITICAL', 0)}
-              - HIGH: {findings.get('HIGH', 0)}
-              - MEDIUM: {findings.get('MEDIUM', 0)}
-              
-              상세 확인: https://console.aws.amazon.com/ecr/repositories/{repo}
-              """
-              
-              # Slack 알림 전송
-              # ... (생략)
-```
-
-**💡 Trivy vs ECR Scan 상세 비교**:
-
-| 기능 | Trivy (Docker Compose) | ECR Image Scanning |
-|------|------------------------|-------------------|
-| **스캔 시점** | CI/CD 파이프라인 (수동 트리거) | 이미지 푸시 시 자동 |
-| **스캔 범위** | OS + Library + Secret + Config | OS + Library (Basic)<br/>OS + Library + Language (Enhanced) |
-| **취약점 DB** | Trivy DB (매일 업데이트) | AWS CVE Database |
-| **Dockerfile 검사** | ✅ 지원 | ❌ 미지원 |
-| **시크릿 탐지** | ✅ 지원 (AWS Key, API Key 등) | ❌ 미지원 |
-| **설정 파일 검사** | ✅ 지원 (K8s, Docker Compose) | ❌ 미지원 |
-| **지속적 스캔** | ❌ 수동 재실행 필요 | ✅ Enhanced Scanning (자동) |
-| **통합 대시보드** | 직접 구축 (S3 + Grafana) | Security Hub 자동 통합 |
-| **알림** | GitHub Actions + Slack (수동) | EventBridge + SNS (자동) |
-| **비용** | 무료 (오픈소스) | Basic: 무료<br/>Enhanced: $0.09/이미지/월 |
-| **설정 복잡도** | 중간 (GitHub Actions 설정) | 낮음 (클릭 한 번) |
-| **커스터마이징** | 매우 높음 (모든 옵션 제어) | 제한적 |
-| **오프라인 사용** | ✅ 가능 | ❌ 불가능 (AWS 전용) |
-
-**Trivy의 장점**:
-- ✅ **포괄적 스캔**: OS, Library, Secret, Config 모두 검사
-- ✅ **Dockerfile 검사**: 보안 베스트 프랙티스 검증
-- ✅ **시크릿 탐지**: 하드코딩된 API Key, Password 발견
-- ✅ **무료**: 오픈소스, 무제한 사용
-- ✅ **유연성**: CI/CD 어디서든 사용 가능
-
-**ECR Scan의 장점**:
-- ✅ **자동화**: 이미지 푸시 시 자동 스캔
-- ✅ **지속적 스캔**: Enhanced Scanning으로 새 취약점 자동 탐지
-- ✅ **통합**: Security Hub, Inspector와 자동 통합
-- ✅ **관리 불필요**: AWS가 DB 업데이트 및 스캔 관리
-- ✅ **규정 준수**: AWS 규정 준수 프레임워크 통합
-
-**🎯 Best Practice: 두 가지 모두 사용!**
-
-```yaml
-# .github/workflows/image-security.yml
-name: Image Security Scan
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      # 1. 빌드 전 Dockerfile 검사 (Trivy)
-      - name: Scan Dockerfile
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'config'
-          scan-ref: './Dockerfile'
-      
-      # 2. 이미지 빌드
-      - name: Build Image
-        run: docker build -t cloudmart-backend:${{ github.sha }} .
-      
-      # 3. 빌드 후 이미지 스캔 (Trivy - 상세)
-      - name: Trivy Full Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'cloudmart-backend:${{ github.sha }}'
-          format: 'json'
-          scanners: 'vuln,secret,config'
-          exit-code: '1'  # CRITICAL 발견 시 중단
-      
-      # 4. ECR 푸시 (자동 스캔 트리거)
-      - name: Push to ECR
-        run: |
-          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
-          docker tag cloudmart-backend:${{ github.sha }} $ECR_REGISTRY/cloudmart-backend:${{ github.sha }}
-          docker push $ECR_REGISTRY/cloudmart-backend:${{ github.sha }}
-      
-      # 5. ECR 스캔 결과 대기 및 확인
-      - name: Wait for ECR Scan
-        run: |
-          sleep 60  # ECR 스캔 완료 대기
-          aws ecr describe-image-scan-findings \
-            --repository-name cloudmart-backend \
-            --image-id imageTag=${{ github.sha }}
-```
-
-**결론**:
-- **개발 단계**: Trivy로 빠른 피드백 (Dockerfile, Secret, Config)
-- **배포 단계**: ECR Scan으로 자동 검증 및 지속적 모니터링
-- **운영 단계**: Security Hub로 통합 관리
-
----
-
-**DAST (Dynamic Application Security Testing) - 동적 분석**:
-```yaml
-# .github/workflows/dast-scan.yml
-name: DAST Scan
-
-on:
-  deployment_status:
-
-jobs:
-  dast:
-    runs-on: ubuntu-latest
-    if: github.event.deployment_status.state == 'success'
-    
-    steps:
-      # 1. OWASP ZAP - 웹 애플리케이션 취약점 스캔
-      - name: OWASP ZAP Scan
-        uses: zaproxy/action-baseline@v0.7.0
-        with:
-          target: 'https://cloudmart.example.com'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
-      
-      # 2. Nikto - 웹 서버 취약점 스캔
-      - name: Nikto Scan
-        run: |
-          docker run --rm \
-            -v $(pwd):/tmp \
-            sullo/nikto \
-            -h https://cloudmart.example.com \
-            -o /tmp/nikto-results.json \
-            -Format json
-      
-      # 3. 결과를 S3에 업로드
-      - name: Upload to S3
-        run: |
-          aws s3 cp zap-results.json s3://cloudmart-security/dast/$(date +%Y%m%d)/
-          aws s3 cp nikto-results.json s3://cloudmart-security/dast/$(date +%Y%m%d)/
-      
-      # 4. 취약점 발견 시 Slack 알림
-      - name: Slack Notification
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: '🚨 운영 환경에서 보안 취약점 발견! DAST 스캔 결과를 확인하세요.'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-```
-
-**런타임 보안 (Falco)**:
-```yaml
-# docker-compose.yml (각 서버)
-version: '3.8'
-services:
-  # 기존 애플리케이션 서비스들...
-  
-  # Falco - 런타임 보안 모니터링
-  falco:
-    image: falcosecurity/falco:latest
-    privileged: true
-    volumes:
-      - /var/run/docker.sock:/host/var/run/docker.sock
-      - /dev:/host/dev
-      - /proc:/host/proc:ro
-      - /boot:/host/boot:ro
-      - /lib/modules:/host/lib/modules:ro
-      - /usr:/host/usr:ro
-      - ./falco/falco.yaml:/etc/falco/falco.yaml
-      - ./falco/rules:/etc/falco/rules.d
-    environment:
-      - FALCO_GRPC_ENABLED=true
-      - FALCO_GRPC_BIND_ADDRESS=0.0.0.0:5060
-    ports:
-      - "5060:5060"
-```
-
-**Falco 보안 규칙 예시**:
-```yaml
-# falco/rules/custom-rules.yaml
-- rule: Unauthorized Process in Container
-  desc: Detect unauthorized process execution
-  condition: >
-    spawned_process and
-    container and
-    not proc.name in (node, npm, sh, bash)
-  output: >
-    Unauthorized process started in container
-    (user=%user.name command=%proc.cmdline container=%container.name)
-  priority: WARNING
-
-- rule: Write to Sensitive Directory
-  desc: Detect writes to sensitive directories
-  condition: >
-    open_write and
-    container and
-    fd.name startswith /etc
-  output: >
-    Write to sensitive directory
-    (user=%user.name file=%fd.name container=%container.name)
-  priority: ERROR
-
-- rule: Outbound Connection to Suspicious IP
-  desc: Detect connections to known malicious IPs
-  condition: >
-    outbound and
-    fd.sip in (suspicious_ips)
-  output: >
-    Suspicious outbound connection
-    (user=%user.name ip=%fd.sip container=%container.name)
-  priority: CRITICAL
-```
-
-**💡 Docker vs AWS 보안 비교**:
-| 항목 | Docker + SAST/DAST | AWS 보안 서비스 |
-|------|-------------------|-----------------|
-| **SAST (정적 분석)** | SonarQube, Trivy, Snyk (수동 설정) | CodeGuru, Inspector (자동) |
-| **DAST (동적 분석)** | OWASP ZAP, Nikto (수동 설정) | Inspector, Penetration Testing |
-| **컨테이너 스캔** | Trivy, Clair (수동) | ECR Image Scanning (자동) |
-| **의존성 스캔** | Snyk, Dependabot (수동) | Inspector (자동) |
-| **런타임 보안** | Falco (수동 설정) | GuardDuty (자동) |
-| **네트워크 보안** | iptables, 방화벽 (수동) | Security Groups, NACL (관리형) |
-| **시크릿 관리** | Vault, 환경변수 (수동) | Secrets Manager (관리형) |
-| **규정 준수** | 수동 감사 | Config, Security Hub (자동) |
-| **위협 탐지** | 수동 로그 분석 | GuardDuty, Macie (자동) |
-| **설정 복잡도** | 매우 높음 | 낮음 (자동) |
-| **비용** | 도구 라이선스 + 인력 | 서비스 사용량당 |
-
-**AWS 보안 서비스 상세**:
-
-**1. AWS CodeGuru (SAST)**:
-```yaml
-# buildspec.yml
-version: 0.2
-phases:
-  pre_build:
-    commands:
-      # CodeGuru Reviewer 자동 실행
-      - echo "CodeGuru Reviewer analyzing code..."
-  build:
-    commands:
-      - docker build -t cloudmart-backend .
-  post_build:
-    commands:
-      # CodeGuru Security 스캔
-      - aws codeguru-security create-scan --scan-name cloudmart-scan
-```
-
-**2. Amazon Inspector (컨테이너 + 인프라 스캔)**:
-```bash
-# ECR 이미지 자동 스캔 (푸시 시 자동 실행)
-aws ecr put-image-scanning-configuration \
-  --repository-name cloudmart-backend \
-  --image-scanning-configuration scanOnPush=true
-
-# EC2 인스턴스 자동 스캔
-aws inspector2 enable \
-  --resource-types EC2 ECR
-```
-
-**3. AWS GuardDuty (런타임 위협 탐지)**:
-```bash
-# GuardDuty 활성화 (자동 위협 탐지)
-aws guardduty create-detector --enable
-
-# 의심스러운 활동 자동 탐지:
-# - 비정상적인 API 호출
-# - 알려진 악성 IP 통신
-# - 크립토마이닝 활동
-# - 권한 상승 시도
-```
-
-**4. AWS Security Hub (통합 보안 대시보드)**:
-```bash
-# Security Hub 활성화
-aws securityhub enable-security-hub
-
-# 자동으로 통합되는 서비스:
-# - GuardDuty (위협 탐지)
-# - Inspector (취약점 스캔)
-# - Macie (데이터 보안)
-# - IAM Access Analyzer (권한 분석)
-# - Config (규정 준수)
-```
-
-**보안 파이프라인 비교**:
-
-**Docker Compose 방식**:
-```
-개발 → Git Push → GitHub Actions
-  ↓
-SAST (SonarQube, Trivy, Snyk) - 수동 설정
-  ↓
-Docker Build → ECR Push
-  ↓
-서버 배포
-  ↓
-DAST (OWASP ZAP, Nikto) - 수동 실행
-  ↓
-Falco 런타임 모니터링 - 수동 설정
-  ↓
-S3 결과 저장 + Slack 알림 - 수동 설정
-```
-
-**AWS 방식**:
-```
-개발 → Git Push → CodePipeline
-  ↓
-CodeGuru (SAST) - 자동 실행
-  ↓
-Docker Build → ECR Push
-  ↓
-Inspector (이미지 스캔) - 자동 실행
-  ↓
-ECS/EC2 배포
-  ↓
-Inspector (인프라 스캔) - 자동 실행
-  ↓
-GuardDuty (런타임 위협 탐지) - 자동 실행
-  ↓
-Security Hub (통합 대시보드) - 자동 통합
-  ↓
-EventBridge → SNS/Lambda - 자동 알림
-```
-
-**🎯 핵심 인사이트**:
-> "Docker Compose + GitHub Actions로 SAST/DAST 파이프라인을 구축할 수 있지만, 각 도구를 개별적으로 설정하고 통합해야 하는 복잡도가 매우 높습니다. AWS는 CodeGuru, Inspector, GuardDuty, Security Hub를 통해 **자동화된 DevSecOps 파이프라인**을 제공하며, 모든 보안 이벤트가 하나의 대시보드에 통합됩니다. **보안은 자동화되어야 효과적입니다!**"
-
----
-
-**💡 셀프 호스팅 관점: Docker Compose의 가치**
-
-**언제 Docker Compose 보안 스택이 적합한가?**
-
-**1. 비용 민감형 스타트업**:
-```
-AWS 보안 서비스 비용 (월간):
-- CodeGuru: $0.75/100 lines (코드 리뷰)
-- Inspector: $0.09/이미지/월 (Enhanced)
-- GuardDuty: $4.60/GB (VPC Flow Logs)
-- Security Hub: $0.0010/check
----
-예상 월 비용: $200-500
-
-Docker Compose 셀프 호스팅:
-- 서버 비용: $50-100/월 (모니터링 서버)
-- 도구 비용: $0 (모두 오픈소스)
-- 관리 인력: 개발자 겸임
----
-예상 월 비용: $50-100 (60-80% 절감)
-```
-
-**2. 데이터 주권 및 규정 준수**:
-```yaml
-# 민감한 데이터를 외부로 보내지 않음
-보안 스캔 결과:
-  - 모든 데이터가 자체 서버에 저장
-  - 외부 클라우드로 전송 없음
-  - GDPR, HIPAA 등 규정 준수 용이
-
-코드 분석:
-  - 소스 코드가 외부로 나가지 않음
-  - 지적 재산권 보호
-  - 내부 보안 정책 완전 제어
-```
-
-**3. 완전한 커스터마이징**:
-```yaml
-# 자체 보안 정책 적용
-Trivy 커스텀 정책:
-  - 회사 내부 보안 기준 적용
-  - 특정 CVE 무시 (False Positive)
-  - 자체 취약점 DB 추가
-
-Falco 커스텀 규칙:
-  - 회사 특화 런타임 정책
-  - 내부 프로세스 화이트리스트
-  - 맞춤형 알림 규칙
-```
-
-**4. 멀티 클라우드 전략**:
-```yaml
-# 클라우드 벤더 종속 회피
-동일한 보안 파이프라인:
-  - AWS, Azure, GCP 모두 동일
-  - 온프레미스 환경도 동일
-  - 하이브리드 클라우드 지원
-
-이식성:
-  - Docker Compose 파일만 있으면 어디서든 실행
-  - 클라우드 마이그레이션 용이
-  - 벤더 락인 없음
-```
-
-**5. 학습 및 실험 환경**:
-```yaml
-# 보안 도구 학습
-로컬 환경:
-  - 비용 걱정 없이 실험
-  - 다양한 도구 테스트
-  - 보안 전문가 양성
-
-교육 목적:
-  - 보안 파이프라인 구축 경험
-  - DevSecOps 문화 이해
-  - 실무 역량 강화
-```
-
-**셀프 호스팅 성공 사례**:
-
-**사례 1: 핀테크 스타트업 (직원 20명)**
-```yaml
-상황:
-  - 금융 데이터 외부 전송 불가
-  - AWS 보안 서비스 비용 부담 ($500/월)
-  - 자체 보안 정책 필요
-
-해결:
-  - Docker Compose 보안 스택 구축
-  - SonarQube + Trivy + Falco
-  - 자체 서버 운영 ($80/월)
-
-결과:
-  - 비용 84% 절감
-  - 데이터 주권 확보
-  - 맞춤형 보안 정책 적용
-```
-
-**사례 2: 오픈소스 프로젝트**
-```yaml
-상황:
-  - 공개 프로젝트 (GitHub)
-  - AWS 비용 지불 불가
-  - 커뮤니티 기여자 다수
-
-해결:
-  - GitHub Actions + Trivy
-  - 무료 SonarCloud
-  - 자체 호스팅 Falco
-
-결과:
-  - 완전 무료 보안 파이프라인
-  - 커뮤니티 신뢰도 향상
-  - 보안 취약점 사전 차단
-```
-
-**사례 3: 글로벌 SaaS 기업 (멀티 클라우드)**
-```yaml
-상황:
-  - AWS, Azure, GCP 모두 사용
-  - 통일된 보안 정책 필요
-  - 클라우드별 도구 관리 복잡
-
-해결:
-  - Docker Compose 통합 보안 스택
-  - 모든 클라우드에 동일 배포
-  - 중앙 집중식 Security Hub
-
-결과:
-  - 일관된 보안 정책
-  - 관리 복잡도 감소
-  - 벤더 독립성 확보
-```
-
-**💡 Docker Compose vs AWS: 선택 기준**
-
-| 기준 | Docker Compose 선택 | AWS 선택 |
-|------|-------------------|----------|
-| **예산** | 월 $100 미만 | 월 $500+ 가능 |
-| **팀 규모** | 개발자 5-20명 | 개발자 50명+ |
-| **데이터 민감도** | 매우 높음 (금융, 의료) | 일반적 |
-| **커스터마이징** | 높은 수준 필요 | 기본 설정으로 충분 |
-| **클라우드 전략** | 멀티/하이브리드 | AWS 중심 |
-| **보안 전문성** | 팀 내 보유 | 외부 의존 가능 |
-| **규정 준수** | 자체 감사 필요 | AWS 인증 활용 |
-| **운영 부담** | 감수 가능 | 최소화 필요 |
-
-**🎯 Best Practice: 하이브리드 접근**
-
-```yaml
-# 단계별 전환 전략
-Phase 1 (스타트업 초기):
-  - Docker Compose 셀프 호스팅
-  - 비용 최소화
-  - 보안 파이프라인 구축 경험
-
-Phase 2 (성장기):
-  - 핵심 보안: Docker Compose 유지
-  - 편의 기능: AWS 서비스 도입
-  - 하이브리드 운영
-
-Phase 3 (성숙기):
-  - 비용 대비 효율 분석
-  - 선택적 AWS 전환
-  - 또는 셀프 호스팅 고도화
-
-결론:
-  - 정답은 없음, 상황에 따라 선택
-  - 셀프 호스팅도 충분히 프로덕션급
-  - 중요한 것은 "보안 자동화"
-```
-
-**💪 셀프 호스팅 성공을 위한 조건**:
-1. ✅ **자동화**: 수동 작업 최소화 (GitHub Actions)
-2. ✅ **모니터링**: 보안 이벤트 실시간 추적
-3. ✅ **백업**: 스캔 결과 및 설정 백업 (S3)
-4. ✅ **문서화**: 팀원 온보딩 및 유지보수
-5. ✅ **지속적 개선**: 도구 업데이트 및 정책 개선
-
-**🎯 최종 인사이트**:
-> "AWS 관리형 서비스는 편리하지만, Docker Compose 셀프 호스팅도 **비용 효율성, 데이터 주권, 완전한 제어**라는 명확한 가치를 제공합니다. 중요한 것은 **자동화된 보안 파이프라인**을 구축하는 것이며, 이는 두 방식 모두 달성 가능합니다. 팀의 상황과 우선순위에 따라 현명하게 선택하세요!"
-
----
-
-### 🔍 개념 1: IAM 정책 & 역할 설계 (12분)
-
-> **정의**: AWS 리소스에 대한 접근 권한을 세밀하게 제어하는 서비스
-
-**IAM 구성 요소**:
+**CloudMart 4단계 마이그레이션 계획**:
+
+**Phase 1: 모니터링 AWS 전환 (위험도: 낮음)**
+- 현재 유지: Docker Compose 애플리케이션
+- 변경 사항: CloudWatch Agent 추가
+- 예상 시간: 1-2시간
+- 롤백 시간: 10분
+
+**Phase 2: 데이터베이스 AWS 전환 (위험도: 중간)**
+- 현재 유지: EC2 + Docker Compose
+- 변경 사항: PostgreSQL → RDS, Redis → ElastiCache
+- 예상 시간: 4-6시간
+- 롤백 시간: 30분
+
+**Phase 3: 로드밸런서 + Auto Scaling (위험도: 중간)**
+- 현재 유지: Docker Compose 애플리케이션
+- 변경 사항: ALB + ASG 추가
+- 예상 시간: 2-3시간
+- 롤백 시간: 15분
+
+**Phase 4: 컨테이너 오케스트레이션 (위험도: 높음)**
+- 변경 사항: Docker Compose → ECS Fargate
+- 예상 시간: 8-12시간
+- 롤백 시간: 2시간
+
+**점진적 접근의 장점**:
+- ✅ **위험 분산**: 각 단계별 위험 최소화
+- ✅ **학습 기회**: 단계별로 새 기술 학습
+- ✅ **효과 검증**: 각 단계의 ROI 측정 가능
+- ✅ **유연한 중단**: 언제든 현재 단계에서 멈출 수 있음
+
+### 🔍 개념 2: 효과 측정 프레임워크 (15분)
+
+**측정 영역 4가지**:
 ```mermaid
 graph TB
-    subgraph "IAM 계층 구조"
-        A[AWS Account<br/>Root User]
-        A --> B1[IAM User<br/>개발자 개인]
-        A --> B2[IAM Group<br/>개발팀]
-        A --> B3[IAM Role<br/>EC2, Lambda]
+    subgraph "측정 영역"
+        A[💰 비용<br/>Cost]
+        B[⚡ 성능<br/>Performance]
+        C[🔧 운영<br/>Operations]
+        D[🚀 개발<br/>Development]
+    end
+    
+    subgraph "구체적 지표"
+        A --> A1[월 인프라 비용]
+        A --> A2[운영 인력 비용]
+        A --> A3[다운타임 비용]
         
-        B2 --> C1[Policy<br/>권한 정의]
-        B3 --> C2[Policy<br/>권한 정의]
+        B --> B1[응답 시간]
+        B --> B2[가용성 %]
+        B --> B3[처리량 TPS]
         
-        C1 --> D1[Allow/Deny<br/>특정 작업]
-        C2 --> D2[Allow/Deny<br/>특정 작업]
+        C --> C1[배포 시간]
+        C --> C2[장애 복구 시간]
+        C --> C3[모니터링 설정 시간]
+        
+        D --> D1[개발 속도]
+        D --> D2[신기능 출시 주기]
+        D --> D3[개발자 만족도]
     end
     
     style A fill:#ffebee
-    style B1 fill:#fff3e0
-    style B2 fill:#e8f5e8
-    style B3 fill:#e8f5e8
+    style B fill:#e8f5e8
+    style C fill:#fff3e0
+    style D fill:#e3f2fd
 ```
 
-**CloudMart IAM 설계**:
-```yaml
-# 1. EC2 Instance Role (Backend 서버용)
-Role Name: CloudMart-Backend-Role
-Policies:
-  - RDS 접근 (읽기/쓰기)
-  - ElastiCache 접근
-  - S3 읽기 (설정 파일)
-  - CloudWatch Logs 쓰기
-  - Secrets Manager 읽기 (DB 비밀번호)
+**Phase별 측정 템플릿**:
 
-Policy Example:
+```markdown
+## Phase N 효과 측정
+
+### Before (현재 상태)
+**비용**:
+- 인프라 비용: $XXX/월
+- 운영 시간: XX시간/월 × $50/시간 = $XXX/월
+- 다운타임: XX분/월 × $100/분 = $XXX/월
+
+**성능**:
+- 평균 응답시간: XXXms
+- 가용성: XX.X%
+- 처리량: XXX TPS
+
+**운영**:
+- 배포 시간: XX분
+- 장애 복구: XX분
+- 모니터링 설정: XX시간
+
+### After (변경 후)
+[동일한 지표 측정]
+
+### ROI 계산
+- 비용 변화: +$XXX/월 (증가) 또는 -$XXX/월 (절약)
+- 효율성 향상: $XXX/월 (시간 절약 × 시급)
+- 순 효과: $XXX/월
+
+### 의사결정
+- ROI > 0: ✅ 다음 Phase 진행
+- ROI < 0: ❌ 현재 단계 유지
+- ROI ≈ 0: ⚠️ 팀 상황에 따라 결정
+```
+
+**실제 측정 도구**:
+
+```bash
+# 성능 측정 스크립트
+#!/bin/bash
+# performance-test.sh
+
+echo "=== CloudMart 성능 측정 시작 ==="
+
+# 1. 응답 시간 측정
+echo "1. 응답 시간 측정 중..."
+for i in {1..10}; do
+  curl -w "%{time_total}\n" -o /dev/null -s http://cloudmart.local/api/products
+done | awk '{sum+=$1} END {print "평균 응답시간:", sum/NR, "초"}'
+
+# 2. 동시 접속 테스트
+echo "2. 동시 접속 테스트 중..."
+ab -n 1000 -c 10 http://cloudmart.local/api/products
+
+# 3. 가용성 테스트
+echo "3. 가용성 테스트 중..."
+for i in {1..60}; do
+  if curl -f -s http://cloudmart.local/health > /dev/null; then
+    echo "OK"
+  else
+    echo "FAIL"
+  fi
+  sleep 1
+done | grep -c "OK" | awk '{print "가용성:", $1/60*100, "%"}'
+
+echo "=== 성능 측정 완료 ==="
+```
+
+**비용 계산 스프레드시트**:
+```
+Phase 1 비용 분석:
+- CloudWatch Agent: $0 (프리티어)
+- CloudWatch 메트릭: 100개 × $0.30 = $30/월
+- CloudWatch 대시보드: 3개 × $3 = $9/월
+- 총 증가 비용: $39/월
+
+시간 절약:
+- 모니터링 설정: 2시간 → 10분 = 1.83시간 절약
+- 문제 진단: 30분 → 5분 = 25분 절약
+- 월 총 절약: 2시간 × $50 = $100/월
+
+순 효과: $100 - $39 = +$61/월 ✅
+```
+
+### 🔍 개념 3: 의사결정 프레임워크 (10분)
+
+**각 Phase별 핵심 질문**:
+
+```mermaid
+graph TB
+    A[Phase 완료] --> B{ROI 계산}
+    B -->|양수| C{팀 역량}
+    B -->|음수| D[현재 단계 유지]
+    B -->|제로| E{비즈니스 우선순위}
+    
+    C -->|충분| F{다음 Phase 필요성}
+    C -->|부족| G[현재 단계에서 학습]
+    
+    F -->|명확| H[다음 Phase 진행]
+    F -->|불명확| I[현재 단계 유지]
+    
+    E -->|높음| F
+    E -->|낮음| D
+    
+    style H fill:#e8f5e8
+    style D fill:#ffebee
+    style G fill:#fff3e0
+    style I fill:#fff3e0
+```
+
+**Phase별 예상 의사결정**:
+
+**Phase 1 (모니터링)**: 
+- 예상 결과: 대부분 팀 진행 ✅
+- 이유: 낮은 위험, 명확한 이익, 쉬운 롤백
+
+**Phase 2 (데이터베이스)**:
+- 예상 결과: 80% 팀 진행 ✅
+- 이유: 백업/복구 자동화의 명확한 가치
+
+**Phase 3 (Auto Scaling)**:
+- 예상 결과: 50% 팀 진행 ⚠️
+- 이유: 트래픽 규모에 따라 필요성 다름
+
+**Phase 4 (ECS)**:
+- 예상 결과: 20% 팀 진행 ❌
+- 이유: Docker Compose로도 충분한 경우 많음
+
+**실무 의사결정 기준**:
+```
+1. ROI 기준:
+   - ROI > $500/월: 즉시 진행
+   - ROI $0-500/월: 신중 검토
+   - ROI < $0: 진행 중단
+
+2. 팀 역량 기준:
+   - 새 기술 학습 여유 있음: 진행
+   - 현재 업무로 바쁨: 연기
+   - 기술 부채 많음: 현상 유지
+
+3. 비즈니스 기준:
+   - 성장 단계: 확장성 우선
+   - 안정 단계: 비용 효율 우선
+   - 위기 상황: 현상 유지
+```
+
+---
+
+## 🔄 4단계 점진적 마이그레이션 실습
+
+### Phase 1: 모니터링 AWS 전환 (10분)
+
+**목표**: CloudWatch로 모니터링 전환하여 AWS 경험 시작
+
+**현재 상태**:
+```yaml
+# 현재: Prometheus + Grafana (Session 3에서 구축)
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+  
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+```
+
+**변경 작업**:
+
+**1-1. CloudWatch Agent 설치**:
+```bash
+# EC2에 CloudWatch Agent 설치
+wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+sudo rpm -U ./amazon-cloudwatch-agent.rpm
+
+# 설정 파일 생성
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
+```
+
+**1-2. 애플리케이션 메트릭 연동**:
+```javascript
+// backend/app.js - CloudWatch 메트릭 추가
+const AWS = require('aws-sdk');
+const cloudwatch = new AWS.CloudWatch();
+
+// 커스텀 메트릭 전송
+const sendMetric = (metricName, value, unit = 'Count') => {
+  const params = {
+    Namespace: 'CloudMart/Application',
+    MetricData: [{
+      MetricName: metricName,
+      Value: value,
+      Unit: unit,
+      Timestamp: new Date()
+    }]
+  };
+  
+  cloudwatch.putMetricData(params).promise();
+};
+
+// API 호출 시 메트릭 전송
+app.get('/api/products', async (req, res) => {
+  const start = Date.now();
+  
+  try {
+    const products = await getProducts();
+    const duration = Date.now() - start;
+    
+    // CloudWatch로 메트릭 전송
+    sendMetric('APIResponseTime', duration, 'Milliseconds');
+    sendMetric('APIRequestCount', 1);
+    
+    res.json(products);
+  } catch (error) {
+    sendMetric('APIErrorCount', 1);
+    res.status(500).json({ error: error.message });
+  }
+});
+```
+
+**1-3. CloudWatch 대시보드 생성**:
+```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
+  "widgets": [
     {
-      "Effect": "Allow",
-      "Action": [
-        "rds:DescribeDBInstances",
-        "rds:Connect"
-      ],
-      "Resource": "arn:aws:rds:ap-northeast-2:*:db:cloudmart-db"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticache:DescribeCacheClusters"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::cloudmart-config/*"
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/EC2", "CPUUtilization", "InstanceId", "i-1234567890abcdef0"],
+          ["CloudMart/Application", "APIResponseTime"],
+          [".", "APIRequestCount"]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "ap-northeast-2",
+        "title": "CloudMart 성능 모니터링"
+      }
     }
   ]
 }
-
-# 2. Developer Group (개발자용)
-Group Name: CloudMart-Developers
-Policies:
-  - EC2 읽기 전용
-  - RDS 읽기 전용
-  - CloudWatch 읽기
-  - S3 읽기/쓰기 (특정 버킷만)
-
-# 3. Admin Group (관리자용)
-Group Name: CloudMart-Admins
-Policies:
-  - 모든 리소스 관리 권한
-  - 단, IAM 정책 변경은 제한
 ```
 
-**최소 권한 원칙 (Least Privilege)**:
-```yaml
-# ❌ 나쁜 예: 너무 많은 권한
-{
-  "Effect": "Allow",
-  "Action": "*",
-  "Resource": "*"
-}
+**Phase 1 효과 측정**:
+```markdown
+### Before (Prometheus + Grafana)
+- 설정 시간: 2시간 (prometheus.yml 작성)
+- 대시보드 구성: 1시간 (PromQL 학습)
+- 문제 진단: 30분 (로그 분석)
+- 월 비용: $0
 
-# ✅ 좋은 예: 필요한 권한만
+### After (CloudWatch)
+- 설정 시간: 10분 (Agent 설치)
+- 대시보드 구성: 5분 (템플릿 사용)
+- 문제 진단: 5분 (통합 뷰)
+- 월 비용: $39
+
+### ROI 계산
+- 비용 증가: +$39/월
+- 시간 절약: 3시간/월 × $50/시간 = $150/월
+- 순 효과: +$111/월 ✅
+
+### 의사결정: Phase 2 진행
+```
+
+### Phase 2: 데이터베이스 AWS 전환 (15분)
+
+**목표**: RDS + ElastiCache로 데이터 계층 Managed Service 전환
+
+**현재 상태**:
+```yaml
+# 현재: Docker Compose DB
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cloudmart
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+```
+
+**변경 작업**:
+
+**2-1. RDS PostgreSQL 생성**:
+```bash
+# AWS CLI로 RDS 생성
+aws rds create-db-instance \
+  --db-instance-identifier cloudmart-db \
+  --db-instance-class db.t3.micro \
+  --engine postgres \
+  --engine-version 15.4 \
+  --master-username cloudmart \
+  --master-user-password SecurePassword123 \
+  --allocated-storage 20 \
+  --storage-type gp2 \
+  --multi-az \
+  --vpc-security-group-ids sg-12345678 \
+  --db-subnet-group-name cloudmart-subnet-group \
+  --backup-retention-period 7 \
+  --storage-encrypted
+```
+
+**2-2. 데이터 마이그레이션**:
+```bash
+# 기존 데이터 백업
+docker exec cloudmart_postgres_1 pg_dump -U cloudmart cloudmart > backup.sql
+
+# RDS로 데이터 복원
+psql -h cloudmart-db.cluster-xyz.ap-northeast-2.rds.amazonaws.com \
+     -U cloudmart -d cloudmart < backup.sql
+```
+
+**2-3. ElastiCache Redis 생성**:
+```bash
+# ElastiCache 클러스터 생성
+aws elasticache create-cache-cluster \
+  --cache-cluster-id cloudmart-redis \
+  --cache-node-type cache.t3.micro \
+  --engine redis \
+  --num-cache-nodes 1 \
+  --security-group-ids sg-87654321 \
+  --subnet-group-name cloudmart-cache-subnet
+```
+
+**2-4. 애플리케이션 연결 변경**:
+```yaml
+# docker-compose.yml 수정
+version: '3.8'
+
+services:
+  backend:
+    image: cloudmart/backend:latest
+    environment:
+      - DB_HOST=cloudmart-db.cluster-xyz.ap-northeast-2.rds.amazonaws.com
+      - DB_PORT=5432
+      - DB_NAME=cloudmart
+      - DB_USER=cloudmart
+      - DB_PASSWORD=SecurePassword123
+      - REDIS_HOST=cloudmart-redis.abc123.cache.amazonaws.com
+      - REDIS_PORT=6379
+    # PostgreSQL, Redis 컨테이너 제거
+```
+
+**Phase 2 효과 측정**:
+```markdown
+### Before (Docker Compose DB)
+- 백업: 수동 (주 1회)
+- 장애 복구: 수동 (30분)
+- 성능 튜닝: 수동 설정
+- 월 비용: $0 (EC2 포함)
+
+### After (RDS + ElastiCache)
+- 백업: 자동 (일 1회)
+- 장애 복구: 자동 (5분)
+- 성능 튜닝: AWS 최적화
+- 월 비용: +$180
+
+### ROI 계산
+- 비용 증가: +$180/월
+- 운영 시간 절약: 8시간/월 × $50/시간 = $400/월
+- 다운타임 감소: 25분/월 × $100/분 = $250/월
+- 순 효과: +$470/월 ✅
+
+### 의사결정: Phase 3 진행
+```
+
+### Phase 3: 로드밸런서 + Auto Scaling (10분)
+
+**목표**: ALB + ASG로 확장성 및 가용성 확보
+
+**변경 작업**:
+
+**3-1. Launch Template 생성**:
+```json
 {
-  "Effect": "Allow",
-  "Action": [
-    "rds:DescribeDBInstances",
-    "rds:Connect"
-  ],
-  "Resource": "arn:aws:rds:ap-northeast-2:123456789012:db:cloudmart-db",
-  "Condition": {
-    "IpAddress": {
-      "aws:SourceIp": "10.0.0.0/16"
-    }
+  "LaunchTemplateName": "cloudmart-template",
+  "LaunchTemplateData": {
+    "ImageId": "ami-0c02fb55956c7d316",
+    "InstanceType": "t3.micro",
+    "SecurityGroupIds": ["sg-12345678"],
+    "UserData": "IyEvYmluL2Jhc2gKY2QgL2hvbWUvZWMyLXVzZXIvY2xvdWRtYXJ0CmRvY2tlci1jb21wb3NlIHVwIC1k",
+    "TagSpecifications": [{
+      "ResourceType": "instance",
+      "Tags": [{"Key": "Name", "Value": "CloudMart-ASG"}]
+    }]
   }
 }
 ```
 
-### 🔍 개념 2: 보안 그룹 최적화 (12분)
-
-> **정의**: EC2 인스턴스 수준의 가상 방화벽으로 인바운드/아웃바운드 트래픽 제어
-
-**CloudMart 보안 그룹 설계**:
-```yaml
-# 1. ALB Security Group
-Name: CloudMart-ALB-SG
-Inbound Rules:
-  - Type: HTTP (80)
-    Source: 0.0.0.0/0 (전 세계)
-  - Type: HTTPS (443)
-    Source: 0.0.0.0/0 (전 세계)
-Outbound Rules:
-  - Type: All Traffic
-    Destination: CloudMart-Backend-SG
-
-# 2. Backend Security Group
-Name: CloudMart-Backend-SG
-Inbound Rules:
-  - Type: HTTP (8080)
-    Source: CloudMart-ALB-SG (ALB만 접근)
-  - Type: SSH (22)
-    Source: Bastion-SG (Bastion만 접근)
-Outbound Rules:
-  - Type: PostgreSQL (5432)
-    Destination: CloudMart-RDS-SG
-  - Type: Redis (6379)
-    Destination: CloudMart-Redis-SG
-  - Type: HTTPS (443)
-    Destination: 0.0.0.0/0 (외부 API 호출)
-
-# 3. RDS Security Group
-Name: CloudMart-RDS-SG
-Inbound Rules:
-  - Type: PostgreSQL (5432)
-    Source: CloudMart-Backend-SG (Backend만 접근)
-Outbound Rules:
-  - None (필요 없음)
-
-# 4. ElastiCache Security Group
-Name: CloudMart-Redis-SG
-Inbound Rules:
-  - Type: Redis (6379)
-    Source: CloudMart-Backend-SG (Backend만 접근)
-Outbound Rules:
-  - None (필요 없음)
-
-# 5. Bastion Security Group
-Name: CloudMart-Bastion-SG
-Inbound Rules:
-  - Type: SSH (22)
-    Source: [회사 IP]/32 (특정 IP만)
-Outbound Rules:
-  - Type: SSH (22)
-    Destination: CloudMart-Backend-SG
+**3-2. Auto Scaling Group 생성**:
+```bash
+# ASG 생성
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name cloudmart-asg \
+  --launch-template LaunchTemplateName=cloudmart-template,Version=1 \
+  --min-size 2 \
+  --max-size 6 \
+  --desired-capacity 2 \
+  --target-group-arns arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:targetgroup/cloudmart-tg/1234567890123456 \
+  --vpc-zone-identifier "subnet-12345678,subnet-87654321"
 ```
 
-**보안 그룹 체인**:
+**3-3. Application Load Balancer 생성**:
+```bash
+# ALB 생성
+aws elbv2 create-load-balancer \
+  --name cloudmart-alb \
+  --subnets subnet-12345678 subnet-87654321 \
+  --security-groups sg-12345678
+
+# Target Group 생성
+aws elbv2 create-target-group \
+  --name cloudmart-tg \
+  --protocol HTTP \
+  --port 80 \
+  --vpc-id vpc-12345678 \
+  --health-check-path /health
+```
+
+**Phase 3 효과 측정**:
+```markdown
+### Before (수동 스케일링)
+- 트래픽 급증 대응: 30분
+- 가용성: 99.5% (단일 인스턴스)
+- 확장 작업: 수동
+
+### After (ALB + ASG)
+- 트래픽 급증 대응: 5분 (자동)
+- 가용성: 99.9% (Multi-AZ)
+- 확장 작업: 자동
+
+### ROI 계산
+- 비용 증가: +$100/월 (ALB + 추가 인스턴스)
+- 다운타임 감소: 20분/월 × $100/분 = $200/월
+- 대응 시간 절약: 2시간/월 × $50/시간 = $100/월
+- 순 효과: +$200/월 ✅
+
+### 의사결정: 팀 상황에 따라 Phase 4 검토
+```
+
+### Phase 4: 컨테이너 오케스트레이션 (5분)
+
+**목표**: ECS Fargate로 완전 Managed 컨테이너 전환
+
+**변경 작업**:
+
+**4-1. ECS 클러스터 생성**:
+```bash
+# ECS 클러스터 생성
+aws ecs create-cluster --cluster-name cloudmart-cluster
+```
+
+**4-2. Task Definition 작성**:
+```json
+{
+  "family": "cloudmart-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "containerDefinitions": [{
+    "name": "cloudmart-backend",
+    "image": "cloudmart/backend:latest",
+    "portMappings": [{
+      "containerPort": 3000,
+      "protocol": "tcp"
+    }],
+    "environment": [
+      {"name": "DB_HOST", "value": "cloudmart-db.cluster-xyz.ap-northeast-2.rds.amazonaws.com"}
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/cloudmart",
+        "awslogs-region": "ap-northeast-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }]
+}
+```
+
+**Phase 4 효과 측정**:
+```markdown
+### Before (EC2 + Docker Compose)
+- 서버 관리: 필요 (패치, 모니터링)
+- 배포: docker-compose up (5분)
+- 확장: 수동 인스턴스 추가
+
+### After (ECS Fargate)
+- 서버 관리: 불필요 (서버리스)
+- 배포: ECS 서비스 업데이트 (2분)
+- 확장: 자동 태스크 스케일링
+
+### ROI 계산
+- 비용 증가: +$150/월 (Fargate 프리미엄)
+- 운영 시간 절약: 4시간/월 × $50/시간 = $200/월
+- 배포 시간 단축: 3분 × 20회/월 × $1/분 = $60/월
+- 순 효과: +$110/월 ⚠️
+
+### 의사결정: 팀 규모와 복잡도에 따라 결정
+- 소규모 팀: Docker Compose 유지 권장
+- 대규모 팀: ECS 전환 고려
+```
+
+---
+
+## 📊 전체 마이그레이션 효과 종합
+
+### 누적 효과 분석
+
 ```mermaid
-graph LR
-    A[인터넷<br/>0.0.0.0/0] --> B[ALB-SG<br/>80, 443]
-    B --> C[Backend-SG<br/>8080]
-    C --> D[RDS-SG<br/>5432]
-    C --> E[Redis-SG<br/>6379]
+graph TB
+    subgraph "Phase별 누적 효과"
+        A[Phase 0<br/>Docker Compose<br/>$0/월]
+        B[Phase 1<br/>+ CloudWatch<br/>+$111/월]
+        C[Phase 2<br/>+ RDS/ElastiCache<br/>+$581/월]
+        D[Phase 3<br/>+ ALB/ASG<br/>+$781/월]
+        E[Phase 4<br/>+ ECS<br/>+$891/월]
+    end
     
-    F[회사 IP] --> G[Bastion-SG<br/>22]
-    G --> C
+    A --> B --> C --> D --> E
     
     style A fill:#ffebee
     style B fill:#fff3e0
     style C fill:#e8f5e8
     style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#e3f2fd
+    style E fill:#e3f2fd
+```
+
+### 실무 의사결정 가이드
+
+**팀 규모별 권장 구성**:
+| 팀 규모 | 권장 Phase | 이유 |
+|---------|-----------|------|
+| **1-3명** | Phase 1-2 | 비용 효율성 우선, 운영 부담 최소화 |
+| **4-10명** | Phase 1-3 | 확장성 필요, Auto Scaling 효과 |
+| **10명+** | Phase 1-4 | 완전 자동화, 개발 생산성 우선 |
+
+**트래픽 규모별 권장 구성**:
+| DAU | 권장 Phase | 핵심 이유 |
+|-----|-----------|----------|
+| **< 1만** | Phase 1-2 | 고정 비용 최소화 |
+| **1-10만** | Phase 1-3 | Auto Scaling 필요성 |
+| **10만+** | Phase 1-4 | 완전 자동화 필수 |
+
+---
+
+## 🎯 핵심 인사이트
+
+### "완벽한 아키텍처는 없다, 상황에 맞는 최적 아키텍처만 있다"
+
+**핵심 메시지**:
+```mermaid
+graph LR
+    A[기술 선택] --> B{우리 상황}
+    B --> C[팀 규모]
+    B --> D[트래픽 규모]
+    B --> E[예산 제약]
+    B --> F[기술 역량]
+    
+    C --> G[최적 Phase 선택]
+    D --> G
+    E --> G
+    F --> G
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
     style G fill:#e8f5e8
 ```
 
-**보안 강화 체크리스트**:
-- [ ] RDS는 Private Subnet에만 배치
-- [ ] DB 포트(5432)는 Backend SG에서만 접근
-- [ ] SSH(22)는 Bastion을 통해서만 접근
-- [ ] 모든 통신은 암호화 (TLS/SSL)
-- [ ] 불필요한 포트는 모두 차단
+### 실무 적용 원칙
 
-### 🔍 개념 3: 백업 전략 & 재해 복구 (11분)
+**1. 데이터 기반 의사결정**:
+- 감정이나 트렌드가 아닌 ROI 계산
+- 각 Phase별 정량적 효과 측정
+- 비용 대비 효과 명확히 산정
 
-> **정의**: 데이터 손실 방지 및 장애 발생 시 신속한 복구를 위한 계획
+**2. 점진적 접근**:
+- Big Bang 마이그레이션 지양
+- 단계별 위험 분산
+- 언제든 중단 가능한 유연성
 
-**3-2-1 백업 규칙**:
-```mermaid
-graph TB
-    A[원본 데이터] --> B[백업 복사본 3개]
-    B --> C1[복사본 1<br/>EBS 스냅샷]
-    B --> C2[복사본 2<br/>RDS 자동 백업]
-    B --> C3[복사본 3<br/>S3 수동 백업]
-    
-    C1 --> D[2가지 다른<br/>저장 매체]
-    C2 --> D
-    
-    C3 --> E[1개는 오프사이트<br/>다른 리전]
-    
-    style A fill:#4caf50
-    style B fill:#fff3e0
-    style C1 fill:#e8f5e8
-    style C2 fill:#e8f5e8
-    style C3 fill:#e8f5e8
-    style D fill:#e3f2fd
-    style E fill:#ffebee
-```
+**3. 팀 역량 고려**:
+- 새 기술 학습 여유 확인
+- 현재 업무 부하 고려
+- 기술 부채 상황 점검
 
-**CloudMart 백업 전략**:
-```yaml
-# 1. RDS 자동 백업
-Automated Backup:
-  Retention Period: 7 days
-  Backup Window: 03:00-04:00 (새벽)
-  Point-in-Time Recovery: Enabled (5분 단위)
-  
-Manual Snapshot:
-  Frequency: 주 1회 (일요일)
-  Retention: 30 days
-  Cross-Region Copy: ap-northeast-1 (도쿄)
+**4. 비즈니스 우선순위**:
+- 성장 vs 안정성 vs 비용 효율
+- 단기 vs 장기 목표
+- 경쟁 우위 요소 식별
 
-# 2. EBS 스냅샷
-Snapshot Schedule:
-  Frequency: 일 1회 (새벽 2시)
-  Retention: 7 days
-  Lifecycle Policy: 7일 후 자동 삭제
-
-# 3. S3 버전 관리
-Versioning: Enabled
-Lifecycle Policy:
-  - Current Version: 30 days
-  - Previous Versions: 90 days
-  - Glacier: 1 year
-  - Delete: 2 years
-
-# 4. 애플리케이션 코드
-Git Repository:
-  - GitHub (Primary)
-  - GitLab (Mirror)
-  - S3 (Backup)
-```
-
-**재해 복구 시나리오**:
-```yaml
-# 시나리오 1: RDS 장애
-Problem: RDS Primary 장애
-Solution:
-  1. Multi-AZ 자동 Failover (1-2분)
-  2. Standby가 Primary로 승격
-  3. 애플리케이션 자동 재연결
-Recovery Time: 2분
-Data Loss: 0 (동기 복제)
-
-# 시나리오 2: 전체 AZ 장애
-Problem: ap-northeast-2a 전체 장애
-Solution:
-  1. ALB가 ap-northeast-2b로 트래픽 전환
-  2. ASG가 ap-northeast-2b에 새 인스턴스 생성
-  3. RDS Standby가 Primary로 승격
-Recovery Time: 5-10분
-Data Loss: 0
-
-# 시나리오 3: 데이터 손상
-Problem: 잘못된 쿼리로 데이터 삭제
-Solution:
-  1. RDS Point-in-Time Recovery
-  2. 삭제 직전 시점으로 복원
-  3. 새 RDS 인스턴스 생성
-  4. 애플리케이션 연결 변경
-Recovery Time: 30분
-Data Loss: 최대 5분
-
-# 시나리오 4: 리전 전체 장애
-Problem: ap-northeast-2 전체 장애 (극히 드묾)
-Solution:
-  1. Route 53 Failover to ap-northeast-1
-  2. Cross-Region RDS Replica 승격
-  3. S3 Cross-Region Replication 활용
-Recovery Time: 1-2시간
-Data Loss: 최대 15분 (비동기 복제)
-```
-
-**RPO & RTO 목표**:
-```yaml
-CloudMart 목표:
-  RPO (Recovery Point Objective):
-    - Critical Data (주문, 결제): 0분 (동기 복제)
-    - User Data (프로필): 5분 (Point-in-Time)
-    - Logs: 15분 (비동기 복제)
-  
-  RTO (Recovery Time Objective):
-    - AZ 장애: 5분
-    - 데이터 손상: 30분
-    - 리전 장애: 2시간
-```
-
-## 💭 함께 생각해보기 (10분)
-
-### 🤝 페어 토론 (5분)
-
-**토론 주제**:
-1. **보안 vs 편의성**: "모든 포트를 막으면 안전하지만 불편해요. 어떻게 균형을 맞출까요?"
-2. **백업 비용**: "백업을 많이 하면 안전하지만 비용이 늘어나요. 적정선은?"
-3. **재해 복구 테스트**: "재해 복구 계획을 어떻게 테스트할 수 있을까요?"
-
-**페어 활동 가이드**:
-- 👥 **자유 페어링**: 보안 관심사가 비슷한 사람끼리
-- 🔄 **역할 교대**: 3분씩 설명자/질문자 역할 바꾸기
-- 📝 **핵심 정리**: 보안 체크리스트 작성
-
-### 🎯 전체 공유 (5분)
-
-**인사이트 공유**:
-- 페어 토론에서 나온 보안 전략
-- 실무에서 겪은 보안 사고 경험
-- 효과적인 백업 및 복구 방법
-
-**💡 이해도 체크 질문**:
-- ✅ "IAM Role과 Security Group의 차이는 무엇인가요?"
-- ✅ "3-2-1 백업 규칙은 무엇인가요?"
-- ✅ "RPO와 RTO의 차이는 무엇인가요?"
+---
 
 ## 🔑 핵심 키워드
 
-### 🆕 새로운 용어
-- **IAM (Identity and Access Management)**: AWS 리소스 접근 권한 관리
-- **Least Privilege**: 최소 권한 원칙 - 필요한 권한만 부여
-- **Defense in Depth**: 다층 방어 - 여러 보안 계층 구축
+### 새로운 용어
+- **점진적 마이그레이션**: Incremental Migration - 단계별 시스템 전환 방식
+- **Big Bang 마이그레이션**: 한 번에 전체 시스템을 전환하는 고위험 방식
+- **ROI 기반 의사결정**: 투자 대비 수익률을 기준으로 한 기술 선택
 
-### 🔧 중요 개념
-- **RPO (Recovery Point Objective)**: 데이터 손실 허용 시간
-- **RTO (Recovery Time Objective)**: 복구 목표 시간
-- **Point-in-Time Recovery**: 특정 시점으로 데이터 복원
+### 중요 개념
+- **Phase별 효과 측정**: 각 단계의 정량적 성과 평가
+- **위험 분산**: 단계별로 위험을 나누어 관리
+- **상황별 최적화**: 팀과 비즈니스 상황에 맞는 기술 선택
 
-### 💼 실무 용어
-- **Bastion Host**: 외부에서 Private 리소스 접근을 위한 점프 서버
-- **Secrets Manager**: 비밀번호, API 키 등 민감 정보 안전 저장
-- **Cross-Region Replication**: 다른 리전으로 데이터 복제
+### 실무 용어
+- **Rollback Plan**: 롤백 계획 - 문제 발생 시 이전 상태로 복구하는 방법
+- **Migration Window**: 마이그레이션 윈도우 - 시스템 전환 작업 시간
+- **Cutover**: 컷오버 - 기존 시스템에서 새 시스템으로 전환하는 순간
 
-## 📝 세션 마무리
+---
 
-### ✅ 오늘 세션 성과
-- **보안 설계**: IAM 정책 및 보안 그룹 최적 구성 방법 습득
-- **백업 전략**: 3-2-1 백업 규칙 및 자동화 방법 이해
-- **재해 복구**: 다양한 장애 시나리오별 대응 계획 수립
+## 📝 Session 마무리
 
-### 🎯 점심 후 실습 준비
-- **Lab 1**: CloudMart 전체 인프라 구축 (14:00-14:50)
-- **Challenge**: 프로덕션급 완성도로 배포 (15:00-15:50)
-- **준비사항**: 오전 4개 세션 내용 복습
+### ✅ 오늘 Session 성과
 
-### 🔗 실습 연계
-- **Lab 1**: 오늘 배운 보안 설정을 실제로 적용
-- **Challenge**: 백업 및 모니터링까지 완전한 시스템 구축
+**실습 성과**:
+- [ ] CloudMart 4단계 점진적 마이그레이션 완료
+- [ ] 각 Phase별 ROI 계산 및 효과 측정
+- [ ] 데이터 기반 의사결정 프로세스 경험
+- [ ] 팀 상황별 최적 구성 도출
+
+**인식 변화**:
+- [ ] "한 번에 다 바꿔야 한다" 편견 해소
+- [ ] "AWS Native = 무조건 좋다" 맹신 탈피
+- [ ] 상황별 최적 기술 선택 능력 향상
+- [ ] 비용 대비 효과 중심 사고 습관화
+
+### 🎯 Week 5 전체 완성
+
+**Week 5 Day 5 전체 여정**:
+```mermaid
+graph LR
+    A[Session 1<br/>MVP + Pain Point] --> B[Session 2<br/>Docker Compose 실력]
+    B --> C[Session 3<br/>관측성 완전체]
+    C --> D[Session 4<br/>점진적 마이그레이션]
+    
+    A --> A1[문제 경험]
+    B --> B1[대안 인식]
+    C --> C1[직접 구축]
+    D --> D1[현실적 선택]
+    
+    style A fill:#ffebee
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#e3f2fd
+```
+
+**핵심 학습 성과**:
+- **Session 1**: 문제를 먼저 경험하는 것의 중요성
+- **Session 2**: Docker Compose의 진짜 실력과 가치
+- **Session 3**: 완전한 관측성 스택 구축 경험
+- **Session 4**: 현실적이고 데이터 기반의 마이그레이션
+
+### 🚀 다음 단계 준비
+
+**기본 프로젝트 (4주) 준비**:
+- 오늘 학습한 점진적 접근법 적용
+- Docker Compose 기반 MVP 구축
+- 실제 Pain Point 경험 및 문서화
+- 팀 상황에 맞는 기술 스택 선택
+
+**실무 적용 계획**:
+- 현재 회사/프로젝트에 적용 가능한 Phase 식별
+- ROI 계산 템플릿 활용한 제안서 작성
+- 점진적 마이그레이션 계획 수립
+
+---
+
+## 🔗 참고 자료
+
+### 📚 복습 자료
+- [AWS 마이그레이션 전략 가이드](https://aws.amazon.com/cloud-migration/)
+- [점진적 마이그레이션 베스트 프랙티스](https://aws.amazon.com/blogs/enterprise-strategy/6-strategies-for-migrating-applications-to-the-cloud/)
+
+### 📖 심화 학습
+- [Strangler Fig 패턴](https://martinfowler.com/bliki/StranglerFigApplication.html)
+- [마이크로서비스 마이그레이션 전략](https://microservices.io/patterns/refactoring/)
+
+### 💡 실무 참고
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+- [클라우드 경제학 가이드](https://aws.amazon.com/economics/)
+
+### 🛠️ 도구 및 템플릿
+- [AWS 마이그레이션 평가 도구](https://aws.amazon.com/migration-evaluator/)
+- [ROI 계산 스프레드시트 템플릿](https://calculator.aws/)
+
+---
+
+## 💭 함께 생각해보기 (10분)
+
+### 🤝 팀 토론 (5분)
+
+**토론 주제**: "우리 팀이라면 어느 Phase까지 갈 것인가?"
+
+**팀 구성**: 3-4명씩 그룹
+**토론 가이드**:
+1. **현재 상황 가정** (1분):
+   - 팀 규모: 5명
+   - 서비스: DAU 3만명
+   - 예산: 월 $1,000 한도
+   
+2. **Phase별 검토** (3분):
+   - Phase 1: ROI +$111/월 → 진행 여부?
+   - Phase 2: ROI +$470/월 → 진행 여부?
+   - Phase 3: ROI +$200/월 → 진행 여부?
+   - Phase 4: ROI +$110/월 → 진행 여부?
+   
+3. **최종 결정** (1분):
+   - 어느 Phase에서 멈출 것인가?
+   - 그 이유는 무엇인가?
+
+### 🎯 전체 공유 (5분)
+
+**공유 질문**:
+1. **최종 선택**: "어느 Phase까지 가기로 했나요?"
+2. **결정 이유**: "가장 중요한 판단 기준은 무엇이었나요?"
+3. **현실 적용**: "실제 회사에서도 이렇게 결정하시겠어요?"
+
+**예상 답변**:
+- "Phase 2까지만. 데이터베이스 자동화가 가장 중요해요"
+- "Phase 3까지. Auto Scaling은 필수라고 생각해요"
+- "ROI보다 팀 학습 역량을 더 고려했어요"
+
+### 💡 이해도 체크 질문
+
+- ✅ "점진적 마이그레이션의 장점 3가지를 설명할 수 있나요?"
+- ✅ "각 Phase별 ROI 계산 방법을 이해했나요?"
+- ✅ "우리 상황에 맞는 최적 Phase를 선택할 수 있나요?"
 
 ---
 
 <div align="center">
 
-**🔐 보안 강화 완료** • **💾 백업 전략 수립** • **🔄 재해 복구 준비**
+**🔄 점진적 마이그레이션** • **📊 데이터 기반 의사결정** • **🎯 상황별 최적화**
 
-*점심 후 실습에서 CloudMart를 완전히 배포해보겠습니다!*
+*완벽한 아키텍처는 없다, 상황에 맞는 최적 아키텍처만 있다*
 
 </div>
