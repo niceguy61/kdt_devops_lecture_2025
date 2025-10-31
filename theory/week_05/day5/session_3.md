@@ -1028,6 +1028,28 @@ graph TB
     style P fill:#fff3e0
 ```
 
+### DORA Metrics 기준 전환 시점
+
+**배포 빈도 기준**:
+- **주 1회 미만**: Docker Compose 유지 (수동 측정으로 충분)
+- **주 1-3회**: Four Keys 도입 고려 (자동화 효과 시작)
+- **일 1회 이상**: AWS 전환 권장 (완전 자동화 필요)
+
+**팀 성숙도 기준**:
+- **DORA 측정 안 함**: Docker Compose 유지
+- **DORA 측정 시작**: Four Keys 도입
+- **DORA 개선 집중**: AWS 전환 고려
+- **DevOps 성숙**: AWS Native 권장
+
+**실무 의사결정 매트릭스**:
+| DORA 지표 | Docker Compose | Four Keys | AWS Native |
+|-----------|---------------|-----------|------------|
+| **Deployment Frequency** | < 주 1회 | 주 1-5회 | 일 1회+ |
+| **Lead Time** | > 1주 | 1일-1주 | < 1일 |
+| **Change Failure Rate** | 측정 안 함 | > 15% | < 15% |
+| **Time to Restore** | > 1일 | 1시간-1일 | < 1시간 |
+| **팀 우선순위** | 기능 개발 | DevOps 개선 | 운영 자동화 |
+
 ### 점진적 전환 전략
 
 **Phase 1: 모니터링만 AWS (1-2주)**
@@ -1238,19 +1260,25 @@ sequenceDiagram
 **페어 활동 가이드**:
 1. **기본 스택 실행** (2분):
    ```bash
-   # 관측성 스택 실행
+   # 관측성 + DORA 스택 실행
    cd observability-stack
-   docker-compose up -d prometheus grafana
+   docker-compose -f observability-with-dora.yml up -d
    
    # 접속 확인
    curl http://localhost:9090  # Prometheus
    curl http://localhost:3000  # Grafana (admin/admin)
+   curl http://localhost:8080  # Four Keys DORA Dashboard
    ```
 
 2. **설정 파일 작성** (2분):
    ```bash
    # Prometheus 설정 확인
    cat config/prometheus.yml
+   
+   # DORA Metrics 확인
+   export GITHUB_TOKEN=demo_token
+   curl http://localhost:8080/api/dora-metrics
+   # → GitHub 연동 없이는 데모 데이터만 표시
    
    # 새 서비스 추가 시도
    # → 설정 파일 수정 필요성 체감
@@ -1260,6 +1288,9 @@ sequenceDiagram
    ```bash
    # Grafana에서 대시보드 생성
    # → PromQL 쿼리 작성의 어려움 체감
+   
+   # Four Keys에서 DORA 메트릭 확인
+   # → 자동 수집의 편리함 체감
    ```
 
 ### 🎯 전체 공유 (5분)
@@ -1267,17 +1298,22 @@ sequenceDiagram
 **공유 질문**:
 1. **설정 복잡도**: "Prometheus 설정이 얼마나 복잡했나요?"
 2. **학습 곡선**: "PromQL 쿼리 작성이 어려웠나요?"
-3. **AWS 가치**: "이제 CloudWatch가 왜 비싼지 이해되나요?"
+3. **DORA 자동화**: "Four Keys로 DORA 메트릭을 자동으로 볼 수 있어서 어땠나요?"
+4. **AWS 가치**: "이제 CloudWatch가 왜 비싼지 이해되나요?"
 
 **예상 답변**:
 - "설정 파일 하나 만드는데 30분 걸렸어요"
 - "PromQL 문법이 SQL보다 어려워요"
+- "DORA 메트릭을 수동으로 계산하는 게 얼마나 번거로운지 알겠어요"
+- "Four Keys 같은 도구가 있어도 GitHub 연동 설정이 복잡하네요"
 - "이제 CloudWatch 비용이 합리적으로 느껴져요"
 
 ### 💡 이해도 체크 질문
 
 - ✅ "관측성 3대 요소를 설명할 수 있나요?"
+- ✅ "DORA 4대 지표가 무엇인지 말할 수 있나요?"
 - ✅ "Docker Compose 관측성 스택의 한계를 3가지 이상 말할 수 있나요?"
+- ✅ "Four Keys와 AWS CodePipeline의 차이점을 설명할 수 있나요?"
 - ✅ "언제 AWS로 전환해야 하는지 판단 기준을 설명할 수 있나요?"
 
 ---
