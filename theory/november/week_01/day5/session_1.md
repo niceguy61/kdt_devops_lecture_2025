@@ -65,7 +65,7 @@
 
 **🔧 Route 53 DNS 조회 흐름**:
 
-![Route 53 DNS Flow](./generated-diagrams/route53_dns.png)
+![Route 53 DNS Flow](./generated-diagrams/route53_dns_flow.png)
 
 *그림: Route 53 DNS 조회 흐름 - 사용자 요청부터 IP 반환까지*
 
@@ -160,6 +160,11 @@ TTL 3600초 (1시간):
 ```
 
 **Health Check 동작**:
+
+![Route 53 Health Check](./generated-diagrams/route53_health_check.png)
+
+*그림: Route 53 Health Check - Primary/Secondary 서버 상태 확인*
+
 ```mermaid
 graph TB
     subgraph "Route 53 Health Check"
@@ -180,6 +185,11 @@ graph TB
 ```
 
 **라우팅 정책 비교**:
+
+![Route 53 Routing Policies](./generated-diagrams/route53_routing_policies.png)
+
+*그림: Route 53 라우팅 정책 - Simple, Weighted, Latency, Failover*
+
 ```
 Simple:
   - 단일 리소스
@@ -227,6 +237,11 @@ Geoproximity:
 ```
 
 **2. 글로벌 서비스**:
+
+![Route 53 Latency Routing](./generated-diagrams/route53_latency_routing.png)
+
+*그림: Latency-based 라우팅 - 지역별 최적 서버 자동 연결*
+
 ```
 시나리오: 동영상 스트리밍
 - 한국 사용자 → ap-northeast-2 (서울)
@@ -236,6 +251,11 @@ Geoproximity:
 ```
 
 **3. 고가용성 아키텍처**:
+
+![Route 53 Failover Routing](./generated-diagrams/route53_failover_routing.png)
+
+*그림: Failover 라우팅 - Primary/Secondary 자동 전환*
+
 ```
 시나리오: 금융 서비스
 - Primary: ap-northeast-2 (서울)
@@ -245,6 +265,11 @@ Failover: 자동 전환
 ```
 
 **4. A/B 테스트**:
+
+![Route 53 Weighted Routing](./generated-diagrams/route53_weighted_routing.png)
+
+*그림: Weighted 라우팅 - 트래픽 비율 조정 (70% vs 30%)*
+
 ```
 시나리오: 신규 기능 테스트
 - 기존 버전: 70% 트래픽
@@ -290,6 +315,12 @@ Failover: 자동 전환
 | **Zone Apex** | ✅ 가능 | ❌ 불가능 | ✅ 가능 |
 | **TTL** | 설정 가능 | 설정 가능 | Route 53 관리 |
 | **Health Check** | ✅ 가능 | ✅ 가능 | ✅ 가능 |
+
+**레코드 타입 비교**:
+
+![Route 53 Record Types](./generated-diagrams/route53_record_types.png)
+
+*그림: Route 53 레코드 타입 - A, ALIAS, CNAME 비교*
 
 **선택 기준**:
 
