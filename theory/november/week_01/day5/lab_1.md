@@ -220,7 +220,7 @@ Route 53에서 직접 구매:
 ```mermaid
 graph TB
     subgraph "기존 도메인 보유 시 (권장)"
-        A1[GoDaddy/Namecheap<br/>기존 도메인]
+        A1[GoDaddy/Namecheap/Cafe24<br/>기존 도메인]
         A2[Route 53<br/>Hosted Zone 생성]
         A3[NS 레코드 4개<br/>확인]
         A4[도메인 업체에서<br/>네임서버만 변경]
@@ -230,7 +230,7 @@ graph TB
     end
     
     subgraph "Route 53 도메인 구매 시"
-        B1[Route 53<br/>도메인 구매]
+        B1[Route 53<br/>도메인 구매<br/>$12/year]
         B2[자동으로<br/>호스팅 존 생성]
         B3[네임서버<br/>자동 설정]
         
@@ -247,13 +247,21 @@ graph TB
     style B3 fill:#e8f5e8
 ```
 
-**네임서버 변경 흐름**:
+**네임서버 변경 흐름 (기존 도메인)**:
 ```
 기존 도메인 → Route 53 호스팅 존 생성
-           → NS 레코드 확인
-           → 도메인 업체에서 NS 변경
-           → DNS 전파 대기
-           → 완료!
+           → NS 레코드 4개 확인
+           → 도메인 업체에서 NS만 변경
+           → DNS 전파 대기 (1-2시간)
+           → 완료! (추가 비용 없음)
+```
+
+**Route 53 구매 흐름**:
+```
+Route 53 도메인 구매 → 자동 호스팅 존 생성
+                   → 자동 NS 설정
+                   → 즉시 사용 가능
+                   → 비용: $12/년
 ```
 
 ### 🔗 참조 개념
