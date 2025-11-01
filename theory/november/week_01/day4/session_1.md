@@ -230,6 +230,11 @@ ELB (Multi-AZ)
 
 **3. Health Check**:
 - 역할: 타겟 정상 여부 확인
+
+![Health Check Process](./generated-diagrams/generated-diagrams/health_check_process.png)
+
+*그림: Health Check 프로세스 - 정상 타겟에만 트래픽 전송*
+
 - 설정:
   - Protocol: HTTP, HTTPS, TCP
   - Path: /health (예시)

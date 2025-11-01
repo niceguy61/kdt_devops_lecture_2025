@@ -182,6 +182,11 @@
 
 **1. Launch Template**:
 - 역할: 인스턴스 생성 템플릿
+
+![Launch Template](./generated-diagrams/generated-diagrams/launch_template.png)
+
+*그림: Launch Template 구조 - ASG가 사용하는 인스턴스 템플릿*
+
 - 포함 내용:
   - AMI ID
   - Instance Type
