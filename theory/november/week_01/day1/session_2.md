@@ -42,6 +42,12 @@
 
 *그림: EC2 인스턴스를 중심으로 한 기본 AWS 아키텍처*
 
+**EC2 구성 요소**:
+
+![EC2 구성 요소](./generated-diagrams/nw1d1s2_ec2_components.png)
+
+*그림: EC2 인스턴스의 핵심 구성 요소 - Hypervisor부터 Storage까지*
+
 ```
 EC2 인스턴스
 ├── Hypervisor (Xen/Nitro)
