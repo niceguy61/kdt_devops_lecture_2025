@@ -77,7 +77,7 @@ S3
 
 **스토리지 클래스 비교**:
 
-![S3 스토리지 클래스](./generated-diagrams/nw1d2s2_storage_classes.png)
+![S3 스토리지 클래스](./generated-diagrams/diagram_58f5f3ab.png)
 
 *그림: 접근 빈도와 비용에 따른 스토리지 클래스 선택*
 
