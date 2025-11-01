@@ -41,13 +41,13 @@ graph TB
         end
         
         subgraph "Application Load Balancer"
-            ALB[⚖️ ALB<br/>HTTPS:443]
+            ALB[⚖️ ALB<br/>Listener HTTPS:443]
             ACM[🔒 ACM Certificate<br/>FREE<br/>Auto Renewal]
             ALB -.SSL/TLS.- ACM
         end
         
         subgraph "Target Group"
-            TG[🎯 Target Group<br/>Port 3000<br/>Health Check]
+            TG[🎯 Target Group<br/>Protocol: HTTP<br/>Port: 3000<br/>Health Check: /]
         end
         
         subgraph "EC2 Instance"
@@ -60,12 +60,12 @@ graph TB
         end
     end
     
-    USER -->|DNS Query| R53
-    R53 -->|ALIAS| ALB
-    ALB -->|HTTP| TG
-    TG -->|Forward| FRONT
-    FRONT -->|API Call| BACK
-    BACK -->|Query| DB
+    USER -->|1. HTTPS Request| R53
+    R53 -->|2. ALIAS| ALB
+    ALB -->|3. SSL Termination| TG
+    TG -->|4. HTTP:3000| FRONT
+    FRONT -->|5. API Call :4000| BACK
+    BACK -->|6. Query :5432| DB
     SG -.Protect.- FRONT
     
     style USER fill:#e3f2fd
@@ -79,23 +79,32 @@ graph TB
     style SG fill:#e8f5e8
 ```
 
-**트래픽 흐름**:
+**트래픽 흐름 (상세)**:
 ```
-1. User → Route 53 (DNS 조회)
+1. User → Route 53 (DNS 조회: example.com)
 2. Route 53 → ALB (ALIAS 레코드, 무료)
-3. ALB → ACM (SSL/TLS 인증서 검증)
-4. ALB → Target Group (Health Check)
-5. Target Group → EC2:3000 (Frontend)
+3. ALB Listener HTTPS:443 → SSL/TLS 종료 (ACM 인증서)
+4. ALB → Target Group (HTTP:3000으로 전달)
+5. Target Group → EC2:3000 (Frontend 컨테이너)
 6. Frontend → Backend:4000 (API 호출)
 7. Backend → Database:5432 (데이터 조회)
 ```
 
+**포트 매핑**:
+```
+External (Internet) → ALB:443 (HTTPS)
+ALB → Target Group:3000 (HTTP)
+Target Group → EC2:3000 (Frontend Container)
+Frontend → Backend:4000 (Internal)
+Backend → Database:5432 (Internal)
+```
+
 **보안 계층**:
 ```
-🔒 HTTPS (443) → ACM Certificate
-🔐 Security Group → ALB (80, 443)
-🔐 Security Group → EC2 (22, 3000, 4000)
-🔐 Docker Network → Internal Communication
+🔒 HTTPS (443) → ACM Certificate (SSL/TLS 종료)
+🔐 Security Group (ALB) → 80, 443 허용
+🔐 Security Group (EC2) → 22 (SSH), 3000 (from ALB), 4000 (from ALB)
+🔐 Docker Network → Internal Communication (5432)
 ```
 
 **사용된 AWS 서비스**:
