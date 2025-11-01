@@ -52,7 +52,7 @@ Read Replica (AZ-C) - 읽기 전용
 
 **작동 원리**:
 
-![RDS Failover Process](./generated-diagrams/diagram_c3583dba.png)
+![RDS Failover Process](./generated-diagrams/diagram_ccf325fa.png)
 
 *그림: RDS Multi-AZ 자동 Failover 프로세스*
 
