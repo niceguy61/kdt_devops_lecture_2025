@@ -116,38 +116,111 @@ aws___read_documentation(url)
 - 표준 색상 팔레트 사용
 - **개념에 가장 적합한 차트 타입 선택**
 
-#### 📊 Mermaid 차트 타입별 활용 가이드
+---
 
-##### 1. **Architecture Diagram** (아키텍처 구조)
-```mermaid
-architecture-beta
-    group cloud(cloud)[AWS Cloud]
-    service web(server)[Web Server] in cloud
-    service db(database)[Database] in cloud
-    service cache(disk)[Cache] in cloud
+### 4순위: generate_diagram MCP (Python Diagrams)
+
+**MCP 도구**: `generate_diagram`, `list_icons`, `get_diagram_examples`
+
+#### ⚠️ 필수 규칙
+
+**1. 한글 사용 금지**
+- Python diagrams 라이브러리는 한글 폰트 미지원
+- 모든 라벨, 클러스터명, 노드명은 **영어로만** 작성
+- 한글 설명은 마크다운 문서에 별도 작성
+
+**2. 여백 최소화 (필수)**
+- 모든 다이어그램에 `graph_attr` 설정 포함
+- TB 방향: `graph_attr={"pad": "0.1", "nodesep": "0.3", "ranksep": "0.3"}`
+- LR 방향: `graph_attr={"pad": "0.1", "nodesep": "0.3", "ranksep": "0.5"}`
+
+#### 사용 방법
+
+```python
+# 1. 사용 가능한 아이콘 확인
+list_icons(provider_filter="aws")
+
+# 2. 예제 코드 확인
+get_diagram_examples(diagram_type="aws")
+
+# 3. 다이어그램 생성 (필수 설정 포함)
+generate_diagram(code="""
+with Diagram("AWS Architecture", show=False, direction="LR", 
+             graph_attr={"pad": "0.1", "nodesep": "0.3", "ranksep": "0.5"}):
+    users = Users("Users")  # 영어만 사용
     
-    web:R -- L:db
-    web:B -- T:cache
+    with Cluster("AWS Cloud"):  # 영어만 사용
+        with Cluster("VPC"):
+            ec2 = EC2("Web Server")  # 영어만 사용
+            rds = RDS("Database")    # 영어만 사용
+    
+    users >> ec2 >> rds
+""", workspace_dir="/path/to/workspace", filename="architecture")
 ```
 
-**사용 시기**:
-- 시스템 아키텍처 설명
-- 인프라 구조 표현
-- 서비스 간 물리적 배치
+#### 올바른 예시 ✅
 
-**⚠️ 중요 규칙**:
-- **특수문자 금지**: `:`, `-`, `/` 등 특수문자 사용 금지
-- **대괄호 내 텍스트**: 영문 또는 한글만 사용, 특수문자 제거
-- **간결한 이름**: 긴 이름은 축약 (Internet Gateway → IGW)
-- **IP 주소 제거**: 가독성을 위해 IP 주소는 별도 설명으로
+```python
+# TB 방향 - 세로 배치
+with Diagram("AWS Global Infrastructure", show=False, direction="TB",
+             graph_attr={"pad": "0.1", "nodesep": "0.3", "ranksep": "0.3"}):
+    users = Users("Global Users")
+    dns = Route53("Route 53 DNS")
+    
+    with Cluster("Region: Seoul"):
+        with Cluster("AZ-A"):
+            ec2_a = EC2("EC2")
+            rds_a = RDS("RDS Primary")
 
-**올바른 예시**:
-```mermaid
-architecture-beta
-    group vpc(cloud)[VPC]
-    group aza(cloud)[AZ A] in vpc
-    service ec2(server)[EC2 Web] in aza
+# LR 방향 - 가로 배치
+with Diagram("Multi-AZ Architecture", show=False, direction="LR",
+             graph_attr={"pad": "0.1", "nodesep": "0.3", "ranksep": "0.5"}):
+    users = Users("Users")
+    lb = ELB("Load Balancer")
+    
+    with Cluster("AZ-A"):
+        web_a = EC2("Web Server")
 ```
+
+#### 잘못된 예시 ❌
+
+```python
+# ❌ 한글 사용
+with Diagram("AWS 아키텍처", show=False):  # 한글 깨짐
+    users = Users("사용자")  # 한글 깨짐
+    ec2 = EC2("웹 서버")  # 한글 깨짐
+
+# ❌ graph_attr 누락
+with Diagram("AWS Architecture", show=False):  # 여백 너무 큼
+    users = Users("Users")
+    ec2 = EC2("Web Server")
+```
+
+#### 장점
+- ✅ AWS 공식 아이콘 자동 사용
+- ✅ 프로그래밍 방식으로 정확한 다이어그램 생성
+- ✅ PNG 파일로 자동 저장
+- ✅ 여백 최소화로 깔끔한 출력
+- ✅ 복잡한 아키텍처 표현 가능
+
+#### 마크다운 문서 삽입
+
+```markdown
+### AWS 글로벌 인프라
+
+![AWS Global Infrastructure](./generated-diagrams/aws_global_infrastructure.png)
+
+*그림: AWS 글로벌 인프라 - Region, AZ, 그리고 Cross-Region 복제*
+
+**주요 구성 요소**:
+- **Route 53**: 전 세계 사용자를 가장 가까운 Region으로 라우팅
+- **Multi-AZ**: 한 AZ 장애 시 다른 AZ로 자동 전환
+- **Cross-Region 복제**: 재해 복구를 위한 다른 Region 백업
+```
+
+---
+
+### 5순위: 커스텀 SVG (복잡한 구조 필요 시)
 
 **잘못된 예시**:
 ```mermaid

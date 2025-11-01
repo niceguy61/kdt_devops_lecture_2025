@@ -67,33 +67,12 @@ AWS 글로벌 인프라
 
 ![Multi-AZ 고가용성 아키텍처](./generated-diagrams/nw1d1s1_multi_az.png)
 
-*그림: Multi-AZ 배포를 통한 고가용성 구현*
+*그림: Multi-AZ 배포를 통한 고가용성 구현 - Load Balancer가 여러 AZ의 웹 서버로 트래픽 분산*
 
-```mermaid
-graph TB
-    USER[사용자] --> CF[CloudFront<br/>Edge Location]
-    CF --> ALB[Application Load Balancer]
-    
-    subgraph "서울 Region"
-        ALB --> AZA[AZ-A<br/>웹 서버 1]
-        ALB --> AZB[AZ-B<br/>웹 서버 2]
-        ALB --> AZC[AZ-C<br/>웹 서버 3]
-        
-        AZA --> DBA[AZ-A<br/>Primary DB]
-        AZB --> DBB[AZ-B<br/>Standby DB]
-        
-        DBA -.복제.-> DBB
-    end
-    
-    style USER fill:#e3f2fd
-    style CF fill:#ff9800
-    style ALB fill:#4caf50
-    style AZA fill:#e8f5e8
-    style AZB fill:#e8f5e8
-    style AZC fill:#e8f5e8
-    style DBA fill:#2196f3
-    style DBB fill:#2196f3
-```
+**주요 특징**:
+- **자동 장애 조치**: Primary DB 장애 시 Standby로 자동 전환 (1-2분)
+- **로드 밸런싱**: ALB가 정상 AZ로만 트래픽 전송
+- **데이터 복제**: AZ 간 동기식 복제로 데이터 일관성 보장
 
 ---
 

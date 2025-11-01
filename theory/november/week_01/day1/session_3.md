@@ -113,45 +113,13 @@ graph TB
 
 **☁️ AWS 구현 예시**:
 
+![Lambda 이벤트 소스](./generated-diagrams/nw1d1s3_lambda_event_sources.png)
+
+*그림: Lambda 함수를 트리거하는 다양한 AWS 이벤트 소스*
+
 ![Lambda 서버리스 아키텍처](./generated-diagrams/nw1d1s3_lambda_architecture.png)
 
 *그림: Lambda 함수를 중심으로 한 서버리스 아키텍처*
-
-```mermaid
-graph TB
-    subgraph "Lambda 이벤트 소스"
-        S3[S3 버킷]
-        API[API Gateway]
-        DDB[DynamoDB]
-        SNS[SNS 토픽]
-        CW[CloudWatch Events]
-    end
-    
-    subgraph "Lambda 함수"
-        L1[이미지 처리]
-        L2[API 백엔드]
-        L3[데이터 변환]
-        L4[알림 전송]
-        L5[스케줄 작업]
-    end
-    
-    S3 --> L1
-    API --> L2
-    DDB --> L3
-    SNS --> L4
-    CW --> L5
-    
-    style S3 fill:#ff9800
-    style API fill:#4caf50
-    style DDB fill:#2196f3
-    style SNS fill:#9c27b0
-    style CW fill:#f44336
-    style L1 fill:#e8f5e8
-    style L2 fill:#e8f5e8
-    style L3 fill:#e8f5e8
-    style L4 fill:#e8f5e8
-    style L5 fill:#e8f5e8
-```
 
 **🔧 AWS 서비스 매핑**:
 - **이벤트 소스** → **AWS 서비스**: S3, API Gateway, DynamoDB, SNS, CloudWatch Events 등
@@ -185,25 +153,10 @@ def lambda_handler(event, context):
 ```
 
 **2단계: 실행 환경 생명주기**
-```mermaid
-sequenceDiagram
-    participant E as 이벤트 소스
-    participant L as Lambda 서비스
-    participant C as 실행 컨테이너
-    participant F as 함수 코드
-    
-    E->>L: 1. 이벤트 전송
-    L->>C: 2. 컨테이너 생성 (Cold Start)
-    C->>F: 3. 런타임 초기화
-    F->>F: 4. 함수 실행
-    F->>L: 5. 결과 반환
-    L->>E: 6. 응답 전달
-    
-    Note over C: 컨테이너 재사용 (Warm Start)
-    E->>L: 7. 다음 이벤트
-    L->>C: 8. 기존 컨테이너 재사용
-    C->>F: 9. 함수 즉시 실행
-```
+
+![Lambda 실행 흐름](./generated-diagrams/nw1d1s3_lambda_execution_flow.png)
+
+*그림: Lambda Cold Start와 Warm Start 실행 흐름*
 
 **3단계: Cold Start vs Warm Start**
 - **Cold Start**: 첫 실행 시 컨테이너 생성 (100-1000ms 지연)
