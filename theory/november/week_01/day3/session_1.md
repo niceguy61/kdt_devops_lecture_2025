@@ -52,9 +52,24 @@ Read Replica (AZ-C) - 읽기 전용
 
 **작동 원리**:
 
-![RDS Failover Process](./generated-diagrams/diagram_ccf325fa.png)
+![RDS Failover Complete Process](./generated-diagrams/diagram_73dea75f.png)
 
-*그림: RDS Multi-AZ 자동 Failover 프로세스*
+*그림: RDS Multi-AZ 완전한 Failover 프로세스 (장애 → 복구 → 역할 전환)*
+
+**Failover 전체 과정**:
+1. **정상 상태**: Primary (AZ-A) ↔ Standby (AZ-B) 동기 복제
+2. **장애 감지**: Primary 장애 발생 (30-120초 내 감지)
+3. **자동 승격**: Standby가 자동으로 Primary로 승격
+4. **DNS 전환**: RDS 엔드포인트가 새 Primary를 가리킴
+5. **기존 Primary 복구**: 자동으로 복구 시작
+6. **역할 전환**: 복구된 인스턴스가 새로운 Standby로 전환
+7. **정상화 완료**: 새 Primary (AZ-B) ↔ 새 Standby (AZ-A)
+
+**💡 핵심 포인트**:
+- ✅ **자동 복구**: 장애 인스턴스가 자동으로 복구됨
+- ✅ **역할 전환**: 복구 후 Standby로 자동 전환
+- ✅ **무중단**: 애플리케이션은 DNS 엔드포인트만 사용하면 됨
+- ✅ **데이터 무손실**: 동기 복제로 데이터 손실 없음
 
 1. **Primary DB**: 모든 쓰기 작업 처리
 2. **Standby DB**: Primary와 동기 복제 (Multi-AZ)
