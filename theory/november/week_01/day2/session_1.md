@@ -38,7 +38,7 @@
 
 **VPC 완전한 아키텍처**:
 
-![VPC 완전한 아키텍처](./generated-diagrams/diagram_64eda513.png)
+![VPC 완전한 아키텍처](./generated-diagrams/diagram_f76f4cdf.png)
 
 *그림: VPC의 모든 구성 요소 - IGW, NAT GW, Route Table, NACL, Security Group*
 
