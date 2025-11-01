@@ -36,11 +36,11 @@
 
 ### 2. 핵심 원리 (How?)
 
-**VPC 아키텍처**:
+**VPC 완전한 아키텍처**:
 
-![VPC 기본 구조](./generated-diagrams/nw1d2s1_vpc_architecture.png)
+![VPC 완전한 아키텍처](./generated-diagrams/diagram_64eda513.png)
 
-*그림: VPC의 핵심 구성 요소 - Subnet, Route Table, Internet Gateway*
+*그림: VPC의 모든 구성 요소 - IGW, NAT GW, Route Table, NACL, Security Group*
 
 **VPC 구성 요소**:
 
