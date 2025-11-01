@@ -881,19 +881,19 @@ graph TB
 - Lambda의 기본 개념, 작동 원리, 주요 기능 소개
 
 **📗 사용자 가이드**:
-- [AWS Lambda 개발자 가이드](https://docs.aws.amazon.com/lambda/latest/dg/)
+- [AWS Lambda 개발자 가이드 (메인)](https://docs.aws.amazon.com/lambda/latest/dg/)
 - 함수 생성, 배포, 모니터링, 최적화 등 전체 가이드
 
-**📙 API 레퍼런스**:
-- [AWS Lambda API 레퍼런스](https://docs.aws.amazon.com/lambda/latest/dg/API_Reference.html)
-- Lambda API 호출 방법 및 파라미터 상세 설명
+**📙 시작하기**:
+- [Lambda 시작하기](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html)
+- 첫 Lambda 함수 생성 및 실행 가이드
 
 **📕 요금 정보**:
 - [AWS Lambda 요금](https://aws.amazon.com/lambda/pricing/)
 - 요청 수 및 실행 시간 기반 과금 구조, 프리티어 정보
 
 **🆕 최신 업데이트**:
-- [AWS Lambda What's New](https://aws.amazon.com/lambda/whats-new/)
+- [AWS Lambda 릴리스 노트](https://docs.aws.amazon.com/lambda/latest/dg/lambda-releases.html)
 - 최신 기능 업데이트, 런타임 지원, 성능 개선 사항
 
 ### 📖 추가 참고 자료
@@ -902,13 +902,13 @@ graph TB
 - [Lambda 베스트 프랙티스](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
 - 성능, 보안, 비용 최적화 가이드
 
-**서버리스 아키텍처**:
-- [서버리스 개발자 가이드](https://docs.aws.amazon.com/serverless/latest/devguide/)
+**서버리스 시작하기**:
+- [서버리스 Lambda 가이드](https://docs.aws.amazon.com/serverless/latest/devguide/starter-lambda.html)
 - 서버리스 애플리케이션 설계 및 구축 가이드
 
-**실습 예제**:
-- [Lambda 샘플 애플리케이션](https://docs.aws.amazon.com/lambda/latest/dg/samples.html)
-- 다양한 언어 및 사용 사례별 샘플 코드
+**고객 사례**:
+- [Lambda 고객 사례](https://aws.amazon.com/lambda/resources/customer-case-studies/)
+- 실제 기업들의 Lambda 활용 사례
 
 ---
 

@@ -317,10 +317,14 @@ graph TB
 
 **⚠️ 학생들이 직접 확인해야 할 공식 문서**:
 - 📘 [AWS 글로벌 인프라 개요](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/global-infrastructure.html)
-- 📗 [AWS Regions and Availability Zones](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions-availability-zones.html)
-- 📙 [EC2 Regions and Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
-- 📕 [AWS 글로벌 인프라 페이지](https://aws.amazon.com/about-aws/global-infrastructure/)
-- 🆕 [AWS 최신 인프라 업데이트](https://aws.amazon.com/about-aws/whats-new/infrastructure/)
+- 📗 [AWS Regions and Availability Zones 가이드](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
+- 📙 [AWS 글로벌 인프라 페이지](https://aws.amazon.com/about-aws/global-infrastructure/)
+- 📕 [AWS Regions 및 AZ 상세 정보](https://docs.aws.amazon.com/global-infrastructure/latest/regions/)
+- 🆕 [AWS What's New (최신 소식)](https://aws.amazon.com/about-aws/whats-new/)
+
+**📡 RSS 피드** (최신 업데이트 구독):
+- [AWS What's New RSS Feed](https://aws.amazon.com/ko/about-aws/whats-new/recent/feed/)
+- RSS 리더에 추가하여 실시간 AWS 업데이트 확인 가능
 
 ---
 
