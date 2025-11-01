@@ -66,10 +66,79 @@
 ## 📁 기존 다이어그램 (Day 5 전체)
 
 ### Session 2: CloudFront (CDN)
-- `cloudfront_cdn.png`: CloudFront Edge Locations 및 캐싱
+
+#### 8. CloudFront Edge Caching Flow
+**파일**: `cloudfront_edge_caching.png`
+**위치**: Session 2 - 핵심 원리 (How?)
+**설명**: Edge Location 캐시 HIT/MISS 흐름
+- Cache HIT: 10-50ms
+- Cache MISS: 200ms (Origin 조회)
+- Regional Edge Cache 중간 계층
+
+#### 9. CloudFront Global Distribution
+**파일**: `cloudfront_global.png`
+**위치**: Session 2 - 주요 사용 사례 (When?)
+**설명**: 글로벌 Edge Locations 분포
+- 450+ Edge Locations
+- S3 Origin 연결
+- 지역별 캐싱
 
 ### Session 3: ACM (SSL/TLS)
-- `acm_certificate.png`: ACM 인증서 발급 및 검증
+
+#### 10. ACM Certificate Issuance (Python Diagrams)
+**파일**: `acm_certificate.png`
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: ACM 인증서 발급 및 검증 프로세스
+- Administrator → ACM 인증서 요청
+- DNS 검증 (Route 53 CNAME)
+- CloudFront (us-east-1) 연결
+- ALB (ap-northeast-2) 연결
+- 자동 갱신 지원
+
+#### 11. DNS vs Email Validation (Mermaid)
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: 두 가지 검증 방법 비교
+- DNS 검증: 자동 갱신 지원 (권장)
+- Email 검증: 수동 승인 필요 (제한적)
+
+#### 12. Wildcard Certificate Coverage (Mermaid)
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: 와일드카드 인증서 커버리지
+- *.example.com 커버: www, api, admin
+- example.com 미커버 (SAN 필요)
+
+#### 13. Region Constraints (Mermaid)
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: CloudFront vs ALB 리전 제약
+- CloudFront: us-east-1 필수
+- ALB: 동일 리전 필수
+
+#### 14. ACM Public vs Private (Mermaid)
+**위치**: Session 3 - 비슷한 서비스 비교 (Which?)
+**설명**: Public vs Private 인증서 비교
+- Public: 무료, CloudFront/ALB/API Gateway
+- Private: $400/월, VPN/IoT/내부 앱
+
+#### 15. Auto Renewal Process (Mermaid)
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: 자동 갱신 프로세스
+- 60일 전 갱신 시작
+- DNS 검증 자동 확인
+- 다운타임 없음
+
+#### 16. Auto Renewal Timeline (Mermaid Gantt)
+**위치**: Session 3 - 핵심 원리 (How?)
+**설명**: 인증서 수명 주기 타임라인
+- 13개월 유효기간
+- 60일 전 갱신 시작
+- 새 인증서 자동 활성화
+
+#### 17. Cost Savings Comparison (Mermaid)
+**위치**: Session 3 - 비용 구조 (💰)
+**설명**: ACM vs 상용 CA 비용 절감
+- ACM: $0/년
+- 상용 CA: $200-500/년
+- 10개 도메인: $2,000-5,000/년 절감
 
 ### Day 5 통합
 - `https_stack.png`: Route 53 + CloudFront + ACM 통합 스택
