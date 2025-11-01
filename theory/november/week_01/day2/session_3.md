@@ -91,6 +91,11 @@ EBS Volume (단일 AZ)
 ```
 
 **작동 원리**:
+
+![EBS Snapshot Backup](./generated-diagrams/diagram_5589d459.png)
+
+*그림: EBS 스냅샷을 통한 백업 및 복구 프로세스*
+
 1. **볼륨 생성**: 특정 AZ에 EBS 볼륨 생성
 2. **인스턴스 연결**: 같은 AZ의 EC2에 연결
 3. **블록 접근**: OS가 일반 디스크처럼 인식
@@ -98,6 +103,10 @@ EBS Volume (단일 AZ)
 5. **스냅샷**: S3에 증분 백업 저장
 
 **EBS 볼륨 타입**:
+
+![EBS Volume Types](./generated-diagrams/diagram_3368ab97.png)
+
+*그림: EBS 볼륨 타입별 특징 - gp3, io2, st1, sc1*
 
 | 타입 | 용도 | IOPS | 처리량 | 가격 |
 |------|------|------|--------|------|
@@ -317,6 +326,11 @@ EFS 파일 시스템 (리전 전체)
 ```
 
 **작동 원리**:
+
+![EFS Multi-AZ Architecture](./generated-diagrams/diagram_7b5f9c58.png)
+
+*그림: EFS의 Multi-AZ 아키텍처 - 여러 AZ에서 동시 접근*
+
 1. **파일 시스템 생성**: 리전 수준에서 생성
 2. **마운트 타겟**: 각 AZ에 마운트 타겟 생성
 3. **NFS 마운트**: EC2에서 NFS 프로토콜로 마운트
@@ -324,6 +338,10 @@ EFS 파일 시스템 (리전 전체)
 5. **자동 복제**: 여러 AZ에 자동 복제
 
 **EFS 성능 모드**:
+
+![EFS Performance Modes](./generated-diagrams/diagram_e00d60f1.png)
+
+*그림: General Purpose vs Max I/O 성능 모드 비교*
 
 | 모드 | 지연시간 | 처리량 | 용도 |
 |------|----------|--------|------|
@@ -516,6 +534,10 @@ EFS 파일 시스템 (리전 전체)
 > **핵심**: 워크로드 특성에 따른 최적의 스토리지 선택
 
 #### 종합 비교표
+
+![Storage Comparison](./generated-diagrams/diagram_902aa40b.png)
+
+*그림: EBS, EFS, S3 스토리지 타입 비교*
 
 | 특성 | EBS | EFS | Instance Store |
 |------|-----|-----|----------------|
