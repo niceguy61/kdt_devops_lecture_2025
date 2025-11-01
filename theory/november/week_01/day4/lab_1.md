@@ -65,13 +65,15 @@ ALB (Listener: 80)
 | Auto-assign Public IP | Enable |
 | Security Group | HTTP (80), Custom TCP (8080-8082), SSH (22) |
 
-### Security Group 규칙
+### Security Group 규칙 (초기 설정)
 ```
 Inbound:
 - Type: HTTP, Port: 80, Source: 0.0.0.0/0
-- Type: Custom TCP, Port: 8080-8082, Source: ALB Security Group
+- Type: Custom TCP, Port: 8080-8082, Source: 0.0.0.0/0 (임시)
 - Type: SSH, Port: 22, Source: My IP
 ```
+
+**⚠️ 주의**: 8080-8082 포트는 Step 3에서 ALB 생성 후 ALB Security Group으로 변경 예정
 
 ### Docker 및 Docker Compose 설치
 ```bash
@@ -273,6 +275,18 @@ curl localhost:8082
 - Port: 80
 - Default action: Forward to api-tg (기본)
 
+### 3-5. EC2 Security Group 업데이트 (보안 강화)
+
+**경로**: AWS Console → EC2 → Security Groups → EC2 SG 선택
+
+**Inbound 규칙 수정**:
+```
+기존: Custom TCP, Port: 8080-8082, Source: 0.0.0.0/0
+변경: Custom TCP, Port: 8080-8082, Source: <ALB-Security-Group-ID>
+```
+
+**이유**: ALB를 통해서만 접근 가능하도록 보안 강화
+
 ### ✅ 검증
 ```bash
 # ALB DNS 확인
@@ -281,7 +295,13 @@ aws elbv2 describe-load-balancers \
   --query 'LoadBalancers[0].DNSName' \
   --output text
 
-# Target Groups Health 확인
+# Target Group ARN 조회
+aws elbv2 describe-target-groups \
+  --names api-tg backend-tg admin-tg \
+  --query 'TargetGroups[*].[TargetGroupName,TargetGroupArn]' \
+  --output table
+
+# Target Groups Health 확인 (ARN은 위에서 복사)
 aws elbv2 describe-target-health --target-group-arn <api-tg-arn>
 aws elbv2 describe-target-health --target-group-arn <backend-tg-arn>
 aws elbv2 describe-target-health --target-group-arn <admin-tg-arn>
@@ -323,12 +343,22 @@ ALB_DNS=$(aws elbv2 describe-load-balancers \
   --query 'LoadBalancers[0].DNSName' \
   --output text)
 
-# 각 경로 테스트
+# 각 경로 테스트 (슬래시 포함)
 curl http://$ALB_DNS/api/
 curl http://$ALB_DNS/backend/
 curl http://$ALB_DNS/admin/
 
-# 예상: 각각 다른 서비스 응답
+# 슬래시 없이도 테스트
+curl http://$ALB_DNS/api
+curl http://$ALB_DNS/backend
+curl http://$ALB_DNS/admin
+
+# 하위 경로 테스트
+curl http://$ALB_DNS/api/test
+curl http://$ALB_DNS/backend/health
+curl http://$ALB_DNS/admin/dashboard
+
+# 예상: 모두 해당 서비스로 라우팅됨
 ```
 
 ---
@@ -414,6 +444,7 @@ http://<ALB-DNS>/admin/    → 🔧 Admin Service
 - [ ] 3개 Target Group 생성 (8080, 8081, 8082)
 - [ ] ALB 생성
 - [ ] Target Health 확인 (모두 healthy)
+- [ ] EC2 Security Group 업데이트 (ALB SG로 제한)
 
 ### ✅ Step 4: 경로 라우팅
 - [ ] Listener Rules 3개 추가
