@@ -36,36 +36,10 @@
 - **Lambda**: 택시/우버 - 필요할 때만 사용하고 이동한 거리만큼만 지불
 
 **☁️ AWS 아키텍처**:
-```mermaid
-graph TB
-    subgraph "전통적 방식 (EC2)"
-        A1[24시간 실행]
-        A2[수동 확장]
-        A3[서버 관리 필요]
-        A4[고정 비용]
-    end
-    
-    subgraph "서버리스 방식 (Lambda)"
-        B1[필요할 때만 실행]
-        B2[자동 확장]
-        B3[서버 관리 불필요]
-        B4[사용량 기반 과금]
-    end
-    
-    A1 -.-> B1
-    A2 -.-> B2
-    A3 -.-> B3
-    A4 -.-> B4
-    
-    style A1 fill:#ffebee
-    style A2 fill:#ffebee
-    style A3 fill:#ffebee
-    style A4 fill:#ffebee
-    style B1 fill:#e8f5e8
-    style B2 fill:#e8f5e8
-    style B3 fill:#e8f5e8
-    style B4 fill:#e8f5e8
-```
+
+![EC2 vs Lambda 접근 방식](./generated-diagrams/nw1d1s3_ec2_lambda_comparison.png)
+
+*그림: 전통적 EC2 방식과 서버리스 Lambda 방식의 차이*
 
 **📊 시장 동향**: 
 - Netflix, Airbnb, Coca-Cola 등 글로벌 기업들이 Lambda 적극 활용
@@ -93,23 +67,10 @@ graph TB
   - 빠른 개발 및 배포가 필요한 경우
 
 **시각적 이해**:
-```mermaid
-graph TB
-    subgraph "서버리스 실행 흐름"
-        A[이벤트 발생] --> B[Lambda 함수 트리거]
-        B --> C[실행 환경 생성]
-        C --> D[코드 실행]
-        D --> E[결과 반환]
-        E --> F[실행 환경 종료]
-    end
-    
-    style A fill:#e3f2fd
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
-    style E fill:#e8f5e8
-    style F fill:#ffebee
-```
+
+![서버리스 실행 흐름](./generated-diagrams/nw1d1s3_serverless_flow.png)
+
+*그림: Lambda 함수의 이벤트 기반 실행 흐름*
 
 **☁️ AWS 구현 예시**:
 
@@ -799,33 +760,10 @@ DB_PASSWORD = os.environ['DB_PASSWORD']  # 평문
 ### 의존성
 
 **Lambda 함수 실행을 위한 필수 요소**:
-```mermaid
-graph TB
-    A[Lambda 함수] --> B[실행 역할]
-    A --> C[런타임]
-    A --> D[트리거]
-    
-    B --> E[IAM 정책]
-    C --> F[언어 런타임]
-    D --> G[이벤트 소스]
-    
-    A --> H[선택적 요소]
-    H --> I[레이어]
-    H --> J[VPC]
-    H --> K[환경 변수]
-    
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#fff3e0
-    style E fill:#e3f2fd
-    style F fill:#e3f2fd
-    style G fill:#e3f2fd
-    style H fill:#ffebee
-    style I fill:#f3e5f5
-    style J fill:#f3e5f5
-    style K fill:#f3e5f5
-```
+
+![Lambda 의존성](./generated-diagrams/nw1d1s3_lambda_dependencies.png)
+
+*그림: Lambda 함수의 필수 및 선택적 구성 요소*
 
 **AWS 서비스 통합**:
 - **이벤트 소스**: S3, API Gateway, DynamoDB, SNS, SQS, CloudWatch Events
