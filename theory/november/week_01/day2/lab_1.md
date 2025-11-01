@@ -216,73 +216,61 @@ S3 → 버킷 선택 → Permissions → Bucket Policy → Edit
 
 ---
 
-## 🛠️ Step 2: 프론트엔드 빌드 파일 업로드 (10분)
+## 🛠️ Step 2: 팀 프로젝트 빌드 및 배포 (15분)
 
 ### 📋 이 단계에서 할 일
-- 팀의 목업 UI 빌드 파일 준비
-- S3 버킷에 파일 업로드
+- 팀의 프론트엔드 프로젝트 빌드
+- 빌드 결과물을 S3 버킷에 업로드
 - 웹사이트 접근 테스트
 
 ### 📝 실습 절차
 
-#### 2-1. 빌드 파일 준비
+#### 2-1. 프론트엔드 프로젝트 빌드
 
-**옵션 1: 팀의 목업 UI 빌드**
+**React 프로젝트 빌드**:
 ```bash
-# React 예시
-cd your-frontend-project
+# 프로젝트 디렉토리로 이동
+cd your-team-frontend-project
+
+# 의존성 설치 (처음 한 번만)
+npm install
+
+# 프로덕션 빌드
 npm run build
-# build/ 폴더 생성됨
+
+# 빌드 결과 확인
+ls -la build/
+# 또는 dist/ 폴더 확인 (Vite 사용 시)
 ```
 
-**옵션 2: 간단한 HTML 파일 생성** (목업이 없는 경우)
-```html
-<!-- index.html -->
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Frontend App</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <header>
-        <h1>Welcome to My App</h1>
-    </header>
-    <main>
-        <p>This is a static website hosted on S3 + CloudFront</p>
-        <img src="images/logo.png" alt="Logo">
-    </main>
-    <script src="js/app.js"></script>
-</body>
-</html>
+**Vue 프로젝트 빌드**:
+```bash
+cd your-team-frontend-project
+npm install
+npm run build
+ls -la dist/
 ```
 
-```css
-/* css/style.css */
-body {
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f5f5f5;
-}
-
-header {
-    background-color: #333;
-    color: white;
-    padding: 20px;
-    text-align: center;
-}
+**빌드 결과물 구조 예시**:
+```
+build/ (또는 dist/)
+├── index.html
+├── static/
+│   ├── css/
+│   │   └── main.*.css
+│   ├── js/
+│   │   └── main.*.js
+│   └── media/
+│       └── logo.*.png
+└── favicon.ico
 ```
 
-```javascript
-// js/app.js
-console.log('Static website loaded successfully!');
-```
+**⚠️ 빌드 전 확인사항**:
+- `package.json`에 `build` 스크립트 존재 확인
+- API 엔드포인트가 하드코딩되어 있다면 환경변수로 변경
+- 빌드 에러 발생 시 의존성 버전 확인
 
-#### 2-2. S3에 파일 업로드
+#### 2-2. S3에 빌드 파일 업로드
 
 **AWS Console 경로**:
 ```
