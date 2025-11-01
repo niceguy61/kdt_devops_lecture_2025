@@ -37,6 +37,11 @@
 ### 2. 핵심 원리 (How?)
 
 **EC2 아키텍처**:
+
+![EC2 기본 아키텍처](./generated-diagrams/nw1d1s2_ec2_architecture.png)
+
+*그림: EC2 인스턴스를 중심으로 한 기본 AWS 아키텍처*
+
 ```
 EC2 인스턴스
 ├── Hypervisor (Xen/Nitro)

@@ -112,6 +112,11 @@ graph TB
 ```
 
 **☁️ AWS 구현 예시**:
+
+![Lambda 서버리스 아키텍처](./generated-diagrams/nw1d1s3_lambda_architecture.png)
+
+*그림: Lambda 함수를 중심으로 한 서버리스 아키텍처*
+
 ```mermaid
 graph TB
     subgraph "Lambda 이벤트 소스"
@@ -226,6 +231,11 @@ sequenceDiagram
 > **정의**: 워크로드 특성에 따라 EC2와 Lambda 중 적합한 서비스 선택
 
 **개념 간 관계**:
+
+![EC2 vs Lambda 비교](./generated-diagrams/nw1d1s3_ec2_vs_lambda.png)
+
+*그림: EC2 방식과 Lambda 방식의 아키텍처 비교*
+
 ```mermaid
 graph TB
     A[워크로드 분석] --> B{실행 패턴}

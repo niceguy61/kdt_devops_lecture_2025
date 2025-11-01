@@ -37,6 +37,11 @@
 ### 2. 핵심 원리 (How?)
 
 **AWS 글로벌 인프라 아키텍처**:
+
+![AWS 글로벌 인프라 구조](./generated-diagrams/nw1d1s1_global_infrastructure.png)
+
+*그림: AWS 글로벌 인프라 - Region, AZ, 그리고 Cross-Region 복제*
+
 ```
 AWS 글로벌 인프라
 ├── Region (33개)
@@ -59,6 +64,11 @@ AWS 글로벌 인프라
 - **Edge Location**: 사용자와 가까운 위치의 캐시 서버 (CloudFront, Route 53)
 
 **고가용성 메커니즘**:
+
+![Multi-AZ 고가용성 아키텍처](./generated-diagrams/nw1d1s1_multi_az.png)
+
+*그림: Multi-AZ 배포를 통한 고가용성 구현*
+
 ```mermaid
 graph TB
     USER[사용자] --> CF[CloudFront<br/>Edge Location]
