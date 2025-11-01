@@ -278,14 +278,35 @@ S3 → 버킷 선택 → Upload
 ```
 
 **업로드 방법**:
-1. **Add files** 또는 **Add folder** 클릭
-2. 빌드 파일 선택 (index.html, css/, js/, images/ 등)
+
+**방법 1: AWS Console 사용** (권장)
+1. **Add folder** 클릭
+2. `build/` 또는 `dist/` 폴더 **내부의 모든 파일** 선택
+   - ⚠️ 폴더 자체가 아닌 폴더 내부 파일들을 선택
+   - `index.html`이 S3 버킷 루트에 위치해야 함
 3. **Upload** 클릭
+4. 업로드 완료 대기
+
+**방법 2: AWS CLI 사용** (빠른 배포)
+```bash
+# AWS CLI 설치 확인
+aws --version
+
+# S3 동기화 (빌드 폴더 전체 업로드)
+aws s3 sync build/ s3://nw1d2-frontend-[이름]/ --delete
+
+# 또는 Vite 사용 시
+aws s3 sync dist/ s3://nw1d2-frontend-[이름]/ --delete
+
+# 업로드 확인
+aws s3 ls s3://nw1d2-frontend-[이름]/ --recursive
+```
 
 **⚠️ 주의사항**:
-- 폴더 구조 유지 (css/, js/, images/)
-- index.html은 루트에 위치
-- 파일명 대소문자 구분
+- **폴더 구조 유지**: `static/`, `css/`, `js/` 등
+- **index.html 위치**: 반드시 S3 버킷 루트에 위치
+- **파일명 대소문자**: 대소문자 구분 (Linux 기준)
+- **--delete 옵션**: S3에 있지만 로컬에 없는 파일 삭제
 
 #### 2-3. 웹사이트 접근 테스트
 
@@ -296,22 +317,72 @@ S3 → 버킷 선택 → Upload
 ```
 
 **예상 결과**:
-- index.html 페이지 정상 표시
-- CSS 스타일 적용 확인
-- 이미지 로딩 확인
+- ✅ 팀의 프론트엔드 UI 정상 표시
+- ✅ CSS 스타일 적용 확인
+- ✅ JavaScript 동작 확인
+- ✅ 이미지/아이콘 로딩 확인
 
-**⚠️ 문제 발생 시**:
-- 403 Forbidden: 버킷 정책 확인
-- 404 Not Found: 파일 경로 및 이름 확인
-- CSS/JS 미적용: 파일 경로 확인
+**⚠️ 트러블슈팅**:
+
+**문제 1: 403 Forbidden**
+```
+원인: 버킷 정책 미설정 또는 Block Public Access 활성화
+해결:
+1. Permissions → Bucket Policy 확인
+2. Block Public Access 모두 해제 확인
+```
+
+**문제 2: 404 Not Found**
+```
+원인: index.html이 루트에 없거나 파일명 오타
+해결:
+1. S3 버킷에서 index.html 위치 확인 (루트에 있어야 함)
+2. 파일명 대소문자 확인 (Index.html ≠ index.html)
+```
+
+**문제 3: CSS/JS 미적용**
+```
+원인: 상대 경로 문제 또는 파일 업로드 누락
+해결:
+1. 브라우저 개발자 도구 (F12) → Network 탭 확인
+2. 404 에러 파일 경로 확인
+3. 해당 파일이 S3에 업로드되었는지 확인
+```
+
+**문제 4: API 호출 실패**
+```
+원인: CORS 설정 또는 API 엔드포인트 문제
+해결:
+1. 백엔드 API CORS 설정 확인
+2. 환경변수로 API 엔드포인트 설정 확인
+```
 
 ### ✅ Step 2 검증
 
+**검증 명령어** (AWS CLI):
+```bash
+# S3 버킷 내용 확인
+aws s3 ls s3://nw1d2-frontend-[이름]/ --recursive
+
+# index.html 존재 확인
+aws s3 ls s3://nw1d2-frontend-[이름]/index.html
+```
+
+**브라우저 테스트**:
+```
+1. Bucket website endpoint 접속
+2. 개발자 도구 (F12) → Console 탭에서 에러 확인
+3. Network 탭에서 리소스 로딩 상태 확인
+```
+
 **✅ 체크리스트**:
+- [ ] 프론트엔드 프로젝트 빌드 성공
 - [ ] 빌드 파일 S3 업로드 완료
+- [ ] `index.html`이 S3 버킷 루트에 위치
 - [ ] HTTP로 웹사이트 접근 성공
 - [ ] CSS/JS 정상 로딩 확인
-- [ ] 이미지 정상 표시 확인
+- [ ] 팀의 UI가 정상적으로 표시됨
+- [ ] 브라우저 콘솔에 에러 없음
 
 ---
 
