@@ -89,6 +89,12 @@ AWS 글로벌 인프라
 - **Airbnb**: 리전별 데이터 저장으로 GDPR 준수
 - **Spotify**: Edge Location 활용으로 음악 스트리밍 최적화
 
+**Multi-Region 아키텍처 예시**:
+
+![Multi-Region 아키텍처](./generated-diagrams/nw1d1s1_multi_region.png)
+
+*그림: Multi-Region 배포 - Route 53이 사용자를 가장 가까운 Region으로 라우팅*
+
 ---
 
 ### 4. 비슷한 서비스 비교 (Which?)
@@ -105,6 +111,12 @@ AWS 글로벌 인프라
 - **CloudFront (Edge)** vs **Direct Access**
   - 언제 CloudFront: 정적 콘텐츠, 글로벌 사용자, 성능 최적화
   - 언제 Direct Access: 동적 콘텐츠, 지역 서비스
+
+**Region 선택 기준**:
+
+![Region 선택 기준](./generated-diagrams/nw1d1s1_region_selection.png)
+
+*그림: Region 선택 시 고려해야 할 4가지 주요 요소*
 
 **선택 기준**:
 | 기준 | Single Region | Multi-Region | Edge Location |
