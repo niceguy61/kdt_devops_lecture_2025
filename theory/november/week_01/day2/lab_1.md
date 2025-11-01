@@ -28,22 +28,45 @@
 
 ### 📐 아키텍처 다이어그램
 
-![S3 + CloudFront Architecture](./generated-diagrams/diagram_eefab49f.png)
+```mermaid
+graph LR
+    Users[Users] -->|1. HTTP Request| CF[CloudFront CDN]
+    CF -->|2. 301 Redirect to HTTPS| Users
+    Users -->|3. HTTPS Request| CF
+    CF -->|4. Fetch Content<br/>if cache miss| S3[S3 Static Website]
+    CF -->|5. HTTPS Response| Users
+    
+    style Users fill:#e3f2fd
+    style CF fill:#fff3e0
+    style S3 fill:#e8f5e8
+```
 
 *그림: S3 정적 웹사이트 호스팅 + CloudFront CDN 아키텍처*
 
 **트래픽 흐름**:
 ```
-1. 사용자 → CloudFront (HTTP 또는 HTTPS)
-2. CloudFront → HTTP 요청 시 자동으로 HTTPS로 301 Redirect
-3. CloudFront Edge Location → 캐시 확인
-4. 캐시 미스 시 → S3 버킷에서 콘텐츠 가져오기
+1. 사용자 → CloudFront (HTTP 요청)
+2. CloudFront → 자동으로 HTTPS로 301 Redirect
+3. 사용자 → CloudFront (HTTPS 재요청)
+4. CloudFront Edge Location → 캐시 확인, 미스 시 S3에서 콘텐츠 가져오기
 5. CloudFront → 사용자에게 HTTPS로 콘텐츠 전달
 ```
 
 ### 🔒 HTTP → HTTPS 자동 전환
 
-![HTTP to HTTPS Redirect](./generated-diagrams/diagram_e8ceb25f.png)
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant CF as CloudFront
+    participant S3 as S3 Bucket
+    
+    User->>CF: 1. HTTP 요청<br/>http://d123.cloudfront.net
+    CF->>User: 2. 301 Redirect<br/>Location: https://d123.cloudfront.net
+    User->>CF: 3. HTTPS 재요청<br/>https://d123.cloudfront.net
+    CF->>S3: 4. 콘텐츠 가져오기<br/>(캐시 미스 시)
+    S3->>CF: 5. 콘텐츠 반환
+    CF->>User: 6. HTTPS 응답<br/>(암호화된 콘텐츠)
+```
 
 *그림: CloudFront의 HTTP → HTTPS 자동 리다이렉트 프로세스*
 
