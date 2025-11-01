@@ -26,18 +26,48 @@
 
 ## 🏗️ 구축할 아키텍처
 
+### 📐 아키텍처 다이어그램
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "Lambda"
+            LF[Lambda Function<br/>my-first-lambda<br/>Python 3.12]
+        end
+        
+        subgraph "IAM"
+            Role[Execution Role<br/>자동 생성]
+        end
+        
+        subgraph "CloudWatch"
+            Logs[CloudWatch Logs<br/>/aws/lambda/my-first-lambda]
+        end
+    end
+    
+    User[사용자<br/>AWS Console] --> LF
+    LF --> Role
+    LF --> Logs
+    
+    style User fill:#e3f2fd
+    style LF fill:#fff3e0
+    style Role fill:#e8f5e8
+    style Logs fill:#ffebee
 ```
-사용자 (AWS Console)
-    ↓
-Lambda 함수 (Python)
-    ↓
-CloudWatch Logs (실행 로그)
-```
+
+**이미지 자리**: 아키텍처 다이어그램 이미지
+<!-- 이미지 삽입 위치: architecture-diagram.png -->
 
 **사용할 AWS 서비스**:
 - **Lambda**: 서버리스 함수 실행
 - **CloudWatch Logs**: 로그 저장 및 확인
 - **IAM**: Lambda 실행 권한 (자동 생성)
+
+### 🔗 참조 Session
+
+**당일 Session**:
+- [Session 1: AWS 글로벌 인프라](./session_1.md) - Region, AZ 개념
+- [Session 2: 클라우드 컴퓨팅 모델](./session_2.md) - IaaS, PaaS, SaaS
+- [Session 3: AWS Lambda](./session_3.md) - 서버리스 컴퓨팅, Lambda 개념
 
 ---
 
@@ -48,6 +78,9 @@ CloudWatch Logs (실행 로그)
 - 기본 설정 구성
 - IAM 역할 자동 생성
 
+### 🔗 참조 개념
+- [Session 3: AWS Lambda](./session_3.md) - Lambda 함수 생성 및 설정
+
 ### 📝 실습 절차
 
 #### 1-1. Lambda 콘솔 접속
@@ -56,6 +89,9 @@ CloudWatch Logs (실행 로그)
 ```
 AWS Console → Lambda → Functions → Create function
 ```
+
+**이미지 자리**: Lambda 콘솔 메인 화면
+<!-- 이미지 삽입 위치: step1-1-lambda-console.png -->
 
 #### 1-2. 함수 생성 설정
 
@@ -67,6 +103,9 @@ AWS Console → Lambda → Functions → Create function
 | Architecture | x86_64 | 프로세서 아키텍처 |
 | Permissions | Create new role | IAM 역할 자동 생성 |
 
+**이미지 자리**: 함수 생성 설정 화면
+<!-- 이미지 삽입 위치: step1-2-create-function.png -->
+
 **⚠️ 주의사항**:
 - 함수 이름은 소문자, 숫자, 하이픈만 사용
 - Runtime은 최신 Python 버전 선택
@@ -76,12 +115,18 @@ AWS Console → Lambda → Functions → Create function
 
 **Create function** 버튼 클릭
 
+**이미지 자리**: 함수 생성 완료 화면
+<!-- 이미지 삽입 위치: step1-3-function-created.png -->
+
 ### ✅ Step 1 검증
 
 **확인 사항**:
 - [ ] Lambda 함수가 생성됨
 - [ ] Function overview에 함수 정보 표시
 - [ ] IAM 역할이 자동 생성됨 (my-first-lambda-role-xxxxx)
+
+**이미지 자리**: 검증 결과 화면
+<!-- 이미지 삽입 위치: step1-verification.png -->
 
 ---
 
@@ -91,6 +136,9 @@ AWS Console → Lambda → Functions → Create function
 - 기본 코드 확인
 - 간단한 Python 코드 작성
 - 코드 배포
+
+### 🔗 참조 개념
+- [Session 3: AWS Lambda](./session_3.md) - Lambda 함수 코드 작성
 
 ### 📝 실습 절차
 
@@ -107,6 +155,9 @@ def lambda_handler(event, context):
         'body': json.dumps('Hello from Lambda!')
     }
 ```
+
+**이미지 자리**: 기본 코드 화면
+<!-- 이미지 삽입 위치: step2-1-default-code.png -->
 
 #### 2-2. 코드 수정
 
@@ -139,6 +190,9 @@ def lambda_handler(event, context):
     }
 ```
 
+**이미지 자리**: 수정된 코드 화면
+<!-- 이미지 삽입 위치: step2-2-modified-code.png -->
+
 **코드 설명**:
 - `event`: Lambda 함수에 전달되는 입력 데이터
 - `context`: 실행 환경 정보 (요청 ID, 메모리 등)
@@ -154,12 +208,18 @@ def lambda_handler(event, context):
 Changes deployed successfully
 ```
 
+**이미지 자리**: 배포 완료 화면
+<!-- 이미지 삽입 위치: step2-3-deployed.png -->
+
 ### ✅ Step 2 검증
 
 **확인 사항**:
 - [ ] 코드가 저장됨
 - [ ] "Changes deployed" 메시지 표시
 - [ ] 코드 에디터에 수정한 코드 표시
+
+**이미지 자리**: 검증 결과 화면
+<!-- 이미지 삽입 위치: step2-verification.png -->
 
 ---
 
@@ -175,6 +235,9 @@ Changes deployed successfully
 
 **Test** 탭 클릭 → **Create new event**
 
+**이미지 자리**: 테스트 이벤트 생성 화면
+<!-- 이미지 삽입 위치: step3-1-create-test-event.png -->
+
 **설정 값**:
 | 항목 | 값 |
 |------|-----|
@@ -189,6 +252,9 @@ Changes deployed successfully
 ```
 
 **Save** 버튼 클릭
+
+**이미지 자리**: 테스트 이벤트 저장 완료
+<!-- 이미지 삽입 위치: step3-1-test-event-saved.png -->
 
 #### 3-2. 추가 테스트 이벤트 생성
 
@@ -207,6 +273,9 @@ Changes deployed successfully
   "message": "Hello Lambda"
 }
 ```
+
+**이미지 자리**: 3개 테스트 이벤트 목록
+<!-- 이미지 삽입 위치: step3-2-test-events-list.png -->
 
 ### ✅ Step 3 검증
 
@@ -237,6 +306,9 @@ Changes deployed successfully
 }
 ```
 
+**이미지 자리**: 테스트 실행 결과
+<!-- 이미지 삽입 위치: step4-1-test-result.png -->
+
 **실행 정보**:
 ```
 Duration: 2.5 ms
@@ -254,9 +326,15 @@ Max Memory Used: 38 MB
 **test-event-3** 실행:
 - 이름 없음 → "Guest"로 처리
 
+**이미지 자리**: 여러 테스트 결과 비교
+<!-- 이미지 삽입 위치: step4-2-multiple-tests.png -->
+
 #### 4-3. CloudWatch Logs 확인
 
 **Monitor** 탭 → **View CloudWatch logs**
+
+**이미지 자리**: CloudWatch Logs 화면
+<!-- 이미지 삽입 위치: step4-3-cloudwatch-logs.png -->
 
 **로그 내용**:
 ```
@@ -274,6 +352,9 @@ REPORT RequestId: abc123... Duration: 2.5 ms Billed Duration: 3 ms
 - [ ] 각 테스트마다 다른 응답 메시지
 - [ ] CloudWatch Logs에 실행 로그 기록됨
 - [ ] Duration이 밀리초 단위로 표시됨
+
+**이미지 자리**: 전체 검증 결과
+<!-- 이미지 삽입 위치: step4-verification.png -->
 
 ---
 
@@ -348,8 +429,14 @@ REPORT RequestId: abc123... Duration: 2.5 ms Billed Duration: 3 ms
 Lambda → Functions → my-first-lambda → Actions → Delete
 ```
 
+**이미지 자리**: Lambda 함수 삭제 화면
+<!-- 이미지 삽입 위치: cleanup-1-delete-function.png -->
+
 **확인**:
 - "delete" 입력하여 삭제 확인
+
+**이미지 자리**: 삭제 확인 화면
+<!-- 이미지 삽입 위치: cleanup-1-confirm-delete.png -->
 
 #### 2. CloudWatch Logs 삭제 (선택)
 
@@ -358,12 +445,18 @@ Lambda → Functions → my-first-lambda → Actions → Delete
 CloudWatch → Logs → Log groups → /aws/lambda/my-first-lambda → Actions → Delete
 ```
 
+**이미지 자리**: CloudWatch Logs 삭제 화면
+<!-- 이미지 삽입 위치: cleanup-2-delete-logs.png -->
+
 ### ✅ 정리 완료 확인
 
 **확인 사항**:
 - [ ] Lambda 함수 삭제됨
 - [ ] CloudWatch Log Group 삭제됨 (선택)
 - [ ] IAM 역할 자동 삭제됨
+
+**이미지 자리**: 정리 완료 확인
+<!-- 이미지 삽입 위치: cleanup-verification.png -->
 
 ---
 

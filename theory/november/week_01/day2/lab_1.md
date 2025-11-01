@@ -133,12 +133,31 @@ sequenceDiagram
 
 ---
 
-## 🛠️ Step 1: S3 버킷 생성 및 정적 웹사이트 호스팅 설정 (15분)
+## 🛠️ Step 1: S3 버킷 생성 (Private 유지) (10분)
 
 ### 📋 이 단계에서 할 일
-- S3 버킷 생성
-- 정적 웹사이트 호스팅 활성화
-- 버킷 정책 설정 (Public 읽기 허용)
+- S3 버킷 생성 (Private 상태 유지)
+- 정적 웹사이트 호스팅 활성화 (선택)
+- ⚠️ Public Access 설정 **하지 않음** (보안)
+
+### 🔒 보안 아키텍처
+
+**올바른 방식** (CloudFront OAC):
+```
+사용자 → CloudFront (HTTPS) → S3 (Private)
+       ✅ 접근 가능          ✅ OAC로만 접근
+
+사용자 → S3 (직접 접근)
+       ❌ 차단됨 (Private)
+```
+
+**잘못된 방식** (Public S3):
+```
+사용자 → S3 (Public)
+       ❌ 보안 취약
+       ❌ HTTP만 지원
+       ❌ DDoS 위험
+```
 
 ### 📝 실습 절차
 
@@ -154,68 +173,32 @@ AWS Console → S3 → Create bucket
 |------|-----|------|
 | Bucket name | `nw1d2-frontend-[이름]` | 전역 고유 이름 (예: nw1d2-frontend-john) |
 | Region | `ap-northeast-2` | 서울 리전 |
-| Block Public Access | **모두 해제** | 정적 웹사이트 공개 필요 |
+| Block Public Access | **모두 체크 유지** ✅ | Private 상태 유지 (보안) |
 
-**⚠️ 주의사항**:
-- 버킷 이름은 전역적으로 고유해야 함
-- Block Public Access를 해제해야 웹사이트 접근 가능
-- 실습용이므로 Public 허용 (프로덕션에서는 CloudFront OAI 사용)
+**⚠️ 중요**:
+- ✅ **Block Public Access 모두 체크 유지** (기본값)
+- ✅ S3를 Private으로 유지
+- ✅ CloudFront OAC로만 접근 허용
+- ❌ Public Access 설정 **하지 않음**
 
-#### 1-2. 정적 웹사이트 호스팅 활성화
-
-**AWS Console 경로**:
-```
-S3 → 버킷 선택 → Properties → Static website hosting → Edit
-```
-
-**설정 값**:
-| 항목 | 값 |
-|------|-----|
-| Static website hosting | Enable |
-| Hosting type | Host a static website |
-| Index document | `index.html` |
-| Error document | `error.html` |
-
-**결과 확인**:
-- Bucket website endpoint 주소 복사 (예: `http://nw1d2-frontend-john.s3-website.ap-northeast-2.amazonaws.com`)
-
-#### 1-3. 버킷 정책 설정
-
-**AWS Console 경로**:
-```
-S3 → 버킷 선택 → Permissions → Bucket Policy → Edit
-```
-
-**버킷 정책 JSON**:
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::nw1d2-frontend-[이름]/*"
-        }
-    ]
-}
-```
-
-**⚠️ 주의**: `nw1d2-frontend-[이름]` 부분을 실제 버킷 이름으로 변경
+**💡 왜 Private으로 유지하나요?**
+- **보안**: S3 직접 접근 차단
+- **HTTPS 강제**: CloudFront를 통해서만 접근
+- **DDoS 방어**: CloudFront가 보호 계층 역할
+- **비용 절감**: S3 직접 트래픽 차단
+- **AWS 베스트 프랙티스**: 프로덕션 환경 권장 방식
 
 ### ✅ Step 1 검증
 
 **검증 방법**:
 1. S3 버킷 목록에서 버킷 확인
-2. Properties에서 Static website hosting 활성화 확인
-3. Bucket website endpoint 주소 확인
+2. Permissions → Block Public Access 모두 체크 확인
+3. 버킷이 Private 상태인지 확인
 
 **✅ 체크리스트**:
 - [ ] S3 버킷 생성 완료
-- [ ] 정적 웹사이트 호스팅 활성화
-- [ ] 버킷 정책 설정 완료
-- [ ] Bucket website endpoint 주소 복사
+- [ ] Block Public Access 모두 활성화 (Private)
+- [ ] 버킷 정책 **설정하지 않음** (나중에 CloudFront OAC 설정 시 자동 생성)
 
 ---
 
@@ -389,12 +372,27 @@ aws s3 ls s3://nw1d2-frontend-[이름]/index.html
 
 ---
 
-## 🛠️ Step 3: CloudFront Distribution 생성 (15분)
+## 🛠️ Step 3: CloudFront Distribution 생성 + OAC 설정 (20분)
 
 ### 📋 이 단계에서 할 일
 - CloudFront Distribution 생성
-- S3 버킷을 Origin으로 설정
+- OAC (Origin Access Control) 설정
+- S3 버킷 정책 자동 업데이트
 - HTTPS 지원 활성화
+
+### 🔒 OAC (Origin Access Control)란?
+
+**OAC의 역할**:
+```
+CloudFront → OAC → S3 (Private)
+           ✅ 인증된 접근만 허용
+```
+
+**장점**:
+- ✅ S3를 Private으로 유지
+- ✅ CloudFront를 통해서만 접근 가능
+- ✅ S3 직접 접근 차단
+- ✅ 보안 강화
 
 ### 📝 실습 절차
 
@@ -405,50 +403,151 @@ aws s3 ls s3://nw1d2-frontend-[이름]/index.html
 AWS Console → CloudFront → Create distribution
 ```
 
-**설정 값**:
-
 **Origin 설정**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| Origin domain | S3 버킷 선택 | 드롭다운에서 선택 |
+| Origin domain | S3 버킷 선택 | 드롭다운에서 `nw1d2-frontend-[이름].s3.ap-northeast-2.amazonaws.com` 선택 |
 | Origin path | 비워둠 | 루트 경로 사용 |
 | Name | 자동 생성 | 그대로 사용 |
+| Origin access | **Origin access control settings (recommended)** | ⚠️ 중요: OAC 선택 |
 
-**Default cache behavior**:
+**⚠️ 중요: Origin access 설정**
+- ✅ **Origin access control settings (recommended)** 선택
+- ❌ Public 선택하지 않음
+- ❌ Legacy access identities 사용하지 않음
+
+#### 3-2. OAC (Origin Access Control) 생성
+
+**Origin access control 섹션**:
+1. **Create new OAC** 클릭
+
+**OAC 설정**:
+| 항목 | 값 |
+|------|-----|
+| Name | `nw1d2-frontend-oac` |
+| Description | OAC for S3 frontend bucket |
+| Signing behavior | Sign requests (recommended) |
+| Origin type | S3 |
+
+2. **Create** 클릭
+
+**💡 OAC가 하는 일**:
+- CloudFront가 S3에 접근할 때 서명된 요청 사용
+- S3는 CloudFront의 서명을 검증
+- 서명이 없는 요청은 거부 (직접 접근 차단)
+
+#### 3-3. Default cache behavior 설정
+
+**Cache behavior 설정**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
 | Viewer protocol policy | **Redirect HTTP to HTTPS** | HTTP → HTTPS 자동 리다이렉트 |
 | Allowed HTTP methods | GET, HEAD | 정적 콘텐츠만 |
 | Cache policy | CachingOptimized | 기본 캐싱 정책 |
+| Origin request policy | None | 기본값 |
 
-**Settings**:
+#### 3-4. Settings 설정
+
+**Distribution settings**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
 | Price class | Use all edge locations | 전 세계 배포 |
 | Default root object | `index.html` | 루트 접근 시 표시 |
+| Standard logging | Off | 로깅 비활성화 (비용 절감) |
 
-**⚠️ 주의사항**:
-- Origin domain은 S3 website endpoint가 아닌 S3 버킷 선택
-- Redirect HTTP to HTTPS 필수 (보안)
-- Distribution 생성에 5-10분 소요
+#### 3-5. Distribution 생성 및 S3 버킷 정책 업데이트
 
-#### 3-2. Distribution 배포 대기
+1. **Create distribution** 클릭
 
-**상태 확인**:
+2. **중요: S3 버킷 정책 업데이트 알림 확인**
+
+**알림 메시지**:
+```
+The S3 bucket policy needs to be updated.
+CloudFront will not be able to access the S3 bucket until you update the bucket policy.
+```
+
+3. **Copy policy** 버튼 클릭 (정책 복사)
+
+**복사된 정책 예시**:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": {
+        "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+        "Effect": "Allow",
+        "Principal": {
+            "Service": "cloudfront.amazonaws.com"
+        },
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::nw1d2-frontend-[이름]/*",
+        "Condition": {
+            "StringEquals": {
+                "AWS:SourceArn": "arn:aws:cloudfront::261250906071:distribution/E1234ABCD5678"
+            }
+        }
+    }
+}
+```
+
+**💡 정책 설명**:
+- **Principal**: CloudFront 서비스만 허용
+- **Condition**: 특정 Distribution만 허용 (SourceArn)
+- **Effect**: S3 객체 읽기 권한 부여
+- **결과**: CloudFront를 통해서만 S3 접근 가능
+
+#### 3-6. S3 버킷 정책 적용
+
+**AWS Console 경로**:
+```
+S3 → 버킷 선택 → Permissions → Bucket Policy → Edit
+```
+
+1. 복사한 정책 붙여넣기
+2. **Save changes** 클릭
+
+**⚠️ 주의**:
+- 정책을 정확히 복사해야 함
+- Distribution ARN이 자동으로 포함됨
+- 이 정책으로 CloudFront만 S3 접근 가능
+
+#### 3-7. Distribution 배포 대기 (5-10분)
+
+**⚠️ 중요**: CloudFront Distribution 배포에는 5-10분 소요됩니다.
+
+**배포 상태 확인**:
 ```
 CloudFront → Distributions → Status 확인
 ```
 
-**배포 상태**:
-- **In Progress**: 배포 중 (5-10분 소요)
-- **Deployed**: 배포 완료
+**배포 단계**:
+- **InProgress**: 배포 시작
+- **Deploying**: 전 세계 Edge Location에 배포 중
+- **Deployed**: 배포 완료 ✅
+
+**대기 중 확인 사항**:
+- [ ] S3 버킷 정책 적용 완료
+- [ ] OAC 설정 완료
+- [ ] Distribution Enabled 상태
+- [ ] Status가 Deployed로 변경될 때까지 대기
+
+**💡 배포 시간이 걸리는 이유**:
+- 전 세계 200+ Edge Location에 설정 배포
+- 각 Edge Location에서 캐시 준비
+- DNS 전파 시간
 
 **Distribution domain name 복사**:
 - 예: `d1234abcd5678.cloudfront.net`
+- 배포 완료 후 이 주소로 접근
 
 ### ✅ Step 3 검증
 
-**검증 방법**:
+**검증 1: 배포 완료 확인**
+```
+CloudFront → Distributions → Status: Deployed
+```
+
+**검증 2: CloudFront 접근 성공**
 ```
 브라우저에서 CloudFront domain 접속
 예: https://d1234abcd5678.cloudfront.net
@@ -457,13 +556,26 @@ CloudFront → Distributions → Status 확인
 **예상 결과**:
 - ✅ HTTPS로 접근 가능
 - ✅ 웹사이트 정상 표시
-- ✅ 브라우저 주소창에 자물쇠 아이콘 (보안 연결)
+- ✅ 브라우저 주소창에 자물쇠 아이콘
+
+**검증 3: S3 직접 접근 차단 확인**
+```
+S3 버킷 URL로 직접 접근 시도
+예: https://nw1d2-frontend-test.s3.ap-northeast-2.amazonaws.com/index.html
+```
+
+**예상 결과**:
+- ❌ **AccessDenied** 오류 (정상)
+- ✅ S3 직접 접근 차단됨
+- ✅ CloudFront를 통해서만 접근 가능
 
 **✅ 체크리스트**:
 - [ ] CloudFront Distribution 생성 완료
+- [ ] OAC 생성 및 연결
+- [ ] S3 버킷 정책 업데이트 완료
 - [ ] Status가 Deployed로 변경
 - [ ] HTTPS로 웹사이트 접근 성공
-- [ ] S3 HTTP와 동일한 콘텐츠 표시
+- [ ] S3 직접 접근 차단 확인 (AccessDenied)
 
 ---
 
@@ -579,12 +691,12 @@ CloudFront → Distributions → 선택 → Invalidations → Create invalidatio
 
 **삭제 순서**:
 ```
-CloudFront Distribution → S3 버킷 객체 → S3 버킷
+CloudFront Distribution 비활성화 → 대기 (5-10분) → 삭제 → S3 버킷 객체 → S3 버킷 → OAC
 ```
 
 ### 🗑️ 삭제 절차
 
-#### 1. CloudFront Distribution 삭제
+#### 1. CloudFront Distribution 비활성화
 
 **AWS Console 경로**:
 ```
@@ -593,20 +705,45 @@ CloudFront → Distributions → 선택 → Disable
 
 **단계**:
 1. Distribution 선택
-2. **Disable** 클릭 (5-10분 소요)
-3. Status가 Disabled로 변경되면
-4. **Delete** 클릭
+2. **Disable** 클릭
+3. **대기 (5-10분)**: Status가 Disabled로 변경될 때까지
 
-**⚠️ 주의**: Disable 후에만 Delete 가능
+**⚠️ 중요**: 
+- Disable 후 즉시 삭제 불가
+- Status가 Disabled로 변경되어야 삭제 가능
+- 5-10분 소요
 
-#### 2. S3 버킷 객체 삭제
+**이미지 자리**: CloudFront 비활성화 화면
+<!-- 이미지 삽입 위치: cleanup-1-disable-cloudfront.png -->
+
+#### 2. CloudFront Distribution 삭제
+
+**Status: Disabled 확인 후**:
+1. Distribution 선택
+2. **Delete** 클릭
+3. 삭제 확인
+
+**이미지 자리**: CloudFront 삭제 확인
+<!-- 이미지 삽입 위치: cleanup-2-delete-cloudfront.png -->
+
+#### 3. S3 버킷 정책 삭제
+
+**AWS Console 경로**:
+```
+S3 → 버킷 선택 → Permissions → Bucket Policy → Delete
+```
+
+#### 4. S3 버킷 객체 삭제
 
 **AWS Console 경로**:
 ```
 S3 → 버킷 선택 → Objects → 전체 선택 → Delete
 ```
 
-#### 3. S3 버킷 삭제
+**이미지 자리**: S3 객체 삭제
+<!-- 이미지 삽입 위치: cleanup-3-delete-objects.png -->
+
+#### 5. S3 버킷 삭제
 
 **AWS Console 경로**:
 ```
@@ -616,12 +753,39 @@ S3 → 버킷 선택 → Delete
 **확인**:
 - 버킷 이름 입력하여 삭제 확인
 
+**이미지 자리**: S3 버킷 삭제 확인
+<!-- 이미지 삽입 위치: cleanup-4-delete-bucket.png -->
+
+#### 6. OAC 삭제 (선택)
+
+**AWS Console 경로**:
+```
+CloudFront → Origin access → Origin access controls → 선택 → Delete
+```
+
 ### ✅ 정리 완료 확인
 
+**확인 명령어** (AWS CLI):
+```bash
+# CloudFront Distribution 확인
+aws cloudfront list-distributions --region us-east-1 --query 'DistributionList.Items[?Comment==`November Week 1 Day 2 Lab 1 Test`]'
+
+# S3 버킷 확인
+aws s3 ls | grep nw1d2-frontend
+```
+
+**예상 결과**:
+```
+[] (빈 배열 - 모든 리소스 삭제됨)
+```
+
 **✅ 최종 체크리스트**:
+- [ ] CloudFront Distribution 비활성화 (5-10분 대기)
 - [ ] CloudFront Distribution 삭제
+- [ ] S3 버킷 정책 삭제
 - [ ] S3 버킷 객체 삭제
 - [ ] S3 버킷 삭제
+- [ ] OAC 삭제 (선택)
 - [ ] 비용 확인 (Cost Explorer)
 
 ---
