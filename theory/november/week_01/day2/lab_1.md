@@ -126,7 +126,10 @@ sequenceDiagram
 
 ### 🔗 참조 Session
 **당일 Session**:
-- [Session 2: S3 스토리지](../session_2.md) - 버킷, 객체, 정적 호스팅
+- [Session 2: S3 스토리지](./session_2.md) - 버킷, 객체, 정적 호스팅
+
+**이전 Day Session**:
+- [Day 1 Session 1: AWS 글로벌 인프라](../day1/session_1.md) - Region, AZ, Edge Location (CloudFront)
 
 ---
 
