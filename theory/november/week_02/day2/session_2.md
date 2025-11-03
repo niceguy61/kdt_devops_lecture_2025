@@ -283,26 +283,70 @@ Custom 속성 (최대 50개):
 
 **데이터 분리 전략**:
 
-![Cognito Data Strategy](./generated-diagrams/cognito_data_strategy.png)
+```mermaid
+graph TB
+    subgraph "Cognito User Pool"
+        A[인증 정보]
+        A1[이메일]
+        A2[비밀번호 해시]
+        A3[전화번호]
+        A4[MFA 설정]
+    end
+    
+    subgraph "DynamoDB"
+        subgraph "Users 테이블"
+            B1[userId PK]
+            B2[nickname]
+            B3[avatar]
+            B4[bio]
+            B5[preferences]
+        end
+        
+        subgraph "Orders 테이블"
+            C1[orderId PK]
+            C2[userId FK]
+            C3[items]
+            C4[createdAt]
+        end
+        
+        subgraph "Posts 테이블"
+            D1[postId PK]
+            D2[userId FK]
+            D3[content]
+            D4[createdAt]
+        end
+    end
+    
+    A --> A1
+    A --> A2
+    A --> A3
+    A --> A4
+    
+    B1 -.Cognito sub.- A
+    C2 -.Cognito sub.- A
+    D2 -.Cognito sub.- A
+    
+    style A fill:#ff9800
+    style A1 fill:#fff3e0
+    style A2 fill:#fff3e0
+    style A3 fill:#fff3e0
+    style A4 fill:#fff3e0
+    style B1 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style B3 fill:#e8f5e8
+    style B4 fill:#e8f5e8
+    style B5 fill:#e8f5e8
+    style C1 fill:#e3f2fd
+    style C2 fill:#e3f2fd
+    style C3 fill:#e3f2fd
+    style C4 fill:#e3f2fd
+    style D1 fill:#f3e5f5
+    style D2 fill:#f3e5f5
+    style D3 fill:#f3e5f5
+    style D4 fill:#f3e5f5
+```
 
 *그림: Cognito + DynamoDB 데이터 전략 - 인증은 Cognito, 프로필/활동 데이터는 DynamoDB*
-
-```
-Cognito User Pool          DynamoDB
-├── 인증 정보           ├── 사용자 프로필 (Users 테이블)
-│   ├── 이메일          │   ├── userId (Cognito sub) ← PK
-│   ├── 비밀번호        │   ├── nickname
-│   └── 전화번호        │   ├── avatar
-                        │   ├── bio
-                        │   └── preferences
-                        │
-                        ├── 사용자 활동 (Orders 테이블)
-                        │   ├── orderId ← PK
-                        │   ├── userId ← FK (Cognito sub)
-                        │   ├── items
-                        │   └── createdAt
-                        │
-                        └── 사용자 게시물 (Posts 테이블)
                             ├── postId ← PK
                             ├── userId ← FK (Cognito sub)
                             └── content
