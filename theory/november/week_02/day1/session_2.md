@@ -575,6 +575,47 @@ cloudwatch.put_metric_alarm(
 - **용도**: 주문 알림, 마케팅 메시지
 - **비용**: 월 $20 이하
 
+### 🆕 최신 업데이트 (2024-2025)
+
+**2025년 주요 업데이트**:
+
+1. **Cross-Region 전달 강화** (2025.07)
+   - Opt-in Region 간 SNS → SQS 전달 지원
+   - Opt-in Region 간 SNS → Lambda 전달 지원
+   - Default Region → Opt-in Region Lambda 전달 지원
+   - **효과**: 글로벌 분산 시스템 설계 유연성 향상
+
+2. **IPv6 지원** (2025.04)
+   - SNS API 요청에 IPv6 지원
+   - IPv4/IPv6 듀얼 스택 클라이언트 지원
+   - **효과**: 주소 공간 확장, 네트워크 아키텍처 단순화
+
+**2024년 주요 업데이트**:
+
+1. **SNS FIFO 고처리량 모드** (2024년 중반)
+   - 메시지 그룹 수준 중복 제거
+   - US East (N. Virginia): 초당 30,000 메시지
+   - US West (Oregon), EU (Ireland): 초당 9,000 메시지
+   - **효과**: FIFO 순서 보장하면서 처리량 대폭 증가
+
+2. **AWS End User Messaging 통합** (2024.09)
+   - SMS 전송이 AWS End User Messaging으로 통합
+   - 양방향 메시징, 세분화된 권한, 국가별 차단 규칙
+   - **효과**: SMS 기능 강화 및 중앙 집중식 관리
+
+3. **Data Firehose 전달 확대** (2024.11)
+   - 6개 신규 리전 지원 (홍콩, 하이데라바드, 멜버른, 취리히, 스페인, UAE)
+   - SNS → Firehose → S3/Redshift/OpenSearch 파이프라인
+   - **효과**: 이벤트 아카이빙 및 분석 용이
+
+**실무 적용 팁**:
+- **글로벌 서비스**: Cross-Region 전달로 지역별 처리
+- **고처리량 필요**: FIFO 고처리량 모드 활용
+- **SMS 알림**: End User Messaging 통합 기능 활용
+- **데이터 분석**: Firehose 연동으로 이벤트 아카이빙
+
+**참조**: [AWS SNS What's New](https://aws.amazon.com/sns/whats-new/)
+
 ---
 
 ## 📝 Session 마무리
