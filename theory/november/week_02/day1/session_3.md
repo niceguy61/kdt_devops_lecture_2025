@@ -247,6 +247,363 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 - Git에 커밋하지 말 것 (.gitignore 추가)
 - 팀 작업 시 Remote State 사용 (S3 + DynamoDB)
 
+### ⚠️ 중요: 웹 콘솔과 Terraform 혼용 금지
+
+> **핵심 원칙**: 한 번 Terraform으로 관리하기 시작한 리소스는 **절대** 웹 콘솔에서 수정하지 마세요!
+
+**문제 상황**:
+```
+1. Terraform으로 EC2 인스턴스 생성
+   → State 파일에 "t3.micro" 기록
+
+2. AWS 콘솔에서 인스턴스 타입을 "t3.small"로 변경
+   → State 파일은 여전히 "t3.micro"
+
+3. 다음에 terraform apply 실행
+   → Terraform: "어? State에는 t3.micro인데 실제는 t3.small?"
+   → Terraform: "내가 t3.micro로 되돌릴게!" 😱
+   → 콘솔에서 한 변경사항이 사라짐!
+```
+
+**실제 예시**:
+```hcl
+# Terraform 코드
+resource "aws_instance" "web" {
+  instance_type = "t3.micro"
+  ami           = "ami-xxxxx"
+}
+
+# 1. terraform apply 실행
+# → EC2 t3.micro 생성
+# → State: instance_type = "t3.micro"
+
+# 2. AWS 콘솔에서 t3.small로 변경
+# → 실제 AWS: t3.small
+# → State: 여전히 t3.micro (모름)
+
+# 3. 다음 terraform apply 실행
+# → Terraform이 State와 실제를 비교
+# → "t3.micro여야 하는데 t3.small이네? 수정해야지!"
+# → 강제로 t3.micro로 되돌림 (콘솔 변경 사라짐)
+```
+
+**왜 이런 일이 발생하는가?**:
+
+```mermaid
+graph TB
+    subgraph "Terraform 관리"
+        TF[Terraform Code] --> State[State File]
+        State --> AWS1[AWS Resources]
+        AWS1 --> State
+    end
+    
+    subgraph "문제 상황"
+        Console[AWS Console 수정] -.->|State 모름| AWS2[AWS Resources]
+        TF2[terraform apply] --> State2[State File]
+        State2 -.->|이전 상태로<br/>되돌림| AWS2
+    end
+    
+    style Console fill:#ffebee
+    style AWS2 fill:#ffebee
+    style TF2 fill:#ffebee
+```
+
+**올바른 방법**:
+```hcl
+# ✅ 올바른 방법: 코드 수정 후 apply
+resource "aws_instance" "web" {
+  instance_type = "t3.small"  # 코드에서 변경
+  ami           = "ami-xxxxx"
+}
+
+# terraform apply
+# → State 업데이트
+# → AWS 리소스 변경
+# → 모든 것이 동기화됨
+```
+
+**예외 상황: 긴급 대응**:
+```
+긴급 상황으로 콘솔에서 수정한 경우:
+
+1. 즉시 Terraform 코드도 동일하게 수정
+2. terraform plan으로 차이 확인
+3. terraform apply로 State 동기화
+
+또는
+
+1. terraform refresh로 State 업데이트
+2. terraform show로 현재 상태 확인
+3. 코드를 실제 상태에 맞게 수정
+```
+
+**팀 규칙 예시**:
+```
+📋 인프라 변경 규칙
+
+✅ 허용:
+- Terraform 코드 수정 → terraform apply
+- 코드 리뷰 후 변경
+- Git으로 변경 이력 관리
+
+❌ 금지:
+- AWS 콘솔에서 직접 수정
+- Terraform 관리 리소스를 수동 변경
+- State 파일 직접 수정
+
+🚨 긴급 상황:
+1. 콘솔에서 수정 (불가피한 경우만)
+2. 즉시 팀에 공지
+3. 24시간 내 Terraform 코드 동기화
+4. 사후 보고서 작성
+```
+
+**실무 팁**:
+- **태그 활용**: Terraform 관리 리소스에 `ManagedBy: Terraform` 태그 추가
+- **읽기 전용 권한**: 개발자에게는 콘솔 읽기 권한만 부여
+- **변경 감지**: AWS Config로 수동 변경 감지 및 알람
+- **정기 검증**: `terraform plan`을 주기적으로 실행하여 drift 확인
+
+**Drift Detection (상태 불일치 감지)**:
+```bash
+# 정기적으로 실행하여 State와 실제 차이 확인
+terraform plan
+
+# 출력 예시
+# ~ resource "aws_instance" "web" {
+#     ~ instance_type = "t3.micro" -> "t3.small"
+#   }
+# 
+# 누군가 콘솔에서 변경했다는 의미!
+```
+
+### ⚠️ 더 심각한 문제: 콘솔에서 생성한 리소스
+
+> **핵심 문제**: Terraform이 모르는 리소스는 **제어 불가능**하고 **삭제 시 충돌** 발생!
+
+**문제 상황 1: 의존성 충돌**:
+```
+시나리오:
+1. Terraform으로 VPC 생성
+2. 누군가 콘솔에서 NAT Gateway 생성 (Terraform 모름)
+3. terraform destroy 실행
+
+결과:
+❌ Error: Cannot delete VPC
+   Reason: VPC has dependencies (NAT Gateway)
+   
+Terraform: "VPC를 삭제하려는데 뭔가 붙어있어요!"
+Terraform: "근데 그게 뭔지 모르겠어요..." 😱
+```
+
+**실제 에러 메시지**:
+```bash
+$ terraform destroy
+
+Error: Error deleting VPC: DependencyViolation: 
+The vpc 'vpc-xxxxx' has dependencies and cannot be deleted.
+
+# 원인: 콘솔에서 생성한 NAT Gateway가 VPC에 연결되어 있음
+# Terraform은 이 NAT Gateway를 모르기 때문에 삭제할 수 없음
+```
+
+**문제 상황 2: 리소스 이름 충돌**:
+```
+시나리오:
+1. Terraform으로 "web-server" Security Group 생성
+2. 누군가 콘솔에서 "web-server" Security Group 생성
+3. terraform apply 실행
+
+결과:
+❌ Error: Security Group "web-server" already exists
+   
+Terraform: "내가 만들려는데 이미 있네요?"
+Terraform: "근데 내 State에는 없는데..." 😱
+```
+
+**문제 상황 3: 리소스 한도 초과**:
+```
+시나리오:
+1. Terraform으로 Elastic IP 4개 생성 (한도: 5개)
+2. 누군가 콘솔에서 Elastic IP 2개 생성
+3. terraform apply로 1개 더 추가 시도
+
+결과:
+❌ Error: Elastic IP limit exceeded (5/5)
+   
+Terraform: "왜 한도 초과지? 내가 4개만 만들었는데..."
+실제: 콘솔에서 2개 더 만들어서 총 6개 😱
+```
+
+**실제 사례: VPC 삭제 실패**:
+```bash
+# Terraform 코드
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+}
+
+# terraform destroy 실행
+$ terraform destroy
+
+# 1단계: Subnet 삭제 성공
+aws_subnet.public: Destroying...
+aws_subnet.public: Destruction complete
+
+# 2단계: VPC 삭제 실패
+aws_vpc.main: Destroying...
+Error: Error deleting VPC: DependencyViolation
+  - NAT Gateway (nat-xxxxx) exists
+  - Internet Gateway (igw-xxxxx) exists
+  - Network Interface (eni-xxxxx) exists
+
+# 원인: 누군가 콘솔에서 생성한 리소스들
+# Terraform은 이들을 모르기 때문에 삭제 불가
+```
+
+**해결 방법**:
+
+**1. 수동 확인 및 삭제**:
+```bash
+# AWS CLI로 VPC 의존성 확인
+aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=vpc-xxxxx"
+aws ec2 describe-internet-gateways --filter "Name=attachment.vpc-id,Values=vpc-xxxxx"
+aws ec2 describe-network-interfaces --filter "Name=vpc-id,Values=vpc-xxxxx"
+
+# 수동으로 삭제
+aws ec2 delete-nat-gateway --nat-gateway-id nat-xxxxx
+aws ec2 detach-internet-gateway --internet-gateway-id igw-xxxxx --vpc-id vpc-xxxxx
+aws ec2 delete-internet-gateway --internet-gateway-id igw-xxxxx
+
+# 다시 terraform destroy 실행
+terraform destroy
+```
+
+**2. Import 후 관리**:
+```bash
+# 콘솔에서 생성한 리소스를 Terraform으로 가져오기
+terraform import aws_nat_gateway.manual nat-xxxxx
+
+# 코드에 추가
+resource "aws_nat_gateway" "manual" {
+  # ... 설정
+}
+
+# 이제 Terraform이 관리 가능
+terraform destroy  # 정상 삭제됨
+```
+
+**3. 강제 삭제 (비추천)**:
+```bash
+# Terraform State에서 제거 (실제 리소스는 남음)
+terraform state rm aws_vpc.main
+
+# AWS 콘솔에서 수동 삭제
+# 또는 AWS CLI로 강제 삭제
+```
+
+**예방 방법**:
+
+**1. 태그 정책**:
+```hcl
+# 모든 Terraform 리소스에 태그 추가
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  
+  tags = {
+    ManagedBy = "Terraform"
+    Project   = "web-app"
+    Owner     = "devops-team"
+  }
+}
+
+# AWS Config로 태그 없는 리소스 감지
+```
+
+**2. IAM 정책으로 콘솔 생성 제한**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": [
+        "ec2:CreateVpc",
+        "ec2:CreateSubnet",
+        "ec2:CreateNatGateway"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/ManagedBy": "Terraform"
+        }
+      }
+    }
+  ]
+}
+```
+
+**3. 정기 감사**:
+```bash
+# 태그 없는 리소스 찾기
+aws ec2 describe-vpcs --query 'Vpcs[?!Tags || !contains(Tags[].Key, `ManagedBy`)]'
+
+# Terraform State와 실제 리소스 비교
+terraform plan -detailed-exitcode
+# Exit code 2: 차이 있음 (조사 필요)
+```
+
+**팀 규칙 강화**:
+```
+📋 인프라 생성 규칙
+
+✅ 반드시 Terraform으로:
+- 모든 AWS 리소스 생성
+- 코드 리뷰 필수
+- State 파일 동기화
+
+❌ 절대 금지:
+- AWS 콘솔에서 리소스 생성
+- Terraform 모르는 리소스 생성
+- 수동 인프라 변경
+
+🔍 정기 점검:
+- 주 1회: terraform plan 실행
+- 월 1회: 태그 없는 리소스 감사
+- 분기 1회: 전체 인프라 리뷰
+
+🚨 발견 시 조치:
+1. 즉시 팀에 공지
+2. 리소스 소유자 확인
+3. Import 또는 삭제 결정
+4. 재발 방지 대책 수립
+```
+
+**실무 경험담**:
+```
+💬 "VPC 삭제가 안 돼요!"
+
+상황: 프로젝트 종료 후 terraform destroy 실행
+문제: VPC 삭제 실패 - 알 수 없는 의존성
+
+원인 조사:
+- NAT Gateway 3개 발견 (Terraform은 1개만 알고 있음)
+- 개발자가 테스트용으로 콘솔에서 생성
+- 테스트 후 삭제 안 함
+
+해결:
+- 수동으로 NAT Gateway 삭제
+- 월 $135 낭비 발견 (3개월간 방치)
+- 이후 IAM 정책으로 콘솔 생성 제한
+
+교훈: 
+"Terraform으로 시작했으면 끝까지 Terraform으로!"
+```
+
 ### 🔍 개념 3: HCL 기본 문법 (9분)
 
 > **정의**: HCL (HashiCorp Configuration Language)은 Terraform의 설정 언어
