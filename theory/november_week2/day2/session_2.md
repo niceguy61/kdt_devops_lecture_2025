@@ -267,6 +267,64 @@ graph TB
 
 **2단계: 각 토큰의 역할**
 
+```mermaid
+graph TB
+    subgraph "JWT 토큰 구조"
+        A[Cognito User Pool]
+        
+        subgraph "ID Token"
+            B1[사용자 정보]
+            B2[sub: user-uuid]
+            B3[email: user@example.com]
+            B4[name: 홍길동]
+            B5[cognito:username]
+        end
+        
+        subgraph "Access Token"
+            C1[권한 정보]
+            C2[cognito:groups]
+            C3[scope: openid profile]
+            C4[client_id]
+        end
+        
+        subgraph "Refresh Token"
+            D1[토큰 갱신]
+            D2[유효기간: 30일]
+            D3[새 토큰 발급용]
+        end
+    end
+    
+    A --> B1
+    A --> C1
+    A --> D1
+    
+    B1 --> B2
+    B1 --> B3
+    B1 --> B4
+    B1 --> B5
+    
+    C1 --> C2
+    C1 --> C3
+    C1 --> C4
+    
+    D1 --> D2
+    D1 --> D3
+    
+    style A fill:#ff9800
+    style B1 fill:#fff3e0
+    style B2 fill:#e3f2fd
+    style B3 fill:#e3f2fd
+    style B4 fill:#e3f2fd
+    style B5 fill:#e3f2fd
+    style C1 fill:#e8f5e8
+    style C2 fill:#e3f2fd
+    style C3 fill:#e3f2fd
+    style C4 fill:#e3f2fd
+    style D1 fill:#ffebee
+    style D2 fill:#e3f2fd
+    style D3 fill:#e3f2fd
+```
+
 **ID Token (사용자 정보)**:
 ```json
 {
