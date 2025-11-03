@@ -198,6 +198,148 @@ graph LR
 메시지 중복: A가 2번 처리될 수 있음
 ```
 
+#### ⚠️ Standard Queue의 중복 처리 문제와 해결 방법
+
+**중복이 발생하는 이유**:
+
+```mermaid
+sequenceDiagram
+    participant SQS
+    participant Worker1
+    participant Worker2
+    
+    SQS->>Worker1: 메시지 A 전달
+    Note over Worker1: 처리 중...<br/>(30초 소요)
+    Note over Worker1: Visibility Timeout 만료
+    SQS->>Worker2: 메시지 A 재전달 (중복!)
+    Worker1->>SQS: 처리 완료 (DeleteMessage)
+    Worker2->>SQS: 처리 완료 (DeleteMessage)
+    
+    Note over Worker1,Worker2: 같은 메시지를 2번 처리!
+```
+
+**중복 발생 시나리오**:
+1. Worker1이 메시지를 받아 처리 중
+2. **Visibility Timeout 만료** (처리 시간이 너무 길 때)
+3. SQS가 메시지를 다시 큐에 노출
+4. Worker2가 같은 메시지를 받음 → **중복 처리**
+
+**실무 대응: 멱등성(Idempotency) 보장** 🔑
+
+> **멱등성**: 같은 작업을 여러 번 수행해도 결과가 동일한 성질
+
+**방법 1: 처리 이력 테이블 (권장)**
+
+```python
+# Lambda Worker 예시
+import boto3
+import json
+from datetime import datetime
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('processed-messages')
+
+def lambda_handler(event, context):
+    for record in event['Records']:
+        message_id = record['messageId']
+        body = json.loads(record['body'])
+        order_id = body['orderId']
+        
+        # 1. 처리 이력 확인 (중복 체크)
+        response = table.get_item(Key={'messageId': message_id})
+        
+        if 'Item' in response:
+            print(f"이미 처리된 메시지: {message_id}")
+            return  # 중복 처리 방지 ✅
+        
+        # 2. 비즈니스 로직 처리
+        send_email(order_id)
+        update_inventory(order_id)
+        
+        # 3. 처리 완료 기록 (멱등성 보장)
+        table.put_item(Item={
+            'messageId': message_id,
+            'orderId': order_id,
+            'processedAt': datetime.now().isoformat(),
+            'status': 'completed'
+        })
+```
+
+**처리 이력 테이블 설계**:
+```sql
+-- DynamoDB 또는 RDS
+CREATE TABLE processed_messages (
+    message_id VARCHAR(255) PRIMARY KEY,  -- SQS MessageId
+    order_id VARCHAR(255),
+    processed_at TIMESTAMP,
+    status VARCHAR(50),
+    worker_id VARCHAR(255)
+);
+
+-- 또는 간단하게 Redis
+SET processed:{message_id} "completed" EX 86400  -- 24시간 TTL
+```
+
+**방법 2: 트랜잭션 기반 처리**
+
+```python
+def process_order(order_id, message_id):
+    with db.transaction():
+        # 1. 처리 이력 확인 (SELECT FOR UPDATE)
+        existing = db.query(
+            "SELECT * FROM processed_messages WHERE message_id = %s FOR UPDATE",
+            (message_id,)
+        )
+        
+        if existing:
+            return  # 이미 처리됨
+        
+        # 2. 비즈니스 로직
+        update_inventory(order_id)
+        
+        # 3. 처리 완료 기록
+        db.execute(
+            "INSERT INTO processed_messages (message_id, order_id) VALUES (%s, %s)",
+            (message_id, order_id)
+        )
+```
+
+**방법 3: Visibility Timeout 조정**
+
+```bash
+# 처리 시간이 긴 경우 Visibility Timeout 증가
+aws sqs set-queue-attributes \
+  --queue-url https://sqs.ap-northeast-2.amazonaws.com/.../my-queue \
+  --attributes VisibilityTimeout=300  # 5분
+```
+
+**실무 권장 사항**:
+```
+✅ DO:
+- MessageId 기반 중복 체크 구현
+- 처리 이력을 DynamoDB/Redis에 저장
+- 트랜잭션으로 원자성 보장
+- Visibility Timeout을 처리 시간보다 길게 설정
+
+❌ DON'T:
+- 중복 처리를 무시하고 개발
+- 처리 이력 없이 운영
+- Visibility Timeout을 너무 짧게 설정
+```
+
+**여러 Worker가 동시에 폴링할 때**:
+```
+SQS Queue (100개 메시지)
+    ↓ (ReceiveMessage API 호출)
+Worker 1 ──┐
+Worker 2 ──┼─→ 각자 독립적으로 폴링
+Worker 3 ──┘
+
+✅ SQS가 자동으로 다른 메시지를 각 Worker에게 분배
+✅ Visibility Timeout으로 동시 처리 방지
+⚠️ 드물게 중복 전달 가능 (At-Least-Once Delivery)
+```
+
 #### FIFO Queue (선입선출 큐)
 
 **특징**:
