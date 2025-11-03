@@ -112,7 +112,7 @@ Lambda 함수 (비즈니스 로직)
 
 **API Gateway 아키텍처**:
 
-![API Gateway Basic Architecture](./generated-diagrams/api_gateway_basic.png)
+![API Gateway Architecture](./generated-diagrams/api_gateway_architecture.png)
 
 *그림: API Gateway 기본 아키텍처 - 클라이언트 요청을 Lambda 함수로 라우팅하고 DynamoDB와 연동*
 
