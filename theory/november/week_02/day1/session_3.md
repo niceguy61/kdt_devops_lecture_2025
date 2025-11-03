@@ -28,6 +28,19 @@
 - 간단한 리소스 정의 작성
 - terraform 기본 명령어 실행
 
+### 📦 사전 준비
+**Terraform 설치 및 AWS 설정이 필요합니다!**
+
+👉 **[Terraform 설치 및 AWS 설정 가이드](../TERRAFORM_SETUP.md)** 참조
+
+- Terraform 설치
+- AWS CLI 설치
+- AWS Access Key 생성
+- AWS 인증 설정
+- 환경 검증
+
+**Lab 시작 전 반드시 완료하세요!**
+
 ---
 
 ## 🤔 왜 필요한가? (5분)
