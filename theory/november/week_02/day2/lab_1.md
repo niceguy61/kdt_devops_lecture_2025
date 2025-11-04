@@ -14,6 +14,7 @@
 **시간**: 13:00-13:50 (50분)
 **목표**: Terraform으로 Multi-AZ VPC 네트워크 구성
 **방식**: 직접 코드 작성 및 배포
+**사전 준비**: IAM 권한 설정 필수
 
 ## 🎯 학습 목표
 
@@ -85,6 +86,128 @@ graph TB
     style PubB fill:#e8f5e8
     style PriA fill:#ffebee
     style PriB fill:#ffebee
+```
+
+---
+
+## 🔐 사전 준비: IAM 권한 설정
+
+### 필요한 IAM 권한
+
+**Terraform 실습에 필요한 권한**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc",
+        "ec2:DeleteVpc",
+        "ec2:DescribeVpcs",
+        "ec2:ModifyVpcAttribute",
+        "ec2:CreateSubnet",
+        "ec2:DeleteSubnet",
+        "ec2:DescribeSubnets",
+        "ec2:CreateInternetGateway",
+        "ec2:DeleteInternetGateway",
+        "ec2:AttachInternetGateway",
+        "ec2:DetachInternetGateway",
+        "ec2:DescribeInternetGateways",
+        "ec2:CreateRouteTable",
+        "ec2:DeleteRouteTable",
+        "ec2:DescribeRouteTables",
+        "ec2:CreateRoute",
+        "ec2:DeleteRoute",
+        "ec2:AssociateRouteTable",
+        "ec2:DisassociateRouteTable",
+        "ec2:CreateTags",
+        "ec2:DeleteTags",
+        "ec2:DescribeTags",
+        "ec2:RunInstances",
+        "ec2:TerminateInstances",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeImages",
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning",
+        "dynamodb:CreateTable",
+        "dynamodb:DeleteTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "iam:GetRole",
+        "iam:PassRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**또는 간단하게 관리형 정책 사용**:
+- `AmazonEC2FullAccess` (VPC, Subnet, IGW, Route Table, EC2 포함)
+- `AmazonS3FullAccess` (S3 Backend용)
+- `AmazonDynamoDBFullAccess` (State Locking용)
+- `IAMFullAccess` (EC2 Instance Profile용)
+
+### IAM User 생성 및 권한 부여
+
+**방법 1: 관리형 정책 사용 (권장 - 간단)**
+
+AWS Console에서:
+```
+1. IAM Console → Users → Create user
+2. User name: terraform-user
+3. Attach policies directly:
+   ✅ AmazonEC2FullAccess
+   ✅ AmazonS3FullAccess
+   ✅ AmazonDynamoDBFullAccess (State Locking용)
+4. Create access key → CLI
+5. Access Key ID, Secret Access Key 저장
+```
+
+**방법 2: 커스텀 정책 사용 (최소 권한 원칙)**
+
+1. IAM Console → Policies → Create policy
+2. JSON 탭에서 위의 권한 JSON 붙여넣기
+3. Policy name: `TerraformLabPolicy`
+4. User 생성 후 해당 정책 연결
+
+### AWS CLI 설정
+
+```bash
+# AWS CLI 설정
+aws configure
+
+# 입력 값:
+# AWS Access Key ID: [YOUR_ACCESS_KEY]
+# AWS Secret Access Key: [YOUR_SECRET_KEY]
+# Default region name: ap-northeast-2
+# Default output format: json
+
+# 확인
+aws sts get-caller-identity
+```
+
+**예상 출력**:
+```json
+{
+    "UserId": "AIDAXXXXXXXXXXXXXXXXX",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/terraform-user"
+}
 ```
 
 ---
