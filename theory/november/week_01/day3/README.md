@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**🗄️ RDS** • **⚡ ElastiCache** • **🔄 캐싱 전략**
+**🗄️ RDS** • **⚡ ElastiCache** • **📊 모니터링** • **🔧 최적화**
 
 *관리형 데이터베이스와 인메모리 캐시로 성능 최적화*
 
@@ -13,25 +13,20 @@
 ## 📅 일일 개요
 
 ### 🎯 학습 목표
-- RDS 관리형 데이터베이스 이해 및 구성
-- ElastiCache Redis/Memcached 활용
-- 캐싱 전략 및 성능 최적화
-- 데이터베이스 고가용성 구현
+- RDS 관리형 데이터베이스 이해 및 Multi-AZ 고가용성 구현
+- ElastiCache Redis/Memcached 활용 및 캐싱 전략 수립
+- CloudWatch를 통한 데이터베이스 모니터링 및 성능 최적화
+- 실제 부하 테스트를 통한 인덱스 최적화 경험
 
 ### ⏰ 세션 구성
 
 | 시간 | 구분 | 주제 | 내용 |
 |------|------|------|------|
-| **09:00-09:20** | 📚 Session 1 | RDS 기초 | 관리형 DB, Multi-AZ, Read Replica |
-| **09:20-09:30** | ☕ 휴식 | 10분 휴식 | |
-| **09:30-09:50** | 📚 Session 2 | ElastiCache | Redis vs Memcached, 캐싱 전략 |
-| **09:50-10:00** | ☕ 휴식 | 10분 휴식 | |
-| **10:00-10:20** | 📚 Session 3 | DB 운영 | 백업, 모니터링, 성능 최적화 |
-| **10:20-10:30** | ☕ 휴식 | 10분 휴식 | |
-| **10:30-11:20** | 🛠️ Lab 1 | RDS + ElastiCache | PostgreSQL + Redis 구성 |
-| **11:20-11:30** | ☕ 휴식 | 10분 휴식 | |
-| **11:30-12:20** | 🛠️ Lab 2 | 캐싱 성능 테스트 | Cache-Aside 패턴 구현 |
-| **12:20-13:00** | 🍽️ 점심 | 점심시간 | |
+| **09:00-09:40** | 📚 Session 1 | RDS 기초 | 관리형 DB, Multi-AZ, Read Replica, Failover |
+| **09:40-10:20** | 📚 Session 2 | ElastiCache | Redis vs Memcached, 캐싱 전략, 성능 향상 |
+| **10:20-11:00** | 📚 Session 3 | DB 운영 | CloudWatch 모니터링, Performance Insights, 최적화 |
+| **11:00-12:00** | 🛠️ Lab 1 | RDS 성능 모니터링 | 대용량 데이터 + 인덱스 최적화 실습 |
+| **12:00-13:00** | 🍽️ 점심 | 점심시간 | |
 
 ---
 
