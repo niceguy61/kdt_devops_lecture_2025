@@ -384,7 +384,48 @@ cat ~/.aws/credentials
 
 ---
 
-## 🛠️ Step 1: 프로젝트 초기화 (5분)
+## 🛠️ Step 1: S3 Backend 버킷 생성 (5분)
+
+### S3 버킷 생성
+
+```bash
+# 1. 고유한 버킷 이름 생성 (본인 이름 또는 랜덤 문자열 사용)
+BUCKET_NAME="terraform-state-$(whoami)-$(date +%s)"
+echo $BUCKET_NAME
+
+# 2. S3 버킷 생성
+aws s3 mb s3://${BUCKET_NAME} --region ap-northeast-2
+
+# 3. 버킷 버전 관리 활성화 (State 파일 보호)
+aws s3api put-bucket-versioning \
+  --bucket ${BUCKET_NAME} \
+  --versioning-configuration Status=Enabled
+
+# 4. 버킷 확인
+aws s3 ls | grep terraform-state
+```
+
+**예상 출력**:
+```
+make_bucket: terraform-state-user-1699000000
+2024-11-04 12:00:00 terraform-state-user-1699000000
+```
+
+**⚠️ 버킷 이름 저장**:
+```bash
+# 버킷 이름을 메모장에 저장하세요!
+# 예: terraform-state-user-1699000000
+# 다음 단계에서 사용됩니다.
+```
+
+**✅ 체크포인트**:
+- [ ] S3 버킷 생성 완료
+- [ ] 버전 관리 활성화 완료
+- [ ] 버킷 이름 저장 완료
+
+---
+
+## 🛠️ Step 2: 프로젝트 초기화 (5분)
 
 ### 작업 디렉토리 생성
 
@@ -400,7 +441,7 @@ pwd
 
 ---
 
-## 🛠️ Step 2: Provider 설정 (5분)
+## 🛠️ Step 3: Provider 및 Backend 설정 (10분)
 
 ### main.tf 작성
 
@@ -416,6 +457,13 @@ terraform {
       version = "~> 5.0"
     }
   }
+  
+  # S3 Backend 설정
+  backend "s3" {
+    bucket = "terraform-state-user-1699000000"  # ⚠️ 본인의 버킷 이름으로 변경!
+    key    = "vpc/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
 }
 
 # AWS Provider 설정
@@ -425,16 +473,33 @@ provider "aws" {
 EOF
 ```
 
-### 초기화
+**⚠️ 중요: 버킷 이름 변경**
+```bash
+# Step 1에서 생성한 버킷 이름으로 변경하세요!
+# 예: terraform-state-user-1699000000
+
+# 방법 1: 텍스트 에디터로 수정
+vim main.tf  # 또는 nano, code 등
+
+# 방법 2: sed 명령어로 자동 변경
+BUCKET_NAME="terraform-state-user-1699000000"  # 본인 버킷 이름
+sed -i "s/terraform-state-user-1699000000/${BUCKET_NAME}/g" main.tf
+```
+
+### Backend 초기화
 
 ```bash
-# Terraform 초기화
+# Terraform 초기화 (Backend 설정 포함)
 terraform init
 ```
 
 **예상 출력**:
 ```
 Initializing the backend...
+
+Successfully configured the backend "s3"! Terraform will automatically
+use this backend unless the backend configuration changes.
+
 Initializing provider plugins...
 - Finding hashicorp/aws versions matching "~> 5.0"...
 - Installing hashicorp/aws v5.25.0...
@@ -443,13 +508,24 @@ Terraform has been successfully initialized!
 ```
 
 **✅ 체크포인트**:
+- [ ] `main.tf` 파일 생성됨
+- [ ] 버킷 이름 변경 완료
 - [ ] `.terraform/` 폴더 생성됨
 - [ ] `.terraform.lock.hcl` 파일 생성됨
+- [ ] S3 Backend 초기화 성공
 - [ ] AWS Provider 다운로드 완료
+
+**🔍 Backend 확인**:
+```bash
+# S3에 state 파일 확인 (아직 비어있음)
+aws s3 ls s3://${BUCKET_NAME}/vpc/
+
+# 출력: (비어있음 - apply 후 생성됨)
+```
 
 ---
 
-## 🛠️ Step 3: VPC 및 Subnet 생성 (15분)
+## 🛠️ Step 4: VPC 및 Subnet 생성 (15분)
 
 ### vpc.tf 작성
 
@@ -552,7 +628,7 @@ Plan: 5 to add, 0 to change, 0 to destroy.
 
 ---
 
-## 🛠️ Step 4: Internet Gateway 및 Route Table (15분)
+## 🛠️ Step 5: Internet Gateway 및 Route Table (15분)
 
 ### igw.tf 작성
 
@@ -638,7 +714,7 @@ Changes to Outputs:
 
 ---
 
-## 🛠️ Step 5: Output 설정 (5분)
+## 🛠️ Step 6: Output 설정 (5분)
 
 ### outputs.tf 작성
 
