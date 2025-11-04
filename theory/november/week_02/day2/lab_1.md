@@ -933,30 +933,64 @@ aws_vpc.main: Destruction complete after 1s
 Destroy complete! Resources: 12 destroyed.
 ```
 
+**🔍 S3 Backend 확인**:
+```bash
+# S3의 state 파일 확인 (빈 state로 업데이트됨)
+aws s3 ls s3://${BUCKET_NAME}/vpc/
+
+# state 파일 내용 확인
+aws s3 cp s3://${BUCKET_NAME}/vpc/terraform.tfstate - | jq '.resources'
+
+# 예상 출력:
+# []  (빈 배열 - 모든 리소스 삭제됨)
+```
+
 **✅ 체크포인트**:
 - [ ] 12개 리소스 삭제 완료
-- [ ] `terraform.tfstate` 파일 비어있음
+- [ ] S3의 state 파일 업데이트됨 (빈 state)
 - [ ] AWS Console에서 리소스 삭제 확인
+
+### S3 버킷 정리 (선택사항)
+
+**⚠️ 주의**: 버킷을 삭제하면 state 파일 히스토리도 모두 삭제됩니다.
+
+```bash
+# 1. 버킷 내 모든 버전 삭제
+aws s3api delete-objects \
+  --bucket ${BUCKET_NAME} \
+  --delete "$(aws s3api list-object-versions \
+    --bucket ${BUCKET_NAME} \
+    --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
+    --output json)"
+
+# 2. 버킷 삭제
+aws s3 rb s3://${BUCKET_NAME}
+
+# 3. 확인
+aws s3 ls | grep terraform-state
+# 출력: (없음)
+```
 
 ---
 
 ## 💡 Lab 회고
 
-### 🤝 페어 회고 (5분)
-1. **Terraform 워크플로우**: init → plan → apply → destroy 순서 이해
-2. **리소스 의존성**: VPC → Subnet → IGW → Route Table 순서
-3. **Multi-AZ 설계**: 고가용성을 위한 2개 AZ 구성
-4. **State 관리**: terraform.tfstate 파일의 중요성
+### 🤝 협업 회고 (5분)
+1. **S3 Backend 장점**: 여러 컴퓨터/팀원이 같은 state 공유
+2. **State 버전 관리**: S3 버전 관리로 이전 상태 복구 가능
+3. **협업 시나리오**: 한 명이 배포 → 다른 사람이 수정 가능
+4. **주의사항**: 동시 작업 시 충돌 가능 (State Locking 필요 - Day 3에서 학습)
 
 ### 📊 학습 성과
 - **Terraform 기본**: 4개 명령어 실습 완료
+- **S3 Backend**: 협업 가능한 인프라 관리
 - **AWS 네트워크**: VPC, Subnet, IGW, Route Table 이해
 - **IaC 경험**: 코드로 인프라 관리하는 경험
 - **실무 패턴**: 프로덕션급 네트워크 구조 학습
 
 ### 🎯 다음 단계
 - **Day 3**: Terraform Variable & Module
-- **Day 4**: Terraform State 관리 (S3 Backend)
+- **Day 4**: State Locking (DynamoDB) & Workspace
 - **Day 5**: 전체 인프라 통합 (VPC + EC2 + RDS)
 
 ---
@@ -965,14 +999,22 @@ Destroy complete! Resources: 12 destroyed.
 
 ```
 terraform-labs/day2-vpc/
-├── main.tf              # Provider 설정
+├── main.tf              # Provider & S3 Backend 설정
 ├── vpc.tf               # VPC & Subnet
 ├── igw.tf               # IGW & Route Table
 ├── outputs.tf           # Output 정의
 ├── .terraform/          # Provider 플러그인
-├── .terraform.lock.hcl  # Provider 버전 잠금
-└── terraform.tfstate    # 현재 인프라 상태
+└── .terraform.lock.hcl  # Provider 버전 잠금
+
+S3 버킷:
+└── s3://terraform-state-user-xxx/
+    └── vpc/
+        └── terraform.tfstate  # State 파일 (S3에 저장)
 ```
+
+**💡 로컬 vs S3 Backend 차이**:
+- **로컬**: `terraform.tfstate` 파일이 로컬에 저장 (협업 불가)
+- **S3 Backend**: State 파일이 S3에 저장 (협업 가능, 버전 관리)
 
 ---
 
