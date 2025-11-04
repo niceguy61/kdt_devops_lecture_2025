@@ -827,7 +827,7 @@ aws s3 ls s3://${BUCKET_NAME}/vpc/
 
 ---
 
-## 🛠️ Step 7: 검증 (5분)
+## 🛠️ Step 8: 검증 (5분)
 
 ### AWS Console 확인
 
@@ -871,6 +871,34 @@ aws_route_table_association.public_b
 aws_route_table_association.private_a
 aws_route_table_association.private_b
 ```
+
+### 🤝 협업 테스트 (선택사항)
+
+**다른 컴퓨터나 팀원이 같은 인프라 관리하기**:
+
+```bash
+# 1. 새 디렉토리 생성
+mkdir -p ~/terraform-labs/day2-vpc-team
+cd ~/terraform-labs/day2-vpc-team
+
+# 2. 같은 코드 복사 (main.tf, vpc.tf, igw.tf, outputs.tf)
+# 또는 Git에서 clone
+
+# 3. terraform init (S3에서 state 다운로드)
+terraform init
+
+# 4. 현재 인프라 확인
+terraform plan
+
+# 예상 출력:
+# No changes. Your infrastructure matches the configuration.
+```
+
+**✅ S3 Backend 장점 확인**:
+- [ ] 다른 위치에서 `terraform init` 성공
+- [ ] S3에서 state 파일 자동 다운로드
+- [ ] 동일한 인프라 상태 확인
+- [ ] 협업 가능 확인
 
 ---
 
