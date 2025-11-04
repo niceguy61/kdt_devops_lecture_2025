@@ -90,7 +90,86 @@ graph TB
 
 ---
 
-## 🔐 사전 준비: IAM 권한 설정
+## 🔐 사전 준비 1: Terraform 설치
+
+### Linux (Ubuntu/Debian)
+
+```bash
+# 1. HashiCorp GPG 키 추가
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+# 2. HashiCorp 저장소 추가
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+# 3. 설치
+sudo apt update
+sudo apt install terraform
+
+# 4. 확인
+terraform version
+```
+
+### macOS
+
+**방법 1: Homebrew (권장)**
+```bash
+# 1. Homebrew로 설치
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+
+# 2. 확인
+terraform version
+```
+
+**방법 2: 수동 설치**
+```bash
+# 1. 다운로드
+wget https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_darwin_amd64.zip
+
+# 2. 압축 해제
+unzip terraform_1.6.4_darwin_amd64.zip
+
+# 3. PATH에 추가
+sudo mv terraform /usr/local/bin/
+
+# 4. 확인
+terraform version
+```
+
+### Windows
+
+**방법 1: Chocolatey (권장)**
+```powershell
+# 1. Chocolatey로 설치
+choco install terraform
+
+# 2. 확인
+terraform version
+```
+
+**방법 2: 수동 설치**
+```powershell
+# 1. 다운로드
+# https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_windows_amd64.zip
+
+# 2. 압축 해제 후 원하는 폴더에 저장 (예: C:\terraform)
+
+# 3. 환경 변수 PATH에 추가
+# 시스템 속성 → 환경 변수 → Path → 편집 → 새로 만들기 → C:\terraform
+
+# 4. 새 터미널 열고 확인
+terraform version
+```
+
+**예상 출력**:
+```
+Terraform v1.6.4
+on linux_amd64
+```
+
+---
+
+## 🔐 사전 준비 2: IAM 권한 설정
 
 ### 필요한 IAM 권한
 
@@ -137,12 +216,6 @@ graph TB
         "s3:DeleteObject",
         "s3:GetBucketVersioning",
         "s3:PutBucketVersioning",
-        "dynamodb:CreateTable",
-        "dynamodb:DeleteTable",
-        "dynamodb:DescribeTable",
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:DeleteItem",
         "iam:GetRole",
         "iam:PassRole",
         "iam:CreateRole",
@@ -159,8 +232,6 @@ graph TB
 **또는 간단하게 관리형 정책 사용**:
 - `AmazonEC2FullAccess` (VPC, Subnet, IGW, Route Table, EC2 포함)
 - `AmazonS3FullAccess` (S3 Backend용)
-- `AmazonDynamoDBFullAccess` (State Locking용)
-- `IAMFullAccess` (EC2 Instance Profile용)
 
 ### IAM User 생성 및 권한 부여
 
@@ -173,7 +244,6 @@ AWS Console에서:
 3. Attach policies directly:
    ✅ AmazonEC2FullAccess
    ✅ AmazonS3FullAccess
-   ✅ AmazonDynamoDBFullAccess (State Locking용)
 4. Create access key → CLI
 5. Access Key ID, Secret Access Key 저장
 ```
@@ -188,7 +258,10 @@ AWS Console에서:
 ### AWS CLI 설정
 
 ```bash
-# AWS CLI 설정
+# 1. AWS CLI 설치 확인
+aws --version
+
+# 2. AWS CLI 설정
 aws configure
 
 # 입력 값:
@@ -197,7 +270,7 @@ aws configure
 # Default region name: ap-northeast-2
 # Default output format: json
 
-# 확인
+# 3. 확인
 aws sts get-caller-identity
 ```
 
@@ -209,6 +282,12 @@ aws sts get-caller-identity
     "Arn": "arn:aws:iam::123456789012:user/terraform-user"
 }
 ```
+
+**✅ 사전 준비 체크리스트**:
+- [ ] Terraform 설치 완료 (`terraform version` 확인)
+- [ ] AWS CLI 설치 완료 (`aws --version` 확인)
+- [ ] IAM User 생성 및 권한 부여
+- [ ] AWS CLI 설정 완료 (`aws sts get-caller-identity` 확인)
 
 ---
 
