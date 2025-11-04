@@ -237,16 +237,59 @@ on linux_amd64
 
 **방법 1: 관리형 정책 사용 (권장 - 간단)**
 
-AWS Console에서:
+**Step 1: IAM User 생성**
 ```
-1. IAM Console → Users → Create user
-2. User name: terraform-user
-3. Attach policies directly:
-   ✅ AmazonEC2FullAccess
-   ✅ AmazonS3FullAccess
-4. Create access key → CLI
-5. Access Key ID, Secret Access Key 저장
+1. AWS Console 로그인
+2. 검색창에 "IAM" 입력 → IAM 서비스 선택
+3. 왼쪽 메뉴 → Users → "Create user" 버튼 클릭
+4. User name: terraform-user
+5. "Next" 클릭
 ```
+
+**Step 2: 권한 부여**
+```
+6. "Attach policies directly" 선택
+7. 정책 검색 및 선택:
+   ✅ AmazonEC2FullAccess (체크박스 선택)
+   ✅ AmazonS3FullAccess (체크박스 선택)
+8. "Next" 클릭
+9. "Create user" 클릭
+```
+
+**Step 3: Access Key 생성**
+```
+10. 생성된 사용자 클릭 (terraform-user)
+11. "Security credentials" 탭 선택
+12. "Access keys" 섹션에서 "Create access key" 클릭
+13. Use case 선택: "Command Line Interface (CLI)" 선택
+14. 하단 체크박스 선택: "I understand the above recommendation..."
+15. "Next" 클릭
+16. Description tag (선택사항): "Terraform Lab"
+17. "Create access key" 클릭
+```
+
+**Step 4: Access Key 저장 (중요!)**
+```
+18. ⚠️ 이 화면에서만 Secret Access Key 확인 가능!
+19. 두 가지 방법 중 선택:
+    
+    방법 A: CSV 파일 다운로드
+    - "Download .csv file" 클릭
+    - 안전한 위치에 저장
+    
+    방법 B: 직접 복사
+    - Access key ID: AKIA... (복사)
+    - Secret access key: wJalrXUtn... (복사)
+    - 메모장에 안전하게 저장
+
+20. "Done" 클릭
+```
+
+**⚠️ 중요 보안 사항**:
+- Secret Access Key는 이 화면에서만 확인 가능
+- 분실 시 새로운 Access Key 생성 필요
+- Access Key는 절대 GitHub 등에 업로드 금지
+- 사용 후 비활성화 또는 삭제 권장
 
 **방법 2: 커스텀 정책 사용 (최소 권한 원칙)**
 
@@ -254,23 +297,39 @@ AWS Console에서:
 2. JSON 탭에서 위의 권한 JSON 붙여넣기
 3. Policy name: `TerraformLabPolicy`
 4. User 생성 후 해당 정책 연결
+5. 위의 Step 3-4와 동일하게 Access Key 생성
 
 ### AWS CLI 설정
 
+**Step 1: AWS CLI 설치 확인**
 ```bash
-# 1. AWS CLI 설치 확인
+# AWS CLI 버전 확인
 aws --version
 
-# 2. AWS CLI 설정
+# 예상 출력:
+# aws-cli/2.x.x Python/3.x.x Linux/x86_64
+```
+
+**AWS CLI 미설치 시**:
+- Linux: `sudo apt install awscli` 또는 `pip install awscli`
+- macOS: `brew install awscli`
+- Windows: https://aws.amazon.com/cli/ 에서 설치
+
+**Step 2: AWS CLI 설정**
+```bash
+# AWS 자격 증명 설정
 aws configure
 
-# 입력 값:
-# AWS Access Key ID: [YOUR_ACCESS_KEY]
-# AWS Secret Access Key: [YOUR_SECRET_KEY]
-# Default region name: ap-northeast-2
-# Default output format: json
+# 프롬프트에 따라 입력:
+AWS Access Key ID [None]: AKIA...  # Step 4에서 저장한 Access Key ID
+AWS Secret Access Key [None]: wJalrXUtn...  # Step 4에서 저장한 Secret Access Key
+Default region name [None]: ap-northeast-2  # 서울 리전
+Default output format [None]: json  # JSON 형식
+```
 
-# 3. 확인
+**Step 3: 설정 확인**
+```bash
+# 자격 증명 확인
 aws sts get-caller-identity
 ```
 
@@ -283,11 +342,45 @@ aws sts get-caller-identity
 }
 ```
 
+**✅ 출력에서 확인할 사항**:
+- `UserId`: IAM User ID
+- `Account`: AWS 계정 번호
+- `Arn`: IAM User ARN (terraform-user 확인)
+
+**❌ 오류 발생 시**:
+```bash
+# 오류: Unable to locate credentials
+# 해결: aws configure 다시 실행하여 Access Key 재입력
+
+# 오류: InvalidClientTokenId
+# 해결: Access Key ID가 잘못됨. 올바른 키 확인 후 재입력
+
+# 오류: SignatureDoesNotMatch
+# 해결: Secret Access Key가 잘못됨. 올바른 키 확인 후 재입력
+```
+
+**Step 4: 설정 파일 확인 (선택사항)**
+```bash
+# 설정 파일 위치
+# Linux/macOS: ~/.aws/credentials
+# Windows: C:\Users\USERNAME\.aws\credentials
+
+# 파일 내용 확인
+cat ~/.aws/credentials
+
+# 예상 출력:
+# [default]
+# aws_access_key_id = AKIA...
+# aws_secret_access_key = wJalrXUtn...
+```
+
 **✅ 사전 준비 체크리스트**:
 - [ ] Terraform 설치 완료 (`terraform version` 확인)
 - [ ] AWS CLI 설치 완료 (`aws --version` 확인)
-- [ ] IAM User 생성 및 권한 부여
-- [ ] AWS CLI 설정 완료 (`aws sts get-caller-identity` 확인)
+- [ ] IAM User 생성 완료 (terraform-user)
+- [ ] 권한 부여 완료 (EC2FullAccess, S3FullAccess)
+- [ ] Access Key 생성 및 저장 완료
+- [ ] AWS CLI 설정 완료 (`aws sts get-caller-identity` 성공)
 
 ---
 
