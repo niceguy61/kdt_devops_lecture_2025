@@ -72,22 +72,125 @@
 
 ---
 
+### 💼 실무 사례 1: Amazon ECS Predictive Scaling
+
+**배경**: 컨테이너 기반 마이크로서비스 아키텍처
+
+**문제 상황**:
+- **반응형 스케일링의 한계**: Target Tracking/Step Scaling은 트래픽 급증 후 반응
+- **지연 시간**: 컨테이너 시작 + 초기화 시간 (1-2분)
+- **가용성 저하**: 급증 초기에 응답 지연 발생
+- **비용 낭비**: 과도한 프로비저닝으로 대응
+
+**Predictive Scaling 도입**:
+- **ML 기반 예측**: 과거 14일 데이터 분석
+- **사전 확장**: 수요 급증 전 미리 태스크 증가
+- **Forecast Only 모드**: 2주간 정확도 검증 후 적용
+- **반응형 정책 병행**: Predictive + Target Tracking 조합
+
+**구성 예시**:
+```json
+{
+  "PolicyName": "predictive-scaling-policy",
+  "ServiceNamespace": "ecs",
+  "ResourceId": "service/my-cluster/my-service",
+  "ScalableDimension": "ecs:service:DesiredCount",
+  "PolicyType": "TargetTrackingScaling",
+  "PredictiveScalingPolicyConfiguration": {
+    "MetricSpecifications": [{
+      "TargetValue": 70.0,
+      "PredefinedMetricPairSpecification": {
+        "PredefinedMetricType": "ECSServiceAverageCPUUtilization"
+      }
+    }],
+    "Mode": "ForecastAndScale"
+  }
+}
+```
+
+**결과**:
+- ✅ **가용성 향상**: 트래픽 급증 시 응답 지연 제거
+- ✅ **비용 최적화**: 과도한 프로비저닝 방지 (10-15% 절감)
+- ✅ **운영 효율**: 수동 개입 불필요
+
+**교훈**:
+- ⚠️ **최소 24시간 데이터 필요**: 2주 데이터 권장
+- ⚠️ **Forecast Only로 검증**: 프로덕션 적용 전 정확도 확인
+- ✅ **반응형 정책 병행**: 예측 + 실시간 대응 조합
+
+**참조**: [Optimize compute resources on Amazon ECS with Predictive Scaling](https://aws.amazon.com/blogs/containers/optimize-compute-resources-on-amazon-ecs-with-predictive-scaling/) (2024.11)
+
+---
+
+### 💼 실무 사례 2: Flo Health - DynamoDB Auto Scaling
+
+**회사**: Flo Health (건강 및 피트니스 앱, 월 7천만 활성 사용자)
+
+**배경**: 
+- **Stories 기능**: 개인화된 콘텐츠 스트림
+- **DynamoDB 사용**: 확장성, 속도, 유연성
+- **성장**: 2천만 → 7천만 사용자 (3.5배 증가)
+
+**문제 상황**:
+- **비용 급증**: 사용자 증가에 따른 WCU/RCU 비용
+- **Throttling 발생**: 트래픽 급증 시 요청 제한
+- **비효율적 용량**: 고정 프로비저닝으로 유휴 용량 발생
+
+**최적화 전략**:
+1. **Auto Scaling 구현**:
+   - Target Tracking: WCU/RCU 70% 유지
+   - 트래픽 패턴에 따라 자동 확장/축소
+   
+2. **데이터 최적화**:
+   - 데이터 타입 크기 최적화 (String → Numeric)
+   - 아이템 크기 5배 감소
+   
+3. **접근 패턴 최적화**:
+   - Dirty Checking: 변경된 데이터만 업데이트
+   - Batch 업데이트: 여러 요청 묶어서 처리
+
+**결과**:
+- ✅ **WCU 사용량 3배 감소**: Auto Scaling + 최적화
+- ✅ **아이템 크기 5배 감소**: 스토리지 비용 절감
+- ✅ **Throttling 완전 제거**: 적절한 용량 유지
+- ✅ **대용량 아이템 업데이트 90% 감소**: Dirty Checking 효과
+
+**교훈**:
+- ✅ **Auto Scaling 필수**: 트래픽 변동 대응
+- ✅ **데이터 최적화 병행**: Auto Scaling만으로 부족
+- ✅ **Well-Architected Review**: AWS 전문가 지원 활용
+- ⚠️ **모니터링 중요**: CloudWatch로 패턴 분석
+
+**참조**: [Scaling to 70M users: How Flo Health optimized Amazon DynamoDB](https://aws.amazon.com/blogs/database/scaling-to-70m-users-how-flo-health-optimized-amazon-dynamodb-for-cost-and-performance/) (2024)
+
+---
+
 ### 4. 비슷한 서비스 비교 (Which?)
 
-**Target Tracking vs Step Scaling vs Scheduled Scaling**:
+**Target Tracking vs Step Scaling vs Scheduled Scaling vs Predictive Scaling**:
 
-| 정책 | Target Tracking | Step Scaling | Scheduled Scaling |
-|------|-----------------|--------------|-------------------|
-| **방식** | 목표값 유지 | 단계별 조정 | 예약 스케줄 |
-| **사용 사례** | CPU 50% 유지 | 트래픽 단계별 대응 | 정기적 패턴 |
-| **복잡도** | 낮음 | 중간 | 낮음 |
-| **유연성** | 중간 | 높음 | 낮음 |
-| **권장** | ✅ 일반적 | ✅ 세밀한 제어 | ✅ 예측 가능 |
+| 정책 | Target Tracking | Step Scaling | Scheduled Scaling | Predictive Scaling |
+|------|-----------------|--------------|-------------------|-------------------|
+| **방식** | 목표값 유지 | 단계별 조정 | 예약 스케줄 | ML 기반 예측 |
+| **사용 사례** | CPU 50% 유지 | 트래픽 단계별 대응 | 정기적 패턴 | 반복 패턴 예측 |
+| **복잡도** | 낮음 | 중간 | 낮음 | 중간 |
+| **유연성** | 중간 | 높음 | 낮음 | 높음 |
+| **응답 속도** | 반응형 (2-5분) | 반응형 (2-5분) | 사전 정의 | 사전 예측 |
+| **권장** | ✅ 일반적 | ✅ 세밀한 제어 | ✅ 예측 가능 | ✅ 반복 패턴 |
 
 **선택 기준**:
 - **일반적인 경우** → Target Tracking (CPU 50% 유지)
+  - 2024년 11월: Highly Responsive 모드로 더 빠른 반응
 - **세밀한 제어** → Step Scaling (단계별 다른 조치)
 - **예측 가능한 패턴** → Scheduled Scaling (매일 오전 9시 확장)
+- **반복적 수요 패턴** → Predictive Scaling (ML 기반 사전 확장)
+  - 매일 오전 9시 트래픽 급증
+  - 주말 vs 평일 패턴 차이
+  - 월말 결산 트래픽
+
+**💡 조합 사용 권장**:
+- Predictive Scaling (사전 확장) + Target Tracking (실시간 조정)
+- Scheduled Scaling (기본 용량) + Step Scaling (급증 대응)
 
 ---
 
@@ -134,13 +237,51 @@
 ### 7. 최신 업데이트 🆕
 
 **2024년 주요 변경사항**:
-- Warm Pool 기능: 사전 준비된 인스턴스로 빠른 확장
-- Predictive Scaling: ML 기반 예측 확장
-- Instance Refresh: 무중단 인스턴스 교체
+
+**1. Highly Responsive Scaling Policies** (2024년 11월 출시) ⭐:
+- **고해상도 모니터링**: 1분 미만 간격으로 CloudWatch 메트릭 확인
+- **자동 Self-Tuning**: 과거 사용 패턴 분석하여 응답성 자동 최적화
+- **적합한 워크로드**:
+  - 클라이언트 서빙 API (급격한 트래픽 변화)
+  - 라이브 스트리밍 서비스
+  - 이커머스 웹사이트 (플래시 세일)
+  - 온디맨드 데이터 처리
+- **효과**: 더 빠른 스케일링 결정, 높은 리소스 활용률, 비용 절감
+
+**2. Predictive Scaling 강화**:
+- **리전 확대** (2024년 10월): 6개 신규 리전 추가
+  - Asia Pacific (Hyderabad, Melbourne)
+  - Israel (Tel Aviv)
+  - Canada West (Calgary)
+  - Europe (Spain, Zurich)
+- **ECS 지원** (2024년 11월): Amazon ECS 서비스에도 Predictive Scaling 적용 가능
+- **작동 원리**:
+  - 과거 트래픽 패턴 분석 (일별/주별)
+  - ML 알고리즘으로 미래 수요 예측
+  - 예측된 수요 발생 전에 미리 인스턴스 시작
+  - "Forecast Only" 모드로 정확도 먼저 평가 가능
+- **적합한 경우**:
+  - 반복적인 수요 패턴 (매일 오전 9시 급증)
+  - 긴 초기화 시간 (애플리케이션 시작 5분+)
+  - 예측 가능한 트래픽 (주간/월간 패턴)
+
+**3. Warm Pool 기능**:
+- **개념**: 사전 준비된 인스턴스 풀 유지
+- **장점**: 
+  - 스케일 아웃 시간 단축 (2-3분 → 30초)
+  - 초기화 비용 절감 (stopped 상태로 대기)
+- **비용**: Stopped 인스턴스는 EBS 스토리지만 과금
+
+**4. Instance Refresh**:
+- 무중단 인스턴스 교체
+- 새 Launch Template 적용 시 자동 롤링 업데이트
 
 **2025년 예정**:
-- 더 빠른 스케일 아웃 (1분 이내)
-- 더 정교한 ML 예측
+- 더 빠른 스케일 아웃 (1분 이내 목표)
+- 더 정교한 ML 예측 (외부 이벤트 연동)
+- Warm Pool 기능 강화
+
+**참조**: [Auto Scaling What's New](https://aws.amazon.com/autoscaling/whats-new/) (2024.11 업데이트)
 
 ---
 
