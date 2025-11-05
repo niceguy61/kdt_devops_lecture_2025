@@ -17,17 +17,16 @@
 **아키텍처 설명**:
 - **VPC**: 10.0.0.0/16 IP 범위의 격리된 네트워크
 - **Internet Gateway**: 외부 인터넷과 연결
-- **Route Tables** (3개):
+- **Route Tables** (2개):
   - **Public RT**: Internet Gateway로 트래픽 전달 (0.0.0.0/0 → IGW)
-  - **Private A RT**: NAT Gateway로 트래픽 전달 (0.0.0.0/0 → NAT)
-  - **Private C RT**: NAT Gateway로 트래픽 전달 (0.0.0.0/0 → NAT)
+  - **Private RT**: NAT Gateway로 트래픽 전달 (0.0.0.0/0 → NAT) - 두 Private Subnet 공유
 - **NAT Gateway**: AZ-A Public Subnet에 배치 (비용 절감을 위해 1개만 사용)
 - **AZ-A (ap-northeast-2a)**: 첫 번째 가용 영역
   - Public Subnet (10.0.1.0/24): NAT Gateway 배치, Public RT 연결
-  - Private Subnet (10.0.11.0/24): 데이터베이스 등 배치 예정, Private A RT 연결
+  - Private Subnet (10.0.11.0/24): 데이터베이스 등 배치 예정, Private RT 연결
 - **AZ-C (ap-northeast-2c)**: 두 번째 가용 영역
   - Public Subnet (10.0.2.0/24): 인터넷 연결용, Public RT 연결
-  - Private Subnet (10.0.12.0/24): 데이터베이스 등 배치 예정, Private C RT 연결
+  - Private Subnet (10.0.12.0/24): 데이터베이스 등 배치 예정, Private RT 연결
 
 **트래픽 흐름**:
 - **Public Subnet → 인터넷**: Public RT → Internet Gateway
@@ -39,7 +38,7 @@
 - ✅ Private Subnet 2개 (AZ-A, AZ-C)
 - ✅ Internet Gateway 1개
 - ✅ NAT Gateway 1개 (AZ-A에만 배치)
-- ✅ Route Table 3개 (Public용 1개, Private용 2개)
+- ✅ Route Table 2개 (Public용 1개, Private용 1개)
 
 ---
 
@@ -307,12 +306,12 @@
 
 ---
 
-## 🛣️ Step 5: Route Table 생성 및 설정 (7분)
+## 🛣️ Step 5: Route Table 생성 및 설정 (5분)
 
 ### ⚠️ 중요 개념
 - **Route Table**: 네트워크 트래픽이 어디로 가야 하는지 알려주는 이정표
 - **Public Route Table**: 인터넷으로 가는 길 (Internet Gateway 사용)
-- **Private Route Table**: NAT Gateway를 통해 인터넷으로 가는 길
+- **Private Route Table**: NAT Gateway를 통해 인터넷으로 가는 길 (두 Private Subnet 공유)
 
 ---
 
@@ -379,7 +378,7 @@
 
 ---
 
-### 5-4. Private Route Table A 생성
+### 5-4. Private Route Table 생성
 
 1. 다시 **"Create route table"** 버튼 클릭
 
@@ -387,18 +386,18 @@
 
 | 항목 | 입력 값 |
 |------|---------|
-| **Name** | `november-w1-d3-private-a-rt` |
+| **Name** | `november-w1-d3-private-rt` |
 | **VPC** | `november-w1-d3-vpc` 선택 |
 
-**📸 스크린샷 자리**: Private Route Table A 생성 설정
+**📸 스크린샷 자리**: Private Route Table 생성 설정
 
 2. 하단 **"Create route table"** 버튼 클릭
 
 ---
 
-### 5-5. Private Route Table A에 NAT Gateway 경로 추가
+### 5-5. Private Route Table에 NAT Gateway 경로 추가
 
-1. 생성된 `november-w1-d3-private-a-rt` 선택
+1. 생성된 `november-w1-d3-private-rt` 선택
 2. 하단 탭에서 **"Routes"** 탭 클릭
 3. **"Edit routes"** 버튼 클릭
 4. **"Add route"** 버튼 클릭
@@ -416,68 +415,20 @@
 
 ---
 
-### 5-6. Private Subnet A를 Private Route Table A에 연결
+### 5-6. Private Subnet 2개를 Private Route Table에 연결
 
-1. `november-w1-d3-private-a-rt` 선택 상태에서
+1. `november-w1-d3-private-rt` 선택 상태에서
 2. 하단 탭에서 **"Subnet associations"** 탭 클릭
 3. **"Edit subnet associations"** 버튼 클릭
-4. ✅ `november-w1-d3-private-a` 체크박스 선택
+4. 다음 2개 Subnet 체크박스 선택:
+   - ✅ `november-w1-d3-private-a`
+   - ✅ `november-w1-d3-private-c`
 
-**📸 스크린샷 자리**: Private Subnet A 연결
+**📸 스크린샷 자리**: Private Subnet 2개 선택
 
 5. 하단 **"Save associations"** 버튼 클릭
 
----
-
-### 5-7. Private Route Table C 생성
-
-1. 다시 **"Create route table"** 버튼 클릭
-
-**Route Table 설정**:
-
-| 항목 | 입력 값 |
-|------|---------|
-| **Name** | `november-w1-d3-private-c-rt` |
-| **VPC** | `november-w1-d3-vpc` 선택 |
-
-**📸 스크린샷 자리**: Private Route Table C 생성 설정
-
-2. 하단 **"Create route table"** 버튼 클릭
-
----
-
-### 5-8. Private Route Table C에 NAT Gateway 경로 추가
-
-1. 생성된 `november-w1-d3-private-c-rt` 선택
-2. 하단 탭에서 **"Routes"** 탭 클릭
-3. **"Edit routes"** 버튼 클릭
-4. **"Add route"** 버튼 클릭
-
-**경로 추가**:
-
-| 항목 | 입력 값 | 설명 |
-|------|---------|------|
-| **Destination** | `0.0.0.0/0` | 모든 인터넷 트래픽 |
-| **Target** | NAT Gateway → `november-w1-d3-nat` 선택 | ⚠️ 같은 NAT Gateway 사용 |
-
-**📸 스크린샷 자리**: NAT Gateway 경로 추가 (AZ-C도 같은 NAT 사용)
-
-5. 하단 **"Save changes"** 버튼 클릭
-
----
-
-### 5-9. Private Subnet C를 Private Route Table C에 연결
-
-1. `november-w1-d3-private-c-rt` 선택 상태에서
-2. 하단 탭에서 **"Subnet associations"** 탭 클릭
-3. **"Edit subnet associations"** 버튼 클릭
-4. ✅ `november-w1-d3-private-c` 체크박스 선택
-
-**📸 스크린샷 자리**: Private Subnet C 연결
-
-5. 하단 **"Save associations"** 버튼 클릭
-
-**📸 스크린샷 자리**: Route Table 3개 모두 생성 완료 목록
+**📸 스크린샷 자리**: Route Table 2개 모두 생성 완료 목록
 
 ---
 
@@ -504,16 +455,13 @@
 - [ ] Status: Available
 - [ ] Elastic IP 할당됨
 
-**Route Tables** (총 3개):
+**Route Tables** (총 2개):
 - [ ] `november-w1-d3-public-rt`
   - [ ] Route: 0.0.0.0/0 → IGW
   - [ ] Associated: Public Subnet A, C
-- [ ] `november-w1-d3-private-a-rt`
+- [ ] `november-w1-d3-private-rt`
   - [ ] Route: 0.0.0.0/0 → NAT Gateway
-  - [ ] Associated: Private Subnet A
-- [ ] `november-w1-d3-private-c-rt`
-  - [ ] Route: 0.0.0.0/0 → NAT Gateway (같은 NAT 사용)
-  - [ ] Associated: Private Subnet C
+  - [ ] Associated: Private Subnet A, C (두 Subnet 모두 연결)
 
 **📸 스크린샷 자리**: 전체 리소스 요약 화면
 
