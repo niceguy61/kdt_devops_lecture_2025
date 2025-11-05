@@ -450,7 +450,7 @@
   - [ ] Route: 0.0.0.0/0 → NAT Gateway
   - [ ] Associated: Private Subnet A, C (두 Subnet 모두 연결)
 
-**📸 스크린샷 자리**: 전체 리소스 요약 화면
+![VPC Multi-AZ Architecture](./images/vpc-27.png)
 
 ---
 
