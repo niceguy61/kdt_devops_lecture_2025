@@ -75,6 +75,12 @@ ELB (Multi-AZ)
 - ✅ 고정 IP 필요
 - ✅ 게임 서버, IoT
 
+**GLB (Gateway Load Balancer) 적합**:
+- ✅ 보안 어플라이언스 통합 (방화벽, IDS/IPS, DLP)
+- ✅ 중앙 집중식 보안 정책
+- ✅ 규정 준수 (PCI-DSS, HIPAA)
+- ✅ DDoS 방어 및 침입 탐지
+
 **CLB (Classic Load Balancer) 적합**:
 - ⚠️ 레거시 애플리케이션
 - ⚠️ EC2-Classic (권장하지 않음)
@@ -180,6 +186,69 @@ ELB (Multi-AZ)
 - ⚠️ WAF 통합 불가
 - ⚠️ 경로 기반 라우팅 불가
 
+**GLB (Gateway Load Balancer) 장점**:
+- ✅ 보안 어플라이언스 통합 (방화벽, IDS/IPS)
+
+```mermaid
+graph TB
+    subgraph "GWLB 보안 아키텍처"
+        Users[인터넷 사용자] --> IGW[Internet Gateway]
+        IGW --> GWLB[Gateway Load Balancer]
+        
+        subgraph "보안 어플라이언스"
+            GWLB --> FW1[방화벽 1]
+            GWLB --> FW2[방화벽 2]
+            GWLB --> IDS1[IDS/IPS 1]
+            GWLB --> IDS2[IDS/IPS 2]
+        end
+        
+        FW1 --> GWLB2[GWLB Return]
+        FW2 --> GWLB2
+        IDS1 --> GWLB2
+        IDS2 --> GWLB2
+        
+        subgraph "애플리케이션 계층"
+            GWLB2 --> APP1[App Server 1]
+            GWLB2 --> APP2[App Server 2]
+        end
+    end
+    
+    style Users fill:#e3f2fd
+    style IGW fill:#fff3e0
+    style GWLB fill:#e8f5e8
+    style GWLB2 fill:#e8f5e8
+    style FW1 fill:#ffebee
+    style FW2 fill:#ffebee
+    style IDS1 fill:#ffebee
+    style IDS2 fill:#ffebee
+    style APP1 fill:#f3e5f5
+    style APP2 fill:#f3e5f5
+```
+
+*그림: GWLB 보안 아키텍처 - 트래픽이 보안 어플라이언스를 거쳐 애플리케이션으로 전달*
+
+- ✅ 투명한 네트워크 게이트웨이 (Layer 3)
+- ✅ 고가용성 보안 인프라
+- ✅ 자동 스케일링 보안 어플라이언스
+
+**GLB 작동 원리**:
+1. **트래픽 수신**: 모든 인바운드 트래픽을 GWLB가 수신
+2. **보안 검사**: 방화벽, IDS/IPS 등 보안 어플라이언스로 전달
+3. **정책 적용**: 보안 정책에 따라 트래픽 허용/차단
+4. **클린 트래픽**: 검증된 트래픽만 애플리케이션으로 전달
+5. **투명성**: 애플리케이션은 보안 계층을 인식하지 못함
+
+**GLB 사용 사례**:
+- **엔터프라이즈 보안**: 중앙 집중식 보안 정책
+- **규정 준수**: PCI-DSS, HIPAA 등 보안 요구사항
+- **DDoS 방어**: 대규모 공격 차단
+- **침입 탐지**: 실시간 위협 탐지 및 차단
+
+**GLB 단점**:
+- ⚠️ 보안 어플라이언스 비용 추가
+- ⚠️ 복잡한 설정 및 관리
+- ⚠️ 지연시간 증가 (보안 검사 시간)
+
 ---
 
 ### 6. 비용 구조 💰
@@ -259,6 +328,14 @@ ELB (Multi-AZ)
 - Target Group별로 Health Check 경로 다르게 설정
 - Sticky Session은 필요한 경우에만 사용
 - Cross-Zone Load Balancing 활성화 (균등 분산)
+- **GLB 사용 시**: 보안 어플라이언스 Auto Scaling 설정 필수
+
+**GLB 베스트 프랙티스**:
+1. **Multi-AZ 배포**: 보안 어플라이언스를 여러 AZ에 배포
+2. **Auto Scaling**: 트래픽 증가 시 자동 확장
+3. **Health Check**: 보안 어플라이언스 상태 모니터링
+4. **로깅**: VPC Flow Logs로 트래픽 분석
+5. **정책 관리**: 중앙 집중식 보안 정책 관리
 
 ---
 
@@ -275,6 +352,14 @@ ELB (Multi-AZ)
 - 모든 서비스에 ALB 사용 (비용 증가)
 - Health Check 경로를 / 로 설정 (불필요한 부하)
 - 타겟 수가 1개 (단일 장애점)
+- **GLB 오용**: 단순 웹 애플리케이션에 GLB 사용 (과도한 복잡성)
+
+**GLB 흔한 실수**:
+1. ❌ 보안 어플라이언스 단일 AZ 배포 (고가용성 부족)
+2. ❌ GENEVE 프로토콜 미지원 어플라이언스 사용
+3. ❌ Health Check 미설정 (장애 어플라이언스로 트래픽 전송)
+4. ❌ 로깅 미활성화 (보안 이벤트 추적 불가)
+5. ❌ 과도한 보안 검사 (성능 저하)
 
 ---
 
@@ -314,6 +399,38 @@ ELB (Multi-AZ)
 - 호스트 기반: api.example.com → API Target Group
 - HTTP 헤더: User-Agent 기반 라우팅
 - 쿼리 스트링: ?version=v2 → V2 Target Group
+
+**5. Gateway Load Balancer Endpoint (GWLBE)**:
+- 역할: VPC와 보안 어플라이언스 연결
+- 작동 방식:
+  1. **GENEVE 프로토콜**: 트래픽 캡슐화 (포트 6081)
+  2. **투명한 전달**: 원본 IP 및 포트 유지
+  3. **양방향 검사**: 인바운드/아웃바운드 모두 검사
+- 구성:
+  - VPC Endpoint: 각 AZ마다 생성
+  - Route Table: GWLBE로 트래픽 라우팅
+  - Security Appliance: EC2 기반 방화벽/IDS
+
+**GLB 트래픽 흐름**:
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant IGW as Internet Gateway
+    participant GWLBE as GWLB Endpoint
+    participant GWLB as Gateway LB
+    participant SA as 보안 어플라이언스
+    participant App as 애플리케이션
+
+    User->>IGW: 1. HTTP 요청
+    IGW->>GWLBE: 2. VPC Endpoint로 전달
+    GWLBE->>GWLB: 3. GENEVE 캡슐화
+    GWLB->>SA: 4. 보안 검사 요청
+    SA->>SA: 5. 방화벽/IDS 검사
+    SA->>GWLB: 6. 검사 완료
+    GWLB->>GWLBE: 7. 클린 트래픽
+    GWLBE->>App: 8. 애플리케이션 전달
+    App->>User: 9. 응답 (역순)
+```
 
 ---
 
