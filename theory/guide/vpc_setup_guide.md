@@ -12,7 +12,7 @@
 
 ## 🎯 이 가이드로 만들 것
 
-![VPC Multi-AZ Architecture](./generated-diagrams/vpc_multi_az_architecture3.png)
+![VPC Multi-AZ Architecture](../november/week_01/day3/generated-diagrams/vpc_multi_az_architecture.png)
 
 **아키텍처 설명**:
 - **VPC**: 10.0.0.0/16 IP 범위의 격리된 네트워크
