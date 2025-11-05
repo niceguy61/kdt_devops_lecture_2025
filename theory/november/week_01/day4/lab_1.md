@@ -25,7 +25,7 @@
 
 ## ⚠️ 사전 준비 필수
 
-### VPC 네트워크 구성
+### 1. VPC 네트워크 구성
 이 Lab을 진행하기 전에 **반드시** VPC 네트워크가 구성되어 있어야 합니다.
 
 **📘 필수 가이드**: [VPC Setup Guide](../../../guide/vpc_setup_guide.md)
@@ -39,6 +39,58 @@
 - ✅ Route Tables (Public/Private)
 
 **⚠️ VPC가 없다면**: 위 가이드를 먼저 완료하고 돌아오세요!
+
+---
+
+### 2. 팀 애플리케이션 포트 정보 정리 (필수)
+
+**각 팀의 실제 애플리케이션 포트를 먼저 확인하고 정리하세요!**
+
+#### 📋 포트 정보 템플릿
+
+아래 표를 팀 상황에 맞게 작성하세요:
+
+| 서비스 | 컨테이너 포트 | 경로 패턴 | 설명 |
+|--------|--------------|----------|------|
+| Frontend | 3000 | `/` 또는 `/app/*` | React/Vue 프론트엔드 |
+| Backend API | 8000 | `/api/*` | REST API 서버 |
+| Admin | 8080 | `/admin/*` | 관리자 페이지 |
+
+**예시 1 (Node.js 기반)**:
+```
+Frontend: 3000 → /
+Backend:  8000 → /api/*
+Admin:    8080 → /admin/*
+```
+
+**예시 2 (Python/Django 기반)**:
+```
+Frontend: 3000 → /
+Backend:  8000 → /api/*
+Admin:    8001 → /admin/*
+```
+
+**예시 3 (Java/Spring 기반)**:
+```
+Frontend: 3000 → /
+Backend:  8080 → /api/*
+Admin:    9090 → /admin/*
+```
+
+#### ⚠️ 중요 사항
+- **포트 범위**: 1024-65535 사용 가능
+- **포트 중복 금지**: 같은 EC2에서 각 서비스는 다른 포트 사용
+- **경로 패턴**: ALB에서 라우팅할 URL 경로 결정
+- **Security Group**: 위에서 정한 모든 포트를 허용해야 함
+
+#### 📝 우리 팀 포트 정보 (작성하세요)
+```
+서비스 1 (이름: _______): 포트 _____ → 경로 _______
+서비스 2 (이름: _______): 포트 _____ → 경로 _______
+서비스 3 (이름: _______): 포트 _____ → 경로 _______
+```
+
+**✅ 포트 정보 확인 완료 후 다음 단계로 진행하세요!**
 
 ---
 
@@ -111,18 +163,32 @@ AWS Console → EC2 → Instances → Launch instances
 **이미지 자리**: Security Group 설정 화면
 
 ### Security Group 규칙 (초기 설정)
+
+**⚠️ 중요**: 위에서 정리한 팀 포트 정보를 사용하세요!
+
 ```
 Inbound:
 - Type: HTTP, Port: 80, Source: 0.0.0.0/0
-- Type: Custom TCP, Port: 8080-8082, Source: 0.0.0.0/0 (임시)
+- Type: Custom TCP, Port: [팀 포트 1], Source: 0.0.0.0/0 (임시)
+- Type: Custom TCP, Port: [팀 포트 2], Source: 0.0.0.0/0 (임시)
+- Type: Custom TCP, Port: [팀 포트 3], Source: 0.0.0.0/0 (임시)
 
 Outbound:
 - Type: All traffic, Destination: 0.0.0.0/0
 ```
 
+**예시 (포트가 3000, 8000, 8080인 경우)**:
+```
+Inbound:
+- Type: HTTP, Port: 80, Source: 0.0.0.0/0
+- Type: Custom TCP, Port: 3000, Source: 0.0.0.0/0 (임시)
+- Type: Custom TCP, Port: 8000, Source: 0.0.0.0/0 (임시)
+- Type: Custom TCP, Port: 8080, Source: 0.0.0.0/0 (임시)
+```
+
 **⚠️ 주의**: 
 - SSH 포트는 열지 않습니다 (SSM Session Manager 사용)
-- 8080-8082 포트는 Step 3에서 ALB Security Group으로 변경 예정
+- 위 포트들은 Step 3에서 ALB Security Group으로 변경 예정
 
 ### Docker 및 Docker Compose 설치
 
@@ -164,95 +230,75 @@ docker ps
 
 ---
 
-## 🛠️ Step 2: Docker Compose로 3개 서비스 실행 (10분)
+## 🛠️ Step 2: Docker Compose로 팀 서비스 실행 (10분)
 
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - Target Groups 포트 매핑
 
-### 프로젝트 디렉토리 생성
+### 팀 애플리케이션 배포
+
+**⚠️ 중요**: 각 팀은 자신들의 실제 애플리케이션 소스를 사용합니다!
+
+#### 옵션 1: 팀 소스가 있는 경우 (권장)
+
 ```bash
-mkdir -p ~/multi-api/{api,backend,admin}
+# 팀 프로젝트 디렉토리로 이동
+cd ~/team-project
+
+# docker-compose.yml 확인 및 수정
+# - 포트 매핑이 위에서 정한 포트와 일치하는지 확인
+# - 예: frontend는 3000, backend는 8000, admin은 8080
+
+# 컨테이너 실행
+docker-compose up -d
+```
+
+#### 옵션 2: 테스트용 샘플 서비스 (팀 소스 없는 경우)
+
+```bash
+mkdir -p ~/multi-api/{service1,service2,service3}
 cd ~/multi-api
-```
 
-### 각 서비스 HTML 파일 생성
-```bash
-# API 서비스
-cat > api/index.html <<EOF
+# 각 서비스 HTML 생성 (팀 포트에 맞게 수정)
+cat > service1/index.html <<EOF
 <!DOCTYPE html>
 <html>
-<head><title>API Service</title></head>
+<head><title>Service 1</title></head>
 <body>
-    <h1>🚀 API Service</h1>
-    <p>Running on port 8080</p>
-    <p>Path: /api/*</p>
+    <h1>🚀 Service 1</h1>
+    <p>Running on port [팀 포트 1]</p>
 </body>
 </html>
 EOF
 
-# Backend 서비스
-cat > backend/index.html <<EOF
-<!DOCTYPE html>
-<html>
-<head><title>Backend Service</title></head>
-<body>
-    <h1>⚙️ Backend Service</h1>
-    <p>Running on port 8081</p>
-    <p>Path: /backend/*</p>
-</body>
-</html>
-EOF
+# service2, service3도 동일하게 생성...
 
-# Admin 서비스
-cat > admin/index.html <<EOF
-<!DOCTYPE html>
-<html>
-<head><title>Admin Service</title></head>
-<body>
-    <h1>🔧 Admin Service</h1>
-    <p>Running on port 8082</p>
-    <p>Path: /admin/*</p>
-</body>
-</html>
-EOF
-```
-
-### docker-compose.yml 생성
-```bash
+# docker-compose.yml 생성 (팀 포트에 맞게 수정)
 cat > docker-compose.yml <<EOF
 version: '3'
 services:
-  api:
+  service1:
     image: nginx:alpine
-    container_name: api-service
     ports:
-      - "8080:80"
+      - "[팀 포트 1]:80"
     volumes:
-      - ./api:/usr/share/nginx/html:ro
-    restart: always
-
-  backend:
+      - ./service1:/usr/share/nginx/html:ro
+  
+  service2:
     image: nginx:alpine
-    container_name: backend-service
     ports:
-      - "8081:80"
+      - "[팀 포트 2]:80"
     volumes:
-      - ./backend:/usr/share/nginx/html:ro
-    restart: always
-
-  admin:
+      - ./service2:/usr/share/nginx/html:ro
+  
+  service3:
     image: nginx:alpine
-    container_name: admin-service
     ports:
-      - "8082:80"
+      - "[팀 포트 3]:80"
     volumes:
-      - ./admin:/usr/share/nginx/html:ro
-    restart: always
+      - ./service3:/usr/share/nginx/html:ro
 EOF
-```
 
-### 컨테이너 실행
-```bash
 docker-compose up -d
 ```
 
@@ -261,12 +307,12 @@ docker-compose up -d
 # 컨테이너 확인
 docker-compose ps
 
-# 각 서비스 테스트
-curl localhost:8080
-curl localhost:8081
-curl localhost:8082
+# 각 서비스 테스트 (팀 포트에 맞게 수정)
+curl localhost:[팀 포트 1]
+curl localhost:[팀 포트 2]
+curl localhost:[팀 포트 3]
 
-# 예상: 각각 다른 HTML 응답
+# 예상: 각각 다른 응답
 ```
 
 **이미지 자리**: Docker Compose 실행 결과 스크린샷
@@ -278,52 +324,54 @@ curl localhost:8082
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - ALB, Target Groups, Health Checks
 
-### 3-1. Target Group 1 생성 (API)
+### 3-1. Target Group 1 생성
 
 **경로**: AWS Console → EC2 → Target Groups → Create target group
 
 **이미지 자리**: Target Group 생성 화면
 
+**⚠️ 중요**: 팀 포트 정보를 사용하세요!
+
 **설정**:
 | 항목 | 값 |
 |------|-----|
 | Target type | Instances |
-| Target group name | api-tg |
+| Target group name | [서비스1-이름]-tg (예: frontend-tg) |
 | Protocol | HTTP |
-| Port | 8080 |
-| VPC | 가지고 있는 VPC / 생성한 VPC |
+| Port | [팀 포트 1] (예: 3000) |
+| VPC | week5-vpc |
 | Health check path | / |
 
 **이미지 자리**: Target Group 설정 완료
 
 **Targets 등록**:
 - EC2 인스턴스 선택
-- Port: 8080
+- Port: [팀 포트 1]
 - Include as pending below
 
 **이미지 자리**: Target 등록 화면
 
-### 3-2. Target Group 2 생성 (Backend)
+### 3-2. Target Group 2 생성
 
 **설정**:
 | 항목 | 값 |
 |------|-----|
-| Target group name | backend-tg |
-| Port | 8081 |
+| Target group name | [서비스2-이름]-tg (예: backend-tg) |
+| Port | [팀 포트 2] (예: 8000) |
 | Health check path | / |
 
-**Targets 등록**: 동일 EC2, Port 8081
+**Targets 등록**: 동일 EC2, Port [팀 포트 2]
 
-### 3-3. Target Group 3 생성 (Admin)
+### 3-3. Target Group 3 생성
 
 **설정**:
 | 항목 | 값 |
 |------|-----|
-| Target group name | admin-tg |
-| Port | 8082 |
+| Target group name | [서비스3-이름]-tg (예: admin-tg) |
+| Port | [팀 포트 3] (예: 8080) |
 | Health check path | / |
 
-**Targets 등록**: 동일 EC2, Port 8082
+**Targets 등록**: 동일 EC2, Port [팀 포트 3]
 
 ### 3-4. ALB 생성
 
@@ -347,7 +395,7 @@ curl localhost:8082
 **Listener 설정**:
 - Protocol: HTTP
 - Port: 80
-- Default action: Forward to api-tg (기본)
+- Default action: Forward to [첫 번째 서비스]-tg (기본)
 
 **이미지 자리**: ALB 생성 완료
 
@@ -357,10 +405,21 @@ curl localhost:8082
 
 **이미지 자리**: Security Group 수정 화면
 
+**⚠️ 중요**: 팀의 모든 포트를 ALB Security Group으로 제한하세요!
+
 **Inbound 규칙 수정**:
 ```
-기존: Custom TCP, Port: 8080-8082, Source: 0.0.0.0/0
-변경: Custom TCP, Port: 8080-8082, Source: <ALB-Security-Group-ID>
+기존: Custom TCP, Port: [팀 포트들], Source: 0.0.0.0/0
+변경: Custom TCP, Port: [팀 포트 1], Source: <ALB-Security-Group-ID>
+변경: Custom TCP, Port: [팀 포트 2], Source: <ALB-Security-Group-ID>
+변경: Custom TCP, Port: [팀 포트 3], Source: <ALB-Security-Group-ID>
+```
+
+**예시 (포트가 3000, 8000, 8080인 경우)**:
+```
+변경: Custom TCP, Port: 3000, Source: <ALB-Security-Group-ID>
+변경: Custom TCP, Port: 8000, Source: <ALB-Security-Group-ID>
+변경: Custom TCP, Port: 8080, Source: <ALB-Security-Group-ID>
 ```
 
 **이유**: ALB를 통해서만 접근 가능하도록 보안 강화
@@ -665,6 +724,195 @@ netstat -tlnp | grep 808
 - Listener Rules 우선순위 확인
 - Path 패턴 정확히 입력 (`/api/*`)
 - Default Rule 확인
+
+### 문제 3: 404 Not Found - ALB 규칙 우선순위 문제 ⭐
+**증상**: 
+- 루트 경로(`/`)는 200 OK
+- `/api`, `/backend`, `/admin` 모두 404 Not Found
+- Target Group은 모두 Healthy 상태
+
+**원인**: ALB 리스너 규칙의 우선순위가 잘못 설정됨
+
+**진단**:
+```bash
+# 현재 규칙 우선순위 확인
+aws elbv2 describe-rules \
+  --listener-arn <listener-arn> \
+  --query 'Rules[?Priority!=`default`].[Priority,Conditions[0].Values[0]]' \
+  --output table \
+  --region ap-northeast-2
+```
+
+**잘못된 우선순위 예시**:
+```
+Priority 4:  /api       (exact path)
+Priority 5:  /backend   (exact path)
+Priority 6:  /admin     (exact path)
+Priority 91: /api/*     (wildcard)
+Priority 92: /backend/* (wildcard)
+Priority 93: /admin/*   (wildcard)
+```
+
+**문제점**: 
+- ALB는 낮은 Priority 번호부터 평가
+- Exact path(`/api`)만 매칭되고, 하위 경로(`/api/users`)는 매칭 안 됨
+- Wildcard 규칙이 너무 낮은 우선순위에 있어서 평가되지 않음
+
+**올바른 우선순위**:
+```
+Priority 1: /api       (exact path)
+Priority 2: /api/*     (wildcard) - 같은 서비스
+Priority 3: /backend   (exact path)
+Priority 4: /backend/* (wildcard) - 같은 서비스
+Priority 5: /admin     (exact path)
+Priority 6: /admin/*   (wildcard) - 같은 서비스
+```
+
+**해결 방법**:
+```bash
+# 1. 각 규칙의 ARN 확인
+aws elbv2 describe-rules \
+  --listener-arn <listener-arn> \
+  --query 'Rules[?Priority!=`default`].[RuleArn,Priority,Conditions[0].Values[0]]' \
+  --output table \
+  --region ap-northeast-2
+
+# 2. 우선순위 수정 (충돌 방지를 위해 순서대로)
+# /admin/* wildcard를 임시로 높은 번호로
+aws elbv2 modify-rule \
+  --rule-arn <admin-wildcard-rule-arn> \
+  --priority 7 \
+  --region ap-northeast-2
+
+# /admin exact를 Priority 5로
+aws elbv2 modify-rule \
+  --rule-arn <admin-exact-rule-arn> \
+  --priority 5 \
+  --region ap-northeast-2
+
+# /admin/* wildcard를 최종 Priority 6으로
+aws elbv2 modify-rule \
+  --rule-arn <admin-wildcard-rule-arn> \
+  --priority 6 \
+  --region ap-northeast-2
+
+# 나머지 규칙도 동일하게 수정...
+```
+
+**검증**:
+```bash
+# 수정 후 규칙 확인
+aws elbv2 describe-rules \
+  --listener-arn <listener-arn> \
+  --query 'Rules[].{Priority:Priority,Path:Conditions[0].Values[0]}' \
+  --output table \
+  --region ap-northeast-2
+
+# 경로 테스트
+curl -I http://<alb-dns>/api
+curl -I http://<alb-dns>/api/test
+curl -I http://<alb-dns>/backend
+curl -I http://<alb-dns>/admin
+```
+
+### 문제 4: 404 Not Found - 애플리케이션 경로 미설정 ⭐
+**증상**:
+- ALB 규칙 우선순위는 올바름
+- Target Group은 Healthy
+- 그래도 404 Not Found
+
+**원인**: 백엔드 애플리케이션이 해당 경로를 처리하지 못함
+
+**진단**:
+```bash
+# EC2에 SSM으로 접속
+aws ssm start-session --target <instance-id> --region ap-northeast-2
+
+# 각 포트에서 직접 테스트
+curl http://localhost:8080/api
+curl http://localhost:8081/backend
+curl http://localhost:8082/admin
+
+# Docker 컨테이너 확인
+docker ps
+docker logs <container-name>
+```
+
+**해결 방법**:
+
+**1) Nginx 기반 애플리케이션**:
+```nginx
+# /etc/nginx/conf.d/default.conf
+server {
+    listen 8080;
+    
+    location /api {
+        # API 처리
+        proxy_pass http://backend-api;
+    }
+    
+    location /api/ {
+        # API 하위 경로 처리
+        proxy_pass http://backend-api/;
+    }
+}
+```
+
+**2) Node.js Express**:
+```javascript
+// app.js
+const express = require('express');
+const app = express();
+
+// /api 경로 처리
+app.get('/api', (req, res) => {
+    res.json({ message: 'API root' });
+});
+
+// /api/* 하위 경로 처리
+app.get('/api/*', (req, res) => {
+    res.json({ path: req.path });
+});
+
+app.listen(8080);
+```
+
+**3) Python Flask**:
+```python
+# app.py
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/api')
+def api_root():
+    return {'message': 'API root'}
+
+@app.route('/api/<path:path>')
+def api_path(path):
+    return {'path': path}
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
+```
+
+**검증**:
+```bash
+# 컨테이너 재시작
+docker-compose restart
+
+# 로컬에서 테스트
+curl http://localhost:8080/api
+curl http://localhost:8080/api/test
+
+# ALB를 통해 테스트
+curl http://<alb-dns>/api
+curl http://<alb-dns>/api/test
+```
+
+**💡 핵심 포인트**:
+- ALB 규칙: 경로 패턴 매칭 (exact + wildcard)
+- 애플리케이션: 실제 경로 처리 로직 구현
+- 둘 다 올바르게 설정되어야 정상 동작
 
 ---
 
