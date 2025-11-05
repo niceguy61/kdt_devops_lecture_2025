@@ -189,43 +189,9 @@ ELB (Multi-AZ)
 **GLB (Gateway Load Balancer) 장점**:
 - ✅ 보안 어플라이언스 통합 (방화벽, IDS/IPS)
 
-```mermaid
-graph TB
-    subgraph "GWLB 보안 아키텍처"
-        Users[인터넷 사용자] --> IGW[Internet Gateway]
-        IGW --> GWLB[Gateway Load Balancer]
-        
-        subgraph "보안 어플라이언스"
-            GWLB --> FW1[방화벽 1]
-            GWLB --> FW2[방화벽 2]
-            GWLB --> IDS1[IDS/IPS 1]
-            GWLB --> IDS2[IDS/IPS 2]
-        end
-        
-        FW1 --> GWLB2[GWLB Return]
-        FW2 --> GWLB2
-        IDS1 --> GWLB2
-        IDS2 --> GWLB2
-        
-        subgraph "애플리케이션 계층"
-            GWLB2 --> APP1[App Server 1]
-            GWLB2 --> APP2[App Server 2]
-        end
-    end
-    
-    style Users fill:#e3f2fd
-    style IGW fill:#fff3e0
-    style GWLB fill:#e8f5e8
-    style GWLB2 fill:#e8f5e8
-    style FW1 fill:#ffebee
-    style FW2 fill:#ffebee
-    style IDS1 fill:#ffebee
-    style IDS2 fill:#ffebee
-    style APP1 fill:#f3e5f5
-    style APP2 fill:#f3e5f5
-```
+![GWLB Security Architecture](./generated-diagrams/gwlb_security_architecture.png)
 
-*그림: GWLB 보안 아키텍처 - 트래픽이 보안 어플라이언스를 거쳐 애플리케이션으로 전달*
+*그림: GWLB 보안 아키텍처 - 트래픽이 GWLB Endpoint를 통해 보안 어플라이언스를 거쳐 애플리케이션으로 전달*
 
 - ✅ 투명한 네트워크 게이트웨이 (Layer 3)
 - ✅ 고가용성 보안 인프라
