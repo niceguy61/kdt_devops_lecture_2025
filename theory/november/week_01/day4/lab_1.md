@@ -230,92 +230,329 @@ docker ps
 
 ---
 
-## 🛠️ Step 2: Docker Compose로 팀 서비스 실행 (10분)
+## 🛠️ Step 2: Docker Compose로 서비스 실행 (10분)
 
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - Target Groups 포트 매핑
 
-### 팀 애플리케이션 배포
+### 💡 권장 진행 순서
 
-**⚠️ 중요**: 각 팀은 자신들의 실제 애플리케이션 소스를 사용합니다!
+**1단계**: 옵션 A (테스트용 샘플)로 ALB 동작 검증 (5분)
+**2단계**: 검증 완료 후 옵션 B (팀 소스)로 전환 (나머지 시간)
 
-#### 옵션 1: 팀 소스가 있는 경우 (권장)
+---
+
+### 옵션 A: 테스트용 샘플 (권장 - 빠른 검증) ⭐
+
+**목적**: ALB 경로 라우팅이 올바르게 동작하는지 빠르게 검증
 
 ```bash
-# 팀 프로젝트 디렉토리로 이동
-cd ~/team-project
+mkdir -p ~/multi-api/html/{8080,8081,8082}
+mkdir -p ~/multi-api/nginx
+cd ~/multi-api
 
-# docker-compose.yml 확인 및 수정
-# - 포트 매핑이 위에서 정한 포트와 일치하는지 확인
-# - 예: frontend는 3000, backend는 8000, admin은 8080
+# 포트 8080용 HTML 파일 생성
+cat > html/8080/index.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Frontend</title></head>
+<body>
+    <h1>🎨 Frontend Service</h1>
+    <p>Port: 8080</p>
+    <p>Path: /</p>
+</body>
+</html>
+EOF
+
+cat > html/8080/api.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>API</title></head>
+<body>
+    <h1>🚀 API Endpoint</h1>
+    <p>Port: 8080</p>
+    <p>Path: /api</p>
+</body>
+</html>
+EOF
+
+# 포트 8081용 HTML 파일 생성
+cat > html/8081/index.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Backend</title></head>
+<body>
+    <h1>⚙️ Backend Service</h1>
+    <p>Port: 8081</p>
+    <p>Path: /</p>
+</body>
+</html>
+EOF
+
+cat > html/8081/backend.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Backend API</title></head>
+<body>
+    <h1>⚙️ Backend API</h1>
+    <p>Port: 8081</p>
+    <p>Path: /backend</p>
+</body>
+</html>
+EOF
+
+# 포트 8082용 HTML 파일 생성
+cat > html/8082/index.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Admin</title></head>
+<body>
+    <h1>🔐 Admin Service</h1>
+    <p>Port: 8082</p>
+    <p>Path: /</p>
+</body>
+</html>
+EOF
+
+cat > html/8082/admin.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Admin Panel</title></head>
+<body>
+    <h1>🔐 Admin Panel</h1>
+    <p>Port: 8082</p>
+    <p>Path: /admin</p>
+</body>
+</html>
+EOF
+
+# Nginx 설정 파일 생성 (8080)
+cat > nginx/8080.conf <<'EOF'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    
+    location = /api {
+        try_files /api.html =404;
+    }
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+# Nginx 설정 파일 생성 (8081)
+cat > nginx/8081.conf <<'EOF'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    
+    location = /backend {
+        try_files /backend.html =404;
+    }
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+# Nginx 설정 파일 생성 (8082)
+cat > nginx/8082.conf <<'EOF'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    
+    location = /admin {
+        try_files /admin.html =404;
+    }
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+# docker-compose.yml 생성
+cat > docker-compose.yml <<'EOF'
+version: '3'
+services:
+  web8080:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./html/8080:/usr/share/nginx/html:ro
+      - ./nginx/8080.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+  
+  web8081:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./html/8081:/usr/share/nginx/html:ro
+      - ./nginx/8081.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+  
+  web8082:
+    image: nginx:alpine
+    ports:
+      - "8082:80"
+    volumes:
+      - ./html/8082:/usr/share/nginx/html:ro
+      - ./nginx/8082.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+EOF
 
 # 컨테이너 실행
 docker-compose up -d
 ```
 
-#### 옵션 2: 테스트용 샘플 서비스 (팀 소스 없는 경우)
-
-```bash
-mkdir -p ~/multi-api/{service1,service2,service3}
-cd ~/multi-api
-
-# 각 서비스 HTML 생성 (팀 포트에 맞게 수정)
-cat > service1/index.html <<EOF
-<!DOCTYPE html>
-<html>
-<head><title>Service 1</title></head>
-<body>
-    <h1>🚀 Service 1</h1>
-    <p>Running on port [팀 포트 1]</p>
-</body>
-</html>
-EOF
-
-# service2, service3도 동일하게 생성...
-
-# docker-compose.yml 생성 (팀 포트에 맞게 수정)
-cat > docker-compose.yml <<EOF
-version: '3'
-services:
-  service1:
-    image: nginx:alpine
-    ports:
-      - "[팀 포트 1]:80"
-    volumes:
-      - ./service1:/usr/share/nginx/html:ro
-  
-  service2:
-    image: nginx:alpine
-    ports:
-      - "[팀 포트 2]:80"
-    volumes:
-      - ./service2:/usr/share/nginx/html:ro
-  
-  service3:
-    image: nginx:alpine
-    ports:
-      - "[팀 포트 3]:80"
-    volumes:
-      - ./service3:/usr/share/nginx/html:ro
-EOF
-
-docker-compose up -d
-```
-
-### ✅ 검증
+**✅ 검증**:
 ```bash
 # 컨테이너 확인
 docker-compose ps
 
-# 각 서비스 테스트 (팀 포트에 맞게 수정)
-curl localhost:[팀 포트 1]
-curl localhost:[팀 포트 2]
-curl localhost:[팀 포트 3]
+# 각 서비스 테스트
+curl http://localhost:8080/          # Frontend 루트
+curl http://localhost:8080/api       # API 경로
+curl http://localhost:8081/          # Backend 루트
+curl http://localhost:8081/backend   # Backend 경로
+curl http://localhost:8082/          # Admin 루트
+curl http://localhost:8082/admin     # Admin 경로
 
-# 예상: 각각 다른 응답
+# 예상: 각각 다른 HTML 응답
 ```
 
-**이미지 자리**: Docker Compose 실행 결과 스크린샷
+**이미지 자리**: 테스트용 샘플 실행 결과
+
+---
+
+### 옵션 B: 팀 실제 소스 연동 (검증 완료 후)
+
+**⚠️ 팀 소스 사용 전 필수 확인사항**:
+
+#### 1. 경로 처리 확인
+```bash
+# 팀 애플리케이션이 다음 경로를 처리하는지 확인
+cd ~/team-project
+docker-compose up -d
+
+curl http://localhost:[팀 포트 1]/api
+curl http://localhost:[팀 포트 2]/backend
+curl http://localhost:[팀 포트 3]/admin
+
+# 404 나오면 → 경로 처리 안 됨 → 아래 해결 방법 적용
+```
+
+#### 2-1. 경로 처리 O: 그대로 사용
+```bash
+# 팀 docker-compose.yml의 포트만 확인
+# ports:
+#   - "8080:3000"  # 팀 포트 1
+#   - "8081:8000"  # 팀 포트 2
+#   - "8082:8080"  # 팀 포트 3
+
+docker-compose up -d
+```
+
+#### 2-2. 경로 처리 X: Nginx 프록시 추가
+
+**디렉토리 구조**:
+```
+~/team-project/
+├── team-source/          # 팀 소스 코드
+├── nginx/
+│   ├── 8080.conf        # Frontend 프록시
+│   ├── 8081.conf        # Backend 프록시
+│   └── 8082.conf        # Admin 프록시
+└── docker-compose.yml
+```
+
+**nginx/8080.conf** (Frontend 프록시):
+```nginx
+server {
+    listen 80;
+    
+    # /api 경로 처리
+    location = /api {
+        proxy_pass http://team-frontend:3000/api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    # /api/* 하위 경로 처리
+    location /api/ {
+        proxy_pass http://team-frontend:3000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    # 나머지 경로
+    location / {
+        proxy_pass http://team-frontend:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+**docker-compose.yml** (프록시 포함):
+```yaml
+version: '3'
+services:
+  # Nginx 프록시 (8080)
+  nginx-8080:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/8080.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - team-frontend
+  
+  # 팀 Frontend 애플리케이션
+  team-frontend:
+    build: ./team-source/frontend
+    expose:
+      - "3000"
+    # ports 제거 (nginx를 통해서만 접근)
+  
+  # 8081, 8082도 동일한 패턴...
+```
+
+**✅ 검증**:
+```bash
+docker-compose up -d
+
+# 로컬 테스트
+curl http://localhost:8080/api
+curl http://localhost:8081/backend
+curl http://localhost:8082/admin
+
+# 모두 200 OK 확인 후 다음 Step 진행
+```
+
+**이미지 자리**: 팀 소스 실행 결과
+
+---
+
+### 💡 트러블슈팅 팁
+
+**문제**: `curl http://localhost:8080/api` → 404
+**원인**: 애플리케이션이 `/api` 경로를 처리하지 못함
+**해결**: 옵션 B의 2-2 (Nginx 프록시) 적용
+
+**문제**: `docker-compose up -d` → 포트 충돌
+**원인**: 이미 다른 컨테이너가 해당 포트 사용 중
+**해결**: 
+```bash
+# 기존 컨테이너 확인 및 중지
+docker ps
+docker stop <container-id>
+```
 
 ---
 
