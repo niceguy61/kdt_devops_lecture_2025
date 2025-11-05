@@ -16,3 +16,5 @@ git_token.txt
 theory/exam/
 niceguy61-key.pem
 node_modules/
+.terraform
+.terraform.lock.hcl
