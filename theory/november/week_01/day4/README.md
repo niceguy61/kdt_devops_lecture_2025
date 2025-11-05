@@ -1,10 +1,10 @@
-# November Week 1 Day 4: 로드밸런싱 & 고가용성
+# November Week 1 Day 4: 로드밸런싱 & 경로 기반 라우팅
 
 <div align="center">
 
-**⚖️ 로드밸런싱** • **📈 Auto Scaling** • **🔄 고가용성**
+**⚖️ ALB 라우팅** • **🐳 Docker Compose** • **🔀 멀티 서비스**
 
-*ALB와 Auto Scaling으로 안정적이고 확장 가능한 아키텍처 구축*
+*ALB 경로 기반 라우팅으로 단일 EC2의 여러 컨테이너 서비스 운영*
 
 </div>
 
@@ -13,15 +13,15 @@
 ## 🎯 Day 4 목표
 
 ### 학습 목표
-- Elastic Load Balancing (ALB, NLB, CLB) 이해
-- Auto Scaling Group 구성 및 정책 설정
-- 고가용성 아키텍처 설계 원칙
-- ALB + ASG 통합 실습
+- Elastic Load Balancing (ALB) 이해
+- 경로 기반 라우팅 (Path-based Routing) 구성
+- Target Group별 포트 매핑
+- 단일 EC2에서 멀티 서비스 운영
 
 ### 실무 역량
-- 트래픽 분산 및 장애 대응
-- 자동 확장/축소로 비용 최적화
-- Multi-AZ 고가용성 구현
+- ALB를 통한 트래픽 분산
+- 마이크로서비스 패턴 구현
+- 비용 효율적 아키텍처 설계
 
 ---
 
@@ -29,79 +29,80 @@
 
 | 시간 | 구분 | 내용 | 방식 |
 |------|------|------|------|
-| **09:00-09:20** | 📚 Session 1 | Elastic Load Balancing | 이론 강의 |
-| **09:30-09:50** | 📚 Session 2 | Auto Scaling | 이론 강의 |
-| **10:00-10:20** | 📚 Session 3 | 고가용성 아키텍처 | 이론 강의 |
-| **10:30-11:00** | ☕ 휴식 | 30분 휴식 | |
-| **11:00-11:50** | 🛠️ Lab 1 | ALB + ASG 구성 | 실습 |
+| **09:00-09:40** | 📚 Session 1 | Elastic Load Balancing | 이론 강의 |
+| **09:40-10:20** | 📚 Session 2 | Auto Scaling | 이론 강의 |
+| **10:20-11:00** | 📚 Session 3 | 고가용성 아키텍처 | 이론 강의 |
+| **11:00-11:10** | ☕ 휴식 | 10분 휴식 | |
+| **11:10-12:00** | 🛠️ Lab 1 | ALB 경로 기반 라우팅 | 실습 |
 
 ---
 
 ## 📚 세션 구성
 
-### [Session 1: Elastic Load Balancing](./session_1.md) (09:00-09:20)
-**주제**: ALB, NLB, CLB 비교 및 선택
+### [Session 1: Elastic Load Balancing](./session_1.md) (09:00-09:40)
+**주제**: ALB, NLB, CLB 비교 및 선택 기준
 
 **핵심 내용**:
-- ELB 종류 및 특징
-- ALB (Application Load Balancer)
-- NLB (Network Load Balancer)
+- Elastic Load Balancing 개념
+- ALB vs NLB vs CLB 비교
 - Target Groups & Health Checks
+- Listener Rules & 라우팅
 
 **학습 포인트**:
-- 로드밸런서 타입별 사용 사례
-- Health Check 설정
-- Sticky Sessions
+- 로드밸런서 타입별 특징
+- 경로 기반 라우팅 (ALB)
+- Health Check 설정 방법
 
 ---
 
-### [Session 2: Auto Scaling](./session_2.md) (09:30-09:50)
-**주제**: Auto Scaling Group 구성 및 정책
+### [Session 2: Auto Scaling](./session_2.md) (09:40-10:20)
+**주제**: Auto Scaling Group 구성 및 정책 설정
 
 **핵심 내용**:
-- Auto Scaling Groups (ASG)
-- Launch Templates
-- 스케일링 정책 (Target Tracking, Step)
-- ASG + ALB 통합
+- Auto Scaling 개념 및 필요성
+- Launch Template 구성
+- Scaling Policy (Target Tracking, Step, Scheduled)
+- ALB + ASG 통합
 
 **학습 포인트**:
-- 자동 확장/축소 조건 설정
+- 자동 확장/축소 원리
+- 스케일링 정책 선택 기준
 - 비용 최적화 전략
-- 장애 대응 자동화
 
 ---
 
-### [Session 3: 고가용성 아키텍처](./session_3.md) (10:00-10:20)
-**주제**: Multi-AZ 고가용성 설계
+### [Session 3: 고가용성 아키텍처](./session_3.md) (10:20-11:00)
+**주제**: Multi-AZ 배포 및 무중단 배포 전략
 
 **핵심 내용**:
-- Multi-AZ 배포 전략
+- Multi-AZ 고가용성 설계
 - 장애 복구 시나리오
 - Blue-Green 배포
 - Canary 배포
 
 **학습 포인트**:
 - 고가용성 설계 원칙
-- 장애 대응 전략
 - 무중단 배포 방법
+- 장애 대응 전략
 
 ---
 
 ## 🛠️ 실습 구성
 
-### [Lab 1: ALB + ASG 구성](./lab_1.md) (11:00-11:50)
-**목표**: 자동 확장 가능한 웹 서비스 구축
+### [Lab 1: ALB 경로 기반 라우팅 + Docker Compose](./lab_1.md) (11:10-12:00)
+**목표**: 단일 EC2에서 여러 컨테이너 서비스를 ALB로 라우팅
 
 **실습 내용**:
-1. Launch Template 생성
-2. ALB 생성 및 Target Group 설정
-3. Auto Scaling Group 구성
-4. 부하 테스트 및 자동 확장 확인
+1. EC2 생성 + Docker/Docker Compose 설치
+2. Docker Compose로 3개 컨테이너 실행 (포트 8080, 8081, 8082)
+3. ALB 생성 + 3개 Target Group (각각 다른 포트)
+4. 경로 기반 라우팅 설정 (/api/*, /backend/*, /admin/*)
+5. 테스트: ALB DNS로 각 경로 접근 확인
 
 **예상 결과**:
-- 트래픽 증가 시 자동으로 인스턴스 추가
-- 트래픽 감소 시 자동으로 인스턴스 제거
-- ALB를 통한 트래픽 분산 확인
+- `http://ALB-DNS/api` → API 컨테이너 응답
+- `http://ALB-DNS/backend` → Backend 컨테이너 응답
+- `http://ALB-DNS/admin` → Admin 컨테이너 응답
 
 ---
 
@@ -133,21 +134,26 @@
 ## ✅ Day 4 체크리스트
 
 ### 이론 학습
-- [ ] ELB 종류 및 차이점 이해
-- [ ] Auto Scaling 정책 이해
-- [ ] 고가용성 설계 원칙 파악
+- [ ] Elastic Load Balancing 개념 이해
+- [ ] ALB vs NLB vs CLB 차이점 파악
+- [ ] Auto Scaling 원리 및 정책 이해
+- [ ] Multi-AZ 고가용성 설계 이해
+- [ ] 무중단 배포 전략 파악
 
 ### 실습 완료
-- [ ] Launch Template 생성
-- [ ] ALB + Target Group 구성
-- [ ] ASG 생성 및 정책 설정
-- [ ] 부하 테스트 성공
+- [ ] EC2 + Docker 환경 구축
+- [ ] Docker Compose 3개 컨테이너 실행
+- [ ] ALB + 3개 Target Group 구성
+- [ ] 경로 기반 라우팅 설정
+- [ ] 각 경로별 접근 테스트 성공
 - [ ] 리소스 정리 완료
 
 ### 실무 역량
-- [ ] 로드밸런서 선택 기준 이해
-- [ ] 자동 확장 설정 능력
-- [ ] 고가용성 아키텍처 설계 능력
+- [ ] ALB 라우팅 규칙 설정 능력
+- [ ] Auto Scaling 정책 구성 능력
+- [ ] 단일 호스트 멀티 서비스 운영
+- [ ] 고가용성 아키텍처 설계
+- [ ] 비용 효율적 운영 전략
 
 ---
 

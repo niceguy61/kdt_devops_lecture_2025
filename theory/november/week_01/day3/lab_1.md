@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**🎯 Private RDS** • **📊 SSM 접속** • **⚡ 200배 성능 향상**
+**🎯 Private RDS** • **📊 SSM 접속** • **⚡ 363배 성능 향상**
 
-*Private RDS에서 인덱스 최적화를 통한 극적인 성능 개선 체험*
+*Private RDS에서 인덱스 최적화를 통한 극적인 성능 개선 체험 (500만 행)*
 
 </div>
 
@@ -19,8 +19,8 @@
 ## 🎯 학습 목표
 - [ ] Private RDS 구성 및 보안 설정
 - [ ] EC2 SSM Session Manager를 통한 안전한 접속
-- [ ] 100만 행 테스트 데이터 생성
-- [ ] 인덱스 최적화를 통한 쿼리 성능 개선 (200배 향상)
+- [ ] 500만 행 테스트 데이터 생성
+- [ ] 인덱스 최적화를 통한 쿼리 성능 개선 (363배 향상)
 - [ ] CloudWatch Performance Insights 분석
 
 ---
@@ -140,6 +140,7 @@ AWS Console → VPC → Security Groups → Create security group
 | Security group name | week1-day3-ec2-sg |
 | Description | Security group for EC2 bastion |
 | VPC | week1-day3-vpc |
+
 
 **이미지 자리**: EC2 Security Group
 
@@ -371,7 +372,7 @@ SELECT
         WHEN random() < 0.95 THEN 'inactive'
         ELSE 'suspended'
     END
-FROM generate_series(1, 1000000);
+FROM generate_series(1, 5000000);
 
 -- 데이터 확인
 SELECT COUNT(*) FROM users;
@@ -381,7 +382,7 @@ SELECT COUNT(*) FROM users;
 ```
   count  
 ---------
- 1000000
+ 5000000
 ```
 
 **이미지 자리**: 데이터 생성 완료
@@ -410,17 +411,20 @@ SELECT COUNT(*) FROM users;
 -- 실행 시간 표시 활성화
 \timing on
 
--- 느린 쿼리 실행
-SELECT * FROM users WHERE email = 'user_500000@example.com';
+-- 느린 쿼리 실행 (500만 행 전체 스캔)
+SELECT * FROM users WHERE email = 'user_2500000@example.com';
 
 -- 실행 계획 확인
 EXPLAIN ANALYZE 
-SELECT * FROM users WHERE email = 'user_500000@example.com';
+SELECT * FROM users WHERE email = 'user_2500000@example.com';
 ```
 
 **예상 결과** (인덱스 없음):
 ```
-Execution Time: 10456.890 ms  ← 약 10초!
+Parallel Seq Scan on users  (actual time=1636.495..2410.330 rows=0 loops=3)
+  Filter: ((email)::text = 'user_2500000@example.com'::text)
+  Rows Removed by Filter: 1666666
+Execution Time: 2668.978 ms  ← 약 2.7초! (500만 행 전체 스캔)
 ```
 
 **이미지 자리**: 인덱스 없는 쿼리 (느림)
@@ -429,7 +433,7 @@ Execution Time: 10456.890 ms  ← 약 10초!
 
 **SQL 실행**:
 ```sql
--- 인덱스 생성
+-- 인덱스 생성 (약 30초 소요)
 CREATE INDEX idx_users_email ON users(email);
 
 -- 인덱스 확인
@@ -443,16 +447,18 @@ CREATE INDEX idx_users_email ON users(email);
 **SQL 실행**:
 ```sql
 -- 빠른 쿼리 실행
-SELECT * FROM users WHERE email = 'user_500000@example.com';
+SELECT * FROM users WHERE email = 'user_2500000@example.com';
 
 -- 실행 계획 확인
 EXPLAIN ANALYZE 
-SELECT * FROM users WHERE email = 'user_500000@example.com';
+SELECT * FROM users WHERE email = 'user_2500000@example.com';
 ```
 
 **예상 결과** (인덱스 사용):
 ```
-Execution Time: 0.052 ms  ← 약 0.05ms!
+Index Scan using idx_users_email on users  (actual time=6.686..6.690 rows=1 loops=1)
+  Index Cond: ((email)::text = 'user_2500000@example.com'::text)
+Execution Time: 7.349 ms  ← 약 0.007초! (인덱스 직접 접근)
 ```
 
 **이미지 자리**: 인덱스 사용 쿼리 (빠름)
@@ -462,24 +468,24 @@ Execution Time: 0.052 ms  ← 약 0.05ms!
 **SQL 실행**:
 ```sql
 SELECT 
-    10456.890 / 0.052 as performance_improvement,
-    '약 200배 빠름' as description;
+    2668.978 / 7.349 as performance_improvement,
+    '약 363배 빠름' as description;
 ```
 
 **예상 결과**:
 ```
  performance_improvement |  description  
 -------------------------+---------------
-              201094.04  | 약 200배 빠름
+              363.18     | 약 363배 빠름
 ```
 
 **이미지 자리**: 성능 비교 결과
 
 ### ✅ Step 6 검증
-- [ ] 인덱스 없는 쿼리: 약 10초
-- [ ] 인덱스 생성 완료
-- [ ] 인덱스 사용 쿼리: 약 0.05ms
-- [ ] **200배 성능 향상 확인**
+- [ ] 인덱스 없는 쿼리: 약 2.7초 (Parallel Seq Scan)
+- [ ] 인덱스 생성 완료 (약 30초 소요)
+- [ ] 인덱스 사용 쿼리: 약 0.007초 (Index Scan)
+- [ ] **363배 성능 향상 확인**
 
 ---
 
