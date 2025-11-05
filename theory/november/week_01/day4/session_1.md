@@ -81,23 +81,67 @@ ELB (Multi-AZ)
 
 ---
 
+### 💼 실무 사례: Sharethrough의 ALB → NLB 마이그레이션
+
+**회사**: Sharethrough (Equativ 브랜드, 글로벌 광고 거래소)
+**배경**: 2011년부터 AWS 고객, 실시간 입찰(RTB) 교환 인프라 운영
+
+**문제 상황**:
+- **높은 비용**: ALB LCU 비용 급증
+- **트래픽 특성**: 초당 수백만 건의 TCP 요청
+- **성능 요구**: 밀리초 단위 지연시간 중요
+
+**마이그레이션 결정**:
+- ALB (Layer 7) → NLB (Layer 4)
+- NLB의 낮은 NLCU 비용 활용
+- 초고성능 TCP 처리 필요
+
+**도전 과제**:
+1. **Cross-AZ 밸런싱**: NLB는 모든 AZ로 트래픽 분산 → 데이터 전송 비용 증가
+2. **네트워크 모드**: Bridge 모드 + 동적 포트 매핑 → NLB IP 타겟팅 불가
+3. **프로토콜 처리**: NLB는 HTTP 구분 불가 → 트래픽 불균형
+4. **Spot 인스턴스**: AZ별 가용성 차이 → 균등 분산 어려움
+
+**해결 방법**:
+- **Envoy 프록시**: TLS 종료 및 보안 강화
+- **Multi-AZ 아키텍처**: 고가용성 확보
+- **ECS 최적화**: awsvpc 네트워크 모드로 전환
+- **Graviton 도입**: ARM 기반 인스턴스로 비용 절감
+
+**결과**:
+- ✅ **비용 최적화**: LCU 비용 대폭 절감
+- ✅ **성능 유지**: 지연시간 개선
+- ✅ **전략적 개선**: Graviton 도입으로 추가 절감
+
+**교훈**:
+- ⚠️ **트래픽 패턴 분석 필수**: 처리 바이트가 주요 비용 요인이면 NLB가 오히려 비쌀 수 있음
+- ⚠️ **총 소유 비용(TCO) 고려**: 마이그레이션 비용, 운영 복잡도 포함
+- ⚠️ **PoC 테스트**: 프로덕션 전 충분한 검증 필요
+- ✅ **AWS 전문가 활용**: 복잡한 최적화는 AWS 지원 활용
+
+**참조**: [Sharethrough's Journey from ALB to NLB](https://aws.amazon.com/blogs/industries/optimizing-ad-exchange-infrastructure-sharethroughs-journey-from-alb-to-nlb/) (2024.07)
+
+---
+
 ### 4. 비슷한 서비스 비교 (Which?)
 
-**ALB vs NLB vs CLB**:
+**ALB vs NLB vs GLB vs CLB**:
 
-| 특성 | ALB | NLB | CLB |
-|------|-----|-----|-----|
-| **OSI 계층** | Layer 7 (HTTP/HTTPS) | Layer 4 (TCP/UDP) | Layer 4/7 |
-| **성능** | 중간 | 매우 높음 | 낮음 |
-| **경로 라우팅** | ✅ 지원 | ❌ 미지원 | ❌ 미지원 |
-| **WebSocket** | ✅ 지원 | ✅ 지원 | ❌ 미지원 |
-| **고정 IP** | ❌ 미지원 | ✅ 지원 | ❌ 미지원 |
-| **가격** | 중간 | 중간 | 낮음 |
-| **권장 여부** | ✅ 권장 | ✅ 권장 | ⚠️ 레거시만 |
+| 특성 | ALB | NLB | GLB | CLB |
+|------|-----|-----|-----|-----|
+| **OSI 계층** | Layer 7 (HTTP/HTTPS) | Layer 4 (TCP/UDP) | Layer 3 (Gateway) | Layer 4/7 |
+| **성능** | 중간 | 매우 높음 | 매우 높음 | 낮음 |
+| **주요 용도** | 웹 애플리케이션 | TCP/UDP 트래픽 | 보안 어플라이언스 | 레거시 |
+| **경로 라우팅** | ✅ 지원 | ❌ 미지원 | ❌ 미지원 | ❌ 미지원 |
+| **WebSocket** | ✅ 지원 | ✅ 지원 | ❌ 미지원 | ❌ 미지원 |
+| **고정 IP** | ❌ 미지원 | ✅ 지원 | ✅ 지원 | ❌ 미지원 |
+| **가격** | 중간 | 중간 | 중간 | 낮음 |
+| **권장 여부** | ✅ 권장 | ✅ 권장 | ✅ 특수 목적 | ⚠️ 레거시만 |
 
 **선택 기준**:
 - **웹 애플리케이션** → ALB
 - **고성능 TCP/UDP** → NLB
+- **보안 어플라이언스 (방화벽, IDS/IPS)** → GLB
 - **레거시 시스템** → CLB (마이그레이션 권장)
 
 ---
@@ -147,6 +191,9 @@ ELB (Multi-AZ)
   - 활성 연결: 3,000/분
   - 처리 바이트: 1GB/hour
   - 규칙 평가: 1,000/초
+- **LCU Reservation** (2024년 신규): 최소 용량 예약 가능
+  - 예약된 LCU에 대한 시간당 요금 지불
+  - 예약 용량 초과 시 추가 LCU 요금 발생
 
 **NLB 비용**:
 - **시간당**: $0.0225/hour
@@ -154,11 +201,19 @@ ELB (Multi-AZ)
   - 신규 연결: 800/초
   - 활성 연결: 100,000/분
   - 처리 바이트: 1GB/hour
+- **NLCU Reservation** (2024년 신규): 최소 용량 예약 가능
+
+**GLB 비용**:
+- **시간당**: $0.0125/hour
+- **GLCU**: $0.004/GLCU-hour
+  - 처리 바이트: 1GB/hour
 
 **비용 최적화**:
 - 불필요한 로드밸런서 삭제
 - Idle 상태 로드밸런서 제거
 - 트래픽 패턴 분석 후 적절한 타입 선택
+- **LCU Reservation**: 예측 가능한 트래픽 급증 시에만 사용
+- Cross-Zone Load Balancing 비용 고려 (NLB는 유료)
 
 **예상 비용 (Lab)**:
 - ALB 1시간: $0.0225
@@ -170,13 +225,24 @@ ELB (Multi-AZ)
 ### 7. 최신 업데이트 🆕
 
 **2024년 주요 변경사항**:
-- ALB: gRPC 프로토콜 지원 강화
-- NLB: TLS 1.3 지원
-- ALB: Lambda 타겟 성능 개선
+- **LCU Reservation** (11월 출시): 트래픽 급증 대비 용량 사전 예약
+  - 이벤트 티켓 판매, 신제품 출시 등 예상 가능한 트래픽 급증 대응
+  - 최소 용량 보장으로 스케일링 지연 방지
+  - ALB: 모든 리전, NLB: 주요 리전 지원
+- **Zonal Shift**: AZ 장애 시 자동 트래픽 전환
+  - 단일 AZ 장애 발생 시 다른 AZ로 트래픽 자동 이동
+  - Cross-Zone Load Balancing과 함께 사용
+  - CloudWatch 알람과 연동하여 자동화 가능
+- **ALB gRPC 지원 강화**: 마이크로서비스 통신 최적화
+- **NLB TLS 1.3 지원**: 보안 및 성능 향상
+- **ALB Lambda 타겟 성능 개선**: 서버리스 통합 강화
 
 **2025년 예정**:
 - ALB: HTTP/3 (QUIC) 지원 검토
 - NLB: UDP 성능 향상
+- 더 세밀한 트래픽 제어 기능
+
+**참조**: [ELB What's New](https://aws.amazon.com/elasticloadbalancing/whats-new/) (2024.11 업데이트)
 
 ---
 
@@ -257,8 +323,9 @@ ELB (Multi-AZ)
 - 📘 [Elastic Load Balancing이란?](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html)
 - 📗 [Application Load Balancer 사용자 가이드](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
 - 📙 [Network Load Balancer 사용자 가이드](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
+- 📙 [Gateway Load Balancer 사용자 가이드](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/)
 - 📕 [ELB 요금](https://aws.amazon.com/elasticloadbalancing/pricing/)
-- 🆕 [ELB 최신 업데이트](https://aws.amazon.com/elasticloadbalancing/whats-new/)
+- 🆕 [ELB 최신 업데이트](https://aws.amazon.com/elasticloadbalancing/whats-new/) (2024.11 LCU Reservation 출시)
 
 ---
 
