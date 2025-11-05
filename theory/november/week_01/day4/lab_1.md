@@ -38,15 +38,6 @@
 - ✅ NAT Gateway
 - ✅ Route Tables (Public/Private)
 
-**확인 방법**:
-```bash
-# VPC 확인
-aws ec2 describe-vpcs --filters "Name=tag:Name,Values=week5-vpc"
-
-# Subnet 확인
-aws ec2 describe-subnets --filters "Name=tag:Name,Values=week5-*"
-```
-
 **⚠️ VPC가 없다면**: 위 가이드를 먼저 완료하고 돌아오세요!
 
 ---
@@ -111,7 +102,7 @@ AWS Console → EC2 → Instances → Launch instances
 |------|-----|
 | AMI | Amazon Linux 2023 |
 | Instance Type | t3.micro |
-| VPC | week5-vpc |
+| VPC | 가지고 있는 VPC / 생성한 VPC |
 | Subnet | Public Subnet (AZ-A) |
 | Auto-assign Public IP | Enable |
 | IAM Instance Profile | SSM-Role (Systems Manager 접속용) |
@@ -300,7 +291,7 @@ curl localhost:8082
 | Target group name | api-tg |
 | Protocol | HTTP |
 | Port | 8080 |
-| VPC | week5-vpc |
+| VPC | 가지고 있는 VPC / 생성한 VPC |
 | Health check path | / |
 
 **이미지 자리**: Target Group 설정 완료
