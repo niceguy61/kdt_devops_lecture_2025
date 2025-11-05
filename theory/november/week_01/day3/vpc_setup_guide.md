@@ -17,19 +17,28 @@
 **아키텍처 설명**:
 - **VPC**: 10.0.0.0/16 IP 범위의 격리된 네트워크
 - **Internet Gateway**: 외부 인터넷과 연결
+- **Route Tables** (3개):
+  - **Public RT**: Internet Gateway로 트래픽 전달 (0.0.0.0/0 → IGW)
+  - **Private A RT**: NAT Gateway로 트래픽 전달 (0.0.0.0/0 → NAT)
+  - **Private C RT**: NAT Gateway로 트래픽 전달 (0.0.0.0/0 → NAT)
+- **NAT Gateway**: AZ-A Public Subnet에 배치 (비용 절감을 위해 1개만 사용)
 - **AZ-A (ap-northeast-2a)**: 첫 번째 가용 영역
-  - Public Subnet (10.0.1.0/24): NAT Gateway 배치
-  - Private Subnet (10.0.11.0/24): RDS 데이터베이스 배치
+  - Public Subnet (10.0.1.0/24): NAT Gateway 배치, Public RT 연결
+  - Private Subnet (10.0.11.0/24): 데이터베이스 등 배치 예정, Private A RT 연결
 - **AZ-C (ap-northeast-2c)**: 두 번째 가용 영역
-  - Public Subnet (10.0.2.0/24): NAT Gateway 배치
-  - Private Subnet (10.0.12.0/24): RDS 데이터베이스 배치
+  - Public Subnet (10.0.2.0/24): 인터넷 연결용, Public RT 연결
+  - Private Subnet (10.0.12.0/24): 데이터베이스 등 배치 예정, Private C RT 연결
+
+**트래픽 흐름**:
+- **Public Subnet → 인터넷**: Public RT → Internet Gateway
+- **Private Subnet → 인터넷**: Private RT → NAT Gateway → Public RT → Internet Gateway
 
 **만들 리소스**:
 - ✅ VPC 1개
 - ✅ Public Subnet 2개 (AZ-A, AZ-C)
 - ✅ Private Subnet 2개 (AZ-A, AZ-C)
 - ✅ Internet Gateway 1개
-- ✅ NAT Gateway 2개 (각 AZ마다)
+- ✅ NAT Gateway 1개 (AZ-A에만 배치)
 - ✅ Route Table 3개 (Public용 1개, Private용 2개)
 
 ---
@@ -43,8 +52,8 @@
 ## 💰 비용 안내
 - **VPC, Subnet, Route Table**: 무료
 - **Internet Gateway**: 무료
-- **NAT Gateway**: 시간당 약 $0.045 (2개 = $0.09/시간)
-- **실습 1시간 예상 비용**: 약 $0.10
+- **NAT Gateway**: 시간당 약 $0.045 (1개만 사용)
+- **실습 1시간 예상 비용**: 약 $0.05
 
 ⚠️ **중요**: 실습 완료 후 반드시 NAT Gateway를 삭제해야 비용이 발생하지 않습니다!
 
@@ -259,16 +268,16 @@
 
 ---
 
-## 🚪 Step 4: NAT Gateway 생성 (5분)
+## 🚪 Step 4: NAT Gateway 생성 (3분)
 
 ### ⚠️ 중요 개념
 - **NAT Gateway**: Private Subnet의 인스턴스가 인터넷에 접근할 수 있게 해주는 관문
 - **반드시 Public Subnet에 배치**해야 합니다!
-- **각 AZ마다 1개씩** 총 2개를 만들어야 합니다
+- **비용 절감**: 1개만 만들어서 두 AZ의 Private Subnet이 공유합니다
 
 ---
 
-### 4-1. NAT Gateway A 생성
+### 4-1. NAT Gateway 생성
 
 1. 좌측 메뉴에서 **"NAT Gateways"** 클릭
 2. 우측 상단 **"Create NAT gateway"** 버튼 클릭
@@ -279,44 +288,22 @@
 
 | 항목 | 입력 값 | 설명 |
 |------|---------|------|
-| **Name** | `november-w1-d3-nat-a` | NAT Gateway A 이름 |
+| **Name** | `november-w1-d3-nat` | NAT Gateway 이름 |
 | **Subnet** | `november-w1-d3-public-a` | ⚠️ Public Subnet A 선택! |
 | **Connectivity type** | Public | Public 선택 (기본값) |
 | **Elastic IP allocation ID** | **"Allocate Elastic IP"** 버튼 클릭 | 새 IP 할당 |
 
-**📸 스크린샷 자리**: NAT Gateway A 생성 설정 화면
+**📸 스크린샷 자리**: NAT Gateway 생성 설정 화면
 
 3. 하단 **"Create NAT gateway"** 버튼 클릭
 4. 생성 완료까지 약 1-2분 대기 (Status: Pending → Available)
 
-**📸 스크린샷 자리**: NAT Gateway A 생성 중 (Pending 상태)
-
----
-
-### 4-2. NAT Gateway C 생성
-
-1. 다시 **"Create NAT gateway"** 버튼 클릭
-
-**NAT Gateway 설정**:
-
-| 항목 | 입력 값 | 설명 |
-|------|---------|------|
-| **Name** | `november-w1-d3-nat-c` | NAT Gateway C 이름 |
-| **Subnet** | `november-w1-d3-public-c` | ⚠️ Public Subnet C 선택! |
-| **Connectivity type** | Public | Public 선택 (기본값) |
-| **Elastic IP allocation ID** | **"Allocate Elastic IP"** 버튼 클릭 | 새 IP 할당 |
-
-**📸 스크린샷 자리**: NAT Gateway C 생성 설정 화면
-
-2. 하단 **"Create NAT gateway"** 버튼 클릭
-3. 생성 완료까지 약 1-2분 대기
-
-**📸 스크린샷 자리**: NAT Gateway 2개 모두 Available 상태
+**📸 스크린샷 자리**: NAT Gateway 생성 완료 (Available 상태)
 
 ✅ **체크포인트**: 
-- NAT Gateway 목록에 2개가 보이나요?
-- 둘 다 Status가 "Available"인가요?
-- 각각 다른 Elastic IP를 가지고 있나요?
+- NAT Gateway가 "Available" 상태인가요?
+- Public Subnet A에 배치되었나요?
+- Elastic IP가 할당되었나요?
 
 ---
 
@@ -421,9 +408,9 @@
 | 항목 | 입력 값 | 설명 |
 |------|---------|------|
 | **Destination** | `0.0.0.0/0` | 모든 인터넷 트래픽 |
-| **Target** | NAT Gateway → `november-w1-d3-nat-a` 선택 | NAT Gateway A로 보내기 |
+| **Target** | NAT Gateway → `november-w1-d3-nat` 선택 | NAT Gateway로 보내기 |
 
-**📸 스크린샷 자리**: NAT Gateway A 경로 추가
+**📸 스크린샷 자리**: NAT Gateway 경로 추가
 
 5. 하단 **"Save changes"** 버튼 클릭
 
@@ -471,9 +458,9 @@
 | 항목 | 입력 값 | 설명 |
 |------|---------|------|
 | **Destination** | `0.0.0.0/0` | 모든 인터넷 트래픽 |
-| **Target** | NAT Gateway → `november-w1-d3-nat-c` 선택 | NAT Gateway C로 보내기 |
+| **Target** | NAT Gateway → `november-w1-d3-nat` 선택 | ⚠️ 같은 NAT Gateway 사용 |
 
-**📸 스크린샷 자리**: NAT Gateway C 경로 추가
+**📸 스크린샷 자리**: NAT Gateway 경로 추가 (AZ-C도 같은 NAT 사용)
 
 5. 하단 **"Save changes"** 버튼 클릭
 
@@ -512,21 +499,20 @@
 - [ ] `november-w1-d3-private-c` (10.0.12.0/24, AZ-C)
 - [ ] Public Subnet 2개 모두 "Auto-assign public IPv4 address" = Yes
 
-**NAT Gateways** (총 2개):
-- [ ] `november-w1-d3-nat-a` (Public Subnet A에 배치)
-- [ ] `november-w1-d3-nat-c` (Public Subnet C에 배치)
-- [ ] 둘 다 Status: Available
-- [ ] 각각 다른 Elastic IP 할당됨
+**NAT Gateways** (총 1개):
+- [ ] `november-w1-d3-nat` (Public Subnet A에 배치)
+- [ ] Status: Available
+- [ ] Elastic IP 할당됨
 
 **Route Tables** (총 3개):
 - [ ] `november-w1-d3-public-rt`
   - [ ] Route: 0.0.0.0/0 → IGW
   - [ ] Associated: Public Subnet A, C
 - [ ] `november-w1-d3-private-a-rt`
-  - [ ] Route: 0.0.0.0/0 → NAT Gateway A
+  - [ ] Route: 0.0.0.0/0 → NAT Gateway
   - [ ] Associated: Private Subnet A
 - [ ] `november-w1-d3-private-c-rt`
-  - [ ] Route: 0.0.0.0/0 → NAT Gateway C
+  - [ ] Route: 0.0.0.0/0 → NAT Gateway (같은 NAT 사용)
   - [ ] Associated: Private Subnet C
 
 **📸 스크린샷 자리**: 전체 리소스 요약 화면
@@ -552,7 +538,7 @@
 
 **1. NAT Gateway 삭제** (가장 먼저! ⚠️)
 1. VPC → NAT Gateways
-2. 2개 모두 선택 → Actions → Delete NAT gateway
+2. `november-w1-d3-nat` 선택 → Actions → Delete NAT gateway
 3. "delete" 입력하여 확인
 4. 삭제 완료까지 약 5분 대기
 
@@ -560,7 +546,7 @@
 
 **2. Elastic IP 해제**
 1. VPC → Elastic IPs
-2. 2개 모두 선택 → Actions → Release Elastic IP addresses
+2. NAT Gateway에 사용된 IP 선택 → Actions → Release Elastic IP addresses
 3. "Release" 버튼 클릭
 
 **📸 스크린샷 자리**: Elastic IP 해제 확인
