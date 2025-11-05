@@ -65,13 +65,11 @@
 2. 계정 정보 입력하여 로그인
 3. 우측 상단에서 **서울 리전 (ap-northeast-2)** 선택 확인
 
-**📸 스크린샷 자리**: AWS Console 메인 화면 (리전 선택 부분)
-
 ### 2. VPC 서비스로 이동
 1. 상단 검색창에 "VPC" 입력
 2. "VPC" 클릭하여 VPC 대시보드로 이동
 
-**📸 스크린샷 자리**: VPC 검색 및 서비스 선택
+![VPC Multi-AZ Architecture](./images/vpc-1.png)
 
 ---
 
@@ -80,8 +78,6 @@
 ### 1-1. VPC 생성 시작
 1. 좌측 메뉴에서 **"Your VPCs"** 클릭
 2. 우측 상단 **"Create VPC"** 버튼 클릭
-
-**📸 스크린샷 자리**: VPC 대시보드 - Your VPCs 메뉴
 
 ### 1-2. VPC 설정 입력
 
@@ -95,7 +91,8 @@
 | **IPv6 CIDR block** | No IPv6 CIDR block | IPv6는 사용 안 함 |
 | **Tenancy** | Default | 기본값 유지 |
 
-**📸 스크린샷 자리**: VPC 생성 설정 화면 (모든 입력 값 표시)
+![VPC Multi-AZ Architecture](./images/vpc-2.png)
+![VPC Multi-AZ Architecture](./images/vpc-3.png)
 
 ### 1-3. VPC 생성 완료
 1. 하단 **"Create VPC"** 버튼 클릭
@@ -114,27 +111,27 @@
 1. 좌측 메뉴에서 **"Internet Gateways"** 클릭
 2. 우측 상단 **"Create internet gateway"** 버튼 클릭
 
-**📸 스크린샷 자리**: Internet Gateways 메뉴
+![VPC Multi-AZ Architecture](./images/vpc-4.png)
 
 3. **Name tag**: `november-w1-d3-igw` 입력
 4. 하단 **"Create internet gateway"** 버튼 클릭
 
-**📸 스크린샷 자리**: Internet Gateway 생성 화면
+![VPC Multi-AZ Architecture](./images/vpc-5.png)
 
 ### 2-2. VPC에 연결 (⚠️ 중요!)
 1. 생성 완료 후 나타나는 녹색 배너에서 **"Attach to a VPC"** 클릭
    - 또는 상단 **Actions** → **Attach to VPC** 클릭
 
-**📸 스크린샷 자리**: Attach to VPC 버튼
+![VPC Multi-AZ Architecture](./images/vpc-6.png)
 
 2. **Available VPCs** 드롭다운에서 `november-w1-d3-vpc` 선택
 3. 하단 **"Attach internet gateway"** 버튼 클릭
 
-**📸 스크린샷 자리**: VPC 선택 및 Attach 화면
+![VPC Multi-AZ Architecture](./images/vpc-7.png)
 
 ✅ **체크포인트**: State가 "Attached"로 변경되었나요?
 
-**📸 스크린샷 자리**: IGW State = Attached 확인
+![VPC Multi-AZ Architecture](./images/vpc-8.png)
 
 ---
 
@@ -152,8 +149,7 @@
 
 1. 좌측 메뉴에서 **"Subnets"** 클릭
 2. 우측 상단 **"Create subnet"** 버튼 클릭
-
-**📸 스크린샷 자리**: Subnets 메뉴 및 Create subnet 버튼
+97.png)
 
 **VPC 선택**:
 - **VPC ID**: `november-w1-d3-vpc` 선택
@@ -166,7 +162,7 @@
 | **Availability Zone** | `ap-northeast-2a` | ⚠️ 반드시 2a 선택! |
 | **IPv4 CIDR block** | `10.0.1.0/24` | IP 범위 (정확히 입력!) |
 
-**📸 스크린샷 자리**: Public Subnet A 생성 설정 화면
+![VPC Multi-AZ Architecture](./images/vpc-10.png)
 
 3. 하단 **"Create subnet"** 버튼 클릭
 
@@ -187,8 +183,6 @@
 | **Availability Zone** | `ap-northeast-2c` | ⚠️ 반드시 2c 선택! |
 | **IPv4 CIDR block** | `10.0.2.0/24` | IP 범위 (정확히 입력!) |
 
-**📸 스크린샷 자리**: Public Subnet C 생성 설정 화면
-
 2. 하단 **"Create subnet"** 버튼 클릭
 
 ---
@@ -207,8 +201,6 @@
 | **Subnet name** | `november-w1-d3-private-a` | Private Subnet A 이름 |
 | **Availability Zone** | `ap-northeast-2a` | ⚠️ 반드시 2a 선택! |
 | **IPv4 CIDR block** | `10.0.11.0/24` | IP 범위 (정확히 입력!) |
-
-**📸 스크린샷 자리**: Private Subnet A 생성 설정 화면
 
 2. 하단 **"Create subnet"** 버튼 클릭
 
@@ -229,8 +221,6 @@
 | **Availability Zone** | `ap-northeast-2c` | ⚠️ 반드시 2c 선택! |
 | **IPv4 CIDR block** | `10.0.12.0/24` | IP 범위 (정확히 입력!) |
 
-**📸 스크린샷 자리**: Private Subnet C 생성 설정 화면
-
 2. 하단 **"Create subnet"** 버튼 클릭
 
 **📸 스크린샷 자리**: 4개 Subnet 생성 완료 목록
@@ -243,12 +233,12 @@
 1. Subnet 목록에서 `november-w1-d3-public-a` 체크박스 선택
 2. 상단 **Actions** → **Edit subnet settings** 클릭
 
-**📸 스크린샷 자리**: Actions 메뉴 - Edit subnet settings
+![VPC Multi-AZ Architecture](./images/vpc-11.png)
 
 3. **Auto-assign IP settings** 섹션에서:
    - ✅ **"Enable auto-assign public IPv4 address"** 체크박스 선택
 
-**📸 스크린샷 자리**: Auto-assign public IPv4 address 체크박스
+![VPC Multi-AZ Architecture](./images/vpc-12.png)
 
 4. 하단 **"Save"** 버튼 클릭
 
@@ -258,8 +248,6 @@
 3. **Auto-assign IP settings** 섹션에서:
    - ✅ **"Enable auto-assign public IPv4 address"** 체크박스 선택
 4. 하단 **"Save"** 버튼 클릭
-
-**📸 스크린샷 자리**: Public Subnet 2개 모두 Auto-assign = Yes 확인
 
 ✅ **체크포인트**: 
 - Subnet 목록에 4개의 Subnet이 보이나요?
@@ -281,7 +269,7 @@
 1. 좌측 메뉴에서 **"NAT Gateways"** 클릭
 2. 우측 상단 **"Create NAT gateway"** 버튼 클릭
 
-**📸 스크린샷 자리**: NAT Gateways 메뉴
+![VPC Multi-AZ Architecture](./images/vpc-13.png)
 
 **NAT Gateway 설정**:
 
@@ -292,12 +280,12 @@
 | **Connectivity type** | Public | Public 선택 (기본값) |
 | **Elastic IP allocation ID** | **"Allocate Elastic IP"** 버튼 클릭 | 새 IP 할당 |
 
-**📸 스크린샷 자리**: NAT Gateway 생성 설정 화면
+![VPC Multi-AZ Architecture](./images/vpc-28.png)
 
 3. 하단 **"Create NAT gateway"** 버튼 클릭
 4. 생성 완료까지 약 1-2분 대기 (Status: Pending → Available)
 
-**📸 스크린샷 자리**: NAT Gateway 생성 완료 (Available 상태)
+![VPC Multi-AZ Architecture](./images/vpc-29.png)
 
 ✅ **체크포인트**: 
 - NAT Gateway가 "Available" 상태인가요?
@@ -320,7 +308,7 @@
 1. 좌측 메뉴에서 **"Route Tables"** 클릭
 2. 우측 상단 **"Create route table"** 버튼 클릭
 
-**📸 스크린샷 자리**: Route Tables 메뉴
+![VPC Multi-AZ Architecture](./images/vpc-15.png)
 
 **Route Table 설정**:
 
@@ -329,7 +317,7 @@
 | **Name** | `november-w1-d3-public-rt` |
 | **VPC** | `november-w1-d3-vpc` 선택 |
 
-**📸 스크린샷 자리**: Public Route Table 생성 설정
+![VPC Multi-AZ Architecture](./images/vpc-16.png)
 
 3. 하단 **"Create route table"** 버튼 클릭
 
@@ -341,7 +329,7 @@
 2. 하단 탭에서 **"Routes"** 탭 클릭
 3. **"Edit routes"** 버튼 클릭
 
-**📸 스크린샷 자리**: Routes 탭 - Edit routes
+![VPC Multi-AZ Architecture](./images/vpc-17.png)
 
 4. **"Add route"** 버튼 클릭
 
@@ -352,7 +340,8 @@
 | **Destination** | `0.0.0.0/0` | 모든 인터넷 트래픽 |
 | **Target** | Internet Gateway → `november-w1-d3-igw` 선택 | IGW로 보내기 |
 
-**📸 스크린샷 자리**: 인터넷 경로 추가 (0.0.0.0/0 → IGW)
+![VPC Multi-AZ Architecture](./images/vpc-18.png)
+![VPC Multi-AZ Architecture](./images/vpc-19.png)
 
 5. 하단 **"Save changes"** 버튼 클릭
 
@@ -364,17 +353,15 @@
 2. 하단 탭에서 **"Subnet associations"** 탭 클릭
 3. **"Edit subnet associations"** 버튼 클릭
 
-**📸 스크린샷 자리**: Subnet associations 탭
+![VPC Multi-AZ Architecture](./images/vpc-20.png)
 
 4. 다음 2개 Subnet 체크박스 선택:
    - ✅ `november-w1-d3-public-a`
    - ✅ `november-w1-d3-public-c`
 
-**📸 스크린샷 자리**: Public Subnet 2개 선택
+![VPC Multi-AZ Architecture](./images/vpc-21.png)
 
 5. 하단 **"Save associations"** 버튼 클릭
-
-**📸 스크린샷 자리**: Public Subnet 연결 완료
 
 ---
 
@@ -389,7 +376,7 @@
 | **Name** | `november-w1-d3-private-rt` |
 | **VPC** | `november-w1-d3-vpc` 선택 |
 
-**📸 스크린샷 자리**: Private Route Table 생성 설정
+![VPC Multi-AZ Architecture](./images/vpc-23.png)
 
 2. 하단 **"Create route table"** 버튼 클릭
 
@@ -409,7 +396,7 @@
 | **Destination** | `0.0.0.0/0` | 모든 인터넷 트래픽 |
 | **Target** | NAT Gateway → `november-w1-d3-nat` 선택 | NAT Gateway로 보내기 |
 
-**📸 스크린샷 자리**: NAT Gateway 경로 추가
+![VPC Multi-AZ Architecture](./images/vpc-24.png)
 
 5. 하단 **"Save changes"** 버튼 클릭
 
@@ -424,11 +411,11 @@
    - ✅ `november-w1-d3-private-a`
    - ✅ `november-w1-d3-private-c`
 
-**📸 스크린샷 자리**: Private Subnet 2개 선택
+![VPC Multi-AZ Architecture](./images/vpc-25.png)
 
 5. 하단 **"Save associations"** 버튼 클릭
 
-**📸 스크린샷 자리**: Route Table 2개 모두 생성 완료 목록
+![VPC Multi-AZ Architecture](./images/vpc-26.png)
 
 ---
 
