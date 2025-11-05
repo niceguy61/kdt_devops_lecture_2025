@@ -49,14 +49,16 @@
 4. **자동 Failover**: 장애 AZ 감지 시 자동 전환
 5. **Health Check**: 지속적인 상태 확인
 
-**고가용성 계산**:
+**고가용성 향상**:
 ```
-단일 AZ 가용성: 99.5%
-Multi-AZ 가용성: 99.99%
+Multi-AZ 배포 시:
+- 단일 AZ 장애 시에도 서비스 지속
+- 자동 Failover (일반적으로 1-2분)
+- 계획된 유지보수 중에도 가용성 유지
+- AZ 장애로부터 보호
 
-연간 다운타임:
-- 단일 AZ: 43.8시간
-- Multi-AZ: 52.6분
+참고: 구체적인 가용성 수치는 워크로드와 구성에 따라 다름
+AWS SLA: https://aws.amazon.com/compute/sla/
 ```
 
 ---
@@ -64,15 +66,75 @@ Multi-AZ 가용성: 99.99%
 ### 3. 주요 사용 사례 (When?)
 
 **적합한 경우**:
-- ✅ 미션 크리티컬 서비스 (금융, 의료)
+- ✅ 미션 크리티컬 서비스 (금융, 의료, 항공)
 - ✅ 24/7 운영 필요
 - ✅ SLA 99.9% 이상 요구
-- ✅ 데이터 손실 불가
+- ✅ 데이터 손실 불가 (RPO = 0)
 
-**실제 사례**:
-- **Netflix**: Multi-Region 고가용성
-- **Amazon**: Multi-AZ + Multi-Region
-- **카카오**: 2022년 판교 데이터센터 화재 교훈
+**실제 고객 사례**:
+
+**1. United Airlines - 항공 예약 시스템**:
+- **과제**: 수동 장애 조치로 인한 긴 복구 시간
+- **솔루션**: 
+  - Amazon Application Recovery Controller (ARC) 도입
+  - Rapid Recovery 플랫폼으로 자동화
+  - Multi-Region 고가용성 구현
+- **성과**:
+  - 1,000회 이상 성공적인 Cross-Region 장애 조치
+  - 400회 이상 자동 데이터베이스 Failover
+  - MTTR 7% 감소 (2024년)
+  - NPS 5% 증가 (Q3 2024)
+
+**2. HashiCorp - 클라우드 플랫폼**:
+- **과제**: 수동 재해 복구 절차의 오류 가능성
+- **솔루션**:
+  - Amazon Application Recovery Controller 구현
+  - Route 53 Failover 레코드 활용
+  - 월간 재해 복구 테스트 프로그램
+- **성과**:
+  - Cross-Region 전환 간소화
+  - RTO/RPO 목표 달성
+  - 재해 복구 표준화 및 민주화
+
+**3. 대형 금융 기관 - 자산 관리 플랫폼**:
+- **과제**: RTO/RPO를 수십 분에서 수 초로 단축 필요
+- **솔루션**:
+  - Aurora PostgreSQL Global Database
+  - Amazon RDS Proxy (Region 내 고가용성)
+  - Cross-Region 복제
+- **성과**:
+  - RTO: 수십 분 → 수 초
+  - RPO: 수십 분 → 수 초
+  - Region 전체 장애 대응 가능
+
+**4. California Credit Union - 핵심 뱅킹 시스템**:
+- **과제**: 기존 DR 사이트의 확장성 부족
+- **솔루션**:
+  - Fiserv DNA 시스템을 AWS로 마이그레이션
+  - EC2, EBS, S3 활용
+  - Multi-Region 구성
+- **성과**:
+  - RTO 목표 달성 또는 초과
+  - 확장성 및 Oracle DB 성능 향상
+  - Active-Active 구성 계획 중
+
+**5. 미국 보험사 - 3-Tier 애플리케이션**:
+- **과제**: 중요 애플리케이션의 재해 복구 필요
+- **솔루션**:
+  - Pilot Light 시나리오 (Primary + Secondary Region)
+  - EventBridge + Lambda로 자동 감지
+  - CloudWatch Alarm 기반 Failover
+- **성과**:
+  - RPO/RTO < 15분
+  - 비용 최적화된 솔루션
+  - 표준화된 패턴으로 조직 전체 적용
+
+**참조**: 
+- [United Airlines 사례](https://aws.amazon.com/blogs/networking-and-content-delivery/united-airlines-implement-enterprise-wide-resilience-program-with-aws/)
+- [HashiCorp 사례](https://aws.amazon.com/blogs/architecture/how-hashicorp-made-cross-region-switchover-seamless-with-amazon-application-recovery-controller/)
+- [금융 기관 사례](https://aws.amazon.com/blogs/database/how-a-large-financial-aws-customer-implemented-ha-and-dr-for-amazon-aurora-postgresql-using-global-database-and-amazon-rds-proxy/)
+- [California Credit Union 사례](https://aws.amazon.com/blogs/publicsector/california-credit-union-enhances-disaster-recovery-and-backup-of-fiserv-dna-core-banking-system-on-aws/)
+- [보험사 사례](https://aws.amazon.com/blogs/architecture/how-an-insurance-company-implements-disaster-recovery-of-3-tier-applications/)
 
 ---
 
@@ -129,10 +191,15 @@ Multi-AZ 가용성: 99.99%
 
 ### 7. 최신 업데이트 🆕
 
-**2024년 주요 변경사항**:
-- Multi-AZ with Standby: RDS 읽기 성능 향상
-- Cross-Region Replication: 재해 복구 강화
-- Zonal Autoshift: 자동 AZ 전환
+**2024-2025년 주요 변경사항**:
+- **RDS Blue/Green Deployments**: 안전한 데이터베이스 업그레이드
+- **ECS Built-in Blue/Green** (2025.07): ALB/NLB 통합 배포
+- **Zonal Autoshift**: 자동 AZ 장애 감지 및 전환
+- **Multi-AZ DB Clusters**: 읽기 성능 향상 (2 readable standbys)
+
+**참조**: 
+- [RDS Blue/Green Deployments](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html)
+- [ECS Blue/Green Deployments](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-blue-green.html)
 
 ---
 
@@ -163,33 +230,54 @@ Multi-AZ 가용성: 99.99%
 **주요 구성 요소**:
 
 **1. Multi-AZ 배포**:
-- **ALB**: 자동으로 모든 AZ에 배포
-- **ASG**: 여러 AZ에 인스턴스 분산
-- **RDS**: Primary (AZ-A) + Standby (AZ-B)
-- **ElastiCache**: 자동 Failover 지원
+- **ALB**: 자동으로 모든 활성화된 AZ에 배포
+- **ASG**: 여러 AZ에 인스턴스 균등 분산 (또는 가중치 기반)
+- **RDS Multi-AZ**: Primary (AZ-A) + Standby (AZ-B)
+  - 동기식 복제로 데이터 일관성 보장
+  - 자동 Failover (일반적으로 1-2분)
+  - Standby는 읽기 트래픽 불가 (Read Replica와 다름)
+- **RDS Multi-AZ DB Cluster**: Primary + 2 Readable Standbys
+  - 읽기 성능 향상 (Standby에서 읽기 가능)
+  - 더 빠른 Failover (일반적으로 35초 이내)
+- **ElastiCache**: Redis Cluster Mode로 자동 Failover 지원
+- **DynamoDB**: 기본적으로 3개 AZ에 자동 복제
 
 **2. Blue-Green 배포**:
 - **Blue 환경**: 현재 운영 중인 버전
-- **Green 환경**: 새 버전 배포
-- **전환**: ALB Target Group 전환
-- **롤백**: Blue로 즉시 복귀
+- **Green 환경**: 새 버전 배포 및 테스트
+- **전환**: ALB/NLB Target Group 전환 (즉시)
+- **롤백**: Blue로 즉시 복귀 가능
+- **AWS 지원**: ECS, RDS, Elastic Beanstalk, Lambda
+
+**RDS Blue/Green 배포 프로세스**:
+1. Green 환경 생성 (Blue의 복제본)
+2. Green에서 변경 사항 적용 (버전 업그레이드 등)
+3. 논리적 복제로 Blue → Green 데이터 동기화
+4. 전환 시 1분 이내 다운타임
+5. 문제 발생 시 즉시 Blue로 롤백
 
 **3. Canary 배포**:
-- **Phase 1**: 10% 트래픽 → 새 버전
-- **Phase 2**: 50% 트래픽 → 새 버전
-- **Phase 3**: 100% 트래픽 → 새 버전
-- **모니터링**: 각 단계마다 메트릭 확인
+- **Phase 1**: 10% 트래픽 → 새 버전 (초기 검증)
+- **Phase 2**: 50% 트래픽 → 새 버전 (확장 검증)
+- **Phase 3**: 100% 트래픽 → 새 버전 (완전 전환)
+- **모니터링**: 각 단계마다 CloudWatch 메트릭 확인
+- **자동 롤백**: CloudWatch Alarm 기반 자동 롤백 가능
+
+**ECS Canary 배포 옵션**:
+- **Canary**: 지정된 비율로 트래픽 전환 (예: 10%, 50%, 100%)
+- **Linear**: 일정 간격으로 점진적 전환 (예: 10분마다 10%씩)
+- **All-at-once**: 즉시 100% 전환
 
 ---
 
 ### 11. 공식 문서 링크 (필수 5개)
 
 **⚠️ 학생들이 직접 확인해야 할 공식 문서**:
-- 📘 [AWS 고가용성 아키텍처](https://docs.aws.amazon.com/whitepapers/latest/real-time-communication-on-aws/high-availability-and-scalability-on-aws.html)
-- 📗 [Multi-AZ 배포](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html)
-- 📙 [Blue-Green 배포](https://docs.aws.amazon.com/whitepapers/latest/blue-green-deployments/welcome.html)
-- 📕 [재해 복구](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html)
-- 🆕 [AWS 아키텍처 센터](https://aws.amazon.com/architecture/)
+- 📘 [Multi-AZ 배포 베스트 프랙티스](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_fault_isolation_multiaz_region_system.html)
+- 📗 [RDS Multi-AZ 배포](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html)
+- 📙 [Blue-Green 배포 가이드](https://docs.aws.amazon.com/whitepapers/latest/blue-green-deployments/introduction.html)
+- 📕 [ECS Blue/Green 배포](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-blue-green.html)
+- 🆕 [RDS Blue/Green 배포](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html)
 
 ---
 
