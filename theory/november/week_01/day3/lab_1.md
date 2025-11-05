@@ -94,6 +94,8 @@ graph TB
 AWS Console → RDS → Subnet groups → Create DB subnet group
 ```
 
+**🔗 Web Console 바로가기**: [RDS Subnet Groups](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#db-subnet-groups-list:)
+
 **설정 값**:
 | 항목 | 값 | 설명 |
 |------|-----|------|
@@ -130,18 +132,14 @@ AWS Console → RDS → Subnet groups → Create DB subnet group
 AWS Console → VPC → Security Groups → Create security group
 ```
 
+**🔗 Web Console 바로가기**: [VPC Security Groups](https://ap-northeast-2.console.aws.amazon.com/vpcconsole/home?region=ap-northeast-2#SecurityGroups:)
+
 **설정 값**:
 | 항목 | 값 |
 |------|-----|
 | Security group name | week1-day3-ec2-sg |
 | Description | Security group for EC2 bastion |
 | VPC | week1-day3-vpc |
-
-**Outbound rules**:
-| Type | Protocol | Port | Destination | Description |
-|------|----------|------|-------------|-------------|
-| PostgreSQL | TCP | 5432 | 10.0.0.0/16 | RDS 접속 |
-| HTTPS | TCP | 443 | 0.0.0.0/0 | SSM 통신 |
 
 **이미지 자리**: EC2 Security Group
 
@@ -183,6 +181,8 @@ AWS Console → VPC → Security Groups → Create security group
 AWS Console → IAM → Roles → Create role
 ```
 
+**🔗 Web Console 바로가기**: [IAM Roles](https://console.aws.amazon.com/iam/home#/roles)
+
 **설정 값**:
 | 항목 | 값 |
 |------|-----|
@@ -199,6 +199,8 @@ AWS Console → IAM → Roles → Create role
 ```
 AWS Console → EC2 → Instances → Launch instances
 ```
+
+**🔗 Web Console 바로가기**: [EC2 Instances](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#Instances:)
 
 **설정 값**:
 | 항목 | 값 |
@@ -241,13 +243,15 @@ dnf install -y postgresql15
 AWS Console → RDS → Databases → Create database
 ```
 
+**🔗 Web Console 바로가기**: [RDS Databases](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#databases:)
+
 **설정 값**:
 
 **Engine options**:
 | 항목 | 값 |
 |------|-----|
 | Engine type | PostgreSQL |
-| Engine version | PostgreSQL 15.x |
+| Engine version | PostgreSQL 17.6 |
 
 **Templates**:
 | 항목 | 값 |
@@ -317,6 +321,8 @@ AWS Console → RDS → Databases → Create database
 ```
 AWS Console → Systems Manager → Session Manager → Start session
 ```
+
+**🔗 Web Console 바로가기**: [SSM Session Manager](https://ap-northeast-2.console.aws.amazon.com/systems-manager/session-manager/start-session?region=ap-northeast-2)
 
 **선택**: week1-day3-bastion
 
@@ -489,6 +495,8 @@ SELECT
 ```
 AWS Console → RDS → Databases → week1-day3-rds → Monitoring
 ```
+
+**🔗 Web Console 바로가기**: [RDS Monitoring](https://ap-northeast-2.console.aws.amazon.com/rds/home?region=ap-northeast-2#database:id=week1-day3-rds;is-cluster=false;tab=monitoring)
 
 **확인 항목**:
 - Performance Insights: Database load, Top SQL
