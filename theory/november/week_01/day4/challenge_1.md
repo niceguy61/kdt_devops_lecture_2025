@@ -223,24 +223,133 @@ graph TB
 
 ### 데이터 모델 (핵심만)
 
-**Entity 1**: [엔티티명]
+#### ERD (Entity Relationship Diagram)
+
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    USER {
+        uuid id PK
+        string email UK
+        string password
+        string name
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ORDER ||--|{ ORDER_ITEM : contains
+    ORDER {
+        uuid id PK
+        uuid user_id FK
+        string status
+        decimal total_amount
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    PRODUCT ||--o{ ORDER_ITEM : includes
+    PRODUCT {
+        uuid id PK
+        string name
+        text description
+        decimal price
+        int stock
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ORDER_ITEM {
+        uuid id PK
+        uuid order_id FK
+        uuid product_id FK
+        int quantity
+        decimal price
+        timestamp created_at
+    }
 ```
-- id: UUID/Integer
-- [필드1]: [타입]
-- [필드2]: [타입]
-- created_at: Timestamp
+
+**💡 팁**: 위 ERD를 팀 프로젝트에 맞게 수정하세요!
+
+---
+
+#### ERD 작성 도구
+
+**추천 도구**:
+
+1. **ERDCloud** (무료, 한글 지원) ⭐
+   - URL: https://www.erdcloud.com/
+   - 장점: 한글 UI, 협업 가능, 이미지 내보내기
+   - 사용법: 회원가입 → 새 다이어그램 → 테이블 추가
+
+2. **dbdiagram.io** (무료)
+   - URL: https://dbdiagram.io/
+   - 장점: 코드로 ERD 작성, 빠른 수정
+   - 사용법: 코드 입력 → 자동 다이어그램 생성
+
+3. **draw.io** (무료)
+   - URL: https://app.diagrams.net/
+   - 장점: 다양한 다이어그램 지원
+   - 사용법: Entity Relationship 템플릿 선택
+
+4. **Mermaid Live Editor** (무료)
+   - URL: https://mermaid.live/
+   - 장점: Markdown에 바로 삽입 가능
+   - 사용법: 위 Mermaid 코드 복사 → 편집
+
+---
+
+#### ERD 링크 (팀 작성)
+
+**팀 ERD 링크**: [여기에 ERDCloud 또는 dbdiagram 링크 입력]
+
+**예시**:
+- ERDCloud: `https://www.erdcloud.com/d/xxxxx`
+- dbdiagram: `https://dbdiagram.io/d/xxxxx`
+
+**이미지 파일**: `docs/erd.png` (Repository에 저장)
+
+---
+
+#### 테이블 상세 설명
+
+**Entity 1**: User (사용자)
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 인덱스
+CREATE INDEX idx_users_email ON users(email);
 ```
 
 **Entity 2**: [엔티티명]
-```
-- id: UUID/Integer
-- [필드1]: [타입]
-- [필드2]: [타입]
-- created_at: Timestamp
+```sql
+CREATE TABLE [table_name] (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    [필드1] [타입] [제약조건],
+    [필드2] [타입] [제약조건],
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 외래키
+ALTER TABLE [table_name] 
+ADD CONSTRAINT fk_[name] 
+FOREIGN KEY ([field]) REFERENCES [parent_table](id);
+
+-- 인덱스
+CREATE INDEX idx_[name] ON [table_name]([field]);
 ```
 
-**관계**:
-- [Entity 1] - [Entity 2]: [1:N / N:M / 1:1]
+**관계 설명**:
+- **User - Order**: 1:N (한 사용자가 여러 주문)
+- **Order - OrderItem**: 1:N (한 주문에 여러 상품)
+- **Product - OrderItem**: 1:N (한 상품이 여러 주문에 포함)
 
 ---
 
