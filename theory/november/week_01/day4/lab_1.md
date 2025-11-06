@@ -712,34 +712,7 @@ docker stop <container-id>
 
 **이미지 자리**: ALB 생성 완료
 
-### 3-5. EC2 Security Group 업데이트 (보안 강화)
-
-**경로**: AWS Console → EC2 → Security Groups → EC2 SG 선택
-
-**이미지 자리**: Security Group 수정 화면
-
-**⚠️ 중요**: 팀의 모든 포트를 ALB Security Group으로 제한하세요!
-
-**Inbound 규칙 수정**:
-```
-기존: Custom TCP, Port: [팀 포트들], Source: 0.0.0.0/0
-변경: Custom TCP, Port: [팀 포트 1], Source: <ALB-Security-Group-ID>
-변경: Custom TCP, Port: [팀 포트 2], Source: <ALB-Security-Group-ID>
-변경: Custom TCP, Port: [팀 포트 3], Source: <ALB-Security-Group-ID>
-```
-
-**예시 (포트가 3000, 8000, 8080인 경우)**:
-```
-변경: Custom TCP, Port: 3000, Source: <ALB-Security-Group-ID>
-변경: Custom TCP, Port: 8000, Source: <ALB-Security-Group-ID>
-변경: Custom TCP, Port: 8080, Source: <ALB-Security-Group-ID>
-```
-
-**이유**: ALB를 통해서만 접근 가능하도록 보안 강화
-
-**이미지 자리**: Security Group 수정 완료
-
-### ✅ 검증
+### ✅ Step 4 검증
 ```bash
 # ALB DNS 확인
 aws elbv2 describe-load-balancers \
