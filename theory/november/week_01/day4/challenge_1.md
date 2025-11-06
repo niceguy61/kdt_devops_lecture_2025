@@ -310,46 +310,29 @@ erDiagram
 
 ---
 
-#### 테이블 상세 설명
+#### ERD 작성 가이드
 
-**Entity 1**: User (사용자)
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+**ERD에 반드시 포함할 정보**:
+- ✅ **테이블명**: 명확하고 일관된 네이밍
+- ✅ **컬럼명 + 타입**: `id UUID`, `email VARCHAR(255)`
+- ✅ **제약조건**: `PK`, `FK`, `UK` (Unique Key), `NOT NULL`
+- ✅ **관계**: `1:1`, `1:N`, `N:M` 명확히 표시
+- ✅ **인덱스**: 자주 조회하는 컬럼 표시
 
--- 인덱스
-CREATE INDEX idx_users_email ON users(email);
+**예시**:
+```
+USER 테이블
+- id: UUID [PK]
+- email: VARCHAR(255) [UK, NOT NULL, INDEX]
+- password: VARCHAR(255) [NOT NULL]
+- name: VARCHAR(100) [NOT NULL]
+- created_at: TIMESTAMP
+- updated_at: TIMESTAMP
+
+관계: USER (1) --- (N) ORDER
 ```
 
-**Entity 2**: [엔티티명]
-```sql
-CREATE TABLE [table_name] (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    [필드1] [타입] [제약조건],
-    [필드2] [타입] [제약조건],
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 외래키
-ALTER TABLE [table_name] 
-ADD CONSTRAINT fk_[name] 
-FOREIGN KEY ([field]) REFERENCES [parent_table](id);
-
--- 인덱스
-CREATE INDEX idx_[name] ON [table_name]([field]);
-```
-
-**관계 설명**:
-- **User - Order**: 1:N (한 사용자가 여러 주문)
-- **Order - OrderItem**: 1:N (한 주문에 여러 상품)
-- **Product - OrderItem**: 1:N (한 상품이 여러 주문에 포함)
+**💡 팁**: ERD 도구에서 제약조건과 인덱스를 명확히 표시하면 별도 문서 불필요!
 
 ---
 
