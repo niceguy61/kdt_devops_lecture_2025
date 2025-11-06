@@ -1087,17 +1087,45 @@ http://<ALB-DNS>/admin/    → 🔧 Admin Service
 
 ## ✅ 실습 체크포인트
 
-### ✅ Step 1: EC2 및 Docker
-- [ ] EC2 인스턴스 생성
-- [ ] Docker 및 Docker Compose 설치
-- [ ] Security Group 설정 (8080-8082)
+### ✅ Step 1: Security Groups
+- [ ] alb-sg 생성 (Inbound: HTTP 80)
+- [ ] ec2-sg 생성 (Inbound: 팀 포트들, Source: alb-sg)
+- [ ] 두 Security Group이 같은 VPC에 있음
 
-### ✅ Step 2: Docker Compose
+### ✅ Step 2: EC2 및 Docker
+- [ ] EC2 인스턴스 생성 (Security Group: ec2-sg)
+- [ ] Docker 및 Docker Compose 설치
+- [ ] SSM Session Manager로 접속 가능
+
+### ✅ Step 3: Docker Compose
 - [ ] 3개 서비스 HTML 생성
 - [ ] docker-compose.yml 작성
 - [ ] 컨테이너 실행 및 확인
+- [ ] 로컬 테스트 성공 (curl localhost:8080-8082)
 
-### ✅ Step 3: ALB 및 Target Groups
+### ✅ Step 4: ALB 및 Target Groups
+- [ ] 3개 Target Groups 생성 (각 팀 포트)
+- [ ] ALB 생성 (Security Group: alb-sg)
+- [ ] 모든 Target Groups healthy 상태
+
+### ✅ Step 5: 경로 기반 라우팅
+- [ ] Listener Rule 1: /api/* → api-tg
+- [ ] Listener Rule 2: /backend/* → backend-tg
+- [ ] Listener Rule 3: /admin/* → admin-tg
+- [ ] Default Rule: api-tg
+- [ ] 경로별 라우팅 테스트 성공
+
+### ✅ Step 6: Route 53 (선택)
+- [ ] A 레코드 생성 (도메인 있는 경우)
+- [ ] 또는 로컬 hosts 파일 수정
+
+### ✅ 전체 시스템 검증
+- [ ] 모든 경로 브라우저 접근 가능
+- [ ] CloudWatch 메트릭 확인
+- [ ] Target Groups 모두 healthy
+- [ ] Security Groups 올바르게 설정 (ALB → EC2만 허용)
+
+---
 - [ ] 3개 Target Group 생성 (8080, 8081, 8082)
 - [ ] ALB 생성
 - [ ] Target Health 확인 (모두 healthy)
