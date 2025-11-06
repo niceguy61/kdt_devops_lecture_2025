@@ -135,10 +135,110 @@ ALB (Listener: 80)
 
 ---
 
-## 🛠️ Step 1: EC2 생성 및 Docker 설치 (10분)
+## 🛠️ Step 1: Security Groups 생성 (5분)
 
 ### 🔗 참조 개념
-- [Session 1: Elastic Load Balancing](./session_1.md) - Target Groups 개념
+- [Session 1: Elastic Load Balancing](./session_1.md) - Security Groups 개념
+- [Week 1 Day 2 Session 2: Security Groups](../../day2/session_2.md) - 보안 그룹 설정
+
+### 1-1. ALB Security Group 생성
+
+**AWS Console 경로**:
+```
+AWS Console → EC2 → Security Groups → Create security group
+```
+
+**설정 값**:
+| 항목 | 값 |
+|------|-----|
+| Security group name | alb-sg |
+| Description | Security group for ALB |
+| VPC | 가지고 있는 VPC |
+
+**Inbound rules**:
+```
+Type: HTTP
+Protocol: TCP
+Port: 80
+Source: 0.0.0.0/0
+Description: Allow HTTP from internet
+```
+
+**Outbound rules**:
+```
+Type: All traffic
+Protocol: All
+Port range: All
+Destination: 0.0.0.0/0
+```
+
+**이미지 자리**: ALB Security Group 생성 화면
+
+### 1-2. EC2 Security Group 생성
+
+**AWS Console 경로**:
+```
+AWS Console → EC2 → Security Groups → Create security group
+```
+
+**설정 값**:
+| 항목 | 값 |
+|------|-----|
+| Security group name | ec2-sg |
+| Description | Security group for EC2 instances |
+| VPC | 가지고 있는 VPC |
+
+**⚠️ 중요**: 위에서 정리한 팀 포트 정보를 사용하세요!
+
+**Inbound rules** (예시 - 포트 8080, 8081, 8082):
+```
+Rule 1:
+Type: Custom TCP
+Protocol: TCP
+Port: 8080
+Source: alb-sg (ALB Security Group 선택)
+Description: Allow traffic from ALB to port 8080
+
+Rule 2:
+Type: Custom TCP
+Protocol: TCP
+Port: 8081
+Source: alb-sg (ALB Security Group 선택)
+Description: Allow traffic from ALB to port 8081
+
+Rule 3:
+Type: Custom TCP
+Protocol: TCP
+Port: 8082
+Source: alb-sg (ALB Security Group 선택)
+Description: Allow traffic from ALB to port 8082
+```
+
+**💡 팁**: 
+- Source에서 "Custom"을 선택하고 "alb-sg"를 검색하여 선택
+- 이렇게 하면 ALB에서만 EC2로 접근 가능 (보안 강화)
+
+**Outbound rules**:
+```
+Type: All traffic
+Protocol: All
+Port range: All
+Destination: 0.0.0.0/0
+```
+
+**이미지 자리**: EC2 Security Group 생성 화면
+
+### ✅ Step 1 검증
+- [ ] alb-sg 생성 완료 (Inbound: HTTP 80)
+- [ ] ec2-sg 생성 완료 (Inbound: 팀 포트들, Source: alb-sg)
+- [ ] 두 Security Group이 같은 VPC에 있음
+
+---
+
+## 🛠️ Step 2: EC2 생성 및 Docker 설치 (10분)
+
+### 🔗 참조 개념
+- [Week 1 Day 2 Session 1: EC2 기초](../../day2/session_1.md) - EC2 인스턴스 생성
 
 ### AWS Console에서 EC2 생성
 
@@ -158,37 +258,13 @@ AWS Console → EC2 → Instances → Launch instances
 | Subnet | Public Subnet (AZ-A) |
 | Auto-assign Public IP | Enable |
 | IAM Instance Profile | SSM-Role (Systems Manager 접속용) |
-| Security Group | HTTP (80), Custom TCP (8080-8082) |
-
-**이미지 자리**: Security Group 설정 화면
-
-### Security Group 규칙 (초기 설정)
-
-**⚠️ 중요**: 위에서 정리한 팀 포트 정보를 사용하세요!
-
-```
-Inbound:
-- Type: HTTP, Port: 80, Source: 0.0.0.0/0
-- Type: Custom TCP, Port: [팀 포트 1], Source: 0.0.0.0/0 (임시)
-- Type: Custom TCP, Port: [팀 포트 2], Source: 0.0.0.0/0 (임시)
-- Type: Custom TCP, Port: [팀 포트 3], Source: 0.0.0.0/0 (임시)
-
-Outbound:
-- Type: All traffic, Destination: 0.0.0.0/0
-```
-
-**예시 (포트가 3000, 8000, 8080인 경우)**:
-```
-Inbound:
-- Type: HTTP, Port: 80, Source: 0.0.0.0/0
-- Type: Custom TCP, Port: 3000, Source: 0.0.0.0/0 (임시)
-- Type: Custom TCP, Port: 8000, Source: 0.0.0.0/0 (임시)
-- Type: Custom TCP, Port: 8080, Source: 0.0.0.0/0 (임시)
-```
+| Security Group | **ec2-sg** (Step 1에서 생성) |
 
 **⚠️ 주의**: 
+- Security Group은 **ec2-sg**를 선택하세요 (Step 1에서 생성한 것)
 - SSH 포트는 열지 않습니다 (SSM Session Manager 사용)
-- 위 포트들은 Step 3에서 ALB Security Group으로 변경 예정
+
+**이미지 자리**: EC2 생성 설정 화면
 
 ### Docker 및 Docker Compose 설치
 
@@ -230,7 +306,7 @@ docker ps
 
 ---
 
-## 🛠️ Step 2: Docker Compose로 서비스 실행 (10분)
+## 🛠️ Step 3: Docker Compose로 서비스 실행 (10분)
 
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - Target Groups 포트 매핑
@@ -556,7 +632,7 @@ docker stop <container-id>
 
 ---
 
-## 🛠️ Step 3: ALB 및 Target Groups 생성 (15분)
+## 🛠️ Step 4: ALB 및 Target Groups 생성 (15분)
 
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - ALB, Target Groups, Health Checks
@@ -689,38 +765,177 @@ aws elbv2 describe-target-health --target-group-arn <admin-tg-arn>
 
 ---
 
-## 🛠️ Step 4: 경로 기반 라우팅 설정 (10분)
+## 🛠️ Step 5: 경로 기반 라우팅 설정 (10분)
 
 ### 🔗 참조 개념
 - [Session 1: Elastic Load Balancing](./session_1.md) - Listener Rules, 경로 기반 라우팅
 
-### Listener Rules 추가
+### 💡 Listener Rule 조건 설정 가이드
 
-**경로**: ALB → Listeners → HTTP:80 → View/edit rules
+**⚠️ 학생들이 헷갈리는 부분**: Path 조건 설정 시 정확한 값 입력
+
+#### 올바른 조건 설정 방법
+
+**AWS Console 경로**:
+```
+ALB → Listeners → HTTP:80 → View/edit rules → + 버튼 (Insert Rule)
+```
 
 **이미지 자리**: Listener Rules 편집 화면
 
-**Rule 1: /api/***
-- Condition: Path is `/api/*`
-- Action: Forward to `api-tg`
-- Priority: 1
+#### Rule 1: /api/* 경로 설정
 
-**Rule 2: /backend/***
-- Condition: Path is `/backend/*`
-- Action: Forward to `backend-tg`
-- Priority: 2
+**1단계: Add condition 클릭**
+- Condition type: **Path** 선택
 
-**Rule 3: /admin/***
-- Condition: Path is `/admin/*`
-- Action: Forward to `admin-tg`
-- Priority: 3
+**2단계: Path 값 입력**
+```
+⚠️ 정확히 이렇게 입력하세요:
+/api/*
 
-**Default Rule**:
-- Forward to `api-tg` (기본)
+❌ 잘못된 예시:
+- /api*     (슬래시 뒤 별표 없음)
+- /api/     (별표 없음)
+- api/*     (앞 슬래시 없음)
+- /api/**   (별표 2개)
+```
 
-**이미지 자리**: Listener Rules 설정 완료
+**3단계: Add action 클릭**
+- Action type: **Forward to** 선택
+- Target group: **api-tg** 선택
+
+**4단계: Priority 설정**
+- Priority: **1** (가장 높은 우선순위)
+
+**이미지 자리**: Rule 1 설정 완료 화면
+
+---
+
+#### Rule 2: /backend/* 경로 설정
+
+**조건 설정**:
+```
+Path: /backend/*
+```
+
+**액션 설정**:
+- Forward to: **backend-tg**
+- Priority: **2**
+
+**이미지 자리**: Rule 2 설정 완료 화면
+
+---
+
+#### Rule 3: /admin/* 경로 설정
+
+**조건 설정**:
+```
+Path: /admin/*
+```
+
+**액션 설정**:
+- Forward to: **admin-tg**
+- Priority: **3**
+
+**이미지 자리**: Rule 3 설정 완료 화면
+
+---
+
+#### Default Rule (기본 규칙)
+
+**설정**:
+- 조건: 없음 (모든 요청)
+- Forward to: **api-tg** (기본 서비스)
+- Priority: **Last** (가장 낮은 우선순위)
+
+**이미지 자리**: 전체 Listener Rules 목록
+
+---
+
+### 📋 최종 Listener Rules 구성
+
+| Priority | Condition | Target Group | 설명 |
+|----------|-----------|--------------|------|
+| 1 | Path: `/api/*` | api-tg | API 서비스 |
+| 2 | Path: `/backend/*` | backend-tg | Backend 서비스 |
+| 3 | Path: `/admin/*` | admin-tg | Admin 서비스 |
+| Last | Default | api-tg | 기본 서비스 |
+
+---
+
+### 🔍 Path 패턴 이해하기
+
+#### `/api/*` 의미
+```
+✅ 매칭되는 경로:
+- /api/
+- /api/users
+- /api/users/123
+- /api/products/search
+
+❌ 매칭되지 않는 경로:
+- /api (슬래시 없음)
+- /apis/
+- /v1/api/
+```
+
+#### 슬래시 없는 경로 처리
+
+**문제**: `http://alb-dns/api` (슬래시 없음) → 404
+
+**해결 방법 1**: Rule 추가
+```
+Priority: 1-1
+Condition: Path is /api (정확히 일치)
+Action: Forward to api-tg
+```
+
+**해결 방법 2**: 애플리케이션에서 리다이렉트
+```javascript
+// Express.js 예시
+app.get('/api', (req, res) => {
+  res.redirect('/api/');
+});
+```
+
+**권장**: 방법 1 (ALB에서 처리)
+
+---
 
 ### ✅ 검증
+
+#### 1. AWS CLI로 Rule 확인
+```bash
+# Listener ARN 조회
+LISTENER_ARN=$(aws elbv2 describe-listeners \
+  --load-balancer-arn <ALB-ARN> \
+  --query 'Listeners[0].ListenerArn' \
+  --output text)
+
+# Rules 확인
+aws elbv2 describe-rules \
+  --listener-arn $LISTENER_ARN \
+  --query 'Rules[*].[Priority,Conditions[0].Values[0],Actions[0].TargetGroupArn]' \
+  --output table
+```
+
+**예상 출력**:
+```
+-----------------------------------------
+|            DescribeRules              |
++----------+----------+-----------------+
+| Priority | Path     | Target Group    |
++----------+----------+-----------------+
+| 1        | /api/*   | api-tg-arn      |
+| 2        | /backend/*| backend-tg-arn |
+| 3        | /admin/* | admin-tg-arn    |
+| default  | -        | api-tg-arn      |
++----------+----------+-----------------+
+```
+
+**이미지 자리**: CLI 검증 결과
+
+#### 2. 경로별 테스트
 ```bash
 # ALB DNS 가져오기
 ALB_DNS=$(aws elbv2 describe-load-balancers \
@@ -728,25 +943,103 @@ ALB_DNS=$(aws elbv2 describe-load-balancers \
   --query 'LoadBalancers[0].DNSName' \
   --output text)
 
-# 각 경로 테스트 (슬래시 포함)
-curl http://$ALB_DNS/api/
-curl http://$ALB_DNS/backend/
-curl http://$ALB_DNS/admin/
+echo "ALB DNS: $ALB_DNS"
 
-# 슬래시 없이도 테스트
-curl http://$ALB_DNS/api
-curl http://$ALB_DNS/backend
-curl http://$ALB_DNS/admin
+# 각 경로 테스트 (슬래시 포함)
+echo "=== Testing /api/ ==="
+curl -I http://$ALB_DNS/api/
+
+echo "=== Testing /backend/ ==="
+curl -I http://$ALB_DNS/backend/
+
+echo "=== Testing /admin/ ==="
+curl -I http://$ALB_DNS/admin/
 
 # 하위 경로 테스트
-curl http://$ALB_DNS/api/test
-curl http://$ALB_DNS/backend/health
-curl http://$ALB_DNS/admin/dashboard
+echo "=== Testing /api/users ==="
+curl -I http://$ALB_DNS/api/users
 
-# 예상: 모두 해당 서비스로 라우팅됨
+echo "=== Testing /backend/health ==="
+curl -I http://$ALB_DNS/backend/health
+
+echo "=== Testing /admin/dashboard ==="
+curl -I http://$ALB_DNS/admin/dashboard
+
+# 예상: 모두 200 OK
 ```
 
 **이미지 자리**: 경로별 라우팅 테스트 결과
+
+#### 3. 브라우저 테스트
+```
+http://<ALB-DNS>/api/      → 🚀 API Service
+http://<ALB-DNS>/backend/  → ⚙️ Backend Service
+http://<ALB-DNS>/admin/    → 🔧 Admin Service
+```
+
+**이미지 자리**: 브라우저에서 각 경로 접근 결과 (3개 스크린샷)
+
+---
+
+### 🔍 트러블슈팅
+
+#### 문제 1: 404 Not Found
+**증상**: `curl http://alb-dns/api/` → 404
+
+**원인 체크리스트**:
+- [ ] Listener Rule이 올바르게 설정되었는가?
+  ```bash
+  aws elbv2 describe-rules --listener-arn $LISTENER_ARN
+  ```
+- [ ] Target Group이 healthy 상태인가?
+  ```bash
+  aws elbv2 describe-target-health --target-group-arn <TG-ARN>
+  ```
+- [ ] EC2 Security Group이 ALB에서 접근 가능한가?
+  ```bash
+  # EC2 SG Inbound에 ALB SG가 있는지 확인
+  ```
+- [ ] 애플리케이션이 해당 경로를 처리하는가?
+  ```bash
+  # EC2에서 직접 테스트
+  curl http://localhost:8080/api/
+  ```
+
+#### 문제 2: 503 Service Unavailable
+**증상**: ALB는 응답하지만 503 에러
+
+**원인**:
+- Target Group의 모든 Target이 unhealthy
+- Health Check 실패
+
+**해결**:
+```bash
+# Target Health 확인
+aws elbv2 describe-target-health --target-group-arn <TG-ARN>
+
+# Health Check 설정 확인
+aws elbv2 describe-target-groups --target-group-arns <TG-ARN>
+
+# EC2에서 Health Check 경로 테스트
+curl http://localhost:8080/
+```
+
+#### 문제 3: 잘못된 서비스로 라우팅
+**증상**: `/api/`로 접근했는데 다른 서비스 응답
+
+**원인**:
+- Listener Rule Priority 순서 문제
+- Path 조건 잘못 설정
+
+**해결**:
+```bash
+# Rule 순서 확인
+aws elbv2 describe-rules --listener-arn $LISTENER_ARN
+
+# Priority 재조정 필요 시
+aws elbv2 set-rule-priorities \
+  --rule-priorities RuleArn=<rule-arn>,Priority=1
+```
 
 ---
 
