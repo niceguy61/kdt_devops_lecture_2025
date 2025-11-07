@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**📢 Pub/Sub** • **🔔 알림** • **🌐 Fan-out**
+**📢 방송하기** • **🔔 알림 보내기** • **🌐 여러 명에게 한번에**
 
-*하나의 메시지를 여러 구독자에게, SNS로 알림 시스템 구축*
+*TV 방송처럼 한 번에 여러 사람에게, SNS로 알림 시스템 만들기*
 
 </div>
 
@@ -12,80 +12,133 @@
 
 ## 🕘 Session 정보
 **시간**: 09:40-10:20 (40분)
-**목표**: SNS Pub/Sub 패턴 이해 및 SQS 통합
-**방식**: 이론 + 실습 예제
+**목표**: 한 번에 여러 사람에게 메시지 보내는 방법 이해하기
+**방식**: 실생활 비유 + 그림 + 간단한 예시
 
 ## 🎯 학습 목표
 
 ### 📚 이해 목표
-- Pub/Sub 패턴의 개념과 필요성
-- SNS의 작동 원리 파악
-- SQS + SNS Fan-out 패턴 이해
-- 다양한 알림 채널 활용 방법
+- SNS가 뭔지 알기 (방송국 같은 거!)
+- 왜 필요한지 이해하기 (한 번에 여러 명에게)
+- 여러 가지 전달 방법 알기 (이메일, 문자, 앱)
+- SQS와 함께 사용하는 방법 알기
 
 ### 🛠️ 적용 목표
-- 알림 시스템 설계 능력
-- 적절한 구독 프로토콜 선택
-- SQS와 SNS 통합 구현
+- 언제 사용하면 좋을지 판단하기
+- 어떤 전달 방법을 선택할지 알기
+- SQS와 SNS를 함께 사용하기
 
 ---
 
 ## 🤔 왜 필요한가? (5분)
 
-### 💼 실무 시나리오: 주문 상태 알림
+### 🏠 실생활 비유 1: TV 방송국
 
-**문제 상황 - SQS만 사용**:
+**편지로 알리기** (느리고 힘들어요):
 ```
-주문 완료 시 알림이 필요한 곳:
-1. 고객 이메일
-2. 고객 SMS
-3. 관리자 대시보드
-4. 재고 시스템
-5. 배송 시스템
-6. 회계 시스템
-
-각각에 메시지를 보내려면?
-→ 6개의 SQS Queue 필요
-→ 6번의 메시지 전송 코드 작성
-→ 새로운 시스템 추가 시 코드 수정 😱
+학교 공지사항을 전달하려면:
+- 학생 1에게 편지 쓰기
+- 학생 2에게 편지 쓰기
+- 학생 3에게 편지 쓰기
+- ... (100명에게 편지 쓰기)
+시간: 하루 종일 😱
 ```
 
-**SNS를 사용한 Pub/Sub**:
+**방송으로 알리기** (빠르고 쉬워요):
+```
+학교 방송:
+- 마이크 앞에서 한 번만 말하기
+- 모든 학생이 동시에 듣기
+시간: 1분 ✅
+```
+
+### 🚌 실생활 비유 2: 메시지 버스 (Message Bus)
+
+**택시로 이동하기** (비효율적):
+```
+회사 직원들이 출근하려면:
+- 직원 1: 택시 1대 (집 → 회사)
+- 직원 2: 택시 1대 (집 → 회사)
+- 직원 3: 택시 1대 (집 → 회사)
+- ... (100명이 각자 택시)
+비용: 엄청 비싸요 😱
+```
+
+**버스로 이동하기** (효율적):
+```
+회사 셔틀버스:
+- 버스 1대가 여러 정류장 순회
+- 각 정류장에서 직원들 태우기
+- 모두 회사에 도착
+비용: 훨씬 저렴해요 ✅
+```
+
+**SNS는 메시지 버스**:
+```mermaid
+graph LR
+    M[메시지] --> B[SNS 버스]
+    B --> S1[정류장 1<br/>이메일]
+    B --> S2[정류장 2<br/>문자]
+    B --> S3[정류장 3<br/>재고]
+    B --> S4[정류장 4<br/>배송]
+    
+    style M fill:#e8f5e8
+    style B fill:#fff3e0
+    style S1 fill:#e3f2fd
+    style S2 fill:#e3f2fd
+    style S3 fill:#e3f2fd
+    style S4 fill:#e3f2fd
+```
+
+**메시지 버스의 특징**:
+- 🚌 **한 번에 여러 곳**: 버스가 여러 정류장을 순회하듯이
+- 🔄 **정해진 경로**: 구독한 곳만 메시지를 받아요
+- ⚡ **효율적**: 하나의 메시지로 여러 시스템에 전달
+- 🎯 **독립적**: 한 정류장이 문제 있어도 다른 곳은 괜찮아요
+
+### 💼 실제 예시: 쿠팡 주문 알림
+
+**문제 상황 - 하나씩 보내기**:
+```
+주문 완료 시 알려야 할 곳:
+1. 고객 이메일 → 코드 작성
+2. 고객 문자 → 코드 작성
+3. 관리자 대시보드 → 코드 작성
+4. 재고 시스템 → 코드 작성
+5. 배송 시스템 → 코드 작성
+6. 회계 시스템 → 코드 작성
+
+새로운 곳 추가하려면?
+→ 코드를 또 수정해야 해요 😱
+```
+
+**SNS 사용하기 - 방송하기**:
 ```
 주문 완료 시:
-1. SNS Topic에 1번만 메시지 발행
-2. 구독자들이 자동으로 메시지 수신
-3. 새로운 구독자 추가 시 코드 수정 불필요 ✅
+1. SNS에 한 번만 "주문 완료!" 방송
+2. 구독한 모든 곳이 자동으로 받기
+3. 새로운 곳 추가?
+   → 구독만 하면 끝! (코드 수정 필요 없음) ✅
 ```
 
-### 🏠 실생활 비유
-
-**방송국 시스템**:
-- **SQS (1:1)**: 편지 - 특정 사람에게만 전달
-- **SNS (1:N)**: TV 방송 - 채널을 켜면 누구나 시청 가능
-
-**신문 구독**:
-- **Publisher (발행자)**: 신문사가 신문 발행
-- **Subscriber (구독자)**: 구독자들이 자동으로 신문 수령
-- **새 구독자**: 언제든 구독 신청 가능
-
-### 📊 Pub/Sub의 장점
-
+**그림으로 보기**:
 ```mermaid
 graph TB
-    subgraph "Without SNS (Point-to-Point)"
-        A1[Producer] --> B1[Consumer 1]
-        A1 --> B2[Consumer 2]
-        A1 --> B3[Consumer 3]
-        A1 --> B4[Consumer 4]
+    subgraph "하나씩 보내기 (힘들어요)"
+        A1[주문 완료] --> B1[이메일]
+        A1 --> B2[문자]
+        A1 --> B3[재고]
+        A1 --> B4[배송]
+        A1 --> B5[회계]
     end
     
-    subgraph "With SNS (Pub/Sub)"
-        A2[Publisher] --> T[SNS Topic]
-        T --> C1[Subscriber 1]
-        T --> C2[Subscriber 2]
-        T --> C3[Subscriber 3]
-        T --> C4[Subscriber 4]
+    subgraph "SNS 방송 (쉬워요)"
+        A2[주문 완료] --> T[SNS 방송국]
+        T --> C1[이메일]
+        T --> C2[문자]
+        T --> C3[재고]
+        T --> C4[배송]
+        T --> C5[회계]
     end
     
     style A1 fill:#ffebee
@@ -95,199 +148,262 @@ graph TB
     style C2 fill:#e3f2fd
     style C3 fill:#e3f2fd
     style C4 fill:#e3f2fd
+    style C5 fill:#e3f2fd
 ```
+
+### 🎯 SNS의 장점
+
+1. **한 번만 보내요**: 여러 번 코드 쓸 필요 없어요
+2. **쉽게 추가해요**: 새로운 구독자 추가가 간단해요
+3. **독립적이에요**: 한 곳이 문제 있어도 다른 곳은 괜찮아요
+4. **빨라요**: 모두에게 동시에 전달돼요
 
 ---
 
 ## 📖 핵심 개념 (25분)
 
-### 🔍 개념 1: SNS 기본 아키텍처 (8분)
+### 🔍 개념 1: SNS가 뭔가요? (5분)
 
-> **정의**: AWS에서 제공하는 완전 관리형 Pub/Sub 메시징 서비스
+> **쉽게 말하면**: AWS가 관리해주는 "방송국" 또는 "메시지 버스"
 
-**핵심 구성 요소**:
-- **Topic**: 메시지를 발행하는 채널
-- **Publisher**: Topic에 메시지를 발행하는 주체
-- **Subscriber**: Topic을 구독하여 메시지를 받는 주체
-- **Subscription**: Topic과 Subscriber를 연결하는 설정
+**두 가지 비유로 이해하기**:
 
-**작동 원리**:
+**1. 방송국 비유** 📺
+- **방송국** (Topic): 메시지를 방송하는 곳
+- **방송하는 사람** (Publisher): 방송국에서 메시지를 말하는 사람
+- **듣는 사람** (Subscriber): 방송을 듣는 사람들
+
+**2. 메시지 버스 비유** 🚌
+- **버스** (Topic): 메시지를 실어 나르는 버스
+- **버스 기사** (Publisher): 메시지를 버스에 태우는 사람
+- **정류장** (Subscriber): 메시지를 받는 각 시스템
+- **승객** (Message): 버스를 타고 여러 정류장으로 가는 메시지
+
+**어떻게 작동하나요?**:
 ```mermaid
 sequenceDiagram
-    participant P as Publisher
-    participant T as SNS Topic
-    participant S1 as Subscriber 1<br/>(Email)
-    participant S2 as Subscriber 2<br/>(SMS)
-    participant S3 as Subscriber 3<br/>(SQS)
+    participant 방송하는사람
+    participant SNS버스
+    participant 정류장1
+    participant 정류장2
+    participant 정류장3
     
-    P->>T: 1. Publish Message
-    Note over T: 메시지 복제
-    T->>S1: 2. Send Email
-    T->>S2: 2. Send SMS
-    T->>S3: 2. Send to Queue
+    방송하는사람->>SNS버스: 1. 메시지 태우기
+    Note over SNS버스: 메시지 복사하기
+    SNS버스->>정류장1: 2. 이메일 정류장 도착
+    SNS버스->>정류장2: 2. 문자 정류장 도착
+    SNS버스->>정류장3: 2. 앱 정류장 도착
     
-    Note over S1,S3: 동시에 전달
+    Note over 정류장1,정류장3: 동시에 도착해요!
 ```
 
-**실제 AWS 아키텍처**:
+**실생활 예시**:
+```
+신문 배달 (방송국 비유):
+1. 신문사: 신문 발행 (방송하는 사람)
+2. 배달부: 구독자들에게 배달 (방송국)
+3. 구독자들: 신문 받기 (듣는 사람)
 
-![SNS Pub-Sub Pattern](./generated-diagrams/sns_pubsub_pattern.png)
-
-*그림: SNS Pub/Sub 패턴 - Publisher가 Topic에 메시지를 발행하면 모든 Subscriber가 동시에 수신*
-
-**주요 특징**:
-- **완전 관리형**: 서버 관리 불필요
-- **높은 처리량**: 초당 수백만 메시지 처리
-- **내구성**: 여러 AZ에 메시지 복제
-- **유연한 구독**: 다양한 프로토콜 지원
-
-**메시지 필터링**:
-```json
-// 구독자별로 원하는 메시지만 수신 가능
-{
-  "store": ["seoul", "busan"],
-  "event_type": ["order_completed"]
-}
+회사 셔틀버스 (메시지 버스 비유):
+1. 버스 기사: 직원들 태우기 (메시지 발행)
+2. 셔틀버스: 여러 정류장 순회 (SNS)
+3. 각 정류장: 직원들 내리기 (구독자들)
 ```
 
-### 🔍 개념 2: 구독 프로토콜 (8분)
-
-> **정의**: SNS는 다양한 방식으로 메시지를 전달할 수 있음
-
-#### 지원 프로토콜
-
-**1. Email / Email-JSON**
-- **용도**: 관리자 알림, 보고서
-- **특징**: 사람이 읽기 쉬운 형식
-- **제한**: 수동 확인 필요
-
-```python
-# Email 구독 예시
-sns.subscribe(
-    TopicArn='arn:aws:sns:ap-northeast-2:123456789012:orders',
-    Protocol='email',
-    Endpoint='admin@example.com'
-)
+**SQS와 비교하기**:
+```mermaid
+graph TB
+    subgraph "SQS - 편지 (1:1)"
+        A1[보내는 사람] --> B1[편지]
+        B1 --> C1[받는 사람 1명]
+    end
+    
+    subgraph "SNS - 방송/버스 (1:N)"
+        A2[방송하는 사람] --> B2[SNS 버스]
+        B2 --> C2[받는 사람 1]
+        B2 --> C3[받는 사람 2]
+        B2 --> C4[받는 사람 3]
+        B2 --> C5[받는 사람 N]
+    end
+    
+    style A1 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style C1 fill:#e3f2fd
+    style A2 fill:#e8f5e8
+    style B2 fill:#fff3e0
+    style C2 fill:#e3f2fd
+    style C3 fill:#e3f2fd
+    style C4 fill:#e3f2fd
+    style C5 fill:#e3f2fd
 ```
 
-**2. SMS**
-- **용도**: 긴급 알림, OTP
-- **특징**: 즉시 전달
-- **제한**: 비용 발생, 길이 제한 (160자)
+**차이점 정리**:
+```
+SQS (편지):
+- 특정 한 사람에게만 보내요 (1:1)
+- 예: 친구에게 편지 쓰기
+- 사용: 특정 작업을 특정 일꾼에게
 
-```python
-# SMS 구독 예시
-sns.subscribe(
-    TopicArn='arn:aws:sns:ap-northeast-2:123456789012:alerts',
-    Protocol='sms',
-    Endpoint='+821012345678'
-)
+SNS (방송/버스):
+- 여러 사람에게 동시에 보내요 (1:N)
+- 예: TV 방송, 학교 방송, 셔틀버스
+- 사용: 여러 시스템에 동시 알림
 ```
 
-**3. HTTP/HTTPS**
-- **용도**: 웹훅, 외부 시스템 연동
-- **특징**: 커스텀 엔드포인트
-- **제한**: 엔드포인트 가용성 필요
+**메시지 버스로서의 SNS 장점**:
+- 🚌 **효율적인 전달**: 하나의 메시지로 여러 시스템에 동시 전달
+- 🔄 **느슨한 결합**: 발행자와 구독자가 서로 몰라도 돼요
+- ⚡ **확장 가능**: 새로운 정류장(구독자) 추가가 쉬워요
+- 🎯 **독립적 처리**: 각 정류장이 독립적으로 메시지 처리
 
-```python
-# HTTPS 구독 예시
-sns.subscribe(
-    TopicArn='arn:aws:sns:ap-northeast-2:123456789012:webhooks',
-    Protocol='https',
-    Endpoint='https://api.example.com/webhook'
-)
+### 🔍 개념 2: 여러 가지 전달 방법 (5분)
+
+> **쉽게 말하면**: 이메일로? 문자로? 앱으로? 선택할 수 있어요
+
+#### 전달 방법 6가지
+
+**1. 이메일** 📧
+- **언제**: 긴 내용, 보고서
+- **장점**: 자세히 쓸 수 있어요
+- **단점**: 바로 안 볼 수도 있어요
+
+```
+예시: 주문 확인 이메일
+- 주문 내역
+- 배송 정보
+- 영수증
 ```
 
-**4. SQS**
-- **용도**: 비동기 처리, 안정적 전달
-- **특징**: 메시지 보관, 재시도
-- **장점**: 가장 안정적
+**2. 문자 (SMS)** 📱
+- **언제**: 긴급 알림, 인증번호
+- **장점**: 바로 확인해요
+- **단점**: 비용이 들어요, 짧게만 써요 (160자)
 
-```python
-# SQS 구독 예시
-sns.subscribe(
-    TopicArn='arn:aws:sns:ap-northeast-2:123456789012:orders',
-    Protocol='sqs',
-    Endpoint='arn:aws:sqs:ap-northeast-2:123456789012:order-queue'
-)
+```
+예시: 배송 알림
+"주문하신 상품이 배송 시작되었습니다"
 ```
 
-**5. Lambda**
-- **용도**: 서버리스 처리
-- **특징**: 자동 실행
-- **장점**: 인프라 관리 불필요
+**3. 웹사이트 알림 (HTTP/HTTPS)** 🌐
+- **언제**: 다른 시스템과 연결
+- **장점**: 자유롭게 사용 가능
+- **단점**: 웹사이트가 켜져 있어야 해요
 
-```python
-# Lambda 구독 예시
-sns.subscribe(
-    TopicArn='arn:aws:sns:ap-northeast-2:123456789012:events',
-    Protocol='lambda',
-    Endpoint='arn:aws:lambda:ap-northeast-2:123456789012:function:processor'
-)
+```
+예시: 재고 시스템 업데이트
+주문 완료 → 재고 시스템에 자동 알림
 ```
 
-**6. Mobile Push**
-- **용도**: 모바일 앱 알림
-- **특징**: iOS/Android 지원
-- **플랫폼**: APNS, FCM, ADM
+**4. 할 일 목록 (SQS)** 📨
+- **언제**: 나중에 처리할 일
+- **장점**: 가장 안전해요, 다시 시도 가능
+- **단점**: 추가 비용
 
-#### 프로토콜 선택 가이드
+```
+예시: 이메일 발송 작업
+주문 완료 → 이메일 발송 목록에 추가
+```
 
-| 프로토콜 | 사용 사례 | 장점 | 단점 |
+**5. 자동 실행 (Lambda)** ⚡
+- **언제**: 자동으로 뭔가 실행
+- **장점**: 서버 필요 없어요
+- **단점**: 15분 이상 걸리는 일은 못 해요
+
+```
+예시: 포인트 자동 적립
+주문 완료 → 자동으로 포인트 계산해서 적립
+```
+
+**6. 앱 알림 (Mobile Push)** 📲
+- **언제**: 스마트폰 앱 알림
+- **장점**: 바로 확인해요
+- **단점**: 앱이 설치되어 있어야 해요
+
+```
+예시: 배달 앱 알림
+"주문하신 음식이 곧 도착합니다!"
+```
+
+#### 어떤 걸 선택할까요?
+
+| 전달 방법 | 언제 사용? | 장점 | 단점 |
 |---------|----------|------|------|
-| **Email** | 보고서, 알림 | 사람이 읽기 쉬움 | 수동 확인 |
-| **SMS** | 긴급 알림, OTP | 즉시 전달 | 비용, 길이 제한 |
-| **HTTP/HTTPS** | 웹훅, 외부 연동 | 유연성 | 가용성 필요 |
-| **SQS** | 비동기 처리 | 안정적, 재시도 | 추가 비용 |
-| **Lambda** | 서버리스 처리 | 자동 실행 | 실행 시간 제한 |
-| **Mobile Push** | 앱 알림 | 실시간 | 플랫폼 설정 복잡 |
+| **이메일** | 긴 내용 | 자세히 쓸 수 있음 | 바로 안 봄 |
+| **문자** | 긴급 알림 | 바로 확인 | 비용, 짧게만 |
+| **웹사이트** | 시스템 연결 | 자유로움 | 항상 켜져 있어야 함 |
+| **할 일 목록** | 나중에 처리 | 안전함 | 추가 비용 |
+| **자동 실행** | 자동 처리 | 서버 필요 없음 | 시간 제한 |
+| **앱 알림** | 스마트폰 | 바로 확인 | 앱 필요 |
 
-### 🔍 개념 3: SQS + SNS Fan-out 패턴 (9분)
+**전달 방법 선택 가이드**:
+```mermaid
+graph TB
+    A{어떤 내용인가요?}
+    A -->|긴 내용| B[이메일 📧]
+    A -->|짧고 긴급| C{누구에게?}
+    A -->|시스템 연동| D[웹사이트 🌐<br/>또는 SQS 📨]
+    
+    C -->|사람| E{어떻게?}
+    C -->|시스템| F[Lambda ⚡<br/>또는 SQS 📨]
+    
+    E -->|문자| G[SMS 📱]
+    E -->|앱| H[Mobile Push 📲]
+    
+    style A fill:#fff3e0
+    style B fill:#e8f5e8
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+```
 
-> **정의**: SNS로 메시지를 발행하고, 여러 SQS Queue가 구독하는 패턴
+### 🔍 개념 3: SQS와 함께 사용하기 (부채꼴 전달 & 메시지 버스) (5분)
 
-**왜 Fan-out이 필요한가?**
+> **쉽게 말하면**: 한 번 방송하면 여러 할 일 목록에 동시에 들어가요 (메시지 버스처럼!)
+
+**왜 필요한가요?**
 
 **문제 상황**:
 ```
-주문 완료 시 처리해야 할 작업:
-1. 이메일 발송 (5초)
-2. SMS 발송 (3초)
-3. 재고 업데이트 (2초)
-4. 배송 시스템 연동 (4초)
-5. 포인트 적립 (1초)
+주문 완료 시 해야 할 일:
+1. 이메일 보내기 (5초)
+2. 문자 보내기 (3초)
+3. 재고 빼기 (2초)
+4. 배송 준비 (4초)
+5. 포인트 주기 (1초)
 
-순차 처리: 15초 소요 😱
-병렬 처리 필요!
+하나씩 하면: 15초 😱
 ```
 
-**Fan-out 패턴 해결**:
+**SNS + SQS 함께 사용 (메시지 버스 패턴)**:
 ```
-SNS Topic에 메시지 발행 (0.1초)
+SNS 버스에 메시지 태우기 (0.1초)
     ↓
-5개의 SQS Queue가 동시에 메시지 수신
+버스가 5개 정류장(SQS)에 동시 도착
     ↓
-각 Queue의 Worker가 독립적으로 병렬 처리
+각 정류장의 일꾼이 동시에 처리
     ↓
-전체 처리 시간: 가장 긴 작업 시간 (5초) ✅
+전체 시간: 가장 긴 일 시간 (5초) ✅
 ```
 
-**아키텍처**:
+**그림으로 보기 - 메시지 버스 패턴**:
 ```mermaid
 graph TB
-    P[Order Service] --> T[SNS Topic:<br/>Order Completed]
+    P[주문 완료<br/>메시지] --> T[SNS 메시지 버스]
     
-    T --> Q1[Email Queue]
-    T --> Q2[SMS Queue]
-    T --> Q3[Inventory Queue]
-    T --> Q4[Shipping Queue]
-    T --> Q5[Points Queue]
+    T --> Q1[정류장 1<br/>이메일 SQS]
+    T --> Q2[정류장 2<br/>문자 SQS]
+    T --> Q3[정류장 3<br/>재고 SQS]
+    T --> Q4[정류장 4<br/>배송 SQS]
+    T --> Q5[정류장 5<br/>포인트 SQS]
     
-    Q1 --> W1[Email Worker]
-    Q2 --> W2[SMS Worker]
-    Q3 --> W3[Inventory Worker]
-    Q4 --> W4[Shipping Worker]
-    Q5 --> W5[Points Worker]
+    Q1 --> W1[이메일<br/>일꾼]
+    Q2 --> W2[문자<br/>일꾼]
+    Q3 --> W3[재고<br/>일꾼]
+    Q4 --> W4[배송<br/>일꾼]
+    Q5 --> W5[포인트<br/>일꾼]
     
     style P fill:#e8f5e8
     style T fill:#fff3e0
@@ -303,96 +419,119 @@ graph TB
     style W5 fill:#f3e5f5
 ```
 
-**실제 AWS 아키텍처**:
-
-![SNS SQS Fanout](./generated-diagrams/sns_sqs_fanout.png)
-
-*그림: SNS + SQS Fan-out 패턴 - 하나의 메시지가 여러 Queue로 동시에 전달되어 병렬 처리*
-
-**전체 시스템 예시**:
-
-![Order Notification System](./generated-diagrams/order_notification_system.png)
-
-*그림: 주문 알림 시스템 - 고객 알림(Email/SMS)과 백엔드 처리(Queue)를 동시에 수행*
-
-**Fan-out 패턴의 장점**:
-1. **병렬 처리**: 모든 작업이 동시에 시작
-2. **독립성**: 한 작업 실패가 다른 작업에 영향 없음
-3. **확장성**: 새로운 구독자 추가 용이
-4. **안정성**: SQS의 재시도 메커니즘 활용
-
-**실제 구현**:
-```python
-# 1. SNS Topic 생성
-topic = sns.create_topic(Name='order-completed')
-
-# 2. 여러 SQS Queue 생성 및 구독
-queues = ['email', 'sms', 'inventory', 'shipping', 'points']
-for queue_name in queues:
-    # Queue 생성
-    queue = sqs.create_queue(QueueName=f'{queue_name}-queue')
-    
-    # SNS 구독
-    sns.subscribe(
-        TopicArn=topic['TopicArn'],
-        Protocol='sqs',
-        Endpoint=queue['QueueUrl']
-    )
-    
-    # Queue 정책 설정 (SNS가 메시지 전송 가능하도록)
-    policy = {
-        "Version": "2012-10-17",
-        "Statement": [{
-            "Effect": "Allow",
-            "Principal": {"Service": "sns.amazonaws.com"},
-            "Action": "sqs:SendMessage",
-            "Resource": queue['QueueArn'],
-            "Condition": {
-                "ArnEquals": {
-                    "aws:SourceArn": topic['TopicArn']
-                }
-            }
-        }]
-    }
-    sqs.set_queue_attributes(
-        QueueUrl=queue['QueueUrl'],
-        Attributes={'Policy': json.dumps(policy)}
-    )
-
-# 3. 메시지 발행
-sns.publish(
-    TopicArn=topic['TopicArn'],
-    Message=json.dumps({
-        'order_id': '12345',
-        'customer_email': 'customer@example.com',
-        'total_amount': 50000
-    }),
-    Subject='Order Completed'
-)
+**실생활 예시 1 - 학교 급식**:
+```
+학교 급식 시간:
+- 선생님: "급식 시간입니다!" (방송)
+- 1학년 줄, 2학년 줄, 3학년 줄 (각각의 할 일 목록)
+- 각 학년이 동시에 급식실로 이동 (동시 처리)
+→ 빨리 끝나요!
 ```
 
-**메시지 필터링**:
-```python
-# 특정 구독자만 특정 메시지 수신
-sns.subscribe(
-    TopicArn=topic_arn,
-    Protocol='sqs',
-    Endpoint=queue_url,
-    Attributes={
-        'FilterPolicy': json.dumps({
-            'store': ['seoul'],  # 서울 매장 주문만
-            'amount': [{'numeric': ['>', 100000]}]  # 10만원 이상만
-        })
-    }
-)
+**실생활 예시 2 - 회사 셔틀버스**:
+```
+회사 셔틀버스:
+- 버스 기사: "출발합니다!" (메시지 발행)
+- 버스: 여러 정류장 순회 (SNS)
+- 각 정류장: 직원들 내리기 (SQS에 메시지 전달)
+- 각 부서: 직원들 업무 시작 (독립적 처리)
+→ 효율적이에요!
 ```
 
-**Fan-out vs 직접 전송 비교**:
+**메시지 버스 패턴의 장점**:
+1. **동시에 처리**: 모든 일이 동시에 시작돼요 (버스가 모든 정류장에 동시 도착)
+2. **독립적**: 한 정류장이 문제 있어도 다른 정류장은 괜찮아요
+3. **쉽게 추가**: 새로운 정류장(구독자) 추가가 간단해요
+4. **안전함**: SQS의 안전한 보관 기능 사용 (정류장에서 대기)
+5. **느슨한 결합**: 발행자는 구독자를 몰라도 돼요 (버스 기사는 승객 목적지 몰라도 됨)
 
-| 방식 | 코드 복잡도 | 확장성 | 장애 격리 | 성능 |
-|------|------------|--------|----------|------|
-| **직접 전송** | 높음 | 낮음 | 낮음 | 순차 처리 |
-| **Fan-out** | 낮음 | 높음 | 높음 | 병렬 처리 |
+**간단한 설정 방법**:
+```
+1. SNS 메시지 버스 만들기 (Topic)
+2. 여러 개의 정류장 만들기 (SQS Queue)
+   - 이메일 정류장
+   - 문자 정류장
+   - 재고 정류장
+   - 배송 정류장
+   - 포인트 정류장
+3. 각 정류장이 버스 노선 구독하기
+4. 메시지를 버스에 태우면 모든 정류장에 자동으로 도착해요!
+```
+
+**실무에서 메시지 버스 활용**:
+```
+마이크로서비스 아키텍처:
+- 주문 서비스: SNS에 "주문 완료" 메시지 발행
+- SNS 버스: 메시지를 여러 서비스에 전달
+- 각 서비스: 독립적으로 메시지 처리
+  * 이메일 서비스: 확인 메일 발송
+  * 재고 서비스: 재고 차감
+  * 배송 서비스: 배송 준비
+  * 포인트 서비스: 포인트 적립
+→ 서비스 간 느슨한 결합 유지!
+```
+
+### 🔍 개념 4: 원하는 메시지만 받기 (10분)
+
+> **쉽게 말하면**: 내가 관심 있는 것만 받을 수 있어요
+
+**왜 필요한가요?**
+
+**문제 상황**:
+```
+서울 매장 직원:
+- 서울 주문 알림 필요 ✅
+- 부산 주문 알림 필요 없음 ❌
+- 하지만 모든 알림을 다 받고 있어요 😱
+```
+
+**필터링 사용**:
+```mermaid
+graph TB
+    T[SNS 방송국<br/>모든 주문 알림] --> F{필터링}
+    
+    F -->|서울만| S1[서울 매장<br/>서울 주문만 받음]
+    F -->|부산만| S2[부산 매장<br/>부산 주문만 받음]
+    F -->|대구만| S3[대구 매장<br/>대구 주문만 받음]
+    
+    style T fill:#fff3e0
+    style F fill:#f3e5f5
+    style S1 fill:#e8f5e8
+    style S2 fill:#e8f5e8
+    style S3 fill:#e8f5e8
+```
+
+**결과**:
+```
+서울 매장 직원:
+- 구독 설정: "서울 주문만 받기"
+- 결과: 서울 주문만 받아요 ✅
+
+부산 매장 직원:
+- 구독 설정: "부산 주문만 받기"
+- 결과: 부산 주문만 받아요 ✅
+```
+
+**실생활 예시**:
+```
+유튜브 구독:
+- 모든 영상 알림 받기 (필터 없음)
+- 특정 주제 영상만 알림 받기 (필터 사용)
+→ 내가 원하는 것만 받아요!
+```
+
+**설정 예시** (간단하게):
+```
+서울 매장 구독 설정:
+- 매장: "서울"만
+- 금액: "10만원 이상"만
+→ 서울 매장의 10만원 이상 주문만 받아요
+```
+
+**장점**:
+- ✅ 필요한 것만 받아요
+- ✅ 불필요한 처리 안 해요
+- ✅ 비용 절약돼요
 
 ---
 
@@ -400,263 +539,202 @@ sns.subscribe(
 
 ### 🤝 페어 토론 (5분)
 
-**토론 주제**:
-1. **알림 시스템 설계**:
-   - 여러분의 프로젝트에서 어떤 알림이 필요한가요?
-   - 각 알림에 어떤 프로토콜을 사용하시겠습니까?
+**쉬운 질문들**:
 
-2. **Fan-out 적용**:
-   - 프로젝트에서 Fan-out 패턴을 적용할 수 있는 곳은?
-   - 병렬 처리하면 좋을 작업들은?
+1. **일상 생활에서 찾기**:
+   - 우리 주변에서 "방송"으로 알리는 것은?
+   - 한 명에게 말하는 것 vs 여러 명에게 방송하는 것
+   - 어떤 게 더 편할까요?
 
-3. **SQS vs SNS**:
-   - 언제 SQS만 사용하고, 언제 SNS를 추가하시겠습니까?
-   - 두 서비스를 함께 사용하는 이유는?
+2. **간단한 시나리오**:
+   - 생일 파티 초대장을 보낸다면:
+     * 한 명씩 전화하기? (SQS)
+     * 단체 카톡 보내기? (SNS)
+   - 어떤 게 더 빠를까요?
+
+3. **전달 방법 선택하기**:
+   - 긴급한 알림: 이메일? 문자?
+   - 긴 내용: 이메일? 문자?
+   - 앱 알림: 언제 사용하면 좋을까요?
 
 **페어 활동 가이드**:
-- 👥 2명씩 자유롭게 페어링
-- 🔄 각자 5분씩 의견 공유
-- 📝 핵심 아이디어 메모
+- 👥 2명씩 편하게 짝 지어요
+- 🔄 각자 생각을 이야기해요
+- 📝 재미있는 아이디어를 메모해요
 
 ### 🎯 전체 공유 (5분)
 
 **공유 내용**:
-- 각 팀의 알림 시스템 설계
-- Fan-out 패턴 적용 아이디어
-- SQS + SNS 통합 전략
+- 각 팀이 찾은 방송 예시
+- SQS vs SNS 선택 이유
+- 전달 방법 선택 아이디어
 
 **💡 이해도 체크 질문**:
-- ✅ "Pub/Sub 패턴의 장점을 설명할 수 있나요?"
-- ✅ "Fan-out 패턴이 필요한 이유를 설명할 수 있나요?"
-- ✅ "여러분의 프로젝트에 SNS를 어떻게 적용할지 구상했나요?"
+- ✅ "SNS가 뭔지 친구에게 설명할 수 있나요?"
+- ✅ "SQS와 SNS의 차이를 알겠나요?"
+- ✅ "언제 SNS를 사용하면 좋을지 알겠나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-### 📝 오늘의 핵심 용어
+### 📝 오늘 배운 용어 (쉽게 정리)
 
 **기본 용어**:
-- **SNS (Simple Notification Service)**: AWS 관리형 Pub/Sub 메시징 서비스
-- **Topic**: 메시지를 발행하는 채널
-- **Publisher**: Topic에 메시지를 발행하는 주체
-- **Subscriber**: Topic을 구독하여 메시지를 받는 주체
-- **Subscription**: Topic과 Subscriber를 연결하는 설정
+- **SNS**: AWS가 관리해주는 "방송국"
+- **방송국 (Topic)**: 메시지를 방송하는 곳
+- **방송하는 사람**: 방송국에서 메시지를 말하는 사람
+- **듣는 사람**: 방송을 듣는 사람들
+- **구독**: 방송을 듣기 위해 신청하는 것
+
+**전달 방법**:
+- **이메일**: 긴 내용 보내기
+- **문자**: 긴급 알림
+- **웹사이트**: 다른 시스템과 연결
+- **할 일 목록**: 나중에 처리할 일
+- **자동 실행**: 자동으로 뭔가 실행
+- **앱 알림**: 스마트폰 알림
 
 **패턴**:
-- **Pub/Sub (Publish/Subscribe)**: 발행/구독 패턴
-- **Fan-out**: 하나의 메시지를 여러 구독자에게 전달
-- **Message Filtering**: 구독자별로 원하는 메시지만 수신
-
-**프로토콜**:
-- **Email/SMS**: 사람에게 알림
-- **HTTP/HTTPS**: 웹훅, 외부 시스템 연동
-- **SQS**: 안정적 비동기 처리
-- **Lambda**: 서버리스 자동 처리
-- **Mobile Push**: 모바일 앱 알림
+- **방송 패턴**: 한 번 말하면 여러 명이 듣기
+- **부채꼴 전달**: 하나가 여러 곳으로 퍼지기
+- **필터링**: 원하는 것만 받기
 
 ---
 
-## 🚀 실무 적용 및 개선 방안
+## 🚀 실무에서는 어떻게 사용하나요?
 
-### 💡 현재 Session의 한계점
-- 기본 개념만 다룸
-- 실제 코드 구현은 Lab에서
-- 고급 기능은 다루지 않음
+### 💡 실제 회사 사례
 
-### 🔧 실무 개선 방안
+**사례 1: 배달의민족**
+- **사용**: 주문 알림을 고객, 가게, 배달원에게 동시에
+- **효과**: 빠른 알림, 효율적인 시스템
 
-#### 1. 메시지 필터링 고급 활용
-**속성 기반 필터링**:
-```python
-# 발행 시 속성 추가
-sns.publish(
-    TopicArn=topic_arn,
-    Message='Order completed',
-    MessageAttributes={
-        'store': {'DataType': 'String', 'StringValue': 'seoul'},
-        'amount': {'DataType': 'Number', 'StringValue': '150000'},
-        'customer_type': {'DataType': 'String', 'StringValue': 'vip'}
-    }
-)
+**사례 2: 쿠팡**
+- **사용**: 배송 상태를 여러 시스템에 동시에 알림
+- **효과**: 실시간 배송 추적
 
-# 구독 시 필터 정책
-filter_policy = {
-    'store': ['seoul', 'busan'],
-    'amount': [{'numeric': ['>', 100000]}],
-    'customer_type': ['vip']
-}
+**사례 3: 작은 쇼핑몰**
+- **사용**: 주문 알림, 재고 알림
+- **비용**: 한 달에 2만원 이하
+- **효과**: 자동화된 알림 시스템
+
+### 🔧 더 잘 사용하는 방법
+
+**1. 필터링 활용**:
+```
+✅ 좋은 방법: 필요한 것만 받기
+- 서울 매장: 서울 주문만
+- 부산 매장: 부산 주문만
+→ 효율적이에요!
 ```
 
-#### 2. 재시도 및 DLQ 설정
-**SNS → SQS 구독 시 DLQ**:
-```python
-# SQS Queue에 DLQ 설정
-dlq = sqs.create_queue(QueueName='email-dlq')
-
-main_queue = sqs.create_queue(
-    QueueName='email-queue',
-    Attributes={
-        'RedrivePolicy': json.dumps({
-            'deadLetterTargetArn': dlq['QueueArn'],
-            'maxReceiveCount': '3'
-        })
-    }
-)
-
-# SNS 구독
-sns.subscribe(
-    TopicArn=topic_arn,
-    Protocol='sqs',
-    Endpoint=main_queue['QueueUrl']
-)
+**2. 실패 대비**:
+```
+✅ 좋은 방법: SQS와 함께 사용
+- SNS → SQS → 처리
+- 실패하면 다시 시도
+→ 안전해요!
 ```
 
-#### 3. 메시지 암호화
-**전송 중 암호화**:
-```python
-# Topic 생성 시 암호화 설정
-topic = sns.create_topic(
-    Name='secure-orders',
-    Attributes={
-        'KmsMasterKeyId': 'alias/aws/sns'  # KMS 키 사용
-    }
-)
+**3. 보안 강화**:
+```
+✅ 메시지를 암호화해요
+✅ 권한이 있는 사람만 받아요
+✅ 누가 언제 받았는지 기록해요
 ```
 
-#### 4. 모니터링 & 알람
-**주요 메트릭**:
-- `NumberOfMessagesPublished`: 발행된 메시지 수
-- `NumberOfNotificationsDelivered`: 전달된 알림 수
-- `NumberOfNotificationsFailed`: 실패한 알림 수
+### 💰 비용은 얼마나 나올까요?
 
-**CloudWatch 알람**:
-```python
-cloudwatch.put_metric_alarm(
-    AlarmName='SNS-Delivery-Failures',
-    MetricName='NumberOfNotificationsFailed',
-    Namespace='AWS/SNS',
-    Statistic='Sum',
-    Period=300,
-    EvaluationPeriods=1,
-    Threshold=10,  # 5분간 10개 이상 실패 시 알람
-    ComparisonOperator='GreaterThanThreshold',
-    AlarmActions=['arn:aws:sns:ap-northeast-2:123456789012:alerts']
-)
+**비용 계산**:
+- 방송 100만 번: 500원
+- 이메일 100만 통: 2,000원
+- 문자 1통: 6.45원 (한국 기준)
+- SQS/Lambda로 보내기: 무료!
+
+**예시**:
+```
+작은 쇼핑몰 (하루 1,000개 주문):
+- 한 달 방송: 30,000번
+- 비용: 약 15원
+→ 거의 공짜! 😊
 ```
 
-#### 5. 비용 최적화
-**비용 구조**:
-- **발행 요청**: 100만 요청당 $0.50
-- **HTTP/HTTPS 전달**: 100만 건당 $0.60
-- **Email 전달**: 100만 건당 $2.00
-- **SMS 전달**: 건당 $0.00645 (한국 기준)
-- **SQS/Lambda 전달**: 무료
-
-**절감 팁**:
-- SQS/Lambda 구독 우선 사용 (무료)
-- 메시지 필터링으로 불필요한 전달 감소
-- Batch 발행 (여러 메시지를 한 번에)
-
-### 📊 실제 운영 사례
-
-**사례 1: Airbnb**
-- **규모**: 수천 개의 SNS Topic
-- **용도**: 예약 알림, 호스트 알림
-- **효과**: 실시간 알림 시스템 구축
-
-**사례 2: Netflix**
-- **규모**: 초당 수백만 메시지
-- **용도**: 시스템 이벤트 전파
-- **효과**: 마이크로서비스 간 느슨한 결합
-
-**사례 3: 스타트업 사례**
-- **규모**: 일 10만 알림
-- **용도**: 주문 알림, 마케팅 메시지
-- **비용**: 월 $20 이하
+**절약 팁**:
+```
+✅ SQS/Lambda 사용 (무료)
+✅ 필터링으로 불필요한 전달 줄이기
+✅ 여러 개를 한번에 보내기
+```
 
 ### 🆕 최신 업데이트 (2024-2025)
 
-**2025년 주요 업데이트**:
+**2025년 새로운 기능**:
 
-1. **Cross-Region 전달 강화** (2025.07)
-   - Opt-in Region 간 SNS → SQS 전달 지원
-   - Opt-in Region 간 SNS → Lambda 전달 지원
-   - Default Region → Opt-in Region Lambda 전달 지원
-   - **효과**: 글로벌 분산 시스템 설계 유연성 향상
+1. **다른 나라로도 보내기** (2025.07)
+   - 한국 → 미국으로도 메시지 보내기 가능
+   - 전 세계 서비스 만들기 쉬워졌어요
 
 2. **IPv6 지원** (2025.04)
-   - SNS API 요청에 IPv6 지원
-   - IPv4/IPv6 듀얼 스택 클라이언트 지원
-   - **효과**: 주소 공간 확장, 네트워크 아키텍처 단순화
+   - 더 많은 기기와 연결 가능
+   - 네트워크가 더 빨라졌어요
 
-**2024년 주요 업데이트**:
+**2024년 새로운 기능**:
 
-1. **SNS FIFO 고처리량 모드** (2024년 중반)
-   - 메시지 그룹 수준 중복 제거
-   - US East (N. Virginia): 초당 30,000 메시지
-   - US West (Oregon), EU (Ireland): 초당 9,000 메시지
-   - **효과**: FIFO 순서 보장하면서 처리량 대폭 증가
+1. **순서 지키면서 빠르게** (2024년 중반)
+   - 순서를 지키면서도 더 빨라졌어요
+   - 초당 30,000개 처리 가능!
 
-2. **AWS End User Messaging 통합** (2024.09)
-   - SMS 전송이 AWS End User Messaging으로 통합
-   - 양방향 메시징, 세분화된 권한, 국가별 차단 규칙
-   - **효과**: SMS 기능 강화 및 중앙 집중식 관리
+2. **문자 기능 강화** (2024.09)
+   - 문자 보내기가 더 좋아졌어요
+   - 양방향 문자 가능 (답장 받기)
 
-3. **Data Firehose 전달 확대** (2024.11)
-   - 6개 신규 리전 지원 (홍콩, 하이데라바드, 멜버른, 취리히, 스페인, UAE)
-   - SNS → Firehose → S3/Redshift/OpenSearch 파이프라인
-   - **효과**: 이벤트 아카이빙 및 분석 용이
-
-**실무 적용 팁**:
-- **글로벌 서비스**: Cross-Region 전달로 지역별 처리
-- **고처리량 필요**: FIFO 고처리량 모드 활용
-- **SMS 알림**: End User Messaging 통합 기능 활용
-- **데이터 분석**: Firehose 연동으로 이벤트 아카이빙
-
-**참조**: [AWS SNS What's New](https://aws.amazon.com/sns/whats-new/)
+3. **데이터 저장 쉬워짐** (2024.11)
+   - 메시지를 자동으로 저장할 수 있어요
+   - 나중에 분석하기 좋아요
 
 ---
 
 ## 📝 Session 마무리
 
-### ✅ 오늘 Session 성과
-- [ ] SNS Pub/Sub 패턴 이해
-- [ ] 다양한 구독 프로토콜 파악
-- [ ] SQS + SNS Fan-out 패턴 습득
-- [ ] 실무 알림 시스템 설계 능력
+### ✅ 오늘 배운 것
+
+- [ ] SNS가 뭔지 알았어요 (방송국)
+- [ ] 왜 필요한지 이해했어요 (한 번에 여러 명에게)
+- [ ] 여러 가지 전달 방법을 알았어요 (이메일, 문자, 앱 등)
+- [ ] SQS와 함께 사용하는 방법을 알았어요 (부채꼴 전달)
+- [ ] 필터링으로 원하는 것만 받을 수 있어요
 
 ### 🎯 다음 Session 준비
+
 **Session 3: Terraform 기초**
-- IaC가 필요한 이유
-- Terraform 기본 개념
-- HCL 문법 기초
+- 인프라를 코드로 관리하기
+- 왜 필요한지 이해하기
+- Terraform 기본 개념 알기
 
 **연결 포인트**:
-- Session 1-2에서 배운 SQS, SNS를 Terraform으로 관리
-- 인프라를 코드로 관리하는 첫 경험
+- Session 1-2에서 배운 SQS, SNS를 Terraform으로 만들기
+- 코드로 관리하면 더 편해요!
 
 ---
 
-## 🔗 참고 자료
+## 🔗 더 알아보기
 
 ### 📚 AWS 공식 문서
-- 📘 [SNS란 무엇인가?](https://docs.aws.amazon.com/sns/latest/dg/welcome.html)
-- 📗 [SNS 사용자 가이드](https://docs.aws.amazon.com/sns/latest/dg/)
-- 📙 [SNS API 레퍼런스](https://docs.aws.amazon.com/sns/latest/api/)
-- 📕 [SNS 요금](https://aws.amazon.com/sns/pricing/)
-- 🆕 [SNS 최신 업데이트](https://aws.amazon.com/sns/whats-new/)
+- 📘 [SNS가 뭔가요?](https://docs.aws.amazon.com/sns/latest/dg/welcome.html)
+- 📗 [SNS 사용 방법](https://docs.aws.amazon.com/sns/latest/dg/)
+- 📕 [SNS 비용](https://aws.amazon.com/sns/pricing/)
 
 ### 🎯 추가 학습 자료
-- [SNS 베스트 프랙티스](https://docs.aws.amazon.com/sns/latest/dg/sns-best-practices.html)
-- [SNS + SQS Fan-out 패턴](https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html)
+- [SNS 잘 사용하는 방법](https://docs.aws.amazon.com/sns/latest/dg/sns-best-practices.html)
+- [SNS + SQS 함께 사용하기](https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html)
 
 ---
 
 <div align="center">
 
-**📢 Pub/Sub** • **🔔 알림** • **🌐 Fan-out** • **🔄 SQS 통합**
+**📢 방송하기** • **🔔 알림 보내기** • **🌐 여러 명에게** • **🔄 SQS 통합**
 
-*Session 2 완료 - 다음은 Terraform으로 인프라 코드화!*
+*Session 2 완료 - 다음은 Terraform으로 인프라를 코드로 관리하기!*
 
 </div>

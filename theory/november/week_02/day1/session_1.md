@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**📨 메시지 큐** • **🔄 비동기 처리** • **🛡️ 장애 격리**
+**📨 메시지 보관함** • **🔄 나중에 처리하기** • **🛡️ 안전하게 보관**
 
-*대규모 시스템의 필수 구성 요소, 메시지 큐 마스터하기*
+*줄 서기처럼 순서대로, 메시지 큐 쉽게 이해하기*
 
 </div>
 
@@ -12,373 +12,220 @@
 
 ## 🕘 Session 정보
 **시간**: 09:00-09:40 (40분)
-**목표**: SQS 개념 이해 및 실무 활용 방법 습득
-**방식**: 이론 + 실습 예제
+**목표**: 메시지 큐가 뭔지, 왜 필요한지 쉽게 이해하기
+**방식**: 실생활 비유 + 그림 + 간단한 예시
 
 ## 🎯 학습 목표
 
 ### 📚 이해 목표
-- 메시지 큐가 필요한 이유 이해
-- SQS의 작동 원리 파악
-- Standard vs FIFO Queue 차이 이해
-- Dead Letter Queue 개념 습득
+- 메시지 큐가 뭔지 알기 (우체통 같은 거!)
+- 왜 필요한지 이해하기 (기다리지 않아도 돼요)
+- 두 가지 종류 알기 (빠른 것 vs 순서 지키는 것)
+- 실패하면 어떻게 하는지 알기 (따로 보관함)
 
 ### 🛠️ 적용 목표
-- 비동기 처리가 필요한 상황 판단
-- 적절한 Queue 타입 선택
-- DLQ를 활용한 장애 처리 설계
+- 언제 사용하면 좋을지 판단하기
+- 어떤 종류를 선택할지 알기
+- 실패한 메시지 처리 방법 알기
 
 ---
 
 ## 🤔 왜 필요한가? (5분)
 
-### 💼 실무 시나리오: 이커머스 주문 처리
+### 🏠 실생활 비유: 우체통
 
-**문제 상황**:
+**우체통 없이 편지 보내기** (기다려야 함):
 ```
-사용자가 주문 버튼 클릭
+나 → 우체국 가서 줄 서기 → 우체부 만날 때까지 기다리기 → 편지 전달
+시간: 30분 😱
+```
+
+**우체통 사용하기** (바로 끝!):
+```
+나 → 우체통에 편지 넣기 → 끝! (바로 집에 가기)
+시간: 1분 ✅
+
+우체부는 나중에 편지를 가져가서 배달해요
+```
+
+### 💼 실제 예시: 쿠팡 주문하기
+
+**방법 1: 모든 걸 기다리기** (느림):
+```
+주문 버튼 클릭
     ↓
-서버가 처리해야 할 작업들:
-1. 주문 정보 DB 저장 (0.5초)
-2. 재고 확인 및 차감 (1초)
-3. 결제 처리 (2초)
-4. 주문 확인 이메일 발송 (1초)
-5. 배송 시스템 연동 (1.5초)
-6. 포인트 적립 (0.5초)
+1. 주문 저장하기 (0.5초)
+2. 재고 확인하기 (1초)
+3. 결제하기 (2초)
+4. 이메일 보내기 (1초)
+5. 배송 준비하기 (1.5초)
+6. 포인트 주기 (0.5초)
 ---
-총 6.5초 대기 😱
+총 6.5초 동안 기다려야 해요 😱
 ```
 
-**동기 처리의 문제점**:
-- 사용자가 6.5초 동안 대기
-- 한 작업 실패 시 전체 실패
-- 트래픽 증가 시 서버 과부하
-- 확장성 제한
-
-**SQS를 사용한 비동기 처리**:
+**방법 2: SQS 사용하기** (빠름):
 ```
-사용자가 주문 버튼 클릭
+주문 버튼 클릭
     ↓
-서버: 주문 정보 DB 저장 (0.5초)
+1. 주문 저장하기 (0.5초)
+2. "할 일 목록"에 적어두기 (0.1초)
     ↓
-SQS에 메시지 전송 (0.1초)
+"주문 완료!" 바로 보여주기 (0.6초) ✅
     ↓
-사용자에게 "주문 접수 완료" 응답 (0.6초) ✅
-    ↓
-백그라운드에서 나머지 작업 처리
+나머지는 나중에 천천히 처리해요
 ```
 
-**실제 아키텍처**:
-
-![E-commerce Order Processing](./generated-diagrams/ecommerce_order_processing.png)
-
-*그림: 이커머스 주문 처리 - 사용자는 즉시 응답을 받고, 나머지 작업은 백그라운드에서 비동기로 처리*
-
-### 🏠 실생활 비유
-
-**우체국 시스템**:
-- **동기 처리**: 편지를 직접 배달할 때까지 우체국에서 대기
-- **비동기 처리 (SQS)**: 편지를 우체통에 넣고 바로 출발, 우체부가 나중에 배달
-
-### 📊 비동기 처리의 장점
-
+**그림으로 보기**:
 ```mermaid
 graph TB
-    subgraph "동기 처리"
-        A1[요청] --> A2[작업 1]
+    subgraph "기다려야 하는 방법"
+        A1[주문하기] --> A2[작업 1]
         A2 --> A3[작업 2]
         A3 --> A4[작업 3]
-        A4 --> A5[응답]
+        A4 --> A5[완료!<br/>6.5초 후]
     end
     
-    subgraph "비동기 처리 (SQS)"
-        B1[요청] --> B2[즉시 응답]
-        B1 --> B3[SQS Queue]
-        B3 --> B4[Worker 1]
-        B3 --> B5[Worker 2]
-        B3 --> B6[Worker 3]
+    subgraph "SQS 사용하는 방법"
+        B1[주문하기] --> B2[할 일 목록에<br/>적어두기]
+        B2 --> B3[완료!<br/>0.6초 후]
+        B2 --> B4[나중에<br/>천천히 처리]
     end
     
-    style A1 fill:#ffebee
     style A5 fill:#ffebee
-    style B2 fill:#e8f5e8
-    style B3 fill:#fff3e0
-    style B4 fill:#e3f2fd
-    style B5 fill:#e3f2fd
-    style B6 fill:#e3f2fd
+    style B3 fill:#e8f5e8
+    style B4 fill:#fff3e0
 ```
+
+### 🎯 SQS의 장점
+
+1. **빨라요**: 사용자가 기다리지 않아도 돼요
+2. **안전해요**: 메시지를 잃어버리지 않아요
+3. **독립적이에요**: 한 작업이 실패해도 다른 작업은 계속해요
+4. **확장 가능해요**: 일이 많아지면 일꾼을 더 투입할 수 있어요
 
 ---
 
 ## 📖 핵심 개념 (25분)
 
-### 🔍 개념 1: SQS 기본 아키텍처 (8분)
+### 🔍 개념 1: SQS가 뭔가요? (5분)
 
-> **정의**: AWS에서 제공하는 완전 관리형 메시지 큐 서비스
+> **쉽게 말하면**: AWS가 관리해주는 "할 일 목록 보관함"
 
-**작동 원리**:
+**등장인물**:
+- **보내는 사람** (Producer): 할 일을 목록에 적는 사람
+- **보관함** (Queue): 할 일 목록을 보관하는 곳
+- **처리하는 사람** (Consumer): 목록을 보고 일을 하는 사람
+
+**어떻게 작동하나요?**:
 ```mermaid
 sequenceDiagram
-    participant P as Producer<br/>(메시지 생성자)
-    participant Q as SQS Queue
-    participant C as Consumer<br/>(메시지 처리자)
+    participant 보내는사람
+    participant 보관함
+    participant 처리하는사람
     
-    P->>Q: 1. SendMessage
-    Note over Q: 메시지 저장
-    C->>Q: 2. ReceiveMessage
-    Q->>C: 3. 메시지 반환
-    Note over C: 메시지 처리
-    C->>Q: 4. DeleteMessage
-    Note over Q: 메시지 삭제
+    보내는사람->>보관함: 1. 할 일 적어서 넣기
+    Note over 보관함: 안전하게 보관
+    처리하는사람->>보관함: 2. 할 일 가져가기
+    보관함->>처리하는사람: 3. 할 일 주기
+    Note over 처리하는사람: 일 처리하기
+    처리하는사람->>보관함: 4. 다 했어요!
+    Note over 보관함: 할 일 지우기
 ```
 
-**실제 AWS 아키텍처**:
-
-![SQS Message Flow](./generated-diagrams/sqs_message_flow.png)
-
-*그림: SQS 메시지 흐름 - Producer가 메시지를 보내면 Queue에 저장되고, Consumer가 처리*
-
-**다중 Worker 처리**:
-
-![SQS Multiple Workers](./generated-diagrams/sqs_multiple_workers.png)
-
-*그림: 여러 Worker가 동시에 Queue에서 메시지를 가져와 병렬 처리*
-
-**핵심 특징**:
-- **완전 관리형**: 서버 관리 불필요
-- **무제한 확장**: 메시지 수 제한 없음
-- **내구성**: 여러 AZ에 메시지 복제
-- **보안**: 암호화 및 IAM 통합
-
-**메시지 생명주기**:
-```mermaid
-graph LR
-    A[메시지 생성] --> B[Queue 저장]
-    B --> C[Visibility Timeout]
-    C --> D{처리 성공?}
-    D -->|Yes| E[메시지 삭제]
-    D -->|No| F[다시 Queue로]
-    F --> C
-    
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#e3f2fd
-    style D fill:#f3e5f5
-    style E fill:#e8f5e8
-    style F fill:#ffebee
+**실제 예시**:
+```
+카페에서 주문하기:
+1. 손님: 주문하고 번호표 받기 (보내는 사람)
+2. 주문 목록: 주방에 전달 (보관함)
+3. 바리스타: 주문 보고 커피 만들기 (처리하는 사람)
+4. 완성되면 번호 부르기
 ```
 
-**주요 용어**:
-- **Producer**: 메시지를 Queue에 보내는 애플리케이션
-- **Consumer**: Queue에서 메시지를 가져와 처리하는 애플리케이션
-- **Visibility Timeout**: 메시지를 받은 후 다른 Consumer가 볼 수 없는 시간
-- **Message Retention**: 메시지가 Queue에 보관되는 기간 (기본 4일, 최대 14일)
-
-### 🔍 개념 2: Standard vs FIFO Queue (8분)
-
-> **정의**: SQS는 두 가지 Queue 타입을 제공하며, 각각 다른 특성을 가짐
-
-#### Standard Queue (표준 큐)
-
-**특징**:
-- **무제한 처리량**: 초당 거의 무제한 메시지 처리
-- **최소 1회 전달**: 메시지가 최소 1번 이상 전달 (중복 가능)
-- **순서 보장 안 함**: 메시지 순서가 바뀔 수 있음
-
-**사용 사례**:
-- 이메일 발송
-- 로그 수집
-- 이미지 처리
-- 순서가 중요하지 않은 작업
-
-**예시**:
-```
-메시지 전송 순서: A → B → C
-실제 처리 순서: B → A → C (순서 바뀜 가능)
-메시지 중복: A가 2번 처리될 수 있음
-```
-
-#### ⚠️ Standard Queue의 중복 처리 문제와 해결 방법
-
-**중복이 발생하는 이유**:
-
-```mermaid
-sequenceDiagram
-    participant SQS
-    participant Worker1
-    participant Worker2
-    
-    SQS->>Worker1: 메시지 A 전달
-    Note over Worker1: 처리 중...<br/>(30초 소요)
-    Note over Worker1: Visibility Timeout 만료
-    SQS->>Worker2: 메시지 A 재전달 (중복!)
-    Worker1->>SQS: 처리 완료 (DeleteMessage)
-    Worker2->>SQS: 처리 완료 (DeleteMessage)
-    
-    Note over Worker1,Worker2: 같은 메시지를 2번 처리!
-```
-
-**중복 발생 시나리오**:
-1. Worker1이 메시지를 받아 처리 중
-2. **Visibility Timeout 만료** (처리 시간이 너무 길 때)
-3. SQS가 메시지를 다시 큐에 노출
-4. Worker2가 같은 메시지를 받음 → **중복 처리**
-
-**실무 대응: 멱등성(Idempotency) 보장** 🔑
-
-> **멱등성**: 같은 작업을 여러 번 수행해도 결과가 동일한 성질
-
-**방법 1: 처리 이력 테이블 (권장)**
-
-```python
-# Lambda Worker 예시
-import boto3
-import json
-from datetime import datetime
-
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('processed-messages')
-
-def lambda_handler(event, context):
-    for record in event['Records']:
-        message_id = record['messageId']
-        body = json.loads(record['body'])
-        order_id = body['orderId']
-        
-        # 1. 처리 이력 확인 (중복 체크)
-        response = table.get_item(Key={'messageId': message_id})
-        
-        if 'Item' in response:
-            print(f"이미 처리된 메시지: {message_id}")
-            return  # 중복 처리 방지 ✅
-        
-        # 2. 비즈니스 로직 처리
-        send_email(order_id)
-        update_inventory(order_id)
-        
-        # 3. 처리 완료 기록 (멱등성 보장)
-        table.put_item(Item={
-            'messageId': message_id,
-            'orderId': order_id,
-            'processedAt': datetime.now().isoformat(),
-            'status': 'completed'
-        })
-```
-
-**처리 이력 테이블 설계**:
-```sql
--- DynamoDB 또는 RDS
-CREATE TABLE processed_messages (
-    message_id VARCHAR(255) PRIMARY KEY,  -- SQS MessageId
-    order_id VARCHAR(255),
-    processed_at TIMESTAMP,
-    status VARCHAR(50),
-    worker_id VARCHAR(255)
-);
-
--- 또는 간단하게 Redis
-SET processed:{message_id} "completed" EX 86400  -- 24시간 TTL
-```
-
-**방법 2: 트랜잭션 기반 처리**
-
-```python
-def process_order(order_id, message_id):
-    with db.transaction():
-        # 1. 처리 이력 확인 (SELECT FOR UPDATE)
-        existing = db.query(
-            "SELECT * FROM processed_messages WHERE message_id = %s FOR UPDATE",
-            (message_id,)
-        )
-        
-        if existing:
-            return  # 이미 처리됨
-        
-        # 2. 비즈니스 로직
-        update_inventory(order_id)
-        
-        # 3. 처리 완료 기록
-        db.execute(
-            "INSERT INTO processed_messages (message_id, order_id) VALUES (%s, %s)",
-            (message_id, order_id)
-        )
-```
-
-**방법 3: Visibility Timeout 조정**
-
-```bash
-# 처리 시간이 긴 경우 Visibility Timeout 증가
-aws sqs set-queue-attributes \
-  --queue-url https://sqs.ap-northeast-2.amazonaws.com/.../my-queue \
-  --attributes VisibilityTimeout=300  # 5분
-```
-
-**실무 권장 사항**:
-```
-✅ DO:
-- MessageId 기반 중복 체크 구현
-- 처리 이력을 DynamoDB/Redis에 저장
-- 트랜잭션으로 원자성 보장
-- Visibility Timeout을 처리 시간보다 길게 설정
-
-❌ DON'T:
-- 중복 처리를 무시하고 개발
-- 처리 이력 없이 운영
-- Visibility Timeout을 너무 짧게 설정
-```
-
-**여러 Worker가 동시에 폴링할 때**:
-```
-SQS Queue (100개 메시지)
-    ↓ (ReceiveMessage API 호출)
-Worker 1 ──┐
-Worker 2 ──┼─→ 각자 독립적으로 폴링
-Worker 3 ──┘
-
-✅ SQS가 자동으로 다른 메시지를 각 Worker에게 분배
-✅ Visibility Timeout으로 동시 처리 방지
-⚠️ 드물게 중복 전달 가능 (At-Least-Once Delivery)
-```
-
-#### FIFO Queue (선입선출 큐)
-
-**특징**:
-- **정확히 1회 전달**: 메시지 중복 없음
-- **순서 보장**: 전송 순서대로 처리
-- **제한된 처리량**: 초당 300개 메시지 (배치 사용 시 3,000개)
-
-**사용 사례**:
-- 금융 거래
-- 주문 처리
-- 재고 관리
-- 순서가 중요한 작업
-
-**예시**:
-```
-메시지 전송 순서: A → B → C
-실제 처리 순서: A → B → C (순서 보장)
-메시지 중복: 없음 (정확히 1회)
-```
-
-#### 비교표
-
-| 특성 | Standard Queue | FIFO Queue |
-|------|----------------|------------|
-| **처리량** | 무제한 | 300 TPS (배치 3,000) |
-| **순서** | 보장 안 함 | 보장 |
-| **중복** | 가능 | 없음 |
-| **지연시간** | 낮음 | 약간 높음 |
-| **비용** | 저렴 | 약간 비쌈 |
-| **사용 사례** | 대량 처리 | 순서 중요 |
-
-**선택 기준**:
+**여러 명이 동시에 일하기**:
 ```mermaid
 graph TB
-    A{순서가 중요한가?}
-    A -->|Yes| B{중복 허용 가능?}
-    A -->|No| C[Standard Queue]
-    B -->|No| D[FIFO Queue]
-    B -->|Yes| C
+    A[할 일 보관함<br/>100개 할 일] --> B[일꾼 1]
+    A --> C[일꾼 2]
+    A --> D[일꾼 3]
+    
+    B --> E[빨리 끝!]
+    C --> E
+    D --> E
+    
+    style A fill:#fff3e0
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#e8f5e8
+```
+
+**중요한 용어** (쉽게 설명):
+- **메시지**: 할 일 하나 (예: "이메일 보내기")
+- **큐(Queue)**: 할 일 목록 보관함
+- **보이지 않는 시간**: 누가 일하는 중이면 다른 사람은 못 봐요
+
+### 🔍 개념 2: 두 가지 종류 (5분)
+
+> **쉽게 말하면**: 빠른 것 vs 순서 지키는 것
+
+#### 종류 1: 빠른 보관함 (Standard Queue)
+
+**특징**:
+- ⚡ **엄청 빨라요**: 거의 무제한으로 처리 가능
+- 🔀 **순서가 바뀔 수 있어요**: A, B, C 순서로 넣었는데 B, A, C로 나올 수 있어요
+- 🔄 **가끔 중복돼요**: 같은 일을 2번 할 수도 있어요
+
+**언제 사용하나요?**:
+- 이메일 보내기 (순서 상관없어요)
+- 사진 처리하기 (누가 먼저든 상관없어요)
+- 로그 저장하기 (순서 안 중요해요)
+
+**예시**:
+```
+카페에서 음료 만들기:
+- 주문 순서: 아메리카노 → 라떼 → 주스
+- 완성 순서: 주스 → 아메리카노 → 라떼 (빨리 만들어진 것부터)
+→ 괜찮아요! 번호로 부르니까요
+```
+
+#### 종류 2: 순서 지키는 보관함 (FIFO Queue)
+
+**특징**:
+- 📋 **순서를 지켜요**: A, B, C 순서로 넣으면 A, B, C 순서로 나와요
+- ✅ **중복 없어요**: 같은 일을 2번 하지 않아요
+- 🐢 **조금 느려요**: 초당 300개까지 (배치하면 3,000개)
+
+**언제 사용하나요?**:
+- 은행 거래 (순서 중요해요!)
+- 주문 처리 (먼저 주문한 사람 먼저)
+- 재고 관리 (순서대로 빼야 해요)
+
+**예시**:
+```
+은행 창구:
+- 1번 손님 → 2번 손님 → 3번 손님
+- 반드시 이 순서대로 처리해야 해요!
+- 같은 사람이 2번 처리되면 안 돼요!
+```
+
+#### 비교하기
+
+| | 빠른 보관함 | 순서 지키는 보관함 |
+|---|---|---|
+| **속도** | 엄청 빠름 ⚡ | 조금 느림 🐢 |
+| **순서** | 바뀔 수 있음 🔀 | 항상 지킴 📋 |
+| **중복** | 가능함 🔄 | 없음 ✅ |
+| **사용 예시** | 이메일, 사진 처리 | 은행, 주문 처리 |
+
+**어떤 걸 선택할까요?**:
+```mermaid
+graph TB
+    A{순서가<br/>중요한가요?}
+    A -->|네| B{같은 일을<br/>2번 하면<br/>안 되나요?}
+    A -->|아니요| C[빠른 보관함<br/>사용하세요]
+    B -->|네| D[순서 지키는<br/>보관함 사용하세요]
+    B -->|괜찮아요| C
     
     style A fill:#fff3e0
     style B fill:#fff3e0
@@ -386,29 +233,29 @@ graph TB
     style D fill:#e3f2fd
 ```
 
-### 🔍 개념 3: Dead Letter Queue (DLQ) (9분)
+### 🔍 개념 3: 실패하면 어떻게 하나요? (5분)
 
-> **정의**: 처리 실패한 메시지를 별도로 보관하는 Queue
+> **쉽게 말하면**: 실패한 일은 "문제 보관함"에 따로 모아요
 
-**왜 필요한가?**:
+**문제 상황**:
 ```
-일반적인 실패 시나리오:
-1. 메시지 처리 중 오류 발생
-2. 메시지가 다시 Queue로 돌아감
-3. 다른 Consumer가 다시 시도
-4. 또 실패...
-5. 무한 반복 😱
+일꾼이 일을 하다가 실패했어요:
+1. 일을 다시 보관함에 넣어요
+2. 다른 일꾼이 또 시도해요
+3. 또 실패...
+4. 또 시도...
+5. 계속 반복... 😱
 ```
 
-**DLQ 작동 원리**:
+**해결 방법: 문제 보관함 (Dead Letter Queue)**:
 ```mermaid
 graph TB
-    A[Main Queue] --> B{처리 시도}
-    B -->|성공| C[메시지 삭제]
-    B -->|실패| D{재시도 횟수<br/>초과?}
-    D -->|No| A
-    D -->|Yes| E[Dead Letter Queue]
-    E --> F[수동 분석 및 처리]
+    A[할 일 보관함] --> B{일 처리}
+    B -->|성공!| C[완료]
+    B -->|실패| D{3번<br/>시도했나요?}
+    D -->|아니요| A
+    D -->|네| E[문제 보관함으로<br/>이동]
+    E --> F[나중에<br/>확인하기]
     
     style A fill:#e8f5e8
     style B fill:#fff3e0
@@ -418,58 +265,123 @@ graph TB
     style F fill:#e3f2fd
 ```
 
-**실제 AWS 아키텍처**:
-
-![SQS with DLQ](./generated-diagrams/sqs_with_dlq.png)
-
-*그림: Dead Letter Queue - 실패한 메시지는 DLQ로 이동하여 별도 모니터링 및 처리*
-
-**설정 방법**:
-1. DLQ용 별도 Queue 생성
-2. Main Queue에 DLQ 연결
-3. `maxReceiveCount` 설정 (예: 3회)
-4. 3회 실패 시 자동으로 DLQ로 이동
-
-**실무 활용**:
-```python
-# Main Queue 설정
-main_queue = sqs.create_queue(
-    QueueName='orders-queue',
-    Attributes={
-        'RedrivePolicy': json.dumps({
-            'deadLetterTargetArn': dlq_arn,
-            'maxReceiveCount': '3'  # 3회 실패 시 DLQ로
-        })
-    }
-)
-
-# DLQ 모니터링
-cloudwatch_alarm = cloudwatch.put_metric_alarm(
-    AlarmName='DLQ-Messages',
-    MetricName='ApproximateNumberOfMessagesVisible',
-    Namespace='AWS/SQS',
-    Statistic='Average',
-    Period=300,
-    EvaluationPeriods=1,
-    Threshold=1,  # DLQ에 메시지 1개 이상이면 알람
-    ComparisonOperator='GreaterThanThreshold'
-)
+**실생활 예시**:
+```
+우체국에서 편지 배달:
+1. 주소가 잘못됐어요
+2. 3번 시도했지만 배달 못 했어요
+3. "배달 불가 편지함"에 따로 모아요
+4. 나중에 우체국 직원이 확인해요
 ```
 
-**DLQ 메시지 처리 전략**:
-1. **즉시 알람**: CloudWatch로 DLQ 메시지 감지
-2. **원인 분석**: 로그 확인 및 오류 패턴 파악
-3. **수정 후 재처리**: 
-   - 코드 수정
-   - DLQ → Main Queue로 메시지 이동
-   - 재처리
-4. **폐기**: 복구 불가능한 메시지는 삭제
+**설정 방법** (간단하게):
+```
+1. 문제 보관함 만들기
+2. 일반 보관함에 연결하기
+3. "3번 실패하면 문제 보관함으로" 설정
+4. 알람 설정: "문제 보관함에 뭔가 들어오면 알려줘!"
+```
 
-**DLQ 베스트 프랙티스**:
-- Main Queue와 동일한 타입 사용 (Standard ↔ Standard, FIFO ↔ FIFO)
-- DLQ 메시지 보관 기간을 Main Queue보다 길게 설정
-- DLQ 모니터링 알람 필수 설정
-- 정기적으로 DLQ 메시지 분석
+**왜 필요한가요?**:
+- ✅ 무한 반복 방지
+- ✅ 문제 있는 일만 따로 확인
+- ✅ 다른 일은 계속 처리
+- ✅ 나중에 원인 파악 가능
+
+### 🔍 개념 4: 실무 주의사항 (10분)
+
+#### 같은 일을 2번 하는 문제
+
+**왜 발생하나요?**:
+```
+상황:
+1. 일꾼 1이 일을 가져가서 처리 중 (30초 걸림)
+2. 시간이 너무 오래 걸려요 (20초 지남)
+3. SQS: "아, 실패한 것 같네?" → 다시 보관함에 넣기
+4. 일꾼 2가 같은 일을 가져가요
+5. 결과: 같은 일을 2번 처리! 😱
+```
+
+**그림으로 보기**:
+```mermaid
+sequenceDiagram
+    participant SQS
+    participant 일꾼1
+    participant 일꾼2
+    
+    SQS->>일꾼1: 일 A 주기
+    Note over 일꾼1: 처리 중...<br/>(30초 걸림)
+    Note over 일꾼1: 20초 지남<br/>(보이지 않는 시간 끝)
+    SQS->>일꾼2: 일 A 또 주기 (중복!)
+    일꾼1->>SQS: 완료!
+    일꾼2->>SQS: 완료!
+    
+    Note over 일꾼1,일꾼2: 같은 일을 2번 했어요!
+```
+
+**해결 방법 1: 처리 이력 확인하기** (권장)
+
+**의사코드** (쉽게 설명):
+```
+일을 받았을 때:
+1. "이미 한 일 목록"을 확인해요
+2. 만약 이미 했으면:
+   - 건너뛰기 (중복 방지!)
+3. 안 했으면:
+   - 일 처리하기
+   - "이미 한 일 목록"에 기록하기
+```
+
+**실생활 예시**:
+```
+숙제 검사:
+1. 선생님이 숙제를 받아요
+2. 출석부에 체크해요 (이미 한 일 목록)
+3. 같은 학생이 또 제출하면:
+   - 출석부 확인 → 이미 체크됨
+   - "이미 받았어요" 말하기
+```
+
+**실제 코드 예시** (참고용):
+```python
+# 이미 처리했는지 확인하는 테이블
+processed_messages = {}
+
+def process_message(message_id, order_id):
+    # 1. 이미 처리했나요?
+    if message_id in processed_messages:
+        print("이미 처리한 메시지예요. 건너뛰기!")
+        return
+    
+    # 2. 일 처리하기
+    send_email(order_id)
+    update_inventory(order_id)
+    
+    # 3. 처리 완료 기록
+    processed_messages[message_id] = "완료"
+    print("처리 완료!")
+```
+
+**해결 방법 2: 시간 늘리기**
+
+```
+문제: 일 처리 시간이 30초인데, "보이지 않는 시간"이 20초
+해결: "보이지 않는 시간"을 40초로 늘리기
+
+→ 일꾼 1이 끝날 때까지 다른 일꾼이 못 봐요
+```
+
+**실무 권장사항**:
+```
+✅ 해야 할 것:
+- 처리 이력을 꼭 확인하세요
+- "보이지 않는 시간"을 충분히 길게 설정하세요
+- 같은 일을 2번 해도 괜찮게 만드세요
+
+❌ 하지 말아야 할 것:
+- 중복 처리를 무시하고 개발하지 마세요
+- "보이지 않는 시간"을 너무 짧게 하지 마세요
+```
 
 ---
 
@@ -477,212 +389,158 @@ cloudwatch_alarm = cloudwatch.put_metric_alarm(
 
 ### 🤝 페어 토론 (5분)
 
-**토론 주제**:
-1. **Queue 타입 선택**:
-   - 여러분의 프로젝트에서 어떤 Queue를 사용하시겠습니까?
-   - Standard와 FIFO 중 선택한 이유는?
+**쉬운 질문들**:
 
-2. **비동기 처리 적용**:
-   - 프로젝트에서 비동기로 처리하면 좋을 작업은?
-   - 동기 처리를 유지해야 하는 작업은?
+1. **일상 생활에서 찾기**:
+   - 우리 주변에서 "줄 서기"가 필요한 곳은 어디인가요?
+   - 순서가 중요한 경우와 안 중요한 경우를 찾아보세요
 
-3. **장애 처리**:
-   - DLQ에 메시지가 쌓이면 어떻게 대응하시겠습니까?
-   - 재처리 전략은?
+2. **간단한 시나리오**:
+   - 카페에서 주문할 때:
+     * 주문 번호가 순서대로 나와야 할까요?
+     * 빨리 만들어진 것부터 나와도 될까요?
+   - 어떤 게 더 좋을까요?
+
+3. **실패 상황 상상하기**:
+   - 메시지가 처리 안 되면 어떻게 될까요?
+   - 어디에 따로 보관하면 좋을까요?
 
 **페어 활동 가이드**:
-- 👥 2명씩 자유롭게 페어링
-- 🔄 각자 5분씩 의견 공유
-- 📝 핵심 아이디어 메모
+- 👥 2명씩 편하게 짝 지어요
+- 🔄 각자 생각을 이야기해요
+- 📝 재미있는 아이디어를 메모해요
 
 ### 🎯 전체 공유 (5분)
 
 **공유 내용**:
-- 각 팀의 Queue 선택 이유
-- 비동기 처리 적용 아이디어
-- DLQ 대응 전략
+- 각 팀이 찾은 일상 생활 예시
+- 순서가 중요한 경우/안 중요한 경우
+- 실패 처리 아이디어
 
 **💡 이해도 체크 질문**:
-- ✅ "Standard와 FIFO Queue의 차이를 설명할 수 있나요?"
-- ✅ "DLQ가 필요한 이유를 설명할 수 있나요?"
-- ✅ "여러분의 프로젝트에 SQS를 어떻게 적용할지 구상했나요?"
+- ✅ "SQS가 뭔지 친구에게 설명할 수 있나요?"
+- ✅ "빠른 보관함과 순서 지키는 보관함의 차이를 알겠나요?"
+- ✅ "문제 보관함이 왜 필요한지 이해했나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-### 📝 오늘의 핵심 용어
+### 📝 오늘 배운 용어 (쉽게 정리)
 
 **기본 용어**:
-- **SQS (Simple Queue Service)**: AWS 관리형 메시지 큐 서비스
-- **Producer**: 메시지를 Queue에 보내는 애플리케이션
-- **Consumer**: Queue에서 메시지를 가져와 처리하는 애플리케이션
-- **Message**: Queue에 저장되는 데이터 단위 (최대 256KB)
+- **SQS**: AWS가 관리해주는 "할 일 목록 보관함"
+- **메시지**: 할 일 하나 (예: "이메일 보내기")
+- **큐(Queue)**: 할 일 목록을 보관하는 곳
+- **보내는 사람**: 할 일을 목록에 적는 사람
+- **처리하는 사람**: 목록을 보고 일을 하는 사람
 
-**Queue 타입**:
-- **Standard Queue**: 무제한 처리량, 순서 보장 안 함, 중복 가능
-- **FIFO Queue**: 순서 보장, 중복 없음, 제한된 처리량
+**두 가지 종류**:
+- **빠른 보관함**: 엄청 빠르지만 순서가 바뀔 수 있어요
+- **순서 지키는 보관함**: 순서를 지키고 중복이 없어요
 
 **고급 개념**:
-- **Visibility Timeout**: 메시지를 받은 후 다른 Consumer가 볼 수 없는 시간
-- **Dead Letter Queue (DLQ)**: 처리 실패한 메시지를 보관하는 별도 Queue
-- **Message Retention**: 메시지 보관 기간 (기본 4일, 최대 14일)
-- **Long Polling**: 메시지가 도착할 때까지 대기 (비용 절감)
+- **보이지 않는 시간**: 누가 일하는 중이면 다른 사람은 못 봐요
+- **문제 보관함**: 실패한 일을 따로 모아두는 곳
+- **보관 기간**: 메시지를 얼마나 오래 보관할지 (기본 4일, 최대 14일)
 
 ---
 
-## 🚀 실무 적용 및 개선 방안
+## 🚀 실무에서는 어떻게 사용하나요?
 
-### 💡 현재 Session의 한계점
-- 단순 Queue 개념만 다룸
-- 실제 코드 구현은 Lab에서
-- 성능 최적화는 다루지 않음
+### 💡 실제 회사 사례
 
-### 🔧 실무 개선 방안
+**사례 1: 쿠팡**
+- **사용**: 주문 처리, 배송 알림
+- **효과**: 빠른 주문 처리, 안정적인 시스템
 
-#### 1. 성능 최적화
-**Batch 처리**:
-```python
-# 단일 메시지 전송 (비효율)
-for message in messages:
-    sqs.send_message(QueueUrl=queue_url, MessageBody=message)
+**사례 2: 배달의민족**
+- **사용**: 주문 알림, 리뷰 처리
+- **효과**: 많은 주문도 문제없이 처리
 
-# Batch 전송 (효율적)
-sqs.send_message_batch(
-    QueueUrl=queue_url,
-    Entries=[
-        {'Id': str(i), 'MessageBody': msg}
-        for i, msg in enumerate(messages)
-    ]
-)
+**사례 3: 작은 쇼핑몰**
+- **사용**: 이메일 발송, 재고 업데이트
+- **비용**: 한 달에 5만원 이하
+- **효과**: 고객이 빠르게 주문 완료
+
+### 🔧 더 잘 사용하는 방법
+
+**1. 여러 개를 한번에 보내기**:
+```
+❌ 나쁜 방법: 메시지 100개를 하나씩 보내기
+✅ 좋은 방법: 메시지 100개를 한번에 보내기 (10배 빠름!)
 ```
 
-**Long Polling 사용**:
-```python
-# Short Polling (비효율 - 빈 응답 많음)
-response = sqs.receive_message(QueueUrl=queue_url)
-
-# Long Polling (효율적 - 메시지 도착까지 대기)
-response = sqs.receive_message(
-    QueueUrl=queue_url,
-    WaitTimeSeconds=20  # 최대 20초 대기
-)
+**2. 기다리면서 받기**:
+```
+❌ 나쁜 방법: 계속 "메시지 있어?" 물어보기 (비용 많이 나옴)
+✅ 좋은 방법: 메시지 올 때까지 기다리기 (비용 절약!)
 ```
 
-#### 2. 보안 강화
-**암호화**:
-- **전송 중 암호화**: HTTPS 사용 (기본)
-- **저장 시 암호화**: KMS 키 사용
-- **IAM 정책**: 최소 권한 원칙
-
-**IAM 정책 예시**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": [
-      "sqs:SendMessage",
-      "sqs:ReceiveMessage",
-      "sqs:DeleteMessage"
-    ],
-    "Resource": "arn:aws:sqs:ap-northeast-2:123456789012:my-queue"
-  }]
-}
+**3. 보안 강화**:
+```
+✅ 메시지를 암호화해서 보관해요
+✅ 권한이 있는 사람만 볼 수 있어요
+✅ 누가 언제 봤는지 기록해요
 ```
 
-#### 3. 모니터링 & 알람
-**주요 메트릭**:
-- `ApproximateNumberOfMessagesVisible`: Queue에 있는 메시지 수
-- `ApproximateAgeOfOldestMessage`: 가장 오래된 메시지 나이
-- `NumberOfMessagesSent`: 전송된 메시지 수
-- `NumberOfMessagesReceived`: 수신된 메시지 수
+### 💰 비용은 얼마나 나올까요?
 
-**CloudWatch 알람 설정**:
-```python
-cloudwatch.put_metric_alarm(
-    AlarmName='SQS-Queue-Depth',
-    MetricName='ApproximateNumberOfMessagesVisible',
-    Namespace='AWS/SQS',
-    Statistic='Average',
-    Period=300,
-    EvaluationPeriods=2,
-    Threshold=1000,  # 메시지 1000개 이상이면 알람
-    ComparisonOperator='GreaterThanThreshold',
-    AlarmActions=['arn:aws:sns:ap-northeast-2:123456789012:alerts']
-)
+**비용 계산**:
+- 요청 100만 번: 400원
+- 메시지 보관: 무료
+- 데이터 전송: 무료 (같은 지역 안에서)
+
+**예시**:
 ```
-
-#### 4. 비용 최적화
-**비용 구조**:
-- **요청 비용**: 100만 요청당 $0.40
-- **데이터 전송**: 무료 (동일 리전 내)
-- **FIFO Queue**: 100만 요청당 $0.50
-
-**절감 팁**:
-- Long Polling 사용 (빈 응답 감소)
-- Batch 처리 (요청 수 감소)
-- 적절한 Visibility Timeout 설정 (재처리 감소)
-
-### 📊 실제 운영 사례
-
-**사례 1: Netflix**
-- **규모**: 초당 수백만 메시지 처리
-- **용도**: 비디오 인코딩 작업 큐
-- **효과**: 확장 가능한 비동기 처리
-
-**사례 2: Airbnb**
-- **규모**: 수천 개의 Queue 운영
-- **용도**: 예약 처리, 알림 발송
-- **효과**: 시스템 분리 및 안정성 향상
-
-**사례 3: 스타트업 사례**
-- **규모**: 일 100만 메시지
-- **용도**: 이메일 발송, 이미지 처리
-- **비용**: 월 $50 이하
+작은 쇼핑몰 (하루 1,000개 주문):
+- 한 달 요청: 30,000번
+- 비용: 약 12원
+→ 거의 공짜! 😊
+```
 
 ---
 
 ## 📝 Session 마무리
 
-### ✅ 오늘 Session 성과
-- [ ] SQS 개념 및 필요성 이해
-- [ ] Standard vs FIFO Queue 차이 파악
-- [ ] Dead Letter Queue 활용 방법 습득
-- [ ] 실무 적용 방안 구상
+### ✅ 오늘 배운 것
+
+- [ ] SQS가 뭔지 알았어요 (할 일 목록 보관함)
+- [ ] 왜 필요한지 이해했어요 (기다리지 않아도 돼요)
+- [ ] 두 가지 종류를 알았어요 (빠른 것 vs 순서 지키는 것)
+- [ ] 실패하면 어떻게 하는지 알았어요 (문제 보관함)
+- [ ] 같은 일을 2번 하는 문제를 알았어요
 
 ### 🎯 다음 Session 준비
-**Session 2: SNS (Simple Notification Service)**
-- Pub/Sub 패턴 이해
-- SQS + SNS 통합 (Fan-out)
-- 알림 시스템 구축
+
+**Session 2: SNS (알림 서비스)**
+- 한 번에 여러 사람에게 알림 보내기
+- 이메일, 문자, 앱 알림
+- SQS와 함께 사용하기
 
 **연결 포인트**:
-- SQS는 1:1 메시지 전달
-- SNS는 1:N 메시지 전달
-- 두 서비스를 함께 사용하면 강력한 비동기 시스템 구축 가능
+- SQS: 한 사람에게 메시지 보내기 (1:1)
+- SNS: 여러 사람에게 메시지 보내기 (1:N)
+- 둘이 함께 사용하면 더 강력해요!
 
 ---
 
-## 🔗 참고 자료
+## 🔗 더 알아보기
 
 ### 📚 AWS 공식 문서
-- 📘 [SQS란 무엇인가?](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html)
-- 📗 [SQS 사용자 가이드](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/)
-- 📙 [SQS API 레퍼런스](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/)
-- 📕 [SQS 요금](https://aws.amazon.com/sqs/pricing/)
-- 🆕 [SQS 최신 업데이트](https://aws.amazon.com/sqs/whats-new/)
+- 📘 [SQS가 뭔가요?](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html)
+- 📗 [SQS 사용 방법](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/)
+- 📕 [SQS 비용](https://aws.amazon.com/sqs/pricing/)
 
 ### 🎯 추가 학습 자료
-- [AWS SQS 베스트 프랙티스](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-best-practices.html)
-- [SQS vs Kafka 비교](https://aws.amazon.com/compare/the-difference-between-sqs-and-kafka/)
+- [SQS 잘 사용하는 방법](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-best-practices.html)
 
 ---
 
 <div align="center">
 
-**📨 메시지 큐** • **🔄 비동기 처리** • **🛡️ 장애 격리** • **📊 확장성**
+**📨 메시지 보관함** • **🔄 나중에 처리** • **🛡️ 안전하게 보관** • **📊 쉽게 확장**
 
-*Session 1 완료 - 다음은 SNS로 알림 시스템 구축!*
+*Session 1 완료 - 다음은 SNS로 여러 사람에게 알림 보내기!*
 
 </div>
