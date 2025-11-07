@@ -10,43 +10,33 @@
 
 ---
 
-## 🕘 Session 정보
+## 🕘 세션 정보
 **시간**: 09:00-09:40 (40분)
-**목표**: ALB와 ECS Service 통합 및 Health Check 이해
-**방식**: 이론 + AWS 공식 문서 기반 설명
+**목표**: ALB와 ECS Service 통합 및 고가용성 구현
+**방식**: 이론 강의 + 아키텍처 설계
 
 ## 🎯 학습 목표
-
-### 📚 이해 목표
-- ALB의 역할과 필요성 이해
-- Target Group 개념 파악
-- Health Check 동작 원리
-- ECS Service와 ALB 통합 방법
-
-### 🛠️ 적용 목표
-- ALB + ECS 아키텍처 설계
-- Target Group 설정
-- Health Check 구성
-- 고가용성 구현
+- ALB의 역할과 ECS Service와의 통합 방법 이해
+- Target Group 및 Health Check 설정 방법 파악
+- 고가용성 및 무중단 배포 개념 습득
 
 ---
 
-## 🤔 왜 필요한가? (5분)
+## 📖 서비스 개요
 
-### 💼 실무 시나리오: 트래픽 분산 필요성
+### 1. 생성 배경 (Why?) - 5분
 
-**ALB 없이 ECS만 사용**:
-```
-사용자 → ECS Task 1 (IP: 10.0.11.5)
-         ECS Task 2 (IP: 10.0.11.8)
-         ECS Task 3 (IP: 10.0.11.12)
+**문제 상황**:
+- **단일 진입점 부재**: 여러 Task에 직접 접근 시 IP 관리 어려움
+- **트래픽 분산 불가**: 특정 Task에 트래픽 집중
+- **장애 대응 수동**: Task 장애 시 수동으로 트래픽 재분배
+- **무중단 배포 어려움**: 새 버전 배포 시 서비스 중단
 
-문제점:
-❌ 사용자가 어떤 Task로 접속해야 하는지 모름
-❌ Task가 재시작되면 IP 변경
-❌ 한 Task에만 트래픽 집중 가능
-❌ Task 장애 시 수동 대응 필요
-```
+**AWS ALB + ECS 솔루션**:
+- **단일 DNS 엔드포인트**: ALB DNS로 모든 트래픽 수신
+- **자동 트래픽 분산**: 여러 Task에 균등 분배
+- **Health Check**: 비정상 Task 자동 제외
+- **무중단 배포**: Rolling Update, Blue/Green 지원
 
 **ALB + ECS 사용**:
 ```

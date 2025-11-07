@@ -1,661 +1,537 @@
-# November Week 2 Day 5 Session 2: ECS 모니터링 & 로깅
+# November Week 2 Day 5 Session 2: EventBridge
 
 <div align="center">
 
-**📊 Container Insights** • **🔍 Logs Insights** • **🚨 CloudWatch 알람**
+**📡 EventBridge** • **🔔 이벤트 버스** • **⚡ 이벤트 기반**
 
-*실시간 모니터링과 로그 분석으로 안정적인 서비스 운영*
+*서버리스 이벤트 버스로 이벤트 기반 아키텍처 구축*
 
 </div>
 
 ---
 
 ## 🕘 세션 정보
-**시간**: 10:00-10:50 (50분)
-**목표**: ECS 모니터링 및 로깅 시스템 구축
-**방식**: 이론 + 실무 쿼리 예시
+**시간**: 09:40-10:20 (40분)
+**목표**: EventBridge를 통한 이벤트 기반 아키텍처 이해
+**방식**: 이론 강의 + 실무 패턴
 
 ## 🎯 학습 목표
-### 📚 학습 목표
-- **이해 목표**: Container Insights와 CloudWatch Logs의 역할 이해
-- **적용 목표**: 실무 모니터링 대시보드 및 알람 구성 방법 습득
-- **협업 목표**: 장애 대응을 위한 로그 분석 기법 공유
-
-### 🤔 왜 필요한가? (5분)
-
-**현실 문제 상황**:
-- 💼 **실무 시나리오**: "컨테이너가 갑자기 재시작되는데 원인을 모르겠어요"
-- 🏠 **일상 비유**: "자동차 계기판 없이 운전하는 것과 같음"
-- ☁️ **AWS 아키텍처**: "Container Insights로 실시간 성능 모니터링"
-- 📊 **시장 동향**: "관측성(Observability)이 DevOps의 핵심 역량"
-
-**학습 전후 비교**:
-```mermaid
-graph LR
-    A[학습 전<br/>장애 원인 불명<br/>수동 로그 확인] --> B[학습 후<br/>실시간 모니터링<br/>자동 알람]
-    
-    style A fill:#ffebee
-    style B fill:#e8f5e8
-```
+- EventBridge의 역할과 이벤트 기반 아키텍처 이해
+- Event Bus, Rule, Target 개념 파악
+- Event Pattern 작성 방법 습득
+- AWS 서비스 통합 및 실무 활용 방법 학습
 
 ---
 
-## 📖 핵심 개념 (35분)
+## 📖 서비스 개요
 
-### 🔍 개념 1: Container Insights with Enhanced Observability (12분)
+### 1. 생성 배경 (Why?) - 5분
 
-> **정의**: ECS 클러스터의 성능 데이터를 자동으로 수집하고 시각화하는 CloudWatch 기능
+**문제 상황**:
+- **강한 결합**: 서비스 간 직접 호출로 의존성 증가
+- **폴링 방식**: 주기적으로 상태 확인 (비효율)
+- **확장성 부족**: 새 서비스 추가 시 기존 코드 수정
+- **복잡한 통합**: 여러 서비스 간 통신 로직 복잡
 
-**상세 설명**:
-- **핵심 원리**: 클러스터 → 서비스 → Task → 컨테이너 레벨까지 자동 수집
-- **주요 특징**:
-  - 2024년 12월 2일 Enhanced Observability 버전 출시
-  - EC2 및 Fargate 모두 지원
-  - Task 및 Container 레벨 메트릭 추가
-  - 자동 대시보드 생성
-- **사용 목적**: 성능 모니터링 및 문제 진단
+**AWS EventBridge 솔루션**:
+- **느슨한 결합**: 이벤트 기반으로 서비스 분리
+- **실시간 반응**: 이벤트 발생 즉시 처리
+- **쉬운 확장**: 새 Rule 추가만으로 기능 확장
+- **90+ AWS 서비스 통합**: 코드 없이 통합 가능
 
-**⚠️ 중요**: Enhanced Observability 버전 사용을 권장합니다. 기존 버전보다 상세한 가시성을 제공하여 MTTR(평균 복구 시간)을 단축합니다.
+### 2. 핵심 원리 (How?) - 10분
 
-**시각적 이해**:
+**EventBridge 아키텍처**:
 ```mermaid
 graph TB
-    subgraph "Container Insights 데이터 수집"
-        A[ECS Cluster] --> B[Service 메트릭]
-        B --> C[Task 메트릭]
-        C --> D[Container 메트릭]
+    subgraph "이벤트 소스"
+        AWS[AWS Services]
+        CUSTOM[Custom Apps]
+        SAAS[SaaS Apps]
     end
     
-    subgraph "CloudWatch"
-        E[메트릭 저장]
-        F[자동 대시보드]
-        G[알람]
+    subgraph "EventBridge"
+        BUS[Event Bus]
+        RULE1[Rule 1<br/>Event Pattern]
+        RULE2[Rule 2<br/>Schedule]
+        RULE3[Rule 3<br/>Event Pattern]
     end
     
-    D --> E
-    E --> F
-    E --> G
+    subgraph "이벤트 타겟"
+        LAMBDA[Lambda]
+        SQS[SQS Queue]
+        SNS[SNS Topic]
+        ECS[ECS Task]
+        STEP[Step Functions]
+    end
     
-    style A fill:#ff9800
-    style B fill:#4caf50
-    style C fill:#2196f3
-    style D fill:#9c27b0
-    style F fill:#e8f5e8
+    AWS -->|이벤트 발행| BUS
+    CUSTOM -->|이벤트 발행| BUS
+    SAAS -->|이벤트 발행| BUS
+    BUS --> RULE1
+    BUS --> RULE2
+    BUS --> RULE3
+    RULE1 -->|매칭| LAMBDA
+    RULE2 -->|스케줄| SQS
+    RULE3 -->|매칭| SNS
+    RULE3 -->|매칭| ECS
+    RULE3 -->|매칭| STEP
+    
+    style AWS fill:#e8f5e8
+    style BUS fill:#fff3e0
+    style RULE1 fill:#e3f2fd
+    style LAMBDA fill:#ffebee
 ```
 
-**수집되는 메트릭**:
-
-**클러스터 레벨**:
-- `ContainerInstanceCount`: 컨테이너 인스턴스 수
-- `ServiceCount`: 서비스 수
-- `TaskCount`: 실행 중인 Task 수
-
-**서비스 레벨**:
-- `CpuUtilized`: 사용 중인 CPU (vCPU 단위)
-- `CpuReserved`: 예약된 CPU
-- `MemoryUtilized`: 사용 중인 메모리 (MB)
-- `MemoryReserved`: 예약된 메모리
-- `DesiredTaskCount`: 원하는 Task 수
-- `RunningTaskCount`: 실행 중인 Task 수
-- `PendingTaskCount`: 대기 중인 Task 수
-
-**Task 레벨 (Enhanced Observability)**:
-- Task별 CPU/메모리 사용률
-- 네트워크 트래픽 (RxBytes, TxBytes)
-- 스토리지 사용량 (EBS, Ephemeral)
-
-**Container 레벨 (Enhanced Observability)**:
-- 컨테이너별 CPU/메모리 사용률
-- 컨테이너 재시작 횟수
-- 컨테이너 상태
-
-**Terraform 구성**:
-```hcl
-# Container Insights 활성화
-resource "aws_ecs_cluster" "main" {
-  name = "production-cluster"
-
-  setting {
-    name  = "containerInsights"
-    value = "enhanced"  # enhanced 또는 enabled
-  }
-
-  tags = {
-    Environment = "production"
-  }
-}
-
-# CloudWatch Log Group (자동 생성됨)
-# /aws/ecs/containerinsights/{cluster-name}/performance
-```
-
-**AWS CLI로 활성화**:
-```bash
-# 기존 클러스터에 Container Insights 활성화
-aws ecs update-cluster-settings \
-  --cluster production-cluster \
-  --settings name=containerInsights,value=enhanced \
-  --region ap-northeast-2
-```
-
-**CloudWatch 대시보드 접근**:
-```
-AWS Console → CloudWatch → Container Insights
-→ Performance monitoring → ECS Clusters
-→ 클러스터 선택
-```
-
-**자동 생성되는 대시보드**:
-1. **Cluster 뷰**: 전체 클러스터 리소스 사용률
-2. **Service 뷰**: 서비스별 성능 메트릭
-3. **Task 뷰**: Task별 상세 메트릭
-4. **Container 뷰**: 컨테이너별 리소스 사용
-
-**비용**:
-- Container Insights 메트릭은 **Custom Metrics**로 과금
-- 메트릭당 $0.30/월 (처음 10,000개 메트릭)
-- 실행 중인 Task가 있을 때만 메트릭 전송
-
-**장점**:
-- ✅ 자동 수집 및 대시보드 생성
-- ✅ Task/Container 레벨 상세 메트릭
-- ✅ CloudWatch Logs 통합
-- ✅ 문제 진단 시간 단축
-
-**단점**:
-- ⚠️ Custom Metrics 비용 발생
-- ⚠️ 실행 중인 Task만 메트릭 전송
-- ⚠️ 과거 데이터 소급 적용 불가
-
----
-
-### 🔍 개념 2: CloudWatch Logs Insights (12분)
-
-> **정의**: SQL과 유사한 쿼리 언어로 CloudWatch Logs를 실시간 분석하는 도구
-
-**상세 설명**:
-- **핵심 원리**: 로그 그룹에서 패턴 검색 및 통계 분석
-- **주요 특징**:
-  - 대화형 쿼리 인터페이스
-  - 시각화 지원 (라인 차트, 막대 차트)
-  - 자동 필드 검색
-  - 저장된 쿼리 재사용
-- **사용 목적**: 로그 분석 및 문제 진단
-
-**CloudWatch Logs Insights 쿼리 언어**:
-
-**기본 구조**:
-```
-fields @timestamp, @message
-| filter @message like /ERROR/
-| sort @timestamp desc
-| limit 20
-```
-
-**주요 명령어**:
-- `fields`: 표시할 필드 선택
-- `filter`: 조건으로 필터링
-- `stats`: 통계 계산
-- `sort`: 정렬
-- `limit`: 결과 개수 제한
-- `parse`: 로그에서 필드 추출
-
-**실무 쿼리 예시**:
-
-**1. 에러 로그 검색**:
-```
-fields @timestamp, @message
-| filter @message like /ERROR|Exception|Failed/
-| sort @timestamp desc
-| limit 100
-```
-
-**2. HTTP 5xx 에러 분석**:
-```
-fields @timestamp, status, request_uri
-| filter status >= 500
-| stats count() by status, request_uri
-| sort count desc
-```
-
-**3. 컨테이너 재시작 원인 분석**:
-```
-fields @timestamp, @message
-| filter @message like /OOMKilled|Error|exit code/
-| parse @message /exit code (?<exitCode>\d+)/
-| stats count() by exitCode
-```
-
-**4. 응답 시간 분석**:
-```
-fields @timestamp, duration
-| filter duration > 1000
-| stats avg(duration), max(duration), min(duration) by bin(5m)
-```
-
-**5. Task 시작 실패 분석**:
-```
-fields @timestamp, @message
-| filter @message like /CannotPullContainerError|ResourceInitializationError/
-| parse @message /taskArn: (?<taskArn>[^\s]+)/
-| stats count() by taskArn
-```
-
-**6. 시간대별 요청 수**:
-```
-fields @timestamp
-| stats count() by bin(1h)
-```
-
-**시각화 예시**:
+**이벤트 처리 흐름**:
 ```mermaid
-graph TB
-    subgraph "Logs Insights 워크플로우"
-        A[로그 그룹 선택] --> B[쿼리 작성]
-        B --> C[쿼리 실행]
-        C --> D[결과 확인]
-        D --> E{시각화 필요?}
-        E -->|Yes| F[차트 생성]
-        E -->|No| G[테이블 뷰]
-        F --> H[대시보드 추가]
-    end
+sequenceDiagram
+    participant S3 as S3 Bucket
+    participant EB as EventBridge
+    participant Rule as Rule
+    participant Lambda as Lambda
+    participant DDB as DynamoDB
     
-    style A fill:#e3f2fd
-    style C fill:#fff3e0
-    style F fill:#e8f5e8
-    style H fill:#f3e5f5
+    S3->>EB: 파일 업로드 이벤트
+    EB->>Rule: 이벤트 패턴 매칭
+    Rule->>Lambda: 이벤트 전달
+    Lambda->>DDB: 메타데이터 저장
+    Lambda->>EB: 처리 완료 이벤트
+    Note over EB: 다른 Rule로 전파 가능
 ```
 
-**ECS 이벤트 캡처 (Event Capture)**:
+**핵심 구성 요소**:
 
-AWS는 ECS 콘솔에서 이벤트 캡처 기능을 제공합니다:
+**1. Event Bus**:
+- **Default Event Bus**: AWS 서비스 이벤트
+- **Custom Event Bus**: 커스텀 애플리케이션 이벤트
+- **Partner Event Bus**: SaaS 파트너 이벤트
 
-**자동 설정**:
-- EventBridge 규칙 자동 생성
-- CloudWatch Logs 로그 그룹 생성
-- 사전 정의된 쿼리 제공
+**2. Rule**:
+- **Event Pattern**: 특정 이벤트 매칭
+- **Schedule**: Cron 또는 Rate 표현식
+- **Target**: 이벤트를 전달할 대상 (최대 5개)
 
-**캡처되는 이벤트**:
-- Service Action Events
-- Task Lifecycle Events
-- Service Deployment State Changes
-- Container Instance State Changes
-
-**Terraform 구성**:
-```hcl
-# EventBridge 규칙
-resource "aws_cloudwatch_event_rule" "ecs_events" {
-  name        = "ecs-task-state-change"
-  description = "Capture ECS task state changes"
-
-  event_pattern = jsonencode({
-    source      = ["aws.ecs"]
-    detail-type = ["ECS Task State Change"]
-  })
-}
-
-# CloudWatch Logs 대상
-resource "aws_cloudwatch_event_target" "logs" {
-  rule      = aws_cloudwatch_event_rule.ecs_events.name
-  target_id = "SendToCloudWatchLogs"
-  arn       = aws_cloudwatch_log_group.ecs_events.arn
-}
-
-# 로그 그룹
-resource "aws_cloudwatch_log_group" "ecs_events" {
-  name              = "/aws/events/ecs-task-events"
-  retention_in_days = 7
-}
-```
-
-**저장된 쿼리 활용**:
-```hcl
-resource "aws_cloudwatch_query_definition" "error_analysis" {
-  name = "ECS Error Analysis"
-
-  log_group_names = [
-    "/ecs/production-app"
-  ]
-
-  query_string = <<-QUERY
-    fields @timestamp, @message
-    | filter @message like /ERROR|Exception/
-    | stats count() by bin(5m)
-  QUERY
-}
-```
-
-**비용**:
-- 쿼리 스캔 데이터량 기준 과금
-- $0.005 per GB scanned
-- 저장된 쿼리는 무료
-
-**장점**:
-- ✅ SQL과 유사한 직관적 쿼리
-- ✅ 실시간 분석
-- ✅ 시각화 지원
-- ✅ 저장된 쿼리 재사용
-
-**단점**:
-- ⚠️ 스캔 데이터량 기준 과금
-- ⚠️ 복잡한 쿼리는 성능 저하
-- ⚠️ 15분 쿼리 타임아웃
-
----
-
-### 🔍 개념 3: CloudWatch 알람 및 대시보드 (11분)
-
-> **정의**: 메트릭 임계값 기반 자동 알림 및 커스텀 대시보드 구성
-
-**상세 설명**:
-- **핵심 원리**: 메트릭 임계값 초과 시 SNS 알림 발송
-- **주요 특징**:
-  - 복합 알람 (Composite Alarms)
-  - 이상 탐지 (Anomaly Detection)
-  - 자동 조치 (Auto Scaling 연동)
-  - 커스텀 대시보드
-- **사용 목적**: 장애 사전 감지 및 자동 대응
-
-**CloudWatch 알람 구성**:
-
-**1. 기본 알람 (CPU 사용률)**:
-```hcl
-resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "ecs-service-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 80
-  alarm_description   = "ECS Service CPU 사용률 80% 초과"
-  treat_missing_data  = "notBreaching"
-
-  dimensions = {
-    ServiceName = aws_ecs_service.app.name
-    ClusterName = aws_ecs_cluster.main.name
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
-  ok_actions    = [aws_sns_topic.alerts.arn]
-}
-```
-
-**2. 복합 알람 (여러 조건)**:
-```hcl
-resource "aws_cloudwatch_composite_alarm" "service_unhealthy" {
-  alarm_name          = "ecs-service-unhealthy"
-  alarm_description   = "ECS 서비스 비정상 상태"
-  actions_enabled     = true
-  alarm_actions       = [aws_sns_topic.critical.arn]
-
-  alarm_rule = "ALARM(${aws_cloudwatch_metric_alarm.cpu_high.alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.memory_high.alarm_name})"
-}
-```
-
-**3. 이상 탐지 알람**:
-```hcl
-resource "aws_cloudwatch_metric_alarm" "request_anomaly" {
-  alarm_name          = "ecs-request-count-anomaly"
-  comparison_operator = "LessThanLowerOrGreaterThanUpperThreshold"
-  evaluation_periods  = 2
-  threshold_metric_id = "e1"
-  alarm_description   = "요청 수 이상 패턴 감지"
-
-  metric_query {
-    id          = "e1"
-    expression  = "ANOMALY_DETECTION_BAND(m1, 2)"
-    label       = "Request Count (Expected)"
-    return_data = true
-  }
-
-  metric_query {
-    id = "m1"
-    metric {
-      metric_name = "RequestCount"
-      namespace   = "AWS/ApplicationELB"
-      period      = 300
-      stat        = "Sum"
-      dimensions = {
-        LoadBalancer = aws_lb.app.arn_suffix
-      }
+**3. Event Pattern**:
+```json
+{
+  "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
+  "detail": {
+    "bucket": {
+      "name": ["my-bucket"]
     }
   }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
 }
 ```
 
-**4. Task 수 알람**:
-```hcl
-resource "aws_cloudwatch_metric_alarm" "running_tasks_low" {
-  alarm_name          = "ecs-running-tasks-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "RunningTaskCount"
-  namespace           = "ECS/ContainerInsights"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 2
-  alarm_description   = "실행 중인 Task 수가 2개 미만"
+### 3. 주요 사용 사례 (When?) - 5분
 
-  dimensions = {
-    ServiceName = aws_ecs_service.app.name
-    ClusterName = aws_ecs_cluster.main.name
-  }
+**적합한 경우**:
 
-  alarm_actions = [aws_sns_topic.critical.arn]
-}
-```
+**EventBridge 사용 시나리오**:
+- **이벤트 기반 아키텍처**: 서비스 간 느슨한 결합
+- **자동화**: AWS 리소스 변경 시 자동 작업
+- **스케줄링**: Cron 작업 실행
+- **멀티 타겟**: 하나의 이벤트로 여러 작업 트리거
 
-**SNS 토픽 구성**:
-```hcl
-resource "aws_sns_topic" "alerts" {
-  name = "ecs-alerts"
-}
+**실제 사례**:
+- **Netflix**: 마이크로서비스 간 이벤트 통신
+- **Airbnb**: 예약 시스템 이벤트 처리
+- **Slack**: 알림 및 통합 자동화
 
-resource "aws_sns_topic_subscription" "email" {
-  topic_arn = aws_sns_topic.alerts.arn
-  protocol  = "email"
-  endpoint  = "devops@example.com"
-}
+### 4. 비슷한 서비스 비교 (Which?) - 5분
 
-resource "aws_sns_topic_subscription" "slack" {
-  topic_arn = aws_sns_topic.alerts.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.slack_notifier.arn
-}
-```
+**AWS 내 대안 서비스**:
 
-**커스텀 대시보드**:
-```hcl
-resource "aws_cloudwatch_dashboard" "ecs_monitoring" {
-  dashboard_name = "ECS-Production-Dashboard"
+**EventBridge vs SNS**:
+- **언제 EventBridge 사용**:
+  - 복잡한 이벤트 패턴 매칭
+  - 90+ AWS 서비스 통합
+  - 이벤트 필터링 및 변환
+  
+- **언제 SNS 사용**:
+  - 간단한 Pub/Sub
+  - 모바일 푸시 알림
+  - 이메일/SMS 전송
 
-  dashboard_body = jsonencode({
-    widgets = [
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/ECS", "CPUUtilization", { stat = "Average" }],
-            [".", "MemoryUtilization", { stat = "Average" }]
-          ]
-          period = 300
-          stat   = "Average"
-          region = "ap-northeast-2"
-          title  = "ECS Service Resource Utilization"
+**EventBridge vs SQS**:
+- **언제 EventBridge 사용**:
+  - 이벤트 라우팅
+  - 멀티 타겟 (최대 5개)
+  - 이벤트 패턴 매칭
+  
+- **언제 SQS 사용**:
+  - 메시지 큐잉
+  - 단일 컨슈머
+  - 메시지 순서 보장 (FIFO)
+
+**선택 기준**:
+| 기준 | EventBridge | SNS | SQS |
+|------|-------------|-----|-----|
+| **패턴 매칭** | ✅ 고급 | ❌ | ❌ |
+| **멀티 타겟** | ✅ (5개) | ✅ (무제한) | ❌ (1개) |
+| **이벤트 변환** | ✅ | ❌ | ❌ |
+| **스케줄링** | ✅ | ❌ | ❌ |
+| **AWS 통합** | ✅ (90+) | ✅ (일부) | ✅ (일부) |
+| **비용** | 중간 | 낮음 | 낮음 |
+
+### 5. 장단점 분석 - 3분
+
+**EventBridge 장점**:
+- ✅ 90+ AWS 서비스 네이티브 통합
+- ✅ 복잡한 이벤트 패턴 매칭
+- ✅ 이벤트 변환 (Input Transformer)
+- ✅ 스케줄링 기능 (Cron, Rate)
+- ✅ 아카이브 및 재생 (Archive & Replay)
+
+**EventBridge 단점/제약사항**:
+- ⚠️ 타겟 최대 5개 제한
+- ⚠️ 이벤트 크기 256KB 제한
+- ⚠️ 순서 보장 없음 (SQS FIFO 필요)
+- ⚠️ 비용 (커스텀 이벤트 $1.00/백만)
+
+**대안**:
+- **간단한 Pub/Sub**: SNS 사용
+- **메시지 큐잉**: SQS 사용
+- **순서 보장**: SQS FIFO 사용
+
+### 6. 비용 구조 💰 - 5분
+
+**EventBridge 과금 방식**:
+- **AWS 서비스 이벤트**: 무료
+- **커스텀 이벤트**: $1.00/백만 이벤트
+- **SaaS 파트너 이벤트**: $1.00/백만 이벤트
+- **크로스 리전 이벤트**: $0.01/GB
+- **Archive**: $0.10/GB/월
+- **Replay**: $0.023/GB
+
+**프리티어 혜택**:
+- **없음**: EventBridge는 프리티어 미제공
+- **AWS 서비스 이벤트**: 무료
+
+**비용 최적화 팁**:
+1. **AWS 서비스 이벤트 활용**: 무료
+2. **이벤트 필터링**: 불필요한 이벤트 제외
+3. **배치 처리**: 여러 이벤트 묶어서 처리
+4. **Archive 정리**: 오래된 아카이브 삭제
+
+**예상 비용 (ap-northeast-2)**:
+| 이벤트 타입 | 월간 이벤트 수 | 단가 | 월간 비용 |
+|-------------|----------------|------|-----------|
+| **AWS 서비스** | 1,000,000 | 무료 | $0 |
+| **커스텀** | 100,000 | $1.00/백만 | $0.10 |
+| **커스텀** | 1,000,000 | $1.00/백만 | $1.00 |
+| **커스텀** | 10,000,000 | $1.00/백만 | $10.00 |
+
+**실제 시나리오**:
+| 시나리오 | 이벤트 수/월 | 월간 비용 |
+|----------|--------------|-----------|
+| **소규모** | 100,000 커스텀 | $0.10 |
+| **중규모** | 1,000,000 커스텀 | $1.00 |
+| **대규모** | 10,000,000 커스텀 | $10.00 |
+
+**Lab 예상 비용**:
+- AWS 서비스 이벤트 (100개): $0
+- 커스텀 이벤트 (10개): $0.00001
+- 합계: ~$0 (1시간 실습 기준)
+
+### 7. 최신 업데이트 🆕 - 2분
+
+**2025년 주요 변경사항**:
+- **향상된 필터링**: 더 복잡한 이벤트 패턴 지원
+- **더 많은 타겟**: 타겟 5개 → 10개로 증가
+- **개선된 성능**: 이벤트 전달 지연 시간 단축
+
+**2024년 주요 변경사항**:
+- **EventBridge Pipes**: 포인트 투 포인트 통합
+- **향상된 변환**: Input Transformer 기능 강화
+- **더 많은 통합**: 90+ AWS 서비스 지원
+
+**2026년 예정**:
+- AI 기반 이벤트 패턴 추천
+- 더 많은 SaaS 파트너 통합
+
+**Deprecated 기능**:
+- CloudWatch Events → EventBridge로 통합 완료
+
+**참조**: [EventBridge What's New](https://aws.amazon.com/eventbridge/whats-new/)
+
+### 8. 잘 사용하는 방법 ✅ - 3분
+
+**베스트 프랙티스**:
+1. **이벤트 패턴 최적화**: 필요한 이벤트만 매칭
+2. **Dead Letter Queue**: 실패한 이벤트 처리
+3. **Retry 정책**: 일시적 오류 대응
+4. **CloudWatch Logs**: 이벤트 디버깅
+5. **Archive & Replay**: 이벤트 재처리
+
+**실무 팁**:
+- **Rule 생성**:
+  ```json
+  {
+    "Name": "s3-object-created",
+    "EventPattern": {
+      "source": ["aws.s3"],
+      "detail-type": ["Object Created"],
+      "detail": {
+        "bucket": {
+          "name": ["my-bucket"]
         }
-      },
+      }
+    },
+    "Targets": [
       {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["ECS/ContainerInsights", "RunningTaskCount"],
-            [".", "PendingTaskCount"],
-            [".", "DesiredTaskCount"]
-          ]
-          period = 60
-          stat   = "Average"
-          region = "ap-northeast-2"
-          title  = "ECS Task Counts"
-        }
-      },
-      {
-        type = "log"
-        properties = {
-          query   = "SOURCE '/ecs/production-app' | fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 20"
-          region  = "ap-northeast-2"
-          title   = "Recent Errors"
+        "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:process-file",
+        "Id": "1",
+        "RetryPolicy": {
+          "MaximumRetryAttempts": 2,
+          "MaximumEventAge": 3600
+        },
+        "DeadLetterConfig": {
+          "Arn": "arn:aws:sqs:ap-northeast-2:123456789012:dlq"
         }
       }
     ]
-  })
-}
+  }
+  ```
+
+- **커스텀 이벤트 발행**:
+  ```bash
+  aws events put-events \
+    --entries '[{
+      "Source": "my.app",
+      "DetailType": "Order Placed",
+      "Detail": "{\"orderId\":\"12345\",\"amount\":100}",
+      "EventBusName": "default"
+    }]'
+  ```
+
+- **Input Transformer**:
+  ```json
+  {
+    "InputPathsMap": {
+      "bucket": "$.detail.bucket.name",
+      "key": "$.detail.object.key"
+    },
+    "InputTemplate": "{\"bucket\": \"<bucket>\", \"key\": \"<key>\"}"
+  }
+  ```
+
+**성능 최적화**:
+- **이벤트 필터링**: 불필요한 이벤트 제외
+- **배치 처리**: Lambda에서 여러 이벤트 묶어서 처리
+- **비동기 처리**: SQS 버퍼링으로 부하 분산
+
+### 9. 잘못 사용하는 방법 ❌ - 3분
+
+**흔한 실수**:
+1. **과도한 이벤트**: 모든 변경을 이벤트로 발행
+   ```json
+   // ❌ 잘못된 방법 (너무 많은 이벤트)
+   {
+     "source": ["aws.s3"],
+     "detail-type": ["*"]  // 모든 이벤트
+   }
+   
+   // ✅ 올바른 방법 (필요한 이벤트만)
+   {
+     "source": ["aws.s3"],
+     "detail-type": ["Object Created"]
+   }
+   ```
+
+2. **DLQ 미설정**: 실패한 이벤트 손실
+3. **Retry 정책 부재**: 일시적 오류 시 이벤트 손실
+4. **이벤트 크기 초과**: 256KB 제한
+5. **순서 보장 기대**: EventBridge는 순서 보장 안 함
+
+**안티 패턴**:
+- **동기 처리**: EventBridge는 비동기 전용
+- **대용량 데이터**: 이벤트에 큰 데이터 포함 (S3 참조 사용)
+- **강한 결합**: 이벤트 구조에 타겟 로직 의존
+
+**보안 취약점**:
+- **IAM 권한 과다**:
+  ```json
+  // ❌ 잘못된 방법
+  {
+    "Effect": "Allow",
+    "Action": "events:*",
+    "Resource": "*"
+  }
+  
+  // ✅ 올바른 방법
+  {
+    "Effect": "Allow",
+    "Action": [
+      "events:PutEvents"
+    ],
+    "Resource": "arn:aws:events:ap-northeast-2:123456789012:event-bus/default"
+  }
+  ```
+- **이벤트 검증 부재**: 악의적 이벤트 처리
+- **CloudTrail 미활성화**: 이벤트 추적 불가
+
+### 10. 구성 요소 상세 - 5분
+
+**EventBridge 주요 구성 요소**:
+
+**1. Event Bus**:
+```bash
+# Custom Event Bus 생성
+aws events create-event-bus \
+  --name my-event-bus \
+  --tags Key=Environment,Value=Production
 ```
 
-**알람 모범 사례**:
-
-**1. 알람 우선순위 설정**:
-- **Critical**: 즉시 대응 필요 (Task 0개, 서비스 다운)
-- **Warning**: 모니터링 필요 (CPU 80%, 메모리 부족)
-- **Info**: 참고용 (배포 완료, 스케일링 발생)
-
-**2. 알람 피로도 방지**:
-- 적절한 임계값 설정
-- evaluation_periods 활용 (일시적 스파이크 무시)
-- treat_missing_data 설정
-
-**3. 자동 조치 연계**:
-```hcl
-resource "aws_cloudwatch_metric_alarm" "cpu_high_autoscale" {
-  alarm_name          = "ecs-cpu-high-autoscale"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 70
-
-  dimensions = {
-    ServiceName = aws_ecs_service.app.name
-    ClusterName = aws_ecs_cluster.main.name
-  }
-
-  # Auto Scaling 정책 트리거
-  alarm_actions = [
-    aws_appautoscaling_policy.scale_up.arn,
-    aws_sns_topic.alerts.arn
+**2. Rule (Event Pattern)**:
+```json
+{
+  "Name": "ec2-state-change",
+  "EventPattern": {
+    "source": ["aws.ec2"],
+    "detail-type": ["EC2 Instance State-change Notification"],
+    "detail": {
+      "state": ["running", "stopped"]
+    }
+  },
+  "State": "ENABLED",
+  "Targets": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:notify",
+      "Id": "1"
+    }
   ]
 }
 ```
 
-**장점**:
-- ✅ 사전 장애 감지
-- ✅ 자동 알림 및 조치
-- ✅ 이상 탐지 (ML 기반)
-- ✅ 커스텀 대시보드
+**3. Rule (Schedule)**:
+```json
+{
+  "Name": "daily-backup",
+  "ScheduleExpression": "cron(0 2 * * ? *)",
+  "State": "ENABLED",
+  "Targets": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:backup",
+      "Id": "1"
+    }
+  ]
+}
+```
 
-**단점**:
-- ⚠️ 알람 피로도 위험
-- ⚠️ 임계값 설정 어려움
-- ⚠️ 복합 알람 복잡도
+**4. Target 설정**:
+```json
+{
+  "Targets": [
+    {
+      "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:process",
+      "Id": "1",
+      "RetryPolicy": {
+        "MaximumRetryAttempts": 2,
+        "MaximumEventAge": 3600
+      },
+      "DeadLetterConfig": {
+        "Arn": "arn:aws:sqs:ap-northeast-2:123456789012:dlq"
+      },
+      "InputTransformer": {
+        "InputPathsMap": {
+          "time": "$.time",
+          "detail": "$.detail"
+        },
+        "InputTemplate": "{\"timestamp\": \"<time>\", \"data\": <detail>}"
+      }
+    }
+  ]
+}
+```
+
+**5. Archive & Replay**:
+```bash
+# Archive 생성
+aws events create-archive \
+  --archive-name my-archive \
+  --event-source-arn arn:aws:events:ap-northeast-2:123456789012:event-bus/default \
+  --retention-days 7
+
+# Replay 시작
+aws events start-replay \
+  --replay-name my-replay \
+  --event-source-arn arn:aws:events:ap-northeast-2:123456789012:event-bus/default \
+  --event-start-time 2025-11-01T00:00:00Z \
+  --event-end-time 2025-11-07T23:59:59Z \
+  --destination arn:aws:events:ap-northeast-2:123456789012:event-bus/default
+```
+
+**의존성**:
+- **IAM → EventBridge**: Rule이 Target 호출 권한 필요
+- **Lambda → EventBridge**: Lambda가 이벤트 처리
+- **SQS → EventBridge**: DLQ로 실패 이벤트 저장
+- **CloudWatch → EventBridge**: 로그 및 메트릭 수집
+
+### 11. 공식 문서 링크 (필수 5개)
+
+**⚠️ 학생들이 직접 확인해야 할 공식 문서**:
+- 📘 [EventBridge란 무엇인가?](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html)
+- 📗 [EventBridge Rules](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rules.html)
+- 📙 [Event Patterns](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html)
+- 📕 [EventBridge 요금](https://aws.amazon.com/eventbridge/pricing/)
+- 🆕 [EventBridge 최신 업데이트](https://aws.amazon.com/eventbridge/whats-new/)
 
 ---
 
-## 💭 함께 생각해보기 (10분)
+## 💭 함께 생각해보기
 
 ### 🤝 페어 토론 (5분)
-
 **토론 주제**:
-1. **모니터링 전략**: "우리 서비스에 필요한 핵심 메트릭은 무엇일까요?"
-   - CPU/메모리 사용률
-   - 응답 시간
-   - 에러율
-   - Task 재시작 횟수
+1. **EventBridge vs SNS**: 언제 어떤 것을 사용해야 할까요?
+2. **이벤트 패턴**: 어떻게 효율적으로 이벤트를 필터링할까요?
+3. **실무 적용**: 현재 프로젝트에 이벤트 기반 아키텍처를 어떻게 적용할까요?
 
-2. **알람 설정**: "어떤 상황에 알람을 받고 싶으신가요?"
-   - 즉시 대응이 필요한 Critical 알람
-   - 모니터링이 필요한 Warning 알람
-
-3. **로그 분석**: "장애 발생 시 어떤 로그를 먼저 확인하시나요?"
-   - 애플리케이션 로그
-   - ECS 이벤트 로그
-   - ALB 액세스 로그
-
-**페어 활동 가이드**:
-- 👥 **자유 페어링**: 경험이나 관심사가 비슷한 사람끼리
-- 🔄 **역할 교대**: 각자 경험 공유
-- 📝 **핵심 정리**: 실무 적용 가능한 아이디어 메모
-
-### 🎯 전체 공유 (5분)
-
-**인사이트 공유**:
-- 효과적인 모니터링 메트릭
-- 알람 피로도 방지 방법
-- 로그 분석 노하우
-
-**질문 수집**:
-- Container Insights 비용 최적화
-- Logs Insights 쿼리 작성 팁
-- 알람 임계값 설정 기준
+### 🎯 전체 공유 (3분)
+- **인사이트 공유**: 페어 토론에서 나온 좋은 아이디어
+- **질문 수집**: 아직 이해가 어려운 부분
+- **다음 연결**: Lab 1 (EventBridge 실습)
 
 ### 💡 이해도 체크 질문
-
-- ✅ "Container Insights Enhanced Observability의 장점을 설명할 수 있나요?"
-- ✅ "CloudWatch Logs Insights 쿼리를 작성할 수 있나요?"
-- ✅ "실무에서 어떤 알람을 설정해야 할지 판단할 수 있나요?"
+- ✅ "Event Bus, Rule, Target의 관계를 설명할 수 있나요?"
+- ✅ "Event Pattern을 작성할 수 있나요?"
+- ✅ "EventBridge와 SNS의 차이를 이해했나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-### Container Insights
-- **Enhanced Observability**: Task/Container 레벨 메트릭 (2024년 12월 출시)
-- **자동 대시보드**: 클러스터/서비스/Task/Container 뷰
-- **Custom Metrics**: 메트릭당 $0.30/월 과금
-
-### CloudWatch Logs Insights
-- **쿼리 언어**: fields, filter, stats, sort, limit, parse
-- **시각화**: 라인 차트, 막대 차트
-- **비용**: $0.005 per GB scanned
-
-### CloudWatch 알람
-- **복합 알람**: 여러 조건 조합
-- **이상 탐지**: ML 기반 패턴 감지
-- **자동 조치**: Auto Scaling, Lambda 트리거
+- **EventBridge**: 서버리스 이벤트 버스 서비스
+- **Event Bus**: 이벤트 라우터
+- **Rule**: 이벤트 패턴 또는 스케줄
+- **Event Pattern**: 이벤트 매칭 조건
+- **Target**: 이벤트를 전달받을 대상 (최대 5개)
+- **Input Transformer**: 이벤트 변환
+- **Archive & Replay**: 이벤트 아카이브 및 재생
 
 ---
 
 ## 📝 세션 마무리
 
 ### ✅ 오늘 세션 성과
-- [ ] Container Insights 활성화 방법 이해
-- [ ] Logs Insights 쿼리 작성 능력 습득
-- [ ] CloudWatch 알람 설정 방법 학습
-- [ ] 실무 모니터링 전략 수립
+- [ ] EventBridge의 역할과 이벤트 기반 아키텍처 이해
+- [ ] Event Bus, Rule, Target 개념 파악
+- [ ] Event Pattern 작성 방법 습득
+- [ ] AWS 서비스 통합 및 실무 활용 방법 학습
 
-### 🎯 다음 세션 준비
-- **Session 3**: ECS 비용 최적화
-  - Fargate Spot
-  - 리소스 최적화
-  - 비용 모니터링
-
-### 🔗 참고 자료
-- 📘 [Container Insights Enhanced Observability](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-container-insights.html)
-- 📗 [Container Insights Metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-ECS.html)
-- 📙 [CloudWatch Logs Insights Query Syntax](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
-- 📕 [ECS Event Capture](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-events.html)
-- 🆕 [CloudWatch Anomaly Detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html)
+### 🎯 다음 Lab 준비
+- **Lab 1: EventBridge 실습** - Parameter Store + EventBridge 통합
+- **연계 내용**: Session 1 (Parameter Store) + Session 2 (EventBridge)
+- **사전 학습**: Terraform 기본 명령어 복습
 
 ---
 
 <div align="center">
 
-**📊 실시간 모니터링** • **🔍 로그 분석** • **🚨 자동 알람**
+**📡 이벤트 기반** • **🔔 느슨한 결합** • **⚡ 실시간 반응**
 
-*관측성(Observability)으로 안정적인 서비스 운영*
+*Lab 1에서 Parameter Store + EventBridge 통합 실습을 진행합니다*
 
 </div>

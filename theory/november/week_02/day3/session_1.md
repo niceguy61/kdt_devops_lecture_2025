@@ -2,412 +2,556 @@
 
 <div align="center">
 
-**🐳 컨테이너** • **📦 ECR** • **⚙️ ECS** • **🎯 Task Definition**
+**🐳 ECR** • **📦 ECS** • **🔧 컨테이너 오케스트레이션**
 
-*AWS 컨테이너 오케스트레이션 서비스 완벽 이해*
+*AWS 컨테이너 레지스트리와 오케스트레이션 서비스*
 
 </div>
 
 ---
 
-## 🕘 Session 정보
+## 🕘 세션 정보
 **시간**: 09:00-09:40 (40분)
-**목표**: ECR과 ECS 기본 개념 이해 및 아키텍처 파악
-**방식**: 이론 + AWS 공식 문서 기반 설명
+**목표**: ECR과 ECS의 기본 개념 및 아키텍처 이해
+**방식**: 이론 강의 + 실습 예제
 
 ## 🎯 학습 목표
-
-### 📚 이해 목표
-- ECR의 역할과 Docker Hub와의 차이 이해
-- ECS 아키텍처 (Cluster, Service, Task) 파악
-- Task Definition 구조 이해
-- EC2 vs Fargate 비교
-
-### 🛠️ 적용 목표
-- ECR에 이미지 푸시 방법 습득
-- Task Definition 작성 능력
-- 적절한 Launch Type 선택
+- ECR(Elastic Container Registry)의 역할과 Docker Hub와의 차이점 이해
+- ECS(Elastic Container Service)의 컨테이너 오케스트레이션 개념 파악
+- Task Definition, Service, Cluster의 관계 이해
 
 ---
 
-## 🤔 왜 필요한가? (5분)
+## 📖 서비스 개요
 
-### 💼 실무 시나리오: Docker Compose → AWS 마이그레이션
+### 1. 생성 배경 (Why?) - 5분
 
 **문제 상황**:
-```
-로컬 Docker Compose:
-- docker-compose up (단일 서버)
-- 확장성 제한
-- 고가용성 부족
-- 수동 배포
+- **Docker Hub 의존성**: 공개 레지스트리 사용 시 보안 및 속도 문제
+- **컨테이너 관리 복잡성**: 수십~수백 개 컨테이너를 수동으로 관리하기 어려움
+- **확장성 한계**: Docker Compose는 단일 호스트에서만 동작
+- **고가용성 부족**: 컨테이너 장애 시 자동 복구 메커니즘 부재
 
-프로덕션 요구사항:
-- 자동 확장 (트래픽 증가 시)
-- 고가용성 (서버 장애 대응)
-- 무중단 배포
-- 모니터링 & 로깅
-```
+**AWS 솔루션**:
+- **ECR**: AWS 통합 프라이빗 컨테이너 레지스트리
+  - IAM 기반 접근 제어
+  - 이미지 스캔 및 암호화
+  - 리전 간 복제 지원
+  
+- **ECS**: 완전 관리형 컨테이너 오케스트레이션
+  - 자동 스케일링 및 로드 밸런싱
+  - AWS 서비스와 긴밀한 통합
+  - Fargate로 서버리스 실행 가능
 
-**ECS 솔루션**:
-```
-Docker 이미지 → ECR (저장)
-              ↓
-         ECS (실행 & 관리)
-              ↓
-    - 자동 확장 ✅
-    - 고가용성 ✅
-    - 무중단 배포 ✅
-    - CloudWatch 통합 ✅
-```
+### 2. 핵심 원리 (How?) - 10분
 
-### 🏠 실생활 비유
-
-**물류 센터**:
-- **ECR**: 창고 (Docker 이미지 보관)
-- **ECS Cluster**: 물류 센터 전체
-- **Task Definition**: 작업 지시서 (어떤 컨테이너를 어떻게 실행할지)
-- **Task**: 실제 작업 (컨테이너 실행 중)
-- **Service**: 작업 관리자 (Task를 계속 유지)
-
----
-
-## 📖 핵심 개념 (30분)
-
-### 🔍 개념 1: ECR (Elastic Container Registry) (8분)
-
-> **정의** (AWS 공식): Amazon ECR은 완전 관리형 Docker 컨테이너 레지스트리로, 개발자가 Docker 컨테이너 이미지를 쉽게 저장, 관리 및 배포할 수 있게 합니다.
-
-#### ECR vs Docker Hub
-
-| 특징 | ECR | Docker Hub |
-|------|-----|------------|
-| **위치** | AWS 내부 | 외부 (인터넷) |
-| **속도** | 빠름 (같은 리전) | 느림 (인터넷 경유) |
-| **보안** | IAM 통합 | 별도 인증 |
-| **비용** | 스토리지 + 전송 | 무료 (제한) / 유료 |
-| **Private** | 기본 Private | 유료 |
-| **ECS 통합** | 네이티브 | 가능 (느림) |
-
-#### ECR 주요 기능
-
-**1. Private Repository**:
-```
-AWS 계정 내에서만 접근 가능
-IAM 정책으로 세밀한 권한 제어
-```
-
-**2. 이미지 스캔**:
-```
-취약점 자동 스캔
-CVE 데이터베이스 기반
-푸시 시 자동 스캔 가능
-```
-
-**3. 수명 주기 정책**:
-```
-오래된 이미지 자동 삭제
-비용 절감
-스토리지 관리 자동화
-```
-
-#### ECR 사용 흐름
-
+**ECR 아키텍처**:
 ```mermaid
-graph LR
-    A[로컬 Docker 이미지] --> B[docker tag]
-    B --> C[ECR 로그인]
-    C --> D[docker push]
-    D --> E[ECR Repository]
-    E --> F[ECS Task]
+graph TB
+    subgraph "개발 환경"
+        DEV[개발자]
+        DOCKER[Docker CLI]
+    end
     
-    style A fill:#e3f2fd
-    style E fill:#fff3e0
-    style F fill:#e8f5e8
+    subgraph "AWS ECR"
+        REGISTRY[ECR Registry]
+        REPO1[Repository 1]
+        REPO2[Repository 2]
+        SCAN[Image Scanning]
+    end
+    
+    subgraph "배포 환경"
+        ECS[ECS Cluster]
+        FARGATE[Fargate Tasks]
+    end
+    
+    DEV --> DOCKER
+    DOCKER -->|docker push| REGISTRY
+    REGISTRY --> REPO1
+    REGISTRY --> REPO2
+    REPO1 --> SCAN
+    REPO2 --> SCAN
+    REGISTRY -->|docker pull| ECS
+    REGISTRY -->|docker pull| FARGATE
+    
+    style DEV fill:#e8f5e8
+    style REGISTRY fill:#fff3e0
+    style ECS fill:#ffebee
+    style FARGATE fill:#e3f2fd
 ```
 
-**실제 명령어**:
-```bash
-# 1. ECR 로그인
-aws ecr get-login-password --region ap-northeast-2 | \
-  docker login --username AWS --password-stdin \
-  123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
-
-# 2. 이미지 태그
-docker tag my-app:latest \
-  123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:latest
-
-# 3. 이미지 푸시
-docker push \
-  123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:latest
-```
-
-### 🔍 개념 2: ECS 아키텍처 (12분)
-
-> **정의** (AWS 공식): Amazon ECS는 완전 관리형 컨테이너 오케스트레이션 서비스로, Docker 컨테이너를 쉽게 실행, 중지 및 관리할 수 있게 합니다.
-
-#### ECS 핵심 구성 요소
-
+**ECS 아키텍처**:
 ```mermaid
 graph TB
     subgraph "ECS Cluster"
-        subgraph "Service"
-            T1[Task 1<br/>컨테이너 실행]
-            T2[Task 2<br/>컨테이너 실행]
-            T3[Task 3<br/>컨테이너 실행]
+        subgraph "Control Plane"
+            SCHEDULER[Task Scheduler]
+            PLACEMENT[Task Placement]
         end
-        TD[Task Definition<br/>작업 지시서]
+        
+        subgraph "Data Plane - EC2"
+            EC2_1[EC2 Instance 1]
+            EC2_2[EC2 Instance 2]
+            TASK1[Task 1]
+            TASK2[Task 2]
+        end
+        
+        subgraph "Data Plane - Fargate"
+            FARGATE1[Fargate Task 1]
+            FARGATE2[Fargate Task 2]
+        end
     end
     
-    ALB[Application Load Balancer] --> T1
-    ALB --> T2
-    ALB --> T3
+    subgraph "AWS Services"
+        ALB[Application Load Balancer]
+        ECR[ECR Registry]
+        CW[CloudWatch]
+    end
     
-    TD -.정의.-> T1
-    TD -.정의.-> T2
-    TD -.정의.-> T3
+    SCHEDULER --> PLACEMENT
+    PLACEMENT --> EC2_1
+    PLACEMENT --> EC2_2
+    PLACEMENT --> FARGATE1
+    PLACEMENT --> FARGATE2
+    EC2_1 --> TASK1
+    EC2_2 --> TASK2
+    ECR --> TASK1
+    ECR --> TASK2
+    ECR --> FARGATE1
+    ECR --> FARGATE2
+    ALB --> TASK1
+    ALB --> TASK2
+    ALB --> FARGATE1
+    ALB --> FARGATE2
+    TASK1 --> CW
+    TASK2 --> CW
+    FARGATE1 --> CW
+    FARGATE2 --> CW
     
-    style TD fill:#ff9800
-    style T1 fill:#4caf50
-    style T2 fill:#4caf50
-    style T3 fill:#4caf50
-    style ALB fill:#2196f3
+    style SCHEDULER fill:#e8f5e8
+    style EC2_1 fill:#fff3e0
+    style FARGATE1 fill:#e3f2fd
+    style ALB fill:#ffebee
 ```
 
-**1. Cluster (클러스터)**:
-- **역할**: 컨테이너 인스턴스의 논리적 그룹
-- **비유**: 물류 센터 전체
-- **예시**: `production-cluster`, `dev-cluster`
+**핵심 구성 요소**:
 
-**2. Task Definition (작업 정의)**:
-- **역할**: 컨테이너 실행 방법을 정의하는 JSON 템플릿
-- **비유**: 작업 지시서 (어떤 이미지, 얼마나 CPU/메모리)
-- **내용**:
+**ECR**:
+- **Registry**: AWS 계정당 하나의 기본 레지스트리
+- **Repository**: 이미지를 저장하는 논리적 단위
+- **Image**: 특정 태그가 붙은 컨테이너 이미지
+- **Lifecycle Policy**: 오래된 이미지 자동 삭제
+
+**ECS**:
+- **Cluster**: 컨테이너 실행 환경의 논리적 그룹
+- **Task Definition**: 컨테이너 실행 명세 (JSON)
+- **Task**: Task Definition의 실행 인스턴스
+- **Service**: Task의 원하는 개수를 유지하는 관리 단위
+
+### 3. 주요 사용 사례 (When?) - 5분
+
+**적합한 경우**:
+
+**ECR 사용 시나리오**:
+- **프라이빗 이미지 관리**: 회사 내부 애플리케이션 이미지
+- **멀티 리전 배포**: 리전 간 이미지 복제로 글로벌 서비스
+- **보안 스캔 필요**: 취약점 자동 스캔 및 알림
+- **CI/CD 통합**: CodePipeline, Jenkins와 통합
+
+**ECS 사용 시나리오**:
+- **마이크로서비스 아키텍처**: 여러 서비스를 독립적으로 배포
+- **배치 작업**: 정기적인 데이터 처리 작업
+- **웹 애플리케이션**: ALB와 통합하여 고가용성 웹 서비스
+- **하이브리드 워크로드**: EC2와 Fargate 혼합 사용
+
+**실제 사례**:
+- **Netflix**: 수천 개의 마이크로서비스를 ECS로 운영
+- **Expedia**: 여행 예약 시스템의 컨테이너화
+- **Samsung**: 글로벌 서비스의 멀티 리전 배포
+
+### 4. 비슷한 서비스 비교 (Which?) - 5분
+
+**AWS 내 대안 서비스**:
+
+**ECR vs Docker Hub**:
+- **언제 Docker Hub 사용**: 
+  - 오픈소스 프로젝트
+  - 공개 이미지 공유
+  - 무료 티어로 충분한 경우
+  
+- **언제 ECR 사용**:
+  - 프라이빗 이미지 필요
+  - AWS 서비스와 통합
+  - 보안 스캔 및 암호화 필요
+
+**ECS vs EKS vs Fargate**:
+- **언제 ECS 사용**:
+  - AWS 네이티브 솔루션 선호
+  - 간단한 컨테이너 오케스트레이션
+  - AWS 서비스와 긴밀한 통합
+  
+- **언제 EKS 사용**:
+  - Kubernetes 표준 필요
+  - 멀티 클라우드 전략
+  - 복잡한 오케스트레이션 요구
+  
+- **언제 Fargate 사용**:
+  - 서버 관리 불필요
+  - 간헐적 워크로드
+  - 빠른 시작 필요
+
+**선택 기준**:
+| 기준 | ECR | Docker Hub | ECS | EKS | Fargate |
+|------|-----|------------|-----|-----|---------|
+| **비용** | 스토리지 기반 | 무료/유료 | EC2 비용 | EC2 + 관리 비용 | 사용량 기반 |
+| **보안** | IAM 통합 | 제한적 | 높음 | 높음 | 매우 높음 |
+| **관리 복잡도** | 낮음 | 매우 낮음 | 중간 | 높음 | 매우 낮음 |
+| **AWS 통합** | 완벽 | 없음 | 완벽 | 좋음 | 완벽 |
+| **표준 준수** | OCI | Docker | AWS 전용 | Kubernetes | AWS 전용 |
+
+### 5. 장단점 분석 - 3분
+
+**ECR 장점**:
+- ✅ AWS 서비스와 완벽한 통합 (IAM, CloudWatch)
+- ✅ 자동 이미지 스캔 및 취약점 탐지
+- ✅ 리전 간 자동 복제
+- ✅ 암호화 (전송 중/저장 시)
+
+**ECR 단점/제약사항**:
+- ⚠️ AWS 종속성 (멀티 클라우드 어려움)
+- ⚠️ Docker Hub보다 비용 높을 수 있음
+- ⚠️ 리전당 별도 레지스트리 필요
+
+**ECS 장점**:
+- ✅ 완전 관리형 서비스 (인프라 관리 불필요)
+- ✅ AWS 서비스와 긴밀한 통합
+- ✅ Fargate로 서버리스 실행 가능
+- ✅ 빠른 학습 곡선 (Kubernetes보다 간단)
+
+**ECS 단점/제약사항**:
+- ⚠️ AWS 종속성 (이식성 낮음)
+- ⚠️ Kubernetes만큼 유연하지 않음
+- ⚠️ 커뮤니티 생태계 작음
+
+**대안**:
+- **멀티 클라우드**: EKS 또는 자체 Kubernetes 클러스터
+- **간단한 워크로드**: Lambda 또는 Elastic Beanstalk
+
+### 6. 비용 구조 💰 - 5분
+
+**ECR 과금 방식**:
+- **스토리지**: $0.10/GB/월 (ap-northeast-2)
+- **데이터 전송**:
+  - 인터넷으로 전송: $0.126/GB (첫 10TB)
+  - 같은 리전 내: 무료
+  - 다른 리전으로: $0.02/GB
+
+**프리티어 혜택**:
+- **ECR**: 프리티어 없음 (사용한 만큼 과금)
+- **ECS**: 컨트롤 플레인 무료 (EC2/Fargate 비용만 발생)
+
+**비용 최적화 팁**:
+1. **Lifecycle Policy 활용**: 오래된 이미지 자동 삭제
+   ```json
+   {
+     "rules": [{
+       "rulePriority": 1,
+       "description": "Keep last 10 images",
+       "selection": {
+         "tagStatus": "any",
+         "countType": "imageCountMoreThan",
+         "countNumber": 10
+       },
+       "action": { "type": "expire" }
+     }]
+   }
+   ```
+
+2. **이미지 크기 최적화**: 멀티 스테이지 빌드 사용
+3. **리전 선택**: 주 사용 리전에 이미지 배치
+4. **압축 활용**: 이미지 레이어 압축
+
+**예상 비용 (ap-northeast-2)**:
+| 항목 | 사용량 | 단가 | 월간 비용 |
+|------|--------|------|-----------|
+| **ECR 스토리지** | 10GB | $0.10/GB | $1.00 |
+| **데이터 전송 (인터넷)** | 100GB | $0.126/GB | $12.60 |
+| **ECS 컨트롤 플레인** | - | 무료 | $0 |
+| **Fargate vCPU** | 0.25 vCPU × 730시간 | $0.04048/vCPU/시간 | $7.39 |
+| **Fargate 메모리** | 0.5GB × 730시간 | $0.004445/GB/시간 | $1.62 |
+| **합계** | | | **$22.61** |
+
+**Lab 예상 비용**:
+- ECR 이미지 저장 (1GB): $0.10/월
+- Fargate Task (1시간): $0.05
+- 합계: ~$0.15 (1시간 실습 기준)
+
+### 7. 최신 업데이트 🆕 - 2분
+
+**2025년 주요 변경사항**:
+- **ECS Managed Instances** (2025.09): EC2 인스턴스 자동 프로비저닝 및 관리
+  - 최적의 인스턴스 타입 자동 선택
+  - 14일마다 자동 보안 패치
+  - 동적 스케일링 및 비용 최적화
+  
+- **Linear & Canary Deployments** (2025.10): 내장 배포 전략 지원
+  - 트래픽 점진적 전환
+  - CloudWatch 알람 기반 자동 롤백
+  - 무중단 배포 강화
+
+- **ECR 이미지 제한 증가** (2025.08): 리포지토리당 20,000 → 100,000 이미지
+
+**2026년 예정**:
+- ECS Service Connect 고도화
+- 더 많은 Graviton 프로세서 지원
+
+**Deprecated 기능**:
+- EC2-Classic 지원 종료 (2022년 완료)
+
+**참조**: [AWS ECS What's New](https://aws.amazon.com/ecs/whats-new/)
+
+### 8. 잘 사용하는 방법 ✅ - 3분
+
+**베스트 프랙티스**:
+1. **IAM 역할 사용**: Access Key 대신 Task Role 사용
+2. **이미지 태깅 전략**: 
+   - `latest` 태그 사용 지양
+   - Git commit SHA 또는 버전 번호 사용
+3. **Health Check 설정**: ALB와 ECS 모두 설정
+4. **로그 중앙화**: CloudWatch Logs 또는 Firelens 사용
+5. **리소스 제한**: CPU/메모리 limits 명시
+
+**실무 팁**:
+- **ECR 이미지 스캔**: 푸시 시 자동 스캔 활성화
+  ```bash
+  aws ecr put-image-scanning-configuration \
+    --repository-name my-repo \
+    --image-scanning-configuration scanOnPush=true
+  ```
+
+- **ECS Exec 활용**: 실행 중인 컨테이너 디버깅
+  ```bash
+  aws ecs execute-command \
+    --cluster my-cluster \
+    --task task-id \
+    --container my-container \
+    --interactive \
+    --command "/bin/bash"
+  ```
+
+- **Capacity Provider 전략**: EC2와 Fargate 혼합 사용
+  ```json
+  {
+    "capacityProviders": ["FARGATE", "FARGATE_SPOT"],
+    "defaultCapacityProviderStrategy": [
+      {"capacityProvider": "FARGATE_SPOT", "weight": 4},
+      {"capacityProvider": "FARGATE", "weight": 1}
+    ]
+  }
+  ```
+
+**성능 최적화**:
+- **이미지 크기 최소화**: Alpine Linux 기반 이미지 사용
+- **레이어 캐싱**: 자주 변경되지 않는 레이어를 먼저 배치
+- **Fargate 플랫폼 버전**: 최신 버전 사용 (성능 개선)
+
+### 9. 잘못 사용하는 방법 ❌ - 3분
+
+**흔한 실수**:
+1. **Root 사용자로 컨테이너 실행**: 보안 취약점
+   ```dockerfile
+   # ❌ 잘못된 방법
+   FROM node:18
+   COPY . /app
+   CMD ["node", "server.js"]
+   
+   # ✅ 올바른 방법
+   FROM node:18
+   RUN useradd -m appuser
+   USER appuser
+   COPY . /app
+   CMD ["node", "server.js"]
+   ```
+
+2. **시크릿 하드코딩**: 환경 변수에 직접 입력
+   ```json
+   // ❌ 잘못된 방법
+   {
+     "environment": [
+       {"name": "DB_PASSWORD", "value": "mypassword123"}
+     ]
+   }
+   
+   // ✅ 올바른 방법
+   {
+     "secrets": [
+       {
+         "name": "DB_PASSWORD",
+         "valueFrom": "arn:aws:secretsmanager:region:account:secret:db-password"
+       }
+     ]
+   }
+   ```
+
+3. **Health Check 미설정**: 장애 감지 불가
+4. **로그 미수집**: 문제 발생 시 디버깅 어려움
+5. **리소스 제한 없음**: 메모리 부족으로 다른 Task 영향
+
+**안티 패턴**:
+- **단일 AZ 배포**: 고가용성 부족
+- **과도한 Task 크기**: 작은 Task 여러 개가 더 효율적
+- **이미지 버전 관리 부재**: `latest` 태그만 사용
+
+**보안 취약점**:
+- **Public ECR 사용**: 민감한 이미지는 Private 사용
+- **IAM 권한 과다**: 최소 권한 원칙 위반
+- **네트워크 격리 부족**: Public Subnet에 민감한 Task 배치
+
+### 10. 구성 요소 상세 - 5분
+
+**ECR 주요 구성 요소**:
+
+**1. Registry**:
+- **역할**: AWS 계정당 하나의 기본 레지스트리
+- **URI 형식**: `{account-id}.dkr.ecr.{region}.amazonaws.com`
+- **인증**: `aws ecr get-login-password` 명령어 사용
+
+**2. Repository**:
+- **역할**: 이미지를 저장하는 논리적 단위
+- **타입**: Private (기본), Public
+- **설정 옵션**:
+  - Image scanning (푸시 시 자동 스캔)
+  - Encryption (AES-256 또는 KMS)
+  - Lifecycle policy (이미지 자동 삭제)
+
+**3. Image**:
+- **역할**: 특정 태그가 붙은 컨테이너 이미지
+- **태그 전략**:
+  - Semantic versioning: `v1.2.3`
+  - Git commit SHA: `abc123f`
+  - 환경별: `prod-v1.2.3`, `dev-latest`
+
+**ECS 주요 구성 요소**:
+
+**1. Cluster**:
+- **역할**: 컨테이너 실행 환경의 논리적 그룹
+- **타입**:
+  - EC2: 직접 관리하는 EC2 인스턴스
+  - Fargate: 서버리스 실행
+  - External: 온프레미스 서버
+
+**2. Task Definition**:
+- **역할**: 컨테이너 실행 명세 (JSON)
+- **주요 설정**:
   ```json
   {
     "family": "my-app",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
     "containerDefinitions": [{
-      "name": "web",
-      "image": "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:latest",
-      "cpu": 256,
-      "memory": 512,
-      "portMappings": [{
-        "containerPort": 3000,
-        "protocol": "tcp"
-      }]
+      "name": "app",
+      "image": "123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:v1",
+      "portMappings": [{"containerPort": 80}],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/my-app",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
     }]
   }
   ```
 
-**3. Task (작업)**:
-- **역할**: Task Definition의 인스턴스 (실제 실행 중인 컨테이너)
-- **비유**: 실제 작업 중인 직원
-- **생명주기**: 시작 → 실행 → 종료
+**3. Service**:
+- **역할**: Task의 원하는 개수를 유지
+- **배포 전략**:
+  - Rolling update (기본)
+  - Blue/Green (CodeDeploy 사용)
+  - Linear/Canary (2025년 신규)
+- **Auto Scaling**: Target tracking, Step scaling
 
-**4. Service (서비스)**:
-- **역할**: 원하는 수의 Task를 유지하고 관리
-- **비유**: 작업 관리자 (항상 3명이 일하도록 관리)
-- **기능**:
-  - Task 개수 유지 (Desired Count)
-  - 자동 복구 (Task 실패 시 재시작)
-  - 로드 밸런서 통합
-  - Auto Scaling
+**4. Task**:
+- **역할**: Task Definition의 실행 인스턴스
+- **생명주기**: PENDING → RUNNING → STOPPED
+- **네트워킹**: awsvpc 모드 (ENI 할당)
 
-#### ECS 동작 흐름
+**의존성**:
+- **ECR → ECS**: Task Definition에서 ECR 이미지 참조
+- **VPC → ECS**: awsvpc 모드에서 Subnet 필요
+- **IAM → ECS**: Task Role, Execution Role 필요
+- **ALB → ECS**: Service에 Target Group 연결
 
-```mermaid
-sequenceDiagram
-    participant U as 사용자
-    participant S as ECS Service
-    participant TD as Task Definition
-    participant T as Task (컨테이너)
-    
-    U->>S: Desired Count = 3
-    S->>TD: Task Definition 참조
-    TD->>T: Task 1 생성
-    TD->>T: Task 2 생성
-    TD->>T: Task 3 생성
-    
-    Note over T: Task 2 실패!
-    T->>S: Task 2 종료 알림
-    S->>TD: 새 Task 생성
-    TD->>T: Task 4 생성
-    
-    Note over S,T: 항상 3개 유지
-```
+### 11. 공식 문서 링크 (필수 5개)
 
-### 🔍 개념 3: EC2 vs Fargate (10분)
-
-> **AWS 공식**: ECS는 두 가지 Launch Type을 지원합니다 - EC2 (직접 관리)와 Fargate (서버리스).
-
-#### Launch Type 비교
-
-| 특징 | EC2 | Fargate |
-|------|-----|---------|
-| **서버 관리** | 필요 (EC2 인스턴스) | 불필요 (서버리스) |
-| **비용** | 인스턴스 비용 | Task 실행 시간 |
-| **확장성** | 수동 (ASG) | 자동 |
-| **시작 시간** | 빠름 (인스턴스 준비됨) | 느림 (콜드 스타트) |
-| **커스터마이징** | 높음 (OS 접근) | 낮음 (제한적) |
-| **적합한 경우** | 대규모, 예측 가능 | 소규모, 가변적 |
-
-#### EC2 Launch Type
-
-**아키텍처**:
-```
-ECS Cluster
-├── EC2 Instance 1 (t3.medium)
-│   ├── Task 1 (컨테이너)
-│   └── Task 2 (컨테이너)
-├── EC2 Instance 2 (t3.medium)
-│   ├── Task 3 (컨테이너)
-│   └── Task 4 (컨테이너)
-```
-
-**장점**:
-- ✅ 비용 효율적 (Reserved Instance)
-- ✅ 완전한 제어 (OS, 네트워크)
-- ✅ GPU, 특수 하드웨어 사용 가능
-
-**단점**:
-- ❌ 서버 관리 필요 (패치, 모니터링)
-- ❌ 용량 계획 필요
-- ❌ 확장 복잡
-
-#### Fargate Launch Type
-
-**아키텍처**:
-```
-ECS Cluster (서버리스)
-├── Task 1 (독립 실행)
-├── Task 2 (독립 실행)
-├── Task 3 (독립 실행)
-└── Task 4 (독립 실행)
-```
-
-**장점**:
-- ✅ 서버 관리 불필요
-- ✅ 자동 확장
-- ✅ 빠른 시작 (인프라 준비 불필요)
-- ✅ 보안 격리 (Task별 독립)
-
-**단점**:
-- ❌ 비용 높음 (소규모는 괜찮음)
-- ❌ 제한적 커스터마이징
-- ❌ 콜드 스타트 지연
-
-#### 선택 기준
-
-```mermaid
-graph TB
-    A{워크로드 특성}
-    A -->|예측 가능<br/>대규모| B[EC2]
-    A -->|가변적<br/>소규모| C[Fargate]
-    
-    B --> D[Reserved Instance<br/>비용 절감]
-    C --> E[운영 부담 최소화]
-    
-    style A fill:#fff3e0
-    style B fill:#e3f2fd
-    style C fill:#e8f5e8
-    style D fill:#e3f2fd
-    style E fill:#e8f5e8
-```
-
-**실무 권장**:
-- **Fargate 우선**: 대부분의 경우 (운영 간편)
-- **EC2 고려**: 대규모 + 예측 가능 + 비용 민감
+**⚠️ 학생들이 직접 확인해야 할 공식 문서**:
+- 📘 [ECR이란 무엇인가?](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html)
+- 📗 [ECS 사용자 가이드](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/)
+- 📙 [ECS API 레퍼런스](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/)
+- 📕 [ECR 요금](https://aws.amazon.com/ecr/pricing/) | [ECS 요금](https://aws.amazon.com/ecs/pricing/)
+- 🆕 [ECS 최신 업데이트](https://aws.amazon.com/ecs/whats-new/)
 
 ---
 
-## 💰 비용 구조 (5분)
+## 💭 함께 생각해보기
 
-### ECR 비용 (ap-northeast-2)
+### 🤝 페어 토론 (5분)
+**토론 주제**:
+1. **Docker Compose vs ECS**: 어떤 상황에서 ECS로 마이그레이션해야 할까요?
+2. **ECR vs Docker Hub**: 프라이빗 레지스트리의 장점은 무엇일까요?
+3. **비용 최적화**: ECR 스토리지 비용을 줄이는 방법은?
 
-**스토리지**:
-```
-$0.10/GB/월
-예: 10GB 이미지 = $1.00/월
-```
+**페어 활동 가이드**:
+- 👥 **자유 페어링**: 관심사가 비슷한 사람끼리
+- 🔄 **역할 교대**: 5분씩 설명자/질문자 역할 바꾸기
+- 📝 **핵심 정리**: 대화 내용 중 중요한 점 메모하기
 
-**데이터 전송**:
-```
-같은 리전 ECS → 무료
-인터넷 → $0.126/GB (첫 10TB)
-```
+### 🎯 전체 공유 (3분)
+- **인사이트 공유**: 페어 토론에서 나온 좋은 아이디어
+- **질문 수집**: 아직 이해가 어려운 부분
+- **다음 연결**: Session 2 (Fargate)와의 연결고리
 
-### ECS 비용
-
-**EC2 Launch Type**:
-```
-EC2 인스턴스 비용만 발생
-ECS 자체는 무료
-
-예: t3.medium 2대
-$0.0416/시간 × 2 × 730시간 = $60.74/월
-```
-
-**Fargate Launch Type**:
-```
-vCPU: $0.04656/vCPU/시간
-메모리: $0.00511/GB/시간
-
-예: 0.25 vCPU + 0.5GB 메모리
-($0.04656 × 0.25 + $0.00511 × 0.5) × 730시간
-= $12.20/월 (1개 Task 24/7 실행)
-```
-
-### 비용 비교 (월간)
-
-| 시나리오 | EC2 | Fargate |
-|---------|-----|---------|
-| **소규모** (2 Task) | $60.74 | $24.40 |
-| **중규모** (10 Task) | $60.74 | $122.00 |
-| **대규모** (50 Task) | $243.00 | $610.00 |
-
-**결론**: 소규모는 Fargate, 대규모는 EC2가 유리
+### 💡 이해도 체크 질문
+- ✅ "ECR과 Docker Hub의 차이점을 설명할 수 있나요?"
+- ✅ "ECS의 Task와 Service의 관계를 이해했나요?"
+- ✅ "Fargate가 무엇인지 예상할 수 있나요?"
 
 ---
 
 ## 🔑 핵심 키워드
 
-- **ECR**: Docker 이미지 저장소 (Private, IAM 통합)
-- **ECS Cluster**: 컨테이너 인스턴스 그룹
-- **Task Definition**: 컨테이너 실행 방법 정의 (JSON)
-- **Task**: 실행 중인 컨테이너 인스턴스
-- **Service**: Task 개수 유지 및 관리
-- **EC2 Launch Type**: 직접 관리 (비용 효율)
-- **Fargate Launch Type**: 서버리스 (운영 간편)
+- **ECR (Elastic Container Registry)**: AWS 관리형 컨테이너 레지스트리
+- **ECS (Elastic Container Service)**: AWS 컨테이너 오케스트레이션 서비스
+- **Task Definition**: 컨테이너 실행 명세 (JSON)
+- **Task**: Task Definition의 실행 인스턴스
+- **Service**: Task의 원하는 개수를 유지하는 관리 단위
+- **Cluster**: 컨테이너 실행 환경의 논리적 그룹
+- **Fargate**: 서버리스 컨테이너 실행 엔진 (Session 2에서 상세 학습)
 
 ---
 
-## 📝 Session 마무리
+## 📝 세션 마무리
 
-### ✅ 오늘 Session 성과
-- [ ] ECR의 역할과 Docker Hub 차이 이해
-- [ ] ECS 아키텍처 (Cluster, Service, Task, Task Definition) 파악
-- [ ] EC2 vs Fargate 비교 및 선택 기준 습득
-- [ ] 비용 구조 이해
+### ✅ 오늘 세션 성과
+- [ ] ECR의 역할과 Docker Hub와의 차이점 이해
+- [ ] ECS의 기본 아키텍처 파악
+- [ ] Task Definition, Service, Cluster의 관계 이해
+- [ ] 비용 구조 및 최적화 방법 학습
 
-### 🎯 다음 Session 준비
-- **Session 2**: Fargate 서버리스 컨테이너 (네트워킹, 로깅)
-- **연계**: Task Definition 작성 및 Fargate 배포
-
-### 🔗 공식 문서 (필수)
-
-**⚠️ 학생들이 직접 확인해야 할 공식 문서**:
-- 📘 [Amazon ECS란?](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html)
-- 📗 [Task Definition 파라미터](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html)
-- 📙 [ECR 사용자 가이드](https://docs.aws.amazon.com/AmazonECR/latest/userguide/)
-- 📕 [ECS 요금](https://aws.amazon.com/ecs/pricing/)
-- 🆕 [ECS 최신 업데이트](https://aws.amazon.com/ecs/whats-new/)
+### 🎯 다음 세션 준비
+- **Session 2: Fargate** - 서버리스 컨테이너 실행
+- **연계 내용**: ECS에서 Fargate를 사용하는 방법
+- **사전 학습**: Fargate가 EC2 기반 ECS와 어떻게 다른지 생각해보기
 
 ---
 
 <div align="center">
 
-**🐳 컨테이너** • **📦 ECR** • **⚙️ ECS** • **🎯 Task Definition**
+**🐳 ECR로 이미지 관리** • **📦 ECS로 컨테이너 오케스트레이션** • **🚀 다음은 Fargate**
 
-*다음: Session 2 - Fargate 서버리스 컨테이너*
+*Session 2에서 서버리스 컨테이너 실행을 배웁니다*
 
 </div>
