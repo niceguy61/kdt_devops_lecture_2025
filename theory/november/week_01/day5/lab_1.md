@@ -440,7 +440,169 @@ AWS Console → EC2 → Security Groups → Create security group
 
 ---
 
-## 🛠️ Step 3: EC2 인스턴스 생성 및 Docker 설치 (20분)
+## 🛠️ Step 3: ACM 인증서 발급 및 DNS 검증 (15분)
+
+### 📋 이 단계에서 할 일
+- ACM 인증서 요청
+- DNS 검증 레코드 추가
+- 인증서 발급 확인
+
+### 🎨 Step 3 다이어그램
+
+```mermaid
+graph TB
+    subgraph "ACM Certificate Request"
+        A[ACM 인증서 요청<br/>example.com<br/>*.example.com]
+        B[DNS 검증 선택]
+        C[CNAME 레코드<br/>자동 생성]
+    end
+    
+    subgraph "Route 53 DNS Validation"
+        D[Route 53<br/>CNAME 레코드 추가]
+        E[DNS 전파<br/>5-10분]
+        F[ACM 검증 완료<br/>Issued 상태]
+    end
+    
+    A --> B --> C --> D --> E --> F
+    
+    style A fill:#fff3e0
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#e3f2fd
+    style F fill:#e8f5e8
+```
+
+**ACM 검증 흐름**:
+```
+1. ACM 인증서 요청 (example.com, *.example.com)
+2. DNS 검증 선택
+3. CNAME 레코드 자동 생성
+4. Route 53에 CNAME 추가 (자동 또는 수동)
+5. DNS 전파 대기 (5-10분)
+6. ACM 검증 완료 (Issued)
+```
+
+### 🔗 참조 개념
+- [Session 3: ACM](./session_3.md) - SSL/TLS 인증서, DNS 검증
+
+### 📝 실습 절차
+
+#### 3-1. ACM 인증서 요청
+
+**⚠️ 중요**: ACM은 **us-east-1 (버지니아)** 리전에서 생성해야 ALB에서 사용 가능
+
+**AWS Console 경로**:
+```
+AWS Console → Certificate Manager (us-east-1 리전) → Request certificate
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Certificate type | Request a public certificate | 공개 인증서 |
+| Domain names | example.com<br/>*.example.com | 메인 도메인 + 와일드카드 |
+| Validation method | DNS validation | DNS 검증 (권장) |
+| Key algorithm | RSA 2048 | 기본값 |
+| Tags | Name: week1-day5-acm | 리소스 태그 |
+
+**도메인 입력 예시**:
+```
+Fully qualified domain name:
+- example.com
+- *.example.com
+
+(Add another name to this certificate 클릭하여 추가)
+```
+
+**⚠️ 주의사항**:
+- **와일드카드 인증서**: `*.example.com`으로 모든 서브도메인 커버
+- **DNS 검증 권장**: 이메일 검증보다 자동화 가능
+- **리전 확인**: 반드시 us-east-1에서 생성
+
+#### 3-2. DNS 검증 레코드 확인
+
+**ACM 콘솔에서 CNAME 레코드 확인**:
+```
+Certificate Manager → Certificates → example.com → Domains
+```
+
+**CNAME 레코드 예시**:
+```
+Name: _abc123def456.example.com
+Type: CNAME
+Value: _xyz789ghi012.acm-validations.aws.
+```
+
+**💡 자동 추가 옵션**:
+- "Create records in Route 53" 버튼 클릭 시 자동 추가
+- 수동 추가도 가능 (아래 단계)
+
+#### 3-3. Route 53에 CNAME 레코드 추가
+
+**방법 1: 자동 추가 (권장)**
+```
+ACM 콘솔 → "Create records in Route 53" 버튼 클릭
+→ Route 53에 자동으로 CNAME 추가
+```
+
+**방법 2: 수동 추가**
+
+**AWS Console 경로**:
+```
+AWS Console → Route 53 → Hosted zones → example.com → Create record
+```
+
+**설정 값**:
+| 항목 | 값 |
+|------|-----|
+| Record name | _abc123def456 |
+| Record type | CNAME |
+| Value | _xyz789ghi012.acm-validations.aws. |
+| TTL | 300 |
+
+**⚠️ 주의**: ACM 콘솔에 표시된 정확한 값 복사
+
+#### 3-4. 인증서 발급 확인
+
+**확인 방법**:
+```
+Certificate Manager → Certificates → example.com
+Status: Issued (발급 완료)
+```
+
+**예상 시간**:
+- DNS 전파: 5-10분
+- ACM 검증: 추가 5-10분
+- 총 소요 시간: 10-20분
+
+**확인 명령어**:
+```bash
+# DNS 레코드 확인
+dig CNAME _abc123def456.example.com
+
+# 또는
+nslookup -type=CNAME _abc123def456.example.com
+```
+
+**예상 결과**:
+```
+_abc123def456.example.com. 300 IN CNAME _xyz789ghi012.acm-validations.aws.
+```
+
+### ✅ Step 3 검증
+
+**✅ 체크리스트**:
+- [ ] ACM 인증서 요청 완료 (us-east-1)
+- [ ] 도메인 2개 추가 (example.com, *.example.com)
+- [ ] DNS 검증 CNAME 레코드 추가
+- [ ] 인증서 상태 "Issued" 확인
+
+**💡 Tip**: 인증서 발급 대기 중 다음 Step 진행 가능
+
+---
+
+## 🛠️ Step 4: EC2 인스턴스 생성 및 Docker 설치 (20분)
 
 ### 📋 이 단계에서 할 일
 - EC2 인스턴스 생성
@@ -659,4 +821,654 @@ curl localhost:4000
 - [ ] localhost:4000 API 응답 확인
 
 ---
+
+
+## 🛠️ Step 5: ALB 생성 및 ACM 인증서 연결 (20분)
+
+### 📋 이 단계에서 할 일
+- Target Group 생성
+- Application Load Balancer 생성
+- HTTPS Listener에 ACM 인증서 연결
+- HTTP → HTTPS 리다이렉트 설정
+
+### 🎨 Step 5 다이어그램
+
+```mermaid
+graph TB
+    subgraph "Target Group"
+        A[Target Group 생성<br/>Protocol: HTTP<br/>Port: 3000]
+        B[Health Check<br/>Path: /<br/>Interval: 30s]
+        C[EC2 인스턴스<br/>등록]
+    end
+    
+    subgraph "Application Load Balancer"
+        D[ALB 생성<br/>Internet-facing<br/>2+ AZs]
+        E[HTTPS Listener:443<br/>ACM 인증서 연결]
+        F[HTTP Listener:80<br/>→ HTTPS 리다이렉트]
+    end
+    
+    A --> B --> C --> D --> E --> F
+    
+    style A fill:#fff3e0
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#e8f5e8
+    style F fill:#ffebee
+```
+
+**ALB 구성 흐름**:
+```
+1. Target Group 생성 (HTTP:3000)
+2. Health Check 설정 (Path: /)
+3. EC2 인스턴스 등록
+4. ALB 생성 (Internet-facing, 2+ AZs)
+5. HTTPS Listener 생성 + ACM 인증서 연결
+6. HTTP Listener 생성 + HTTPS 리다이렉트
+```
+
+### 🔗 참조 개념
+- [Session 1: Route 53](./session_1.md) - ALIAS 레코드
+- [Session 3: ACM](./session_3.md) - SSL/TLS 인증서
+
+### 📝 실습 절차
+
+#### 5-1. Target Group 생성
+
+**AWS Console 경로**:
+```
+AWS Console → EC2 → Target Groups → Create target group
+```
+
+**설정 값**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Target type | Instances | EC2 인스턴스 |
+| Target group name | week1-day5-tg | 타겟 그룹 이름 |
+| Protocol | HTTP | HTTP 프로토콜 |
+| Port | 3000 | Frontend 포트 |
+| VPC | Default VPC | VPC 선택 |
+| Protocol version | HTTP1 | HTTP 버전 |
+
+**Health Check 설정**:
+| 항목 | 값 |
+|------|-----|
+| Health check protocol | HTTP |
+| Health check path | / |
+| Health check port | Traffic port |
+| Healthy threshold | 2 |
+| Unhealthy threshold | 2 |
+| Timeout | 5 seconds |
+| Interval | 30 seconds |
+| Success codes | 200 |
+
+**⚠️ 주의사항**:
+- Port는 반드시 **3000** (Frontend 컨테이너 포트)
+- Health check path는 **/** (루트 경로)
+
+#### 5-2. EC2 인스턴스 등록
+
+**Target Group에 EC2 추가**:
+```
+Target Groups → week1-day5-tg → Targets → Register targets
+```
+
+**설정**:
+- EC2 인스턴스 선택: week1-day5-docker-app
+- Port: 3000
+- "Include as pending below" 클릭
+- "Register pending targets" 클릭
+
+**Health Check 확인**:
+```
+Targets 탭에서 Status: healthy 확인 (1-2분 소요)
+```
+
+#### 5-3. Application Load Balancer 생성
+
+**AWS Console 경로**:
+```
+AWS Console → EC2 → Load Balancers → Create load balancer → Application Load Balancer
+```
+
+**기본 설정**:
+| 항목 | 값 |
+|------|-----|
+| Load balancer name | week1-day5-alb |
+| Scheme | Internet-facing |
+| IP address type | IPv4 |
+
+**Network mapping**:
+| 항목 | 값 |
+|------|-----|
+| VPC | Default VPC |
+| Availability Zones | 최소 2개 AZ 선택 |
+
+**⚠️ 중요**: 반드시 2개 이상의 AZ 선택
+
+**Security groups**:
+- week1-day5-alb-sg 선택
+
+
+#### 5-4. HTTPS Listener 생성 및 ACM 인증서 연결 ⭐
+
+**Listeners and routing**:
+
+**HTTPS Listener (443)**:
+| 항목 | 값 |
+|------|-----|
+| Protocol | HTTPS |
+| Port | 443 |
+| Default action | Forward to week1-day5-tg |
+| **Secure listener settings** | |
+| Security policy | ELBSecurityPolicy-2016-08 |
+| **Default SSL/TLS certificate** | **⭐ 중요** |
+| Certificate source | From ACM |
+| Certificate | example.com (발급받은 ACM 인증서 선택) |
+
+**⚠️ 핵심 포인트**:
+- **Certificate source**: "From ACM" 선택
+- **Certificate**: Step 3에서 발급받은 ACM 인증서 선택
+- 인증서 상태가 "Issued"여야 선택 가능
+
+**HTTP Listener (80) - HTTPS 리다이렉트**:
+| 항목 | 값 |
+|------|-----|
+| Protocol | HTTP |
+| Port | 80 |
+| Default action | Redirect to HTTPS |
+| Redirect to | HTTPS |
+| Port | 443 |
+| Status code | 301 - Permanently moved |
+
+**💡 리다이렉트 설정**:
+```
+HTTP:80 → HTTPS:443 (301 Redirect)
+모든 HTTP 요청을 자동으로 HTTPS로 리다이렉트
+```
+
+#### 5-5. ALB 생성 완료 및 확인
+
+**"Create load balancer" 클릭**
+
+**ALB DNS 이름 확인**:
+```
+Load Balancers → week1-day5-alb → DNS name
+예: week1-day5-alb-1234567890.us-east-1.elb.amazonaws.com
+```
+
+**ALB 상태 확인**:
+```
+State: Active (활성화까지 2-3분 소요)
+```
+
+**Target Health 확인**:
+```
+Target Groups → week1-day5-tg → Targets
+Status: healthy
+```
+
+### ✅ Step 5 검증
+
+**✅ 체크리스트**:
+- [ ] Target Group 생성 (HTTP:3000)
+- [ ] EC2 인스턴스 등록 및 healthy 상태
+- [ ] ALB 생성 (Internet-facing, 2+ AZs)
+- [ ] HTTPS Listener 생성 (443)
+- [ ] **ACM 인증서 연결 확인** ⭐
+- [ ] HTTP Listener 생성 (80 → 443 리다이렉트)
+- [ ] ALB 상태 Active 확인
+
+**HTTPS 테스트 (ALB DNS로)**:
+```bash
+# HTTPS 접속 (인증서 경고 무시)
+curl -k https://week1-day5-alb-1234567890.us-east-1.elb.amazonaws.com
+
+# HTTP → HTTPS 리다이렉트 확인
+curl -I http://week1-day5-alb-1234567890.us-east-1.elb.amazonaws.com
+# 예상: 301 Moved Permanently, Location: https://...
+```
+
+---
+
+## 🛠️ Step 6: Route 53 ALIAS 레코드 생성 (10분)
+
+### 📋 이 단계에서 할 일
+- Route 53에 ALIAS 레코드 생성
+- 도메인을 ALB에 연결
+- HTTPS 접속 확인
+
+### 📝 실습 절차
+
+#### 6-1. Route 53 ALIAS 레코드 생성
+
+**AWS Console 경로**:
+```
+AWS Console → Route 53 → Hosted zones → example.com → Create record
+```
+
+**설정 값**:
+| 항목 | 값 |
+|------|-----|
+| Record name | (비워둠 - 루트 도메인) |
+| Record type | A - IPv4 address |
+| **Alias** | ✅ 체크 |
+| Route traffic to | Alias to Application and Classic Load Balancer |
+| Region | us-east-1 |
+| Load balancer | week1-day5-alb |
+| Routing policy | Simple routing |
+| Evaluate target health | No |
+
+**⚠️ 주의사항**:
+- **Alias 반드시 체크**: ALIAS 레코드는 무료
+- **Load balancer 선택**: Step 5에서 생성한 ALB
+- **Region 확인**: ALB가 생성된 리전
+
+#### 6-2. DNS 전파 확인
+
+**확인 명령어**:
+```bash
+# DNS 조회
+dig example.com
+
+# 또는
+nslookup example.com
+```
+
+**예상 결과**:
+```
+example.com.  60  IN  A  52.1.2.3
+example.com.  60  IN  A  52.4.5.6
+(ALB의 IP 주소들)
+```
+
+#### 6-3. HTTPS 웹사이트 접속
+
+**브라우저에서 접속**:
+```
+https://example.com
+```
+
+**예상 결과**:
+- ✅ HTTPS 연결 성공 (자물쇠 아이콘)
+- ✅ 인증서 유효 (ACM 인증서)
+- ✅ "Lab 1 Success!" 페이지 표시
+- ✅ Protocol: https:
+- ✅ Domain: example.com
+
+**HTTP 리다이렉트 확인**:
+```
+http://example.com
+→ 자동으로 https://example.com 으로 리다이렉트
+```
+
+### ✅ Step 6 검증
+
+**✅ 체크리스트**:
+- [ ] Route 53 ALIAS 레코드 생성
+- [ ] DNS 전파 확인 (dig/nslookup)
+- [ ] HTTPS 접속 성공 (https://example.com)
+- [ ] 인증서 유효 확인 (브라우저 자물쇠)
+- [ ] HTTP → HTTPS 리다이렉트 확인
+- [ ] 웹페이지 정상 표시
+
+---
+
+## 🎉 전체 시스템 테스트
+
+### 📋 테스트 시나리오
+
+#### 테스트 1: HTTPS 연결 확인
+```bash
+curl -v https://example.com
+```
+
+**확인 사항**:
+- SSL/TLS 핸드셰이크 성공
+- ACM 인증서 사용 확인
+- HTTP/1.1 200 OK
+
+#### 테스트 2: HTTP → HTTPS 리다이렉트
+```bash
+curl -I http://example.com
+```
+
+**예상 결과**:
+```
+HTTP/1.1 301 Moved Permanently
+Location: https://example.com/
+```
+
+#### 테스트 3: 인증서 정보 확인
+```bash
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+**확인 사항**:
+- Issuer: Amazon
+- Subject: example.com
+- Validity: 유효 기간 확인
+
+### ✅ 최종 검증 체크리스트
+
+**인프라 구성**:
+- [ ] Route 53 호스팅 존 생성
+- [ ] ACM 인증서 발급 (DNS 검증)
+- [ ] VPC 및 Security Groups 설정
+- [ ] EC2 Docker Compose 앱 실행
+- [ ] Target Group 및 ALB 생성
+- [ ] HTTPS Listener + ACM 연결
+- [ ] Route 53 ALIAS 레코드
+
+**기능 테스트**:
+- [ ] https://example.com 접속 성공
+- [ ] HTTPS 인증서 유효
+- [ ] HTTP → HTTPS 리다이렉트
+- [ ] 웹페이지 정상 표시
+- [ ] Protocol: https:// 확인
+
+**보안 확인**:
+- [ ] SSL/TLS 암호화 적용
+- [ ] ACM 인증서 자동 갱신 설정
+- [ ] Security Groups 최소 권한
+- [ ] HTTP 접속 차단 (리다이렉트)
+
+---
+
+
+## 🧹 리소스 정리 (10분)
+
+### ⚠️ 중요: 반드시 순서대로 삭제
+
+**삭제 순서** (역순으로):
+```
+Step 6 → Step 5 → Step 4 → Step 3 → Step 2 → Step 1
+```
+
+### 🗑️ 삭제 절차
+
+#### 1. Route 53 ALIAS 레코드 삭제
+```
+Route 53 → Hosted zones → example.com → A 레코드 선택 → Delete
+```
+
+#### 2. ALB 삭제
+```
+EC2 → Load Balancers → week1-day5-alb → Actions → Delete
+```
+
+**⚠️ 주의**: ALB 삭제 전 ALIAS 레코드 먼저 삭제
+
+#### 3. Target Group 삭제
+```
+EC2 → Target Groups → week1-day5-tg → Actions → Delete
+```
+
+#### 4. EC2 인스턴스 종료
+```
+EC2 → Instances → week1-day5-docker-app → Instance state → Terminate
+```
+
+#### 5. ACM 인증서 삭제
+```
+Certificate Manager (us-east-1) → example.com → Actions → Delete
+```
+
+**⚠️ 주의**: ALB가 사용 중이면 삭제 불가 (ALB 먼저 삭제)
+
+#### 6. Route 53 CNAME 레코드 삭제 (ACM 검증용)
+```
+Route 53 → Hosted zones → example.com → CNAME 레코드 선택 → Delete
+```
+
+#### 7. Security Groups 삭제
+```
+EC2 → Security Groups → week1-day5-alb-sg → Actions → Delete
+EC2 → Security Groups → week1-day5-ec2-sg → Actions → Delete
+```
+
+**⚠️ 주의**: EC2 종료 후 삭제 가능
+
+#### 8. Route 53 호스팅 존 삭제 (선택사항)
+```
+Route 53 → Hosted zones → example.com → Delete hosted zone
+```
+
+**⚠️ 주의**: 
+- 호스팅 존 삭제 시 도메인 DNS 작동 중지
+- 기존 도메인 사용 시 네임서버를 원래대로 복구 필요
+
+### ✅ 정리 완료 확인
+
+**확인 명령어**:
+```bash
+# ALB 삭제 확인
+aws elbv2 describe-load-balancers --names week1-day5-alb
+# 예상: LoadBalancerNotFoundException
+
+# EC2 종료 확인
+aws ec2 describe-instances --filters "Name=tag:Name,Values=week1-day5-docker-app"
+# 예상: State: terminated
+
+# ACM 인증서 삭제 확인
+aws acm list-certificates --region us-east-1
+# 예상: example.com 인증서 없음
+```
+
+**✅ 최종 체크리스트**:
+- [ ] Route 53 ALIAS 레코드 삭제
+- [ ] ALB 삭제
+- [ ] Target Group 삭제
+- [ ] EC2 인스턴스 종료
+- [ ] ACM 인증서 삭제
+- [ ] Route 53 CNAME 레코드 삭제
+- [ ] Security Groups 삭제
+- [ ] Route 53 호스팅 존 삭제 (선택)
+
+---
+
+## 💰 비용 확인
+
+### 실제 비용 계산 (2시간 기준)
+
+| 리소스 | 사용 시간 | 단가 | 실제 비용 |
+|--------|----------|------|-----------|
+| Route 53 Hosted Zone | 1개월 | $0.50/월 | $0.50 |
+| Route 53 ALIAS Queries | 무료 | $0 | $0 |
+| ACM Certificate | 무료 | $0 | $0 |
+| ALB | 2시간 | $0.0225/hour | $0.05 |
+| ALB Data Processing | 1GB | $0.008/GB | $0.01 |
+| EC2 t3.micro | 2시간 | $0.0104/hour | $0.02 |
+| EBS 8GB | 2시간 | $0.10/month | $0.01 |
+| **합계** | | | **$0.59** |
+
+**💡 비용 절감 포인트**:
+- ✅ ACM 인증서: **무료** (상용 CA 대비 $200-500/년 절감)
+- ✅ Route 53 ALIAS: **무료** (CNAME 대비 쿼리 비용 절감)
+- ✅ ACM 자동 갱신: **무료** (수동 갱신 작업 불필요)
+
+### 실제 비용 확인
+
+**AWS Console 경로**:
+```
+AWS Console → Cost Explorer → Cost & Usage
+```
+
+**필터 설정**:
+- Time range: Last 7 days
+- Granularity: Daily
+- Group by: Service
+
+---
+
+## 🔍 트러블슈팅
+
+### 문제 1: ACM 인증서가 "Pending validation" 상태
+
+**증상**:
+- 인증서 상태가 계속 "Pending validation"
+- 10분 이상 대기해도 "Issued"로 변경 안 됨
+
+**원인**:
+- Route 53 CNAME 레코드 미추가
+- CNAME 값 오타
+- DNS 전파 지연
+
+**해결 방법**:
+```bash
+# 1. CNAME 레코드 확인
+dig CNAME _abc123def456.example.com
+
+# 2. Route 53에서 CNAME 재확인
+Route 53 → Hosted zones → example.com → CNAME 레코드
+
+# 3. ACM 콘솔에서 "Create records in Route 53" 재시도
+Certificate Manager → example.com → Create records in Route 53
+```
+
+### 문제 2: ALB에서 ACM 인증서 선택 불가
+
+**증상**:
+- HTTPS Listener 생성 시 인증서 목록에 없음
+- "No certificates available" 메시지
+
+**원인**:
+- ACM 인증서가 다른 리전에 생성됨
+- 인증서 상태가 "Issued"가 아님
+
+**해결 방법**:
+```bash
+# 1. ACM 리전 확인
+Certificate Manager → 리전 확인 (us-east-1이어야 함)
+
+# 2. 인증서 상태 확인
+Certificate Manager → example.com → Status: Issued
+
+# 3. 다른 리전에 생성된 경우
+- us-east-1에서 새로 인증서 요청
+- DNS 검증 다시 진행
+```
+
+### 문제 3: HTTPS 접속 시 "Your connection is not private" 경고
+
+**증상**:
+- 브라우저에서 인증서 경고
+- NET::ERR_CERT_COMMON_NAME_INVALID
+
+**원인**:
+- Route 53 ALIAS 레코드 미생성
+- 도메인과 인증서 불일치
+- DNS 전파 미완료
+
+**해결 방법**:
+```bash
+# 1. DNS 확인
+dig example.com
+# ALB IP가 나와야 함
+
+# 2. 인증서 도메인 확인
+openssl s_client -connect example.com:443 -servername example.com
+# Subject: example.com 확인
+
+# 3. Route 53 ALIAS 레코드 재확인
+Route 53 → Hosted zones → example.com → A 레코드 (ALIAS)
+```
+
+### 문제 4: HTTP → HTTPS 리다이렉트 안 됨
+
+**증상**:
+- http://example.com 접속 시 HTTPS로 리다이렉트 안 됨
+- HTTP로 계속 접속됨
+
+**원인**:
+- ALB HTTP Listener 리다이렉트 설정 누락
+- Security Group에서 80 포트 차단
+
+**해결 방법**:
+```bash
+# 1. ALB Listener 확인
+Load Balancers → week1-day5-alb → Listeners
+HTTP:80 → Redirect to HTTPS:443 확인
+
+# 2. Security Group 확인
+Security Groups → week1-day5-alb-sg
+Inbound: 80, 443 모두 허용 확인
+
+# 3. 리다이렉트 테스트
+curl -I http://example.com
+# 예상: 301 Moved Permanently
+```
+
+---
+
+## 💡 Lab 회고
+
+### 🤝 페어 회고 (5분)
+1. **가장 어려웠던 부분**: 
+   - ACM DNS 검증 과정
+   - ALB HTTPS Listener 설정
+   - Route 53 ALIAS 레코드 이해
+
+2. **새로 배운 점**:
+   - ACM 무료 인증서 발급 방법
+   - DNS 검증 vs 이메일 검증
+   - ALB SSL/TLS 종료 개념
+   - Route 53 ALIAS 레코드 장점
+
+3. **실무 적용 아이디어**:
+   - 모든 웹사이트 HTTPS 필수 적용
+   - ACM 자동 갱신으로 운영 부담 감소
+   - ALB로 SSL/TLS 중앙 관리
+   - Route 53 ALIAS로 비용 절감
+
+### 📊 학습 성과
+- **기술적 성취**: 
+  - Route 53 + ACM + ALB 통합 구성
+  - HTTPS 웹사이트 완전 배포
+  - DNS 검증 프로세스 이해
+  - SSL/TLS 종료 개념 습득
+
+- **실무 역량**: 
+  - 프로덕션급 HTTPS 설정
+  - 보안 인증서 관리
+  - 로드밸런서 운영
+  - DNS 관리 능력
+
+- **비용 최적화**: 
+  - ACM 무료 인증서 활용 ($200-500/년 절감)
+  - Route 53 ALIAS 무료 쿼리
+  - 자동 갱신으로 운영 비용 절감
+
+### 🔗 다음 Lab 준비
+- **Lab 2**: CloudFront + S3 정적 웹사이트 (선택)
+- **연계 내용**: 
+  - CloudFront에서도 ACM 인증서 사용
+  - 글로벌 CDN으로 성능 향상
+  - S3 Origin으로 비용 절감
+
+---
+
+## 📚 참고 자료
+
+### 📖 AWS 공식 문서
+- [Route 53 사용자 가이드](https://docs.aws.amazon.com/route53/)
+- [ACM 사용자 가이드](https://docs.aws.amazon.com/acm/)
+- [ALB 사용자 가이드](https://docs.aws.amazon.com/elasticloadbalancing/)
+- [Route 53 요금](https://aws.amazon.com/route53/pricing/)
+- [ACM 요금](https://aws.amazon.com/certificate-manager/pricing/) (무료)
+
+### 🎯 추가 학습 자료
+- [SSL/TLS 작동 원리](https://www.cloudflare.com/learning/ssl/what-is-ssl/)
+- [DNS 검증 vs 이메일 검증](https://docs.aws.amazon.com/acm/latest/userguide/dns-validation.html)
+- [ALB SSL/TLS 종료](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html)
+
+---
+
+<div align="center">
+
+**✅ Lab 완료** • **🔒 HTTPS 보안** • **💰 비용 절감** • **🚀 프로덕션 준비**
+
+*Route 53 + ACM + ALB로 완전한 HTTPS 웹 서비스 구축 완료!*
+
+</div>
 
