@@ -124,6 +124,13 @@ AWS Console → SQS → Create queue
 - **Name**: 나중에 찾기 쉽게 이름 붙이기
 - **dlq**: "Dead Letter Queue"의 줄임말 (실패 보관함)
 
+**⚠️ 중요 규칙**:
+- **타입 매칭 필수**: DLQ 타입은 원본 큐와 동일해야 해요
+  - Standard Queue → Standard DLQ ✅
+  - FIFO Queue → FIFO DLQ ✅
+  - Standard Queue → FIFO DLQ ❌ (안 됨!)
+- 우리는 Standard Queue를 쓸 거니까 DLQ도 Standard로 만들어요
+
 **반복**: 똑같은 방법으로 2개 더 만들기
 - `inventory-dlq` (재고 실패 보관함)
 - `analytics-dlq` (분석 실패 보관함)
@@ -174,6 +181,12 @@ AWS Console → SQS → Create queue
 - 3번 시도: 실패 (또또 없음)
 → 3번 실패하면 "실패 보관함"으로 이동!
 ```
+
+**💡 AWS 권장사항**:
+- **3번은 학습용 설정**: 빠르게 DLQ 동작을 확인하기 위함
+- **실무에서는 5-10번 권장**: 일시적 오류(네트워크 지연 등)를 견딜 수 있도록
+- **1번은 절대 금지**: 한 번 실패로 DLQ 이동 (at-least-once delivery 특성상 위험)
+- **너무 높으면**: 문제 있는 메시지가 계속 재시도되어 시스템 부하 증가
 
 **그림으로 보기**:
 ```mermaid
@@ -602,6 +615,30 @@ graph TB
 
 ### Step 2-3: SQS Access Policy 설정 (5분)
 
+**🏠 비유**: SNS 방송국에게 우체통 열쇠 주기
+
+**🤔 왜 필요한가요?**
+
+**지금 상황**:
+```
+SNS: "메시지 보낼게요!"
+SQS: "누구세요? 열쇠 있어요?"
+SNS: "없어요..."
+SQS: "그럼 못 넣어요!" 🔒
+```
+
+**해결 방법**:
+```
+1. SQS에 "Access Policy" 설정
+2. "SNS는 메시지 넣어도 돼요" 허가
+3. SNS가 메시지 넣을 수 있게 됨 ✅
+```
+
+**⚠️ 매우 중요**: 이 단계를 건너뛰면 메시지가 전달되지 않아요!
+- AWS Console에서는 자동으로 설정되기도 하지만
+- 수동으로 확인하고 설정하는 게 안전해요
+- 실무에서 가장 많이 실수하는 부분이에요!
+
 **각 Queue에 SNS 전송 권한 부여**:
 
 ```
@@ -614,15 +651,15 @@ SQS → email-queue → Access policy → Edit
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Effect": "Allow",
+      "Effect": "Allow",                    // 허가해요
       "Principal": {
-        "Service": "sns.amazonaws.com"
+        "Service": "sns.amazonaws.com"      // SNS 서비스에게
       },
-      "Action": "sqs:SendMessage",
-      "Resource": "arn:aws:sqs:ap-northeast-2:YOUR_ACCOUNT_ID:email-queue",
+      "Action": "sqs:SendMessage",          // 메시지 보내기 권한
+      "Resource": "arn:aws:sqs:ap-northeast-2:YOUR_ACCOUNT_ID:email-queue",  // 이 큐에
       "Condition": {
         "ArnEquals": {
-          "aws:SourceArn": "arn:aws:sns:ap-northeast-2:YOUR_ACCOUNT_ID:order-completed"
+          "aws:SourceArn": "arn:aws:sns:ap-northeast-2:YOUR_ACCOUNT_ID:order-completed"  // 이 Topic에서만
         }
       }
     }
@@ -630,7 +667,43 @@ SQS → email-queue → Access policy → Edit
 }
 ```
 
+**💡 Policy 한 줄씩 이해하기**:
+```json
+"Effect": "Allow"
+→ "허가해요" (Deny면 거부)
+
+"Principal": {"Service": "sns.amazonaws.com"}
+→ "SNS 서비스에게" (누구한테 허가?)
+
+"Action": "sqs:SendMessage"
+→ "메시지 보내기 권한" (뭘 할 수 있게?)
+
+"Resource": "arn:aws:sqs:...:email-queue"
+→ "이 큐에" (어디에?)
+
+"Condition": {"ArnEquals": {"aws:SourceArn": "..."}}
+→ "특정 Topic에서만" (보안 강화!)
+```
+
+**⚠️ 보안 주의사항**:
+- **Condition 필수**: 특정 SNS Topic만 허용 (다른 Topic은 차단)
+- **최소 권한 원칙**: SendMessage만 허용 (DeleteMessage 등은 불허)
+- **Cross-account 주의**: 다른 AWS 계정의 SNS는 별도 설정 필요
+
 **반복**: `inventory-queue`, `analytics-queue` 동일하게 설정
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    SNS[SNS 방송국<br/>🔑 열쇠 받음] -->|이제 넣을 수 있어요| Q1[email-queue<br/>🔓 열림]
+    SNS -->|이제 넣을 수 있어요| Q2[inventory-queue<br/>🔓 열림]
+    SNS -->|이제 넣을 수 있어요| Q3[analytics-queue<br/>🔓 열림]
+    
+    style SNS fill:#e8f5e8
+    style Q1 fill:#e8f5e8
+    style Q2 fill:#e8f5e8
+    style Q3 fill:#e8f5e8
+```
 
 ### Step 2-4: Lambda Producer 수정 (5분)
 
