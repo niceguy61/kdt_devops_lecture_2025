@@ -2,843 +2,471 @@
 
 <div align="center">
 
-**🚪 문지기** • **🔐 신분증 확인** • **📞 전화 교환원**
+**🚪 API 관리** • **🔐 인증/인가** • **⚡ 서버리스 통합**
 
-*Lambda 함수를 인터넷에서 사용할 수 있게 해주는 문지기*
+*RESTful API를 생성, 배포, 관리하는 완전 관리형 서비스*
 
 </div>
 
 ---
 
-## 🕘 Session 정보
-**시간**: 09:00-09:40 (40분)
-**목표**: API Gateway가 뭔지, 왜 필요한지 쉽게 이해하기
-**방식**: 실생활 비유 + 그림 + 간단한 예시
+## 🕘 세션 정보
+**시간**: 09:00-09:50 (50분)
+**목표**: AWS API Gateway의 핵심 개념과 Lambda 통합 방법 이해
+**방식**: 개념 설명 + 실무 사례 + 아키텍처 패턴
 
 ## 🎯 학습 목표
-
-### 📚 이해 목표
-- API Gateway가 뭔지 알기 (문지기 같은 거!)
-- 왜 필요한지 이해하기 (Lambda를 인터넷에 연결)
-- 두 가지 종류 알기 (기능 많은 것 vs 저렴한 것)
-- Lambda와 어떻게 연결되는지 알기
-
-### 🛠️ 적용 목표
-- 언제 사용하면 좋을지 판단하기
-- 어떤 종류를 선택할지 알기
-- Lambda와 연결하는 방법 알기
+- API Gateway의 생성 배경과 필요성 이해
+- REST API와 HTTP API의 차이점 파악
+- Lambda 통합 방식 (Proxy vs Custom) 이해
+- 인증/인가 메커니즘 (API Key, IAM, Cognito, Lambda Authorizer) 습득
+- 비용 구조와 최적화 방법 학습
 
 ---
 
-## 🤔 왜 필요한가? (5분)
+## 📖 서비스 개요
 
-### 🏠 실생활 비유 1: 아파트 경비실
+### 1. 생성 배경 (Why?) - 5분
 
-**경비실 없이 방문하기** (위험해요):
-```
-외부 사람 → 바로 집 문 두드리기
-    ↓
-문제점:
-- 누가 오는지 모름 😱
-- 위험한 사람도 올 수 있음
-- 몇 명이 왔는지 기록 없음
-```
+**문제 상황**:
+- **API 관리의 복잡성**: 버전 관리, 배포, 모니터링을 직접 구현 필요
+- **인증/인가 구현 어려움**: 보안 메커니즘을 매번 새로 개발
+- **트래픽 관리 부재**: Rate limiting, Throttling 직접 구현
+- **확장성 문제**: 트래픽 증가 시 서버 확장 필요
 
-**경비실 있는 아파트** (안전해요):
-```
-외부 사람 → 경비실 (신분증 확인)
-    ↓
-1. 신분증 확인 (인증)
-2. 방문 목적 확인 (인가)
-3. 방문 기록 작성 (로그)
-4. 집으로 안내
-    ↓
-안전하고 기록도 남아요 ✅
-```
+**AWS API Gateway 솔루션**:
+- **완전 관리형**: API 생명주기 전체 관리
+- **내장 인증**: API Key, IAM, Cognito, Lambda Authorizer 지원
+- **자동 확장**: 트래픽에 따라 자동으로 확장
+- **서버리스 통합**: Lambda와 완벽한 통합
 
-### 🏠 실생활 비유 2: 전화 교환원
+### 2. 핵심 원리 (How?) - 10분
 
-**옛날 전화 (교환원 있음)**:
-```
-전화 걸기 → 교환원 → "몇 번으로 연결해드릴까요?"
-    ↓
-교환원이 하는 일:
-- 전화번호 확인
-- 연결해주기
-- 통화 기록
-- 잘못된 번호 차단
-```
+**API Gateway 작동 원리**:
 
-**API Gateway = 전화 교환원**:
-```
-인터넷 요청 → API Gateway → "어느 Lambda로 연결할까요?"
-    ↓
-API Gateway가 하는 일:
-- 신분 확인 (로그인했나요?)
-- Lambda 연결해주기
-- 요청 기록
-- 이상한 요청 차단
-```
-
-### 💼 실제 예시: Lambda 함수 사용하기
-
-**문제 상황 - Lambda만 있을 때**:
-```
-Lambda 함수 (주문 처리 코드)
-    ↓
-어떻게 인터넷에서 사용할까?
-- Lambda는 AWS 안에만 있어요
-- 인터넷에서 직접 접근 불가
-- URL이 없어요
-- 누가 사용하는지 확인 불가
-```
-
-**해결 - API Gateway 사용**:
-```
-인터넷 → API Gateway (문지기) → Lambda 함수
-         ↓
-API Gateway가 해주는 일:
-1. URL 만들어주기 (https://xxx.amazonaws.com/prod/order)
-2. 신분 확인 (로그인한 사람만)
-3. Lambda 연결해주기
-4. 기록 남기기
-```
-
-**그림으로 보기**:
-```mermaid
-graph TB
-    subgraph "Lambda만 있을 때 (사용 불가)"
-        A1[인터넷] -.->|접근 불가| A2[Lambda<br/>AWS 안에만 있음]
-    end
-    
-    subgraph "API Gateway 사용 (사용 가능)"
-        B1[인터넷] -->|URL로 접근| B2[API Gateway<br/>문지기]
-        B2 -->|신분 확인 후| B3[Lambda<br/>주문 처리]
-    end
-    
-    style A1 fill:#ffebee
-    style A2 fill:#ffebee
-    style B1 fill:#e3f2fd
-    style B2 fill:#fff3e0
-    style B3 fill:#e8f5e8
-```
-
-### 🎯 API Gateway의 역할
-
-1. **문 만들어주기**: Lambda에 URL 주소 만들기
-2. **신분 확인**: 로그인한 사람만 들어오게
-3. **교통 정리**: 너무 많은 요청 막기
-4. **기록 남기기**: 누가 언제 왔는지 기록
-
----
-
-## 📖 핵심 개념 (30분)
-
-### 🔍 개념 1: API Gateway가 뭔가요? (10분)
-
-> **쉽게 말하면**: Lambda 함수를 인터넷에서 사용할 수 있게 해주는 "문지기"
-
-**등장인물**:
-- **사용자**: 인터넷에서 요청하는 사람 (웹사이트, 앱)
-- **API Gateway**: 문지기 (신분 확인, 안내)
-- **Lambda 함수**: 일하는 로봇 (주문 처리, 계산 등)
-
-**어떻게 작동하나요?**:
-```mermaid
-sequenceDiagram
-    participant 사용자
-    participant 문지기
-    participant Lambda로봇
-    
-    사용자->>문지기: 1. 주문하고 싶어요!
-    문지기->>문지기: 2. 신분증 확인
-    문지기->>Lambda로봇: 3. 주문 처리해주세요
-    Lambda로봇->>Lambda로봇: 4. 주문 처리 중...
-    Lambda로봇->>문지기: 5. 처리 완료!
-    문지기->>사용자: 6. 주문 완료되었어요
-```
-
-**실생활 예시**:
-```
-놀이공원 입구:
-1. 사람들: 놀이공원 가고 싶어요 (사용자)
-2. 입구 직원: 티켓 확인해요 (API Gateway)
-3. 놀이기구: 사람들이 탑니다 (Lambda)
-```
-
-**API Gateway가 하는 일**:
-
-**1. URL 주소 만들기** (문 만들기):
-```
-Lambda만 있을 때:
-- 주소 없음 ❌
-- 인터넷에서 접근 불가
-
-API Gateway 추가하면:
-- https://abc123.execute-api.ap-northeast-2.amazonaws.com/prod/order
-- 이 주소로 접근 가능 ✅
-```
-
-**2. 신분 확인하기** (경비):
-```
-누가 왔나요?
-- 로그인한 사람? ✅ 들어오세요
-- 로그인 안 한 사람? ❌ 안 돼요
-```
-
-**3. Lambda 연결하기** (안내):
-```
-어디로 갈까요?
-- /order → 주문 Lambda
-- /payment → 결제 Lambda
-- /user → 사용자 Lambda
-```
-
-**4. 기록 남기기** (방명록):
-```
-누가 언제 왔나요?
-- 2024-11-07 15:00 - 홍길동 - 주문
-- 2024-11-07 15:01 - 김철수 - 결제
-```
-
-**그림으로 보기**:
-```mermaid
-graph TB
-    User[사용자<br/>웹/앱] --> APIGW[API Gateway<br/>문지기]
-    
-    APIGW --> Check{신분증<br/>확인}
-    Check -->|있어요| Route[어디로<br/>갈까요?]
-    Check -->|없어요| Reject[❌ 안 돼요]
-    
-    Route --> L1[Lambda 1<br/>주문]
-    Route --> L2[Lambda 2<br/>결제]
-    Route --> L3[Lambda 3<br/>사용자]
-    
-    L1 --> Response[결과<br/>돌려주기]
-    L2 --> Response
-    L3 --> Response
-    
-    Response --> User
-    
-    style User fill:#e3f2fd
-    style APIGW fill:#fff3e0
-    style Check fill:#f3e5f5
-    style L1 fill:#e8f5e8
-    style L2 fill:#e8f5e8
-    style L3 fill:#e8f5e8
-```
-
-### 🔍 개념 2: 두 가지 종류 (10분)
-
-> **쉽게 말하면**: 기능 많은 것 vs 저렴한 것
-
-#### 종류 1: REST API (기능 많음)
-
-**특징**:
-- 🎁 **기능이 많아요**: 여러 가지 할 수 있어요
-- 💰 **조금 비싸요**: 기능이 많으니까요
-- 🏢 **회사에서 많이 써요**: 안전하고 기능 많아서
-
-**할 수 있는 일**:
-- API Key로 관리 (누가 얼마나 쓰는지)
-- 캐싱 (빠르게 응답)
-- 복잡한 인증 (여러 방법으로 확인)
-
-**언제 사용하나요?**:
-- 큰 회사 시스템
-- 보안이 중요할 때
-- 많은 기능이 필요할 때
-
-**비유**:
-```
-고급 아파트:
-- 경비실 24시간 (API Key 관리)
-- CCTV 많음 (모니터링)
-- 주차장 넓음 (캐싱)
-→ 관리비 비싸지만 편해요
-```
-
-#### 종류 2: HTTP API (저렴함)
-
-**특징**:
-- 💵 **엄청 저렴해요**: REST API보다 70% 싸요!
-- ⚡ **빨라요**: 기능이 적어서 빠름
-- 🎯 **간단해요**: 복잡한 기능 없음
-
-**할 수 있는 일**:
-- Lambda 연결 (기본)
-- 로그인 확인 (기본)
-- 빠른 응답
-
-**언제 사용하나요?**:
-- 작은 프로젝트
-- 비용 절약하고 싶을 때
-- 간단한 API면 충분할 때
-
-**비유**:
-```
-원룸:
-- 경비 없음 (기본 기능만)
-- 주차 제한적
-- 관리비 저렴
-→ 저렴하고 간단해요
-```
-
-#### 비교표 (쉽게 이해하기)
-
-| 비교 | REST API<br/>(고급 아파트) | HTTP API<br/>(원룸) |
-|------|---------------------------|---------------------|
-| **가격** | 비싸요 💰💰💰 | 저렴해요 💰 |
-| **기능** | 많아요 🎁🎁🎁 | 기본만 🎁 |
-| **속도** | 보통 🚗 | 빨라요 🚀 |
-| **사용** | 큰 회사 🏢 | 작은 프로젝트 🏠 |
-
-**그림으로 보기**:
-```mermaid
-graph TB
-    subgraph "REST API (기능 많음)"
-        R1[API Key 관리]
-        R2[캐싱]
-        R3[복잡한 인증]
-        R4[많은 설정]
-    end
-    
-    subgraph "HTTP API (간단함)"
-        H1[Lambda 연결]
-        H2[기본 인증]
-        H3[빠른 속도]
-    end
-    
-    R1 --> Cost1[비용: 💰💰💰]
-    H1 --> Cost2[비용: 💰]
-    
-    style R1 fill:#fff3e0
-    style R2 fill:#fff3e0
-    style R3 fill:#fff3e0
-    style R4 fill:#fff3e0
-    style H1 fill:#e8f5e8
-    style H2 fill:#e8f5e8
-    style H3 fill:#e8f5e8
-    style Cost1 fill:#ffebee
-    style Cost2 fill:#e8f5e8
-```
-
-### 🔍 개념 3: Lambda와 연결하기 (10분)
-
-> **쉽게 말하면**: 문지기(API Gateway)와 일꾼(Lambda)을 연결하기
-
-**연결 과정**:
-
-**Step 1: Lambda 함수 만들기** (일꾼 고용):
-```python
-# Lambda 함수 (주문 처리 로봇)
-def lambda_handler(event, context):
-    # 주문 정보 받기
-    order = event['body']
-    
-    # 주문 처리하기
-    result = "주문 완료!"
-    
-    # 결과 돌려주기
-    return {
-        'statusCode': 200,
-        'body': result
-    }
-```
-
-**Step 2: API Gateway 만들기** (문지기 배치):
-```
-AWS Console → API Gateway → Create API
-    ↓
-HTTP API 선택 (저렴한 것)
-    ↓
-이름: my-order-api
-```
-
-**Step 3: Lambda 연결하기** (일꾼과 문지기 연결):
-```
-API Gateway → Routes → Create
-    ↓
-경로: POST /order
-    ↓
-연결: Lambda 함수 선택
-```
-
-**완성!**:
-```
-이제 사용할 수 있어요:
-https://abc123.execute-api.ap-northeast-2.amazonaws.com/order
-    ↓
-이 주소로 주문하면
-    ↓
-Lambda가 자동으로 처리해요!
-```
-
-**그림으로 보기**:
 ```mermaid
 graph LR
-    A[1. Lambda<br/>만들기] --> B[2. API Gateway<br/>만들기]
-    B --> C[3. 연결하기]
-    C --> D[4. 완성!<br/>URL 생성]
+    subgraph "Client"
+        C[Mobile/Web App]
+    end
     
-    D --> E[사용자가<br/>URL로 접근]
-    E --> F[Lambda가<br/>자동 실행]
+    subgraph "API Gateway"
+        AG[API Gateway]
+        
+        subgraph "Features"
+            AUTH[인증/인가]
+            CACHE[캐싱]
+            THROTTLE[Rate Limiting]
+            TRANSFORM[요청/응답 변환]
+        end
+    end
     
-    style A fill:#e8f5e8
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#e3f2fd
-    style E fill:#ffebee
-    style F fill:#e8f5e8
+    subgraph "Backend"
+        L[Lambda Function]
+        EC2[EC2/ECS]
+        HTTP[HTTP Endpoint]
+    end
+    
+    C --> AG
+    AG --> AUTH
+    AUTH --> CACHE
+    CACHE --> THROTTLE
+    THROTTLE --> TRANSFORM
+    
+    TRANSFORM --> L
+    TRANSFORM --> EC2
+    TRANSFORM --> HTTP
+    
+    style AG fill:#fff3e0
+    style AUTH fill:#e8f5e8
+    style CACHE fill:#e8f5e8
+    style THROTTLE fill:#e8f5e8
+    style TRANSFORM fill:#e8f5e8
 ```
 
-**주요 기능**:
-1. **API 생성 및 배포**: REST/HTTP/WebSocket API 지원
-2. **백엔드 통합**: Lambda, HTTP 엔드포인트, AWS 서비스
-3. **인증/인가**: API Key, IAM, Cognito, Lambda Authorizer
-4. **트래픽 관리**: Throttling, Rate Limiting, Caching
-5. **모니터링**: CloudWatch 자동 통합
+**핵심 구성 요소**:
 
-**API Gateway 아키텍처**:
+1. **API (Application Programming Interface)**:
+   - REST API: 완전한 기능, 높은 비용
+   - HTTP API: 기본 기능, 저렴한 비용
+   - WebSocket API: 양방향 통신
 
-![API Gateway Architecture](./generated-diagrams/api_gateway_architecture.png)
+2. **Resource (리소스)**:
+   - API의 경로 (예: /users, /orders)
+   - 계층 구조 지원 (예: /users/{id}/orders)
 
-*그림: API Gateway 기본 아키텍처 - 클라이언트 요청을 Lambda 함수로 라우팅하고 DynamoDB와 연동*
+3. **Method (메서드)**:
+   - HTTP 메서드 (GET, POST, PUT, DELETE 등)
+   - 각 리소스에 여러 메서드 정의 가능
 
-**상세 흐름**:
+4. **Integration (통합)**:
+   - Lambda Function
+   - HTTP Endpoint
+   - AWS Service (DynamoDB, S3 등)
 
+**요청 처리 흐름**:
 ```mermaid
-graph TB
-    Client[클라이언트<br/>웹/모바일] --> APIGW[API Gateway]
+sequenceDiagram
+    participant C as Client
+    participant AG as API Gateway
+    participant AUTH as Authorizer
+    participant L as Lambda
     
-    APIGW --> Auth{인증/인가}
-    Auth -->|성공| Route[라우팅]
-    Auth -->|실패| Reject[403 Forbidden]
+    C->>AG: HTTP Request
+    Note over AG: 1. 요청 검증
     
-    Route --> Lambda[Lambda 함수]
-    Route --> HTTP[HTTP 백엔드]
-    Route --> AWS[AWS 서비스<br/>DynamoDB, S3]
+    AG->>AUTH: 인증 확인
+    AUTH-->>AG: 인증 성공
     
-    Lambda --> Response[응답 변환]
-    HTTP --> Response
-    AWS --> Response
+    Note over AG: 2. Rate Limiting<br/>3. 캐시 확인
     
-    Response --> Cache{캐시?}
-    Cache -->|있음| Client
-    Cache -->|없음| Client
+    AG->>L: Lambda 호출
+    L-->>AG: 응답
     
-    APIGW --> CW[CloudWatch<br/>로그/메트릭]
+    Note over AG: 4. 응답 변환<br/>5. 캐시 저장
     
-    style Client fill:#e3f2fd
-    style APIGW fill:#fff3e0
-    style Auth fill:#f3e5f5
-    style Lambda fill:#e8f5e8
-    style CW fill:#ffebee
+    AG-->>C: HTTP Response
 ```
 
-**핵심 구성 요소** (AWS 공식 문서):
+### 3. 주요 사용 사례 (When?) - 5분
 
-1. **API Endpoint**:
-   - **Edge-Optimized**: CloudFront 통해 글로벌 배포 (기본값)
-   - **Regional**: 특정 리전에만 배포
-   - **Private**: VPC 내부에서만 접근
+**적합한 경우**:
 
-2. **Resource & Method**:
-   - **Resource**: API 경로 (예: `/users`, `/orders`)
-   - **Method**: HTTP 동사 (GET, POST, PUT, DELETE)
+1. **서버리스 API**:
+   - Lambda 함수를 HTTP 엔드포인트로 노출
+   - 인프라 관리 없이 API 제공
 
-3. **Integration**:
-   - **Lambda**: Lambda 함수 호출
-   - **HTTP**: HTTP 엔드포인트 프록시
-   - **AWS Service**: DynamoDB, S3 등 직접 호출
-   - **Mock**: 테스트용 가짜 응답
+2. **마이크로서비스 게이트웨이**:
+   - 여러 마이크로서비스를 단일 엔드포인트로 통합
+   - 서비스 간 라우팅 및 인증
 
-4. **Stage**:
-   - **환경 분리**: dev, staging, prod
-   - **버전 관리**: v1, v2
-   - **Stage Variables**: 환경별 설정
+3. **레거시 시스템 현대화**:
+   - 기존 HTTP 엔드포인트를 RESTful API로 변환
+   - 인증 및 모니터링 추가
 
-### 🔍 개념 2: REST API vs HTTP API (10분)
+4. **모바일/웹 백엔드**:
+   - 모바일 앱의 백엔드 API
+   - SPA(Single Page Application) 백엔드
 
-> **AWS 공식**: API Gateway는 두 가지 API 타입을 제공하며, 각각 다른 기능과 가격을 가집니다.
+**실제 사례**:
+- **Netflix**: 수천 개의 마이크로서비스를 API Gateway로 통합
+- **Airbnb**: 모바일 앱 백엔드 API
+- **Uber**: 운전자 및 승객 앱 API
 
-#### REST API (기능 중심)
+### 4. 비슷한 서비스 비교 (Which?) - 5분
 
-**특징**:
-- **풍부한 기능**: API Key, Usage Plans, Request Validation
-- **고급 통합**: VTL 변환, Mock Integration
-- **캐싱**: 응답 캐싱 지원
-- **Private API**: VPC 내부 전용 API
+**AWS 내 대안 서비스**:
 
-**사용 사례**:
-- 엔터프라이즈급 API
-- 복잡한 인증/인가 요구사항
-- API 사용량 제어 필요
-- 응답 캐싱 필요
+**API Gateway vs ALB (Application Load Balancer)**:
+- **API Gateway 사용**: 서버리스, API 관리 기능, 인증/인가 내장
+- **ALB 사용**: EC2/ECS 기반, 간단한 로드 밸런싱, 저렴한 비용
 
-**가격** (ap-northeast-2):
-- **첫 3억 3천만 호출**: $4.25/백만 호출
-- **다음 6억 6천 7백만 호출**: $3.53/백만 호출
-- **10억 호출 초과**: $2.97/백만 호출
-- **캐싱**: $0.02/시간 (0.5GB 캐시)
+**API Gateway vs AppSync**:
+- **API Gateway 사용**: REST API, HTTP API, 유연한 통합
+- **AppSync 사용**: GraphQL API, 실시간 구독, 오프라인 동기화
 
-#### HTTP API (비용 중심)
-
-**특징**:
-- **저렴한 가격**: REST API 대비 70% 저렴
-- **빠른 성능**: 낮은 지연시간
-- **간단한 설정**: 최소 기능
-- **JWT 네이티브**: Cognito, Auth0 통합
-
-**사용 사례**:
-- 서버리스 웹 애플리케이션
-- 마이크로서비스 API
-- 비용 최적화 우선
-- 간단한 인증만 필요
-
-**가격** (ap-northeast-2):
-- **첫 3억 호출**: $1.29/백만 호출
-- **다음 7억 호출**: $1.03/백만 호출
-- **10억 호출 초과**: $0.52/백만 호출
-
-#### 비교표
-
-| 기능 | REST API | HTTP API |
-|------|----------|----------|
-| **가격** | $4.25/백만 | $1.29/백만 (70% 저렴) |
-| **성능** | 보통 | 빠름 (60% 낮은 지연) |
-| **API Key** | ✅ | ❌ |
-| **Usage Plans** | ✅ | ❌ |
-| **Request Validation** | ✅ | ❌ |
-| **Response Caching** | ✅ | ❌ |
-| **Private API** | ✅ | ❌ |
-| **JWT 인증** | Lambda Authorizer | ✅ 네이티브 |
-| **CORS** | 수동 설정 | ✅ 자동 |
-| **WebSocket** | ✅ | ❌ |
+**REST API vs HTTP API**:
+- **REST API 사용**: 완전한 기능, API Key, Usage Plans, 캐싱
+- **HTTP API 사용**: 기본 기능, 저렴한 비용, 빠른 성능
 
 **선택 기준**:
-```mermaid
-graph TB
-    A{API 요구사항}
-    A -->|비용 최적화| B[HTTP API]
-    A -->|고급 기능 필요| C{어떤 기능?}
-    
-    C -->|API Key, Usage Plans| D[REST API]
-    C -->|캐싱| D
-    C -->|Private API| D
-    C -->|Request Validation| D
-    
-    B --> E[JWT 인증만 필요]
-    B --> F[간단한 Lambda 통합]
-    
-    style A fill:#fff3e0
-    style B fill:#e8f5e8
-    style C fill:#f3e5f5
-    style D fill:#e3f2fd
-    style E fill:#e8f5e8
-    style F fill:#e8f5e8
+| 기준 | REST API | HTTP API | ALB | AppSync |
+|------|----------|----------|-----|---------|
+| 비용 | 높음 | 낮음 (70% 저렴) | 매우 낮음 | 중간 |
+| 기능 | 완전 | 기본 | 제한적 | GraphQL 전용 |
+| 인증 | 모두 지원 | IAM, JWT | 기본 | Cognito, IAM |
+| 캐싱 | 지원 | 미지원 | 미지원 | 지원 |
+| WebSocket | 지원 | 미지원 | 미지원 | 지원 (구독) |
+| 사용 사례 | 복잡한 API | 간단한 API | EC2/ECS | GraphQL |
+
+### 5. 장단점 분석 - 3분
+
+**장점**:
+- ✅ **완전 관리형**: 서버 관리 불필요, 자동 확장
+- ✅ **내장 인증**: API Key, IAM, Cognito, Lambda Authorizer
+- ✅ **모니터링**: CloudWatch 통합, X-Ray 추적
+- ✅ **캐싱**: 응답 캐싱으로 성능 향상 (REST API만)
+- ✅ **버전 관리**: Stage를 통한 환경 분리
+
+**단점/제약사항**:
+- ⚠️ **비용**: 요청당 과금, 대량 트래픽 시 비용 증가
+- ⚠️ **타임아웃**: 최대 29초 (Lambda 통합 시)
+- ⚠️ **페이로드 크기**: 최대 10MB
+- ⚠️ **Cold Start**: Lambda 통합 시 초기 지연
+
+**대안**:
+- 비용 절감: HTTP API 사용 또는 ALB 고려
+- 긴 처리 시간: 비동기 처리 (SQS, Step Functions)
+- 큰 파일: S3 Pre-signed URL 사용
+
+### 6. 비용 구조 💰 - 5분
+
+**과금 방식**:
+
+**REST API**:
+- API 호출: 100만 건당 $3.50
+- 데이터 전송: GB당 $0.09
+- 캐싱: 시간당 $0.02 (0.5GB 캐시)
+
+**HTTP API**:
+- API 호출: 100만 건당 $1.00 (REST API 대비 70% 저렴)
+- 데이터 전송: GB당 $0.09
+
+**프리티어 혜택** (12개월):
+- REST API: 100만 건/월 무료
+- HTTP API: 100만 건/월 무료
+
+**비용 최적화 팁**:
+1. **HTTP API 우선 고려**: 기본 기능만 필요하면 HTTP API
+2. **캐싱 활용**: 반복 요청 캐싱으로 비용 절감 (REST API)
+3. **압축 사용**: 응답 압축으로 데이터 전송 비용 절감
+4. **적절한 Stage**: 개발/테스트는 별도 Stage
+5. **CloudFront 통합**: 정적 콘텐츠는 CloudFront 캐싱
+
+**예상 비용 계산**:
+```
+월간 1,000만 건 API 호출 시:
+
+REST API:
+- API 호출: (1,000만 - 100만) / 100만 × $3.50 = $31.50
+- 데이터 전송 (10GB): 10 × $0.09 = $0.90
+총 비용: $32.40/월
+
+HTTP API:
+- API 호출: (1,000만 - 100만) / 100만 × $1.00 = $9.00
+- 데이터 전송 (10GB): 10 × $0.09 = $0.90
+총 비용: $9.90/월 (70% 절감)
 ```
 
-### 🔍 개념 3: Lambda 통합 및 인증 (10분)
+**실제 사용 예시**:
+| 시나리오 | 월간 호출 | API 타입 | 예상 비용 |
+|----------|-----------|----------|-----------|
+| 소규모 앱 | 50만 건 | HTTP | $0 (프리티어) |
+| 중규모 앱 | 500만 건 | HTTP | $4.00 |
+| 대규모 앱 | 5,000만 건 | HTTP | $49.00 |
+| 엔터프라이즈 | 5,000만 건 | REST (캐싱) | $150.00 |
 
-#### Lambda 통합 방식
+### 7. 최신 업데이트 🆕 - 2분
 
-![API Gateway Lambda Integration](./generated-diagrams/api_gateway_lambda_simple.png)
+**2024년 주요 변경사항**:
+- **HTTP API JWT Authorizer**: JWT 토큰 검증 기능 강화
+- **Mutual TLS**: 클라이언트 인증서 기반 인증 지원
+- **Enhanced Observability**: CloudWatch 메트릭 개선
 
-*그림: API Gateway와 Lambda 통합 - 서버리스 API 구현의 핵심 패턴*
+**2025년 예정**:
+- **더 긴 타임아웃**: 60초까지 확장 검토 중
+- **더 큰 페이로드**: 20MB까지 지원 예정
 
-**1. Lambda Proxy Integration** (권장):
-```json
-// API Gateway가 Lambda에 전달하는 이벤트
-{
-  "httpMethod": "POST",
-  "path": "/users",
-  "headers": {
-    "Authorization": "Bearer token..."
-  },
-  "body": "{\"name\":\"John\"}",
-  "queryStringParameters": {
-    "page": "1"
-  }
-}
-```
+**참조**: [AWS API Gateway What's New](https://aws.amazon.com/api-gateway/whats-new/)
 
-**Lambda 함수 예시**:
+### 8. 잘 사용하는 방법 ✅ - 3분
+
+**베스트 프랙티스**:
+1. **HTTP API 우선**: 기본 기능만 필요하면 HTTP API 사용
+2. **Lambda Proxy Integration**: 간단한 통합, 유연한 응답
+3. **Stage Variables**: 환경별 설정 분리 (dev, staging, prod)
+4. **CloudWatch Logs**: 상세 로깅으로 디버깅
+5. **Custom Domain**: 사용자 친화적 도메인 사용
+
+**실무 팁**:
+- **CORS 설정**: 웹 애플리케이션에서 API 호출 시 필수
+- **Request Validation**: API Gateway에서 요청 검증
+- **Response Caching**: 반복 요청 캐싱 (REST API)
+- **Throttling**: Rate limiting으로 과도한 요청 방지
+
+**코드 예시**:
 ```python
-def lambda_handler(event, context):
-    # API Gateway 이벤트 파싱
-    http_method = event['httpMethod']
-    path = event['path']
-    body = json.loads(event['body'])
-    
-    # 비즈니스 로직
-    if http_method == 'POST' and path == '/users':
-        user = create_user(body)
-        
-        # API Gateway 응답 형식
-        return {
-            'statusCode': 201,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps(user)
-        }
-```
-
-**2. Lambda Custom Integration**:
-- 요청/응답 변환 필요
-- VTL (Velocity Template Language) 사용
-- 복잡한 매핑 가능
-
-#### 인증/인가 방식
-
-**1. API Key** (REST API만):
-```bash
-# API Key 생성
-aws apigateway create-api-key --name "mobile-app-key"
-
-# Usage Plan 연결
-aws apigateway create-usage-plan \
-  --name "basic-plan" \
-  --throttle burstLimit=100,rateLimit=50
-```
-
-**사용 사례**: 간단한 앱 식별, 사용량 제어
-
-**2. IAM 인증**:
-```python
-# AWS SDK가 자동으로 서명
 import boto3
+import json
 
-client = boto3.client('apigateway')
-response = client.invoke(
-    FunctionName='my-api',
-    Payload=json.dumps(data)
+apigateway = boto3.client('apigateway')
+
+# REST API 생성
+response = apigateway.create_rest_api(
+    name='my-api',
+    description='My REST API',
+    endpointConfiguration={
+        'types': ['REGIONAL']
+    }
+)
+
+api_id = response['id']
+
+# 리소스 생성
+root_id = apigateway.get_resources(restApiId=api_id)['items'][0]['id']
+
+resource = apigateway.create_resource(
+    restApiId=api_id,
+    parentId=root_id,
+    pathPart='users'
+)
+
+# 메서드 생성 (GET)
+apigateway.put_method(
+    restApiId=api_id,
+    resourceId=resource['id'],
+    httpMethod='GET',
+    authorizationType='NONE'
+)
+
+# Lambda 통합
+apigateway.put_integration(
+    restApiId=api_id,
+    resourceId=resource['id'],
+    httpMethod='GET',
+    type='AWS_PROXY',
+    integrationHttpMethod='POST',
+    uri=f'arn:aws:apigateway:ap-northeast-2:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-2:123456789012:function:my-function/invocations'
 )
 ```
 
-**사용 사례**: AWS 서비스 간 통신, 내부 API
+### 9. 잘못 사용하는 방법 ❌ - 3분
 
-**3. Cognito User Pool** (권장):
-```javascript
-// 프론트엔드에서 JWT 토큰 전송
-fetch('https://api.example.com/users', {
-  headers: {
-    'Authorization': `Bearer ${cognitoToken}`
-  }
-})
-```
+**흔한 실수**:
+1. **REST API 남용**: 기본 기능만 필요한데 REST API 사용
+2. **캐싱 미사용**: 반복 요청에도 캐싱 안 함
+3. **CORS 미설정**: 웹 앱에서 API 호출 실패
+4. **Throttling 미설정**: DDoS 공격에 취약
+5. **로깅 미활성화**: 문제 발생 시 디버깅 어려움
 
-**사용 사례**: 사용자 인증, 모바일/웹 앱
+**안티 패턴**:
+- **동기 처리 강요**: 긴 작업을 API Gateway에서 처리
+- **대용량 파일 전송**: 10MB 제한 초과
+- **API Key만 사용**: 보안 취약, IAM이나 Cognito 사용 권장
+- **Stage 미사용**: 개발/운영 환경 분리 안 함
 
-![API Gateway with Cognito](./generated-diagrams/api_gateway_cognito.png)
+**보안 취약점**:
+- **인증 없음**: 공개 API로 노출
+- **Rate Limiting 없음**: 과도한 요청으로 비용 폭탄
+- **HTTPS 미사용**: 데이터 평문 전송
+- **API Key 하드코딩**: 코드에 API Key 포함
 
-*그림: API Gateway + Cognito 인증 흐름 - JWT 토큰 기반 사용자 인증*
+### 10. 구성 요소 상세 - 5분
 
-**4. Lambda Authorizer** (커스텀):
-```python
-def lambda_handler(event, context):
-    token = event['authorizationToken']
-    
-    # 토큰 검증 로직
-    if validate_token(token):
-        return {
-            'principalId': 'user123',
-            'policyDocument': {
-                'Version': '2012-10-17',
-                'Statement': [{
-                    'Action': 'execute-api:Invoke',
-                    'Effect': 'Allow',
-                    'Resource': event['methodArn']
-                }]
-            }
-        }
-    else:
-        raise Exception('Unauthorized')
-```
+**주요 구성 요소**:
 
-**사용 사례**: 커스텀 인증 로직, 서드파티 OAuth
-
-#### 실무 연동 패턴
-
-**패턴 1: 서버리스 REST API**
-```
-Client → API Gateway (HTTP API) → Lambda → DynamoDB
-         ↓
-    Cognito JWT 인증
-```
-
-**패턴 2: 마이크로서비스 게이트웨이**
-```
-Client → API Gateway (REST API) → Lambda → 여러 백엔드
-         ↓                              ↓
-    API Key 인증                    - RDS
-                                    - ElastiCache
-                                    - 외부 API
-```
-
-**패턴 3: 이벤트 기반 아키텍처**
-```
-Client → API Gateway → Lambda → SQS/SNS → 비동기 처리
-         ↓
-    Lambda Authorizer
-```
-
----
-
-## 💰 비용 구조 (5분)
-
-### 프리티어 (12개월)
-- **REST API**: 100만 호출/월
-- **HTTP API**: 100만 호출/월
-- **WebSocket**: 100만 메시지 + 75만 연결 분
-
-### 실제 비용 계산 (ap-northeast-2)
-
-**시나리오**: 월 1천만 호출 서버리스 API
-
-**HTTP API**:
-```
-첫 3억 호출: 10M * $1.29/M = $12.90
-총 비용: $12.90/월
-```
+**1. API Types (API 타입)**:
 
 **REST API**:
+- **특징**: 완전한 기능, API Key, Usage Plans, 캐싱
+- **비용**: 100만 건당 $3.50
+- **사용 시기**: 복잡한 API, 캐싱 필요, API Key 관리
+
+**HTTP API**:
+- **특징**: 기본 기능, 저렴한 비용, 빠른 성능
+- **비용**: 100만 건당 $1.00
+- **사용 시기**: 간단한 API, Lambda 통합, 비용 절감
+
+**WebSocket API**:
+- **특징**: 양방향 통신, 실시간 메시징
+- **비용**: 연결당 + 메시지당
+- **사용 시기**: 채팅, 실시간 알림, 게임
+
+**2. Integration Types (통합 타입)**:
+
+**Lambda Proxy Integration**:
+- **특징**: Lambda가 전체 요청/응답 처리
+- **장점**: 간단, 유연
+- **예시**:
+```python
+def lambda_handler(event, context):
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'message': 'Hello'})
+    }
 ```
-첫 3억 호출: 10M * $4.25/M = $42.50
-총 비용: $42.50/월
-```
 
-**비용 절감**: HTTP API 사용 시 **70% 절감** ($29.60/월)
+**Lambda Custom Integration**:
+- **특징**: API Gateway에서 요청/응답 변환
+- **장점**: 세밀한 제어
+- **단점**: 복잡한 설정
 
-### 추가 비용
+**HTTP Integration**:
+- **특징**: HTTP 엔드포인트 통합
+- **용도**: 기존 API 통합, 마이크로서비스
 
-**Lambda 호출**:
-```
-10M 호출 * $0.20/M = $2.00
-Lambda 실행 시간 (128MB, 100ms): $2.08
-총 Lambda 비용: $4.08/월
-```
+**3. Authorization (인증/인가)**:
 
-**데이터 전송**:
-```
-10M 호출 * 10KB 응답 = 100GB
-첫 10TB 무료 (EC2 Data Transfer)
-추가 비용: $0
-```
+**API Key**:
+- **용도**: 간단한 인증, Usage Plans
+- **보안**: 낮음, 추가 인증 필요
 
-**총 예상 비용**:
-- **HTTP API + Lambda**: $16.98/월
-- **REST API + Lambda**: $46.58/월
+**IAM**:
+- **용도**: AWS 서비스 간 통신
+- **보안**: 높음, SigV4 서명
 
-### 비용 최적화 팁
+**Cognito User Pool**:
+- **용도**: 사용자 인증
+- **보안**: 높음, JWT 토큰
 
-1. **HTTP API 우선 사용**: 70% 저렴
-2. **캐싱 활용**: 반복 요청 감소 (REST API만)
-3. **Lambda 최적화**: 메모리/실행 시간 최소화
-4. **CloudFront 통합**: 정적 콘텐츠 캐싱
+**Lambda Authorizer**:
+- **용도**: 커스텀 인증 로직
+- **보안**: 유연, 복잡도 높음
 
----
+**4. Stages (스테이지)**:
+- **역할**: 환경 분리 (dev, staging, prod)
+- **기능**: Stage Variables, Canary 배포
+- **예시**: `https://api.example.com/dev/users`
 
-## 🔑 핵심 키워드
+**5. Usage Plans (사용 계획)**:
+- **역할**: API 사용량 제한
+- **기능**: Rate Limiting, Quota
+- **예시**: 초당 1,000건, 월 100만 건
 
-- **API Gateway**: AWS 관리형 API 서비스
-- **REST API**: 기능 중심, 고급 기능 제공
-- **HTTP API**: 비용 중심, 70% 저렴
-- **Lambda Integration**: 서버리스 백엔드 통합
-- **Cognito**: 사용자 인증 (JWT)
-- **API Key**: 간단한 앱 식별
-- **Stage**: 환경 분리 (dev/prod)
-- **Throttling**: 요청 제한
-
----
-
-## 📝 Session 마무리
-
-### ✅ 오늘 Session 성과
-- [ ] API Gateway 필요성 이해
-- [ ] REST API vs HTTP API 차이 파악
-- [ ] Lambda 통합 방식 이해
-- [ ] 인증/인가 메커니즘 습득
-- [ ] Kong과의 비교를 통한 개념 정리
-
-### 🎯 다음 Session 준비
-- **Session 2**: Cognito (사용자 인증/인가)
-- **연계**: API Gateway + Cognito 통합 실습
-
-### 🔗 공식 문서 (필수)
+### 11. 공식 문서 링크 (필수 5개)
 
 **⚠️ 학생들이 직접 확인해야 할 공식 문서**:
-- 📘 [API Gateway란?](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
-- 📗 [API Gateway 개념](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-basic-concept.html)
-- 📙 [REST API vs HTTP API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)
+- 📘 [API Gateway란 무엇인가?](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+- 📗 [API Gateway 사용자 가이드](https://docs.aws.amazon.com/apigateway/latest/developerguide/)
+- 📙 [API Gateway API 레퍼런스](https://docs.aws.amazon.com/apigateway/latest/api/)
 - 📕 [API Gateway 요금](https://aws.amazon.com/api-gateway/pricing/)
 - 🆕 [API Gateway 최신 업데이트](https://aws.amazon.com/api-gateway/whats-new/)
 
 ---
 
-## 💭 함께 생각해보기 (5분)
-
-### 🤝 페어 토론 (3분)
+## 💭 함께 생각해보기
 
 **토론 주제**:
-1. "우리 집 아파트 경비실은 어떤 일을 하나요?"
-2. "API Gateway가 없으면 어떤 문제가 생길까요?"
-3. "REST API와 HTTP API 중 어떤 걸 선택할까요?"
-
-**페어 활동 가이드**:
-- 👥 옆 사람과 이야기하기
-- 🔄 각자 1분씩 설명하기
-- 📝 중요한 점 메모하기
-
-### 🎯 전체 공유 (2분)
-
-**질문**:
-- "API Gateway를 한 문장으로 설명하면?"
-- "REST API와 HTTP API의 가장 큰 차이는?"
-
-### 💡 이해도 체크 질문
-
-- ✅ "API Gateway가 뭐하는 건지 설명할 수 있나요?"
-- ✅ "Lambda와 어떻게 연결되는지 알겠나요?"
-- ✅ "언제 REST API를 쓰고 언제 HTTP API를 쓸까요?"
+1. REST API와 HTTP API 중 어떤 것을 선택해야 할까?
+2. Lambda Proxy Integration의 장단점은?
+3. 어떤 인증 방식을 선택해야 할까?
 
 ---
 
 ## 🔑 핵심 키워드
 
-**새로운 용어** (쉽게 설명):
-- **API Gateway**: Lambda를 인터넷에 연결해주는 문지기
-- **REST API**: 기능 많은 API (비싸지만 좋음)
-- **HTTP API**: 간단한 API (저렴하고 빠름)
-- **Lambda 통합**: Lambda와 API Gateway 연결하기
-- **URL**: 인터넷 주소 (집 주소 같은 것)
-
-**중요 개념**:
-- **문지기 역할**: 신분 확인, 안내, 기록
-- **두 가지 종류**: 기능 많음 vs 저렴함
-- **Lambda 연결**: 문지기와 일꾼 연결
+- **API Gateway**: AWS 완전 관리형 API 서비스
+- **REST API**: 완전한 기능을 제공하는 API 타입
+- **HTTP API**: 기본 기능과 저렴한 비용의 API 타입
+- **Lambda Proxy Integration**: Lambda가 전체 요청/응답 처리
+- **Stage**: 환경 분리 (dev, staging, prod)
+- **Authorizer**: 인증/인가 메커니즘
+- **Usage Plan**: API 사용량 제한
+- **Throttling**: Rate limiting으로 과도한 요청 방지
 
 ---
 
-## 📝 Session 마무리
+## 📝 세션 마무리
 
-### ✅ 오늘 Session 성과
-- [ ] API Gateway가 뭔지 이해했어요
-- [ ] 왜 필요한지 알았어요
-- [ ] REST API와 HTTP API 차이를 알았어요
-- [ ] Lambda와 연결하는 방법을 알았어요
+### ✅ 오늘 세션 성과
+- [ ] API Gateway의 필요성 이해
+- [ ] REST API와 HTTP API 차이점 파악
+- [ ] Lambda 통합 방식 이해
+- [ ] 인증/인가 메커니즘 습득
+- [ ] 비용 구조와 최적화 방법 학습
 
-### 🎯 다음 Session 준비
-- **Session 2**: Cognito (로그인 시스템)
-- **연결**: API Gateway에서 로그인 확인하는 방법
-- **준비**: 로그인이 왜 필요한지 생각해보기
+### 🎯 다음 세션 준비
+**Session 2: Cognito**
+- User Pool vs Identity Pool
+- JWT 토큰 인증
+- API Gateway 통합
+
+---
 
 <div align="center">
 
-**🚪 API 관리** • **🔐 인증/인가** • **⚡ 서버리스** • **💰 비용 효율**
+**🚪 API 관리** • **🔐 인증/인가** • **⚡ 서버리스 통합**
 
-*다음: Session 2 - Cognito (사용자 인증)*
+*API Gateway로 확장 가능한 서버리스 API 구축*
 
 </div>
