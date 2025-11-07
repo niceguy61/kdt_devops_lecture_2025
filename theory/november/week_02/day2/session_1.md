@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**🚪 API 관리** • **🔐 인증/인가** • **⚡ 서버리스** • **📊 모니터링**
+**🚪 문지기** • **🔐 신분증 확인** • **📞 전화 교환원**
 
-*AWS 관리형 API 서비스로 안전하고 확장 가능한 API 구축*
+*Lambda 함수를 인터넷에서 사용할 수 있게 해주는 문지기*
 
 </div>
 
@@ -12,96 +12,444 @@
 
 ## 🕘 Session 정보
 **시간**: 09:00-09:40 (40분)
-**목표**: API Gateway 개념 이해 및 실무 활용 방법 습득
-**방식**: 이론 + AWS 공식 문서 기반 설명
+**목표**: API Gateway가 뭔지, 왜 필요한지 쉽게 이해하기
+**방식**: 실생활 비유 + 그림 + 간단한 예시
 
 ## 🎯 학습 목표
 
 ### 📚 이해 목표
-- API Gateway가 필요한 이유 이해
-- REST API vs HTTP API 차이 파악
-- Lambda 통합 방식 이해
-- 인증/인가 메커니즘 습득
+- API Gateway가 뭔지 알기 (문지기 같은 거!)
+- 왜 필요한지 이해하기 (Lambda를 인터넷에 연결)
+- 두 가지 종류 알기 (기능 많은 것 vs 저렴한 것)
+- Lambda와 어떻게 연결되는지 알기
 
 ### 🛠️ 적용 목표
-- 적절한 API 타입 선택
-- Lambda 함수와 API 연동
-- 인증 방식 구현
-- 비용 효율적 운영
+- 언제 사용하면 좋을지 판단하기
+- 어떤 종류를 선택할지 알기
+- Lambda와 연결하는 방법 알기
 
 ---
 
 ## 🤔 왜 필요한가? (5분)
 
-### 💼 실무 시나리오: 서버리스 웹 애플리케이션
+### 🏠 실생활 비유 1: 아파트 경비실
 
-**문제 상황**:
+**경비실 없이 방문하기** (위험해요):
 ```
-Lambda 함수 (비즈니스 로직)
+외부 사람 → 바로 집 문 두드리기
     ↓
-어떻게 외부에서 호출할까?
-- HTTP 엔드포인트 필요
-- 인증/인가 필요
-- Rate Limiting 필요
-- 모니터링 필요
+문제점:
+- 누가 오는지 모름 😱
+- 위험한 사람도 올 수 있음
+- 몇 명이 왔는지 기록 없음
 ```
 
-**기존 방식 (Week 4 Kong)**:
+**경비실 있는 아파트** (안전해요):
 ```
-사용자 → Kong (API Gateway) → Backend Service
+외부 사람 → 경비실 (신분증 확인)
+    ↓
+1. 신분증 확인 (인증)
+2. 방문 목적 확인 (인가)
+3. 방문 기록 작성 (로그)
+4. 집으로 안내
+    ↓
+안전하고 기록도 남아요 ✅
+```
+
+### 🏠 실생활 비유 2: 전화 교환원
+
+**옛날 전화 (교환원 있음)**:
+```
+전화 걸기 → 교환원 → "몇 번으로 연결해드릴까요?"
+    ↓
+교환원이 하는 일:
+- 전화번호 확인
+- 연결해주기
+- 통화 기록
+- 잘못된 번호 차단
+```
+
+**API Gateway = 전화 교환원**:
+```
+인터넷 요청 → API Gateway → "어느 Lambda로 연결할까요?"
+    ↓
+API Gateway가 하는 일:
+- 신분 확인 (로그인했나요?)
+- Lambda 연결해주기
+- 요청 기록
+- 이상한 요청 차단
+```
+
+### 💼 실제 예시: Lambda 함수 사용하기
+
+**문제 상황 - Lambda만 있을 때**:
+```
+Lambda 함수 (주문 처리 코드)
+    ↓
+어떻게 인터넷에서 사용할까?
+- Lambda는 AWS 안에만 있어요
+- 인터넷에서 직접 접근 불가
+- URL이 없어요
+- 누가 사용하는지 확인 불가
+```
+
+**해결 - API Gateway 사용**:
+```
+인터넷 → API Gateway (문지기) → Lambda 함수
          ↓
-    - 자체 호스팅 (Kubernetes)
-    - 플러그인 기반 확장
-    - 인프라 관리 필요
+API Gateway가 해주는 일:
+1. URL 만들어주기 (https://xxx.amazonaws.com/prod/order)
+2. 신분 확인 (로그인한 사람만)
+3. Lambda 연결해주기
+4. 기록 남기기
 ```
 
-**AWS API Gateway 방식**:
+**그림으로 보기**:
+```mermaid
+graph TB
+    subgraph "Lambda만 있을 때 (사용 불가)"
+        A1[인터넷] -.->|접근 불가| A2[Lambda<br/>AWS 안에만 있음]
+    end
+    
+    subgraph "API Gateway 사용 (사용 가능)"
+        B1[인터넷] -->|URL로 접근| B2[API Gateway<br/>문지기]
+        B2 -->|신분 확인 후| B3[Lambda<br/>주문 처리]
+    end
+    
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style B1 fill:#e3f2fd
+    style B2 fill:#fff3e0
+    style B3 fill:#e8f5e8
 ```
-사용자 → API Gateway → Lambda 함수
-         ↓
-    - AWS 관리형 (서버리스)
-    - AWS 서비스 네이티브 통합
-    - 인프라 관리 불필요
-```
 
-### 🏠 실생활 비유
+### 🎯 API Gateway의 역할
 
-**호텔 프론트 데스크**:
-- **API Gateway**: 호텔 프론트 데스크
-- **Lambda 함수**: 각 부서 (청소, 룸서비스, 컨시어지)
-- **역할**: 고객 요청을 적절한 부서로 라우팅, 인증, 기록
-
-### 📊 Kong vs API Gateway 비교
-
-| 특징 | Kong | API Gateway |
-|------|------|-------------|
-| **배포 방식** | 자체 호스팅 (K8s) | AWS 관리형 |
-| **인프라 관리** | 필요 (서버, 스케일링) | 불필요 (서버리스) |
-| **통합** | 범용 (HTTP 백엔드) | Lambda 최적화 |
-| **확장** | 플러그인 | AWS 서비스 통합 |
-| **비용** | 인프라 비용 | 사용량 기반 |
-| **모니터링** | 별도 설정 | CloudWatch 자동 |
-| **사용 사례** | 멀티 클라우드, 온프레미스 | AWS 서버리스 |
-
-**언제 Kong을 사용?**
-- 멀티 클라우드 환경
-- 온프레미스 통합 필요
-- 커스텀 플러그인 개발
-- Kubernetes 네이티브 환경
-
-**언제 API Gateway를 사용?**
-- AWS Lambda 중심 아키텍처
-- 서버리스 애플리케이션
-- 빠른 프로토타이핑
-- 인프라 관리 최소화
+1. **문 만들어주기**: Lambda에 URL 주소 만들기
+2. **신분 확인**: 로그인한 사람만 들어오게
+3. **교통 정리**: 너무 많은 요청 막기
+4. **기록 남기기**: 누가 언제 왔는지 기록
 
 ---
 
 ## 📖 핵심 개념 (30분)
 
-### 🔍 개념 1: API Gateway 기본 개념 (10분)
+### 🔍 개념 1: API Gateway가 뭔가요? (10분)
 
-> **정의** (AWS 공식): API Gateway는 RESTful API, HTTP API, WebSocket API를 생성, 배포, 관리할 수 있는 AWS 관리형 서비스입니다.
+> **쉽게 말하면**: Lambda 함수를 인터넷에서 사용할 수 있게 해주는 "문지기"
+
+**등장인물**:
+- **사용자**: 인터넷에서 요청하는 사람 (웹사이트, 앱)
+- **API Gateway**: 문지기 (신분 확인, 안내)
+- **Lambda 함수**: 일하는 로봇 (주문 처리, 계산 등)
+
+**어떻게 작동하나요?**:
+```mermaid
+sequenceDiagram
+    participant 사용자
+    participant 문지기
+    participant Lambda로봇
+    
+    사용자->>문지기: 1. 주문하고 싶어요!
+    문지기->>문지기: 2. 신분증 확인
+    문지기->>Lambda로봇: 3. 주문 처리해주세요
+    Lambda로봇->>Lambda로봇: 4. 주문 처리 중...
+    Lambda로봇->>문지기: 5. 처리 완료!
+    문지기->>사용자: 6. 주문 완료되었어요
+```
+
+**실생활 예시**:
+```
+놀이공원 입구:
+1. 사람들: 놀이공원 가고 싶어요 (사용자)
+2. 입구 직원: 티켓 확인해요 (API Gateway)
+3. 놀이기구: 사람들이 탑니다 (Lambda)
+```
+
+**API Gateway가 하는 일**:
+
+**1. URL 주소 만들기** (문 만들기):
+```
+Lambda만 있을 때:
+- 주소 없음 ❌
+- 인터넷에서 접근 불가
+
+API Gateway 추가하면:
+- https://abc123.execute-api.ap-northeast-2.amazonaws.com/prod/order
+- 이 주소로 접근 가능 ✅
+```
+
+**2. 신분 확인하기** (경비):
+```
+누가 왔나요?
+- 로그인한 사람? ✅ 들어오세요
+- 로그인 안 한 사람? ❌ 안 돼요
+```
+
+**3. Lambda 연결하기** (안내):
+```
+어디로 갈까요?
+- /order → 주문 Lambda
+- /payment → 결제 Lambda
+- /user → 사용자 Lambda
+```
+
+**4. 기록 남기기** (방명록):
+```
+누가 언제 왔나요?
+- 2024-11-07 15:00 - 홍길동 - 주문
+- 2024-11-07 15:01 - 김철수 - 결제
+```
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    User[사용자<br/>웹/앱] --> APIGW[API Gateway<br/>문지기]
+    
+    APIGW --> Check{신분증<br/>확인}
+    Check -->|있어요| Route[어디로<br/>갈까요?]
+    Check -->|없어요| Reject[❌ 안 돼요]
+    
+    Route --> L1[Lambda 1<br/>주문]
+    Route --> L2[Lambda 2<br/>결제]
+    Route --> L3[Lambda 3<br/>사용자]
+    
+    L1 --> Response[결과<br/>돌려주기]
+    L2 --> Response
+    L3 --> Response
+    
+    Response --> User
+    
+    style User fill:#e3f2fd
+    style APIGW fill:#fff3e0
+    style Check fill:#f3e5f5
+    style L1 fill:#e8f5e8
+    style L2 fill:#e8f5e8
+    style L3 fill:#e8f5e8
+```
+
+### 🔍 개념 2: 두 가지 종류 (10분)
+
+> **쉽게 말하면**: 기능 많은 것 vs 저렴한 것
+
+#### 종류 1: REST API (기능 많음)
+
+**특징**:
+- 🎁 **기능이 많아요**: 여러 가지 할 수 있어요
+- 💰 **조금 비싸요**: 기능이 많으니까요
+- 🏢 **회사에서 많이 써요**: 안전하고 기능 많아서
+
+**할 수 있는 일**:
+- API Key로 관리 (누가 얼마나 쓰는지)
+- 캐싱 (빠르게 응답)
+- 복잡한 인증 (여러 방법으로 확인)
+
+**언제 사용하나요?**:
+- 큰 회사 시스템
+- 보안이 중요할 때
+- 많은 기능이 필요할 때
+
+**비유**:
+```
+고급 아파트:
+- 경비실 24시간 (API Key 관리)
+- CCTV 많음 (모니터링)
+- 주차장 넓음 (캐싱)
+→ 관리비 비싸지만 편해요
+```
+
+#### 종류 2: HTTP API (저렴함)
+
+**특징**:
+- 💵 **엄청 저렴해요**: REST API보다 70% 싸요!
+- ⚡ **빨라요**: 기능이 적어서 빠름
+- 🎯 **간단해요**: 복잡한 기능 없음
+
+**할 수 있는 일**:
+- Lambda 연결 (기본)
+- 로그인 확인 (기본)
+- 빠른 응답
+
+**언제 사용하나요?**:
+- 작은 프로젝트
+- 비용 절약하고 싶을 때
+- 간단한 API면 충분할 때
+
+**비유**:
+```
+원룸:
+- 경비 없음 (기본 기능만)
+- 주차 제한적
+- 관리비 저렴
+→ 저렴하고 간단해요
+```
+
+#### 비교표 (쉽게 이해하기)
+
+| 비교 | REST API<br/>(고급 아파트) | HTTP API<br/>(원룸) |
+|------|---------------------------|---------------------|
+| **가격** | 비싸요 💰💰💰 | 저렴해요 💰 |
+| **기능** | 많아요 🎁🎁🎁 | 기본만 🎁 |
+| **속도** | 보통 🚗 | 빨라요 🚀 |
+| **사용** | 큰 회사 🏢 | 작은 프로젝트 🏠 |
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    subgraph "REST API (기능 많음)"
+        R1[API Key 관리]
+        R2[캐싱]
+        R3[복잡한 인증]
+        R4[많은 설정]
+    end
+    
+    subgraph "HTTP API (간단함)"
+        H1[Lambda 연결]
+        H2[기본 인증]
+        H3[빠른 속도]
+    end
+    
+    R1 --> Cost1[비용: 💰💰💰]
+    H1 --> Cost2[비용: 💰]
+    
+    style R1 fill:#fff3e0
+    style R2 fill:#fff3e0
+    style R3 fill:#fff3e0
+    style R4 fill:#fff3e0
+    style H1 fill:#e8f5e8
+    style H2 fill:#e8f5e8
+    style H3 fill:#e8f5e8
+    style Cost1 fill:#ffebee
+    style Cost2 fill:#e8f5e8
+```
+
+### 🔍 개념 3: Lambda와 연결하기 (10분)
+
+> **쉽게 말하면**: 문지기(API Gateway)와 일꾼(Lambda)을 연결하기
+
+**연결 과정**:
+
+**Step 1: Lambda 함수 만들기** (일꾼 고용):
+```python
+# Lambda 함수 (주문 처리 로봇)
+def lambda_handler(event, context):
+    # 주문 정보 받기
+    order = event['body']
+    
+    # 주문 처리하기
+    result = "주문 완료!"
+    
+    # 결과 돌려주기
+    return {
+        'statusCode': 200,
+        'body': result
+    }
+```
+
+**Step 2: API Gateway 만들기** (문지기 배치):
+```
+AWS Console → API Gateway → Create API
+    ↓
+HTTP API 선택 (저렴한 것)
+    ↓
+이름: my-order-api
+```
+
+**Step 3: Lambda 연결하기** (일꾼과 문지기 연결):
+```
+API Gateway → Routes → Create
+    ↓
+경로: POST /order
+    ↓
+연결: Lambda 함수 선택
+```
+
+**완성!**:
+```
+이제 사용할 수 있어요:
+https://abc123.execute-api.ap-northeast-2.amazonaws.com/order
+    ↓
+이 주소로 주문하면
+    ↓
+Lambda가 자동으로 처리해요!
+```
+
+**그림으로 보기**:
+```mermaid
+graph LR
+    A[1. Lambda<br/>만들기] --> B[2. API Gateway<br/>만들기]
+    B --> C[3. 연결하기]
+    C --> D[4. 완성!<br/>URL 생성]
+    
+    D --> E[사용자가<br/>URL로 접근]
+    E --> F[Lambda가<br/>자동 실행]
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#e3f2fd
+    style E fill:#ffebee
+    style F fill:#e8f5e8
+```
+
+---
+
+## 💭 함께 생각해보기 (5분)
+
+### 🤝 페어 토론 (3분)
+
+**토론 주제**:
+1. "우리 집 아파트 경비실은 어떤 일을 하나요?"
+2. "API Gateway가 없으면 어떤 문제가 생길까요?"
+3. "REST API와 HTTP API 중 어떤 걸 선택할까요?"
+
+**페어 활동 가이드**:
+- 👥 옆 사람과 이야기하기
+- 🔄 각자 1분씩 설명하기
+- 📝 중요한 점 메모하기
+
+### 🎯 전체 공유 (2분)
+
+**질문**:
+- "API Gateway를 한 문장으로 설명하면?"
+- "REST API와 HTTP API의 가장 큰 차이는?"
+
+### 💡 이해도 체크 질문
+
+- ✅ "API Gateway가 뭐하는 건지 설명할 수 있나요?"
+- ✅ "Lambda와 어떻게 연결되는지 알겠나요?"
+- ✅ "언제 REST API를 쓰고 언제 HTTP API를 쓸까요?"
+
+---
+
+## 🔑 핵심 키워드
+
+**새로운 용어** (쉽게 설명):
+- **API Gateway**: Lambda를 인터넷에 연결해주는 문지기
+- **REST API**: 기능 많은 API (비싸지만 좋음)
+- **HTTP API**: 간단한 API (저렴하고 빠름)
+- **Lambda 통합**: Lambda와 API Gateway 연결하기
+- **URL**: 인터넷 주소 (집 주소 같은 것)
+
+**중요 개념**:
+- **문지기 역할**: 신분 확인, 안내, 기록
+- **두 가지 종류**: 기능 많음 vs 저렴함
+- **Lambda 연결**: 문지기와 일꾼 연결
+
+---
+
+## 📝 Session 마무리
+
+### ✅ 오늘 Session 성과
+- [ ] API Gateway가 뭔지 이해했어요
+- [ ] 왜 필요한지 알았어요
+- [ ] REST API와 HTTP API 차이를 알았어요
+- [ ] Lambda와 연결하는 방법을 알았어요
+
+### 🎯 다음 Session 준비
+- **Session 2**: Cognito (로그인 시스템)
+- **연결**: API Gateway에서 로그인 확인하는 방법
+- **준비**: 로그인이 왜 필요한지 생각해보기
 
 **주요 기능**:
 1. **API 생성 및 배포**: REST/HTTP/WebSocket API 지원
