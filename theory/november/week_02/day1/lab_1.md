@@ -509,6 +509,97 @@ graph TB
     style Q3 fill:#e8f5e8
 ```
 
+---
+
+### Step 2-3: 🔑 우체통 열쇠 주기 (5분) ⚠️ 필수!
+
+**🏠 비유**: 방송국(SNS)이 우체통(SQS)에 편지를 넣으려면 "열쇠"가 필요해요!
+
+**🤔 왜 필요한가요?**
+
+**지금 상황**:
+```
+방송국(SNS): "편지를 우체통에 넣고 싶어요!"
+우체통(SQS): "안 돼요! 자물쇠가 걸려 있어요 🔒"
+```
+
+**해결 방법**:
+```
+우체통에게 말하기: "방송국한테 열쇠를 줘!"
+→ 이게 바로 "Access Policy" (접근 권한)
+→ 열쇠를 받으면 방송국이 편지를 넣을 수 있어요 🔑
+```
+
+**⚠️ 이 단계를 건너뛰면**:
+```
+❌ SNS에서 메시지를 보내도 SQS에 도착하지 않아요
+❌ 에러 메시지도 안 나와서 찾기 어려워요
+❌ 반드시 해야 하는 단계예요!
+```
+
+**AWS Console 경로**:
+```
+SQS → email-queue → Access policy → Edit
+```
+
+**Policy 추가** (복사해서 붙여넣기):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "sns.amazonaws.com"
+      },
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:ap-northeast-2:YOUR_ACCOUNT_ID:email-queue",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "arn:aws:sns:ap-northeast-2:YOUR_ACCOUNT_ID:order-completed"
+        }
+      }
+    }
+  ]
+}
+```
+
+**💡 쉽게 이해하기**:
+```json
+{
+  "Effect": "Allow",              // 허용해줘!
+  "Principal": {
+    "Service": "sns.amazonaws.com" // SNS 방송국에게
+  },
+  "Action": "sqs:SendMessage",    // 편지 넣기 권한을
+  "Resource": "...email-queue",   // 이 우체통에
+  "Condition": {
+    "ArnEquals": {
+      "aws:SourceArn": "...order-completed"  // 우리 방송국만!
+    }
+  }
+}
+```
+
+**⚠️ 중요**: `YOUR_ACCOUNT_ID`를 여러분의 AWS 계정 번호로 바꾸세요!
+
+**반복**: 똑같은 방법으로 2개 더 설정하기
+- `inventory-queue` Access Policy 설정
+- `analytics-queue` Access Policy 설정
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    SNS[SNS 방송국<br/>🔑 열쇠 받음] -->|이제 넣을 수 있어요| Q1[email-queue<br/>🔓 열림]
+    SNS -->|이제 넣을 수 있어요| Q2[inventory-queue<br/>🔓 열림]
+    SNS -->|이제 넣을 수 있어요| Q3[analytics-queue<br/>🔓 열림]
+    
+    style SNS fill:#e8f5e8
+    style Q1 fill:#e8f5e8
+    style Q2 fill:#e8f5e8
+    style Q3 fill:#e8f5e8
+```
+
 ### Step 2-3: SQS Access Policy 설정 (5분)
 
 **각 Queue에 SNS 전송 권한 부여**:
@@ -608,12 +699,104 @@ SQS → analytics-queue → Poll for messages (메시지 확인)
 
 ---
 
-## 🛠️ Phase 3: Lambda Consumer 구현 (10분)
+## 🛠️ Phase 3: Lambda Consumer 구현 (50분)
 
-### 목표
-- Queue에서 메시지를 읽어 처리하는 Worker 구현
+### 🎯 이번 단계에서 할 일
+우체통에서 편지를 읽어서 일하는 로봇(Lambda)을 만들 거예요!
 
-### Step 3-1: Email Worker Lambda 생성
+**만들 것**:
+- 🎫 **Lambda 실행 권한** (IAM Role) - 먼저 만들어야 해요!
+- 🤖 **3개 로봇** (Lambda Worker) - 각 우체통마다 1개씩
+
+---
+
+### Step 3-0: 🎫 Lambda 실행 권한 만들기 (10분) ⚠️ 먼저 해야 해요!
+
+**🏠 비유**: 로봇(Lambda)이 일하려면 "허가증"이 필요해요!
+
+**🤔 왜 필요한가요?**
+
+**지금 상황**:
+```
+로봇: "일하고 싶어요!"
+AWS: "허가증이 있어요?"
+로봇: "없어요..."
+AWS: "그럼 일 못 해요!" ❌
+```
+
+**필요한 허가증**:
+```
+1. 우체통(SQS)에서 편지 읽기 권한 📨
+2. 로그(CloudWatch)에 일한 내용 쓰기 권한 📝
+3. 이런 권한을 모아둔 게 "IAM Role"이에요
+```
+
+**AWS Console 경로**:
+```
+AWS Console → IAM → Roles → Create role
+```
+
+**Step 1: Trusted entity 선택**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Trusted entity type | AWS service | AWS 서비스가 사용 |
+| Use case | Lambda | Lambda가 사용할 거예요 |
+
+**💡 쉽게 이해하기**:
+- **Trusted entity**: 누가 이 허가증을 쓸 수 있나요?
+- **Lambda**: Lambda 로봇만 쓸 수 있어요
+
+**Step 2: Permissions 추가**:
+
+검색창에서 다음 2개를 찾아서 체크하세요:
+
+| Permission | 설명 |
+|------------|------|
+| ✅ `AWSLambdaBasicExecutionRole` | 로그 쓰기 권한 (일한 내용 기록) |
+| ✅ `AWSLambdaSQSQueueExecutionRole` | SQS 읽기 권한 (우체통에서 편지 꺼내기) |
+
+**💡 쉽게 이해하기**:
+```
+AWSLambdaBasicExecutionRole:
+- CloudWatch에 로그 쓰기
+- "나 이런 일 했어요!" 기록하기
+
+AWSLambdaSQSQueueExecutionRole:
+- SQS에서 메시지 읽기
+- 메시지 삭제하기 (처리 완료 후)
+```
+
+**Step 3: Role 이름 짓기**:
+| 항목 | 값 |
+|------|-----|
+| Role name | `lab1-lambda-role` |
+| Description | Lab 1 Lambda 실행 역할 |
+
+**✅ Create role 버튼 클릭!**
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    R[IAM Role<br/>lab1-lambda-role<br/>🎫 허가증] --> P1[권한 1<br/>로그 쓰기]
+    R --> P2[권한 2<br/>SQS 읽기]
+    
+    L1[Lambda 1<br/>email-worker] -.->|사용| R
+    L2[Lambda 2<br/>inventory-worker] -.->|사용| R
+    L3[Lambda 3<br/>analytics-worker] -.->|사용| R
+    
+    style R fill:#fff3e0
+    style P1 fill:#e8f5e8
+    style P2 fill:#e8f5e8
+    style L1 fill:#e3f2fd
+    style L2 fill:#e3f2fd
+    style L3 fill:#e3f2fd
+```
+
+---
+
+### Step 3-1: Email Worker Lambda 생성 (10분)
+
+**🏠 비유**: 이메일 보내는 로봇 만들기
 
 **AWS Console 경로**:
 ```
@@ -621,12 +804,30 @@ AWS Console → Lambda → Create function
 ```
 
 **설정**:
-| 항목 | 값 |
-|------|-----|
-| Function name | `email-worker` |
-| Runtime | Python 3.12 |
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Function name | `email-worker` | 이메일 로봇 |
+| Runtime | Python 3.12 | Python으로 만들기 |
+| Architecture | x86_64 | 컴퓨터 종류 |
+| **Execution role** | **Use an existing role** | **위에서 만든 역할 사용** ⚠️ |
+| **Existing role** | **lab1-lambda-role** | **아까 만든 역할 선택** ⚠️ |
 
-**코드**:
+**⚠️ 중요**: "Execution role"에서 반드시 `lab1-lambda-role`을 선택하세요!
+
+**그림으로 보기**:
+```mermaid
+graph LR
+    L[email-worker<br/>Lambda] -->|사용| R[lab1-lambda-role<br/>🎫 허가증]
+    R -->|권한| SQS[SQS 읽기]
+    R -->|권한| CW[로그 쓰기]
+    
+    style L fill:#e3f2fd
+    style R fill:#fff3e0
+    style SQS fill:#e8f5e8
+    style CW fill:#e8f5e8
+```
+
+**코드 (복사해서 붙여넣기)**:
 ```python
 import json
 
@@ -649,13 +850,87 @@ def lambda_handler(event, context):
     }
 ```
 
-**Trigger 추가**:
-```
-Add trigger → SQS → email-queue 선택
-Batch size: 10
+**💡 코드 설명**:
+```python
+for record in event['Records']:  # SQS에서 온 편지들을 하나씩
+    body = json.loads(record['body'])  # 편지 내용 읽기
+    
+    print(f"📧 이메일 발송 처리")  # 로그에 기록
+    print(f"주문 ID: {body['order_id']}")  # 주문 번호 출력
 ```
 
-### Step 3-2: Inventory Worker Lambda 생성
+**✅ Create function 버튼 클릭!**
+
+---
+
+### Step 3-2: ⏰ 30초 대기 (Lambda 준비 중)
+
+**🤔 왜 기다려야 하나요?**
+
+```
+Lambda가 지금 준비 중이에요:
+- 코드 저장하기
+- 실행 환경 만들기
+- 권한 확인하기
+→ 이 작업이 끝날 때까지 기다려야 해요!
+```
+
+**⚠️ 너무 빨리 다음 단계로 가면**:
+```
+❌ Trigger 추가가 실패할 수 있어요
+❌ "Lambda is not ready" 에러가 나요
+❌ 30초만 기다리면 안전해요!
+```
+
+**Lambda 상태 확인**:
+```
+Lambda → email-worker → Configuration → General configuration
+Status: Active ✅ (이렇게 나오면 준비 완료!)
+```
+
+---
+
+### Step 3-3: Email Queue Trigger 추가 (5분)
+
+**🏠 비유**: 로봇에게 "이 우체통을 지켜봐!" 알려주기
+
+**AWS Console 경로**:
+```
+Lambda → email-worker → Add trigger
+```
+
+**설정**:
+| 항목 | 값 | 설명 |
+|------|-----|------|
+| Trigger | SQS | SQS 우체통 선택 |
+| SQS queue | email-queue | 어느 우체통? |
+| Batch size | 10 | 한 번에 10개까지 처리 |
+
+**💡 쉽게 이해하기**:
+```
+Trigger = 방아쇠 = 자동 실행 장치
+
+email-queue에 편지가 들어오면:
+1. Lambda가 자동으로 깨어나요
+2. 편지를 읽어요
+3. 일을 처리해요
+4. 다시 잠들어요 (대기)
+```
+
+**그림으로 보기**:
+```mermaid
+graph LR
+    Q[email-queue<br/>우체통] -->|편지 도착!| T[Trigger<br/>🔔 알림]
+    T -->|깨워!| L[email-worker<br/>Lambda 로봇]
+    L -->|일 처리| LOG[CloudWatch<br/>로그 기록]
+    
+    style Q fill:#e8f5e8
+    style T fill:#fff3e0
+    style L fill:#e3f2fd
+    style LOG fill:#f3e5f5
+```
+
+**✅ Add 버튼 클릭!**
 
 **동일한 방식으로 생성**:
 
