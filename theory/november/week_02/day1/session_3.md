@@ -342,7 +342,147 @@ graph TB
     style D fill:#f3e5f5
 ```
 
-#### 용어 4: HCL (HashiCorp Configuration Language)
+#### 용어 3-1: Backend (백엔드)
+
+> **전문 용어**: Backend
+> 
+> **쉽게 말하면**: State 파일을 어디에 보관할지 정하는 것
+
+**실생활 비유**:
+```
+조립 일지 보관 장소:
+- Local Backend: 내 책상 서랍 (혼자 사용)
+- Remote Backend: 학교 도서관 (여럿이 공유)
+```
+
+**왜 필요한가요?**:
+```
+혼자 작업할 때:
+- Local Backend (내 컴퓨터에 저장)
+- 간단하고 빠름
+
+팀으로 작업할 때:
+- Remote Backend (클라우드에 저장)
+- 모두가 같은 State 파일 사용
+- 동시에 작업해도 안전
+```
+
+**Backend 종류**:
+```
+Local (로컬):
+- 내 컴퓨터에 저장
+- 혼자 쓸 때 좋음
+- 예: terraform.tfstate 파일
+
+Remote (원격):
+- S3 같은 곳에 저장
+- 팀이 함께 쓸 때 좋음
+- 예: AWS S3 버킷
+```
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    subgraph "Local Backend - 혼자 사용"
+        A1[내 컴퓨터] --> A2[State 파일<br/>내 컴퓨터에 저장]
+    end
+    
+    subgraph "Remote Backend - 팀 공유"
+        B1[팀원 1] --> B3[State 파일<br/>S3에 저장]
+        B2[팀원 2] --> B3
+        B4[팀원 3] --> B3
+    end
+    
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B4 fill:#fff3e0
+    style B3 fill:#e3f2fd
+```
+
+**언제 사용하나요?**:
+```
+Local Backend:
+- 혼자 연습할 때
+- 테스트할 때
+- 간단한 프로젝트
+
+Remote Backend:
+- 팀 프로젝트
+- 실제 서비스
+- 안전하게 보관해야 할 때
+```
+
+#### 용어 4: Data Source (데이터 소스)
+
+> **전문 용어**: Data Source
+> 
+> **쉽게 말하면**: 이미 있는 것을 찾아서 정보 가져오기
+
+**Resource vs Data Source**:
+```
+Resource (리소스):
+- 새로 만들기
+- 예: 새 저장소 만들기
+
+Data Source (데이터 소스):
+- 이미 있는 것 찾기
+- 예: 이미 있는 저장소 정보 가져오기
+```
+
+**실생활 비유**:
+```
+레고 블록:
+- Resource: 새 블록 사기 (새로 만들기)
+- Data Source: 집에 있는 블록 찾기 (이미 있는 것)
+
+학교:
+- Resource: 새 교실 만들기
+- Data Source: 1학년 1반 교실 찾기 (이미 있음)
+```
+
+**언제 사용하나요?**:
+```
+상황 1: 이미 만들어진 네트워크 사용하기
+- 다른 사람이 VPC를 만들어놨어요
+- 나는 그 VPC 정보만 가져와서 사용
+
+상황 2: 최신 버전 찾기
+- 가장 최신 Amazon Linux 이미지 찾기
+- 자동으로 최신 버전 사용
+```
+
+**그림으로 보기**:
+```mermaid
+graph TB
+    subgraph "Resource - 새로 만들기"
+        A1[코드 작성] --> A2[새 저장소 생성]
+    end
+    
+    subgraph "Data Source - 찾아서 사용"
+        B1[코드 작성] --> B2[이미 있는 저장소 찾기]
+        B2 --> B3[정보 가져오기]
+    end
+    
+    style A1 fill:#e8f5e8
+    style A2 fill:#e8f5e8
+    style B1 fill:#fff3e0
+    style B2 fill:#fff3e0
+    style B3 fill:#fff3e0
+```
+
+**간단한 예시**:
+```
+Resource (새로 만들기):
+→ "my-bucket"이라는 저장소 만들기
+
+Data Source (찾아서 사용):
+→ "existing-bucket"이라는 저장소 찾기
+→ 그 저장소 정보 가져오기
+```
+
+#### 용어 5: HCL (HashiCorp Configuration Language)
 
 > **전문 용어**: HCL
 > 
@@ -374,19 +514,20 @@ graph TB
 
 **코드 구조** (천천히 읽어봐요):
 
-```
-┌─────────────────────────────────┐
-│ 어디에 만들까요? (Provider)      │
-│ → AWS 서울 지역                  │
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐
-│ 무엇을 만들까요? (Resource)      │
-│ → 저장소 (S3 Bucket)             │
-│                                  │
-│ 이름은 뭐예요?                   │
-│ → "my-first-bucket"              │
-└─────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "Terraform 코드 구조"
+        A[Provider<br/>어디에 만들까요?<br/>→ AWS 서울 지역]
+        B[Data Source<br/>이미 있는 것 찾기<br/>→ 기본 네트워크]
+        C[Resource<br/>무엇을 만들까요?<br/>→ S3 저장소<br/>이름: my-first-bucket]
+    end
+    
+    A --> B
+    B --> C
+    
+    style A fill:#e8f5e8
+    style B fill:#fff3e0
+    style C fill:#e3f2fd
 ```
 
 **실제 코드** (참고용):
@@ -394,6 +535,11 @@ graph TB
 # 어디에 만들까요?
 provider "aws" {
   region = "ap-northeast-2"  # 서울
+}
+
+# 이미 있는 것 찾기
+data "aws_vpc" "default" {
+  default = true  # 기본 네트워크 찾기
 }
 
 # 무엇을 만들까요?
@@ -405,20 +551,27 @@ resource "aws_s3_bucket" "my_bucket" {
 **코드 읽는 방법**:
 1. `#`으로 시작하면 → 설명 (주석)
 2. `provider` → 어디에 만들지
-3. `resource` → 무엇을 만들지
-4. `"aws_s3_bucket"` → S3 저장소
-5. `"my_bucket"` → 코드에서 부르는 이름
-6. `bucket = "..."` → 실제 이름
+3. `data` → 이미 있는 것 찾기 (새로 안 만듦)
+4. `resource` → 무엇을 만들지 (새로 만듦)
+5. `"aws_s3_bucket"` → S3 저장소
+6. `"my_bucket"` → 코드에서 부르는 이름
+7. `bucket = "..."` → 실제 이름
 
 **비유로 이해하기**:
-```
-레고 설명서:
-┌─────────────────────┐
-│ 레고 가게: 서울점    │  ← provider
-│                     │
-│ 만들 것: 집         │  ← resource
-│ 이름: 우리집        │  ← bucket
-└─────────────────────┘
+```mermaid
+graph TB
+    subgraph "레고 설명서"
+        L1[레고 가게: 서울점<br/>Provider]
+        L2[집에 있는 블록 찾기<br/>→ 빨간 블록 10개<br/>Data Source]
+        L3[새로 만들 것: 집<br/>이름: 우리집<br/>Resource]
+    end
+    
+    L1 --> L2
+    L2 --> L3
+    
+    style L1 fill:#e8f5e8
+    style L2 fill:#fff3e0
+    style L3 fill:#e3f2fd
 ```
 
 ---
@@ -476,10 +629,14 @@ resource "aws_s3_bucket" "my_bucket" {
 **중요한 용어**:
 - **Provider (제공자)**: 어디에 만들지 (AWS, Azure, GCP)
   - 비유: 레고 가게 선택
+- **Data Source (데이터 소스)**: 이미 있는 것 찾기
+  - 비유: 집에 있는 블록 찾기
 - **Resource (리소스)**: 무엇을 만들지 (서버, DB, 저장소)
-  - 비유: 레고 블록 종류
+  - 비유: 새 레고 블록 사기
 - **State (상태)**: 지금 뭘 만들었는지 기록하는 노트
   - 비유: 조립 일지
+- **Backend (백엔드)**: State 파일을 어디에 보관할지
+  - 비유: 일지 보관 장소 (내 책상 vs 도서관)
 - **HCL**: Terraform 코드를 쓰는 언어
   - 비유: 설명서 언어
 
