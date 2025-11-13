@@ -128,16 +128,51 @@ graph TB
 
 **적합한 경우**:
 
-**Parameter Store 사용 시나리오**:
-- **환경 변수 관리**: DB 연결 정보, API 엔드포인트
-- **시크릿 관리**: 비밀번호, API 키, 토큰
-- **설정 중앙화**: 여러 애플리케이션의 공통 설정
-- **동적 설정**: 재배포 없이 설정 변경
+**1. ECS/Fargate 컨테이너 시크릿 주입**:
+```
+실제 활용 사례 (AWS 공식 문서):
+- ECS Task Definition에서 Parameter Store 참조
+- DB 연결 정보를 SecureString으로 저장
+- 컨테이너 시작 시 환경 변수로 자동 주입
+- 재배포 없이 시크릿 업데이트 가능
+```
+**참조**: [ECS에서 Parameter Store 사용](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-ssm-paramstore.html)
 
-**실제 사례**:
-- **Netflix**: 마이크로서비스 설정 관리
-- **Airbnb**: 환경별 설정 분리
-- **Slack**: API 키 및 토큰 관리
+**2. 마이크로서비스 설정 중앙 관리**:
+```
+DXC Technology 고객 사례:
+- 모놀리식 애플리케이션을 마이크로서비스로 전환
+- Parameter Store로 각 서비스 설정 중앙화
+- 계층 구조로 환경별 설정 분리 (/app/dev, /app/prod)
+- IAM 정책으로 서비스별 접근 제어
+```
+**참조**: [DXC 마이크로서비스 전환 사례](https://aws.amazon.com/blogs/apn/how-dxc-helped-a-customer-transform-its-monolithic-application-into-microservices-on-aws/)
+
+**3. AMI 빌드 및 인프라 자동화**:
+```
+AWS Automation Best Practice:
+- Systems Manager Automation과 통합
+- AMI 빌드 시 Parameter Store에서 설정 로드
+- 일관된 인프라 구성 유지
+- 환경별 파라미터로 동적 구성
+```
+**참조**: [Systems Manager Best Practices](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-best-practices.html)
+
+**4. 멀티 계정 환경 설정 공유**:
+```
+AWS RAM 통합 패턴:
+- 중앙 계정에서 공통 설정 관리
+- AWS Resource Access Manager로 파라미터 공유
+- 다른 계정에서 읽기 전용 접근
+- 대규모 조직의 설정 표준화
+```
+**참조**: [Parameter Store 공유](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-shared-parameters.html)
+
+**실제 활용 패턴**:
+- **마이크로서비스**: 각 서비스별 설정을 계층 구조로 관리
+- **CI/CD 파이프라인**: 빌드/배포 시 동적으로 설정 로드
+- **컨테이너 오케스트레이션**: ECS/EKS에서 시크릿 주입
+- **서버리스**: Lambda 함수에서 환경 변수 대신 사용
 
 ### 4. 비슷한 서비스 비교 (Which?) - 5분
 
