@@ -51,9 +51,9 @@ graph TB
     end
     
     subgraph "Parameter Store"
-        PARAM1[/db/host<br/>String]
-        PARAM2[/db/password<br/>SecureString]
-        PARAM3[/api/key<br/>SecureString]
+        PARAM1["/db/host (String)"]
+        PARAM2["/db/password (SecureString)"]
+        PARAM3["/api/key (SecureString)"]
     end
     
     subgraph "암호화"
