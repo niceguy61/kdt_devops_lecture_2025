@@ -49,8 +49,8 @@ graph TB
     
     subgraph "Parameter Store"
         KMS[KMS Key]
-        P1[/myapp/prod/db/password]
-        P2[/myapp/prod/api/key]
+        P1["/myapp/prod/db/password"]
+        P2["/myapp/prod/api/key"]
     end
     
     subgraph "ECS"
