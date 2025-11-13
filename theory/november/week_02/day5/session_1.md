@@ -81,20 +81,20 @@ graph TB
 **파라미터 계층 구조**:
 ```mermaid
 graph TB
-    ROOT[/]
+    ROOT["Root /"]
     
-    ROOT --> APP[/app]
-    ROOT --> DB[/db]
-    ROOT --> API[/api]
+    ROOT --> APP["/app"]
+    ROOT --> DB["/db"]
+    ROOT --> API["/api"]
     
-    APP --> APP_DEV[/app/dev]
-    APP --> APP_PROD[/app/prod]
+    APP --> APP_DEV["/app/dev"]
+    APP --> APP_PROD["/app/prod"]
     
-    DB --> DB_HOST[/db/host]
-    DB --> DB_PASS[/db/password]
+    DB --> DB_HOST["/db/host"]
+    DB --> DB_PASS["/db/password"]
     
-    API --> API_KEY[/api/key]
-    API --> API_URL[/api/url]
+    API --> API_KEY["/api/key"]
+    API --> API_URL["/api/url"]
     
     style ROOT fill:#e8f5e8
     style APP fill:#fff3e0
