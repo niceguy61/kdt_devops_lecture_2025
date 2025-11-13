@@ -113,17 +113,17 @@ output "subnet_ids" {
 ```mermaid
 graph TB
     subgraph "count 방식"
-        C[`count = 3`]
-        C --> C1[`리소스(0)`]
-        C --> C2[`리소스(1)`]
-        C --> C3[`리소스(2)`]
+        C[count = 3]
+        C --> C1[리소스 0]
+        C --> C2[리소스 1]
+        C --> C3[리소스 2]
     end
     
     subgraph "for_each 방식"
-        F[`for_each = map`]
-        F --> F1[`리소스(a)`]
-        F --> F2[`리소스(b)`]
-        F --> F3[`리소스(c)`]
+        F[for_each = map]
+        F --> F1[리소스 a]
+        F --> F2[리소스 b]
+        F --> F3[리소스 c]
     end
     
     style C fill:#fff3e0
