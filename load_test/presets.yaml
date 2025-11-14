@@ -1,0 +1,17 @@
+# 부하 테스트 프리셋
+
+light:
+  workers: 5
+  iterations: 100
+
+medium:
+  workers: 20
+  iterations: 500
+
+heavy:
+  workers: 50
+  iterations: 1000
+
+extreme:
+  workers: 100
+  iterations: 5000

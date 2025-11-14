@@ -1,0 +1,22 @@
+config:
+  workers: 40
+  iterations: 30000
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkODgzOTA2Yy01ZGY3LTQ5NjgtOWZiNi01ODFiMzg5YTU0NWMiLCJlbWFpbCI6Im5pY2VndXk2MUBuYXZlci5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MzEwMzY4MiwiZXhwIjoxNzYzNzA4NDgyfQ.7oRRnlK-evTsj_NYG1ws0XXS2XnLru4g-qqm_0nhqdM
+
+requests:
+  - url: https://tiketi.store/
+    method: GET
+  - url: https://tiketi.store/api/reservations/my
+    method: GET
+  - url: https://tiketi.store/api/events/a9b0ae57-7521-454f-bc93-758eaaa97084
+    method: GET  
+  - url: https://tiketi.store/api/events/9117df4f-836c-4537-8969-3e83a74efbbd
+    method: GET  
+  - url: https://tiketi.store/api/reservations/01d663ce-f34f-4e51-959c-1e4fe04394b5
+    method: GET
+  # POST 예시
+  - url: https://tiketi.store/api/payments/process
+    method: POST
+    body:
+      paymentMethod: "naver_pay"
+      reservationId: "8d3ebff2-086f-49f1-ba0f-1049259f2170"
