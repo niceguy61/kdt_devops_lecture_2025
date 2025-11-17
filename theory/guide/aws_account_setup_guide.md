@@ -66,12 +66,7 @@ https://aws.amazon.com/ko/
       "Principal": {
         "AWS": "arn:aws:iam::261250906071:root"
       },
-      "Action": "sts:AssumeRole",
-      "Condition": {
-        "StringEquals": {
-          "sts:ExternalId": "kdt-devops-2025"
-        }
-      }
+      "Action": "sts:AssumeRole"
     }
   ]
 }
