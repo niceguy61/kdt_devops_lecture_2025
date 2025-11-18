@@ -30,18 +30,27 @@
 
 ## 📊 학습 구조
 
-### 일일 시간표
+### 일일 시간표 (Day 1-4)
 ```
 09:00-09:40  Session 1: 핵심 주제 1 (40분)
 09:40-10:20  Session 2: 핵심 주제 2 (40분)
 10:20-11:00  Session 3: 핵심 주제 3 (40분)
-11:00-12:00  Lab: 통합 실습 (60분)
+11:00-12:00  강사 Demo + Q&A (60분) ⭐
+```
+
+### Day 5 특별 구성
+```
+09:00-09:40  November 전체 복습 (40분)
+09:40-10:20  기본 프로젝트 소개 (40분)
+10:20-11:00  팀 구성 & 주제 선정 (40분)
+11:00-12:00  Q&A & 준비 (60분)
 ```
 
 ### 학습 방식
-- **EKS 중심**: Kubernetes on AWS 완전 정복
-- **실전 배포**: 실제 애플리케이션 배포 경험
-- **자동화**: CI/CD 파이프라인 구축
+- **이론 중심**: NW1 템플릿 기반 체계적 학습
+- **강사 데모**: 완벽하게 검증된 환경에서 시연
+- **비용 절감**: 강사 계정만 사용, 학생 부담 없음
+- **이해 집중**: 실습 부담 없이 개념 이해에 집중
 
 ---
 
@@ -69,12 +78,14 @@
   - Network Policy
   - Secrets 관리
 
-**실습**:
-- Lab 1: Terraform으로 EKS 클러스터 생성 (60분)
-  - VPC + EKS Cluster
-  - Managed Node Group
-  - kubectl 연결
-  - 기본 워크로드 배포
+**강사 Demo**:
+- Demo: Terraform으로 EKS 클러스터 생성 (60분)
+  - VPC + EKS Cluster 생성 시연
+  - Managed Node Group 구성
+  - kubectl 연결 및 기본 명령어
+  - 간단한 워크로드 배포 데모
+  - **검증**: 모든 리소스 정상 동작 확인
+  - Q&A 및 트러블슈팅 공유
 
 **학습 포인트**:
 - EKS 아키텍처 이해
@@ -105,12 +116,14 @@
   - Metrics Server
   - 리소스 관리
 
-**실습**:
-- Lab 1: 마이크로서비스 배포 (60분)
-  - Frontend + Backend + Database
-  - ALB Ingress 설정
-  - Auto Scaling 구성
-  - 데이터 영속성
+**강사 Demo**:
+- Demo: 마이크로서비스 배포 (60분)
+  - Frontend + Backend + Database 배포 시연
+  - ALB Ingress 설정 및 동작 확인
+  - Auto Scaling 구성 및 테스트
+  - 데이터 영속성 검증
+  - **검증**: 전체 스택 정상 동작 확인
+  - Q&A 및 베스트 프랙티스 공유
 
 **학습 포인트**:
 - Kubernetes 워크로드 관리
@@ -141,12 +154,14 @@
   - Cert-Manager
   - 애플리케이션 Chart
 
-**실습**:
-- Lab 1: Helm으로 전체 스택 배포 (60분)
-  - 커스텀 Chart 작성
+**강사 Demo**:
+- Demo: Helm으로 전체 스택 배포 (60분)
+  - 커스텀 Chart 작성 시연
   - Prometheus + Grafana 설치
-  - 애플리케이션 배포
-  - 업그레이드 & 롤백
+  - 애플리케이션 배포 및 설정
+  - 업그레이드 & 롤백 데모
+  - **검증**: Chart 정상 동작 및 Release 관리
+  - Q&A 및 Chart 작성 팁 공유
 
 **학습 포인트**:
 - Helm 패키지 관리
@@ -177,12 +192,14 @@
   - ArgoCD 소개
   - GitOps 개념
 
-**실습**:
-- Lab 1: GitHub Actions CI/CD 구축 (60분)
-  - 코드 푸시 → 이미지 빌드 → ECR 푸시
-  - EKS 배포 자동화
-  - 롤링 업데이트
-  - 배포 검증
+**강사 Demo**:
+- Demo: GitHub Actions CI/CD 구축 (60분)
+  - 코드 푸시 → 이미지 빌드 → ECR 푸시 전체 흐름
+  - EKS 배포 자동화 시연
+  - 롤링 업데이트 동작 확인
+  - 배포 검증 및 롤백 데모
+  - **검증**: 전체 파이프라인 정상 동작
+  - Q&A 및 CI/CD 베스트 프랙티스
 
 **학습 포인트**:
 - CI/CD 파이프라인 구축
@@ -191,39 +208,76 @@
 
 ---
 
-### Day 5 (금): 모니터링 & 운영
+### Day 5 (금): November 전체 복습 & 기본 프로젝트 준비
 **시간**: 09:00-12:00
 
-**이론**:
-- Session 1: **Prometheus & Grafana** (40분)
-  - Prometheus 아키텍처
-  - 메트릭 수집
-  - Grafana 대시보드
-  - 알람 설정
+**Session 1: November 전체 복습** (40분)
+- **Week 1-2 복습**:
+  - AWS 핵심 서비스 (VPC, EC2, RDS, S3, Lambda)
+  - 기본 웹 아키텍처 패턴
+  - Terraform 기초 문법
+  
+- **Week 3 복습**:
+  - Terraform 심화 (Module, Data Source)
+  - Remote State & Backend
+  - 환경 관리 전략
+  
+- **Week 4 복습**:
+  - EKS 아키텍처
+  - Kubernetes 워크로드
+  - Helm & CI/CD
 
-- Session 2: **로깅 & 트레이싱** (40분)
-  - CloudWatch Container Insights
-  - Fluent Bit
-  - 로그 중앙화
-  - 분산 추적 (X-Ray)
+**Session 2: 기본 프로젝트 소개** (40분)
+- **프로젝트 개요**:
+  - 4주 일정 및 목표
+  - 평가 기준
+  - 산출물 요구사항
+  
+- **기술 스택**:
+  - AWS 서비스 선택 가이드
+  - Terraform IaC
+  - Kubernetes/EKS (선택)
+  - CI/CD 파이프라인
+  
+- **프로젝트 주제 예시**:
+  - 웹 서비스 플랫폼
+  - 마이크로서비스 아키텍처
+  - 서버리스 애플리케이션
+  - 데이터 파이프라인
 
-- Session 3: **Week 1-4 전체 복습** (40분)
-  - AWS 서비스 총정리
-  - Terraform IaC 복습
-  - EKS 운영 베스트 프랙티스
-  - 기본 프로젝트 준비
+**Session 3: 팀 구성 & 주제 선정** (40분)
+- **팀 구성**:
+  - 3-4명 팀 구성
+  - 역할 분담 (인프라, 개발, DevOps)
+  - 협업 도구 설정 (GitHub, Slack)
+  
+- **주제 선정**:
+  - 팀별 아이디어 브레인스토밍
+  - 기술 스택 결정
+  - 아키텍처 초안 작성
+  
+- **계획 수립**:
+  - 주간 마일스톤 설정
+  - 작업 분배
+  - 리스크 식별
 
-**실습**:
-- Lab 1: 프로덕션급 모니터링 시스템 (60분)
-  - Prometheus + Grafana 설정
-  - 커스텀 메트릭 수집
-  - 알람 규칙 설정
-  - 로그 분석
+**Q&A & 준비** (60분)
+- **질문 시간**:
+  - November 학습 내용 질문
+  - 프로젝트 관련 질문
+  - 기술 선택 상담
+  
+- **프로젝트 준비**:
+  - GitHub Repository 생성
+  - AWS 계정 확인
+  - 개발 환경 설정
+  - 다음 주 준비사항 확인
 
 **학습 포인트**:
-- 프로덕션 모니터링
-- 로그 관리
-- 전체 복습
+- November 전체 내용 체계적 정리
+- 프로젝트 방향성 설정
+- 팀 협업 체계 구축
+- 기본 프로젝트 준비 완료
 
 ---
 
@@ -317,61 +371,55 @@ graph TB
 
 ## 💰 주간 예상 비용
 
-### 일별 비용 (프리티어 활용)
-| Day | 주요 리소스 | 예상 비용 |
+### 강사 Demo 방식 비용
+| Day | 주요 리소스 | 비용 부담 |
 |-----|------------|-----------|
-| Day 1 | EKS Cluster + Node Group | $0.50 |
-| Day 2 | EKS + 워크로드 | $0.60 |
-| Day 3 | EKS + Helm Stack | $0.70 |
-| Day 4 | EKS + CI/CD | $0.65 |
-| Day 5 | EKS + 모니터링 | $0.75 |
-| **합계** | | **$3.20** |
+| Day 1 | EKS Cluster + Node Group | 강사 계정 |
+| Day 2 | EKS + 워크로드 | 강사 계정 |
+| Day 3 | EKS + Helm Stack | 강사 계정 |
+| Day 4 | EKS + CI/CD | 강사 계정 |
+| Day 5 | 복습 (리소스 없음) | 비용 없음 |
+| **학생 부담** | | **$0** ⭐ |
 
-### 비용 구성
-- **EKS Control Plane**: $0.10/hour (시간당)
-- **Worker Node (t3.medium)**: $0.0416/hour × 2 = $0.0832/hour
-- **ALB**: $0.0225/hour
-- **EBS**: $0.10/GB-month
+### 강사 계정 예상 비용
+- **EKS Control Plane**: $0.10/hour × 4일 × 1시간 = $0.40
+- **Worker Node (t3.medium)**: $0.0416/hour × 4일 × 1시간 = $0.17
+- **ALB**: $0.0225/hour × 4일 × 1시간 = $0.09
+- **EBS**: 최소 비용
+- **합계**: 약 $0.70 (강사 부담)
 
-### 비용 절감 팁
-- 실습 완료 후 즉시 클러스터 삭제
-- 최소 Node 수 사용 (2개)
-- Spot Instance 활용 (선택)
-- 실습 시간 엄수 (60분)
+### Demo 방식의 장점
+- ✅ **학생 비용 부담 없음**: 강사 계정만 사용
+- ✅ **완벽한 환경**: 사전 검증된 환경에서 시연
+- ✅ **시간 효율**: 실습 오류 없이 빠른 진행
+- ✅ **이해 집중**: 개념 이해에 집중 가능
+- ✅ **질문 시간**: 충분한 Q&A 시간 확보
 
 ---
 
 ## ✅ Week 4 완료 체크리스트
 
-### EKS 클러스터
-- [ ] Terraform으로 EKS 클러스터 생성
-- [ ] Managed Node Group 구성
-- [ ] kubectl 연결 및 기본 명령어
-- [ ] RBAC 보안 설정
+### 이론 학습
+- [ ] EKS 아키텍처 이해
+- [ ] Terraform으로 EKS 관리 방법 학습
+- [ ] Kubernetes 워크로드 개념 습득
+- [ ] Helm 패키지 관리 이해
+- [ ] CI/CD 파이프라인 구조 파악
 
-### Kubernetes 워크로드
-- [ ] Deployment 배포 및 관리
-- [ ] Service & Ingress 설정
-- [ ] StatefulSet & PersistentVolume
-- [ ] HPA & Cluster Autoscaler
+### Demo 관찰 및 이해
+- [ ] EKS 클러스터 생성 과정 이해
+- [ ] Kubernetes 리소스 배포 흐름 파악
+- [ ] Helm Chart 작성 및 배포 방법 학습
+- [ ] GitHub Actions 워크플로우 이해
+- [ ] 전체 아키텍처 통합 이해
 
-### Helm 패키지 관리
-- [ ] Helm Chart 작성
-- [ ] Prometheus + Grafana 설치
-- [ ] 애플리케이션 Chart 배포
-- [ ] Release 관리 (upgrade, rollback)
-
-### CI/CD 파이프라인
-- [ ] GitHub Actions Workflow 작성
-- [ ] Docker 이미지 빌드 & ECR 푸시
-- [ ] EKS 자동 배포
-- [ ] 배포 검증
-
-### 모니터링 & 로깅
-- [ ] Prometheus 메트릭 수집
-- [ ] Grafana 대시보드 구성
-- [ ] CloudWatch Logs 통합
-- [ ] 알람 설정
+### 기본 프로젝트 준비
+- [ ] November 전체 내용 복습 완료
+- [ ] 팀 구성 및 역할 분담
+- [ ] 프로젝트 주제 선정
+- [ ] 기술 스택 결정
+- [ ] GitHub Repository 생성
+- [ ] 주간 마일스톤 설정
 
 ---
 

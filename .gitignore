@@ -18,3 +18,4 @@ niceguy61-key.pem
 node_modules/
 .terraform
 .terraform.lock.hcl
+mcp.json
