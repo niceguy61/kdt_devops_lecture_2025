@@ -474,37 +474,39 @@ cat > app/index.html <<'EOF'
 EOF
 ```
 
-#### 3-3. ECR 배포 및 이미지 Push
-```bash
-# ECR Repository 생성
-terraform apply -target=aws_ecr_repository.app -auto-approve
-
-# ECR 로그인
-aws ecr get-login-password --region ap-northeast-2 | \
-  docker login --username AWS --password-stdin \
-  $(terraform output -raw ecr_repository_url)
-
-# Docker 이미지 빌드
-cd app
-docker build -t nw3-day2-lab1-app .
-
-# 이미지 태그
-docker tag nw3-day2-lab1-app:latest \
-  $(terraform output -raw ecr_repository_url):latest
-
-# 이미지 Push
-docker push $(terraform output -raw ecr_repository_url):latest
-
-cd ..
-```
-
-#### 3-4. outputs.tf에 ECR URL 추가
+#### 3-3. outputs.tf에 ECR URL 추가 (먼저!)
 ```hcl
 # outputs.tf
 output "ecr_repository_url" {
   description = "ECR Repository URL"
   value       = aws_ecr_repository.app.repository_url
 }
+```
+
+#### 3-4. ECR 배포 및 이미지 Push
+```bash
+# ECR Repository 생성
+terraform apply -target=aws_ecr_repository.app -auto-approve
+
+# ECR URL 확인 (output 사용 가능)
+ECR_URL=$(terraform output -raw ecr_repository_url)
+echo "ECR Repository URL: $ECR_URL"
+
+# ECR 로그인
+aws ecr get-login-password --region ap-northeast-2 | \
+  docker login --username AWS --password-stdin $ECR_URL
+
+# Docker 이미지 빌드
+cd app
+docker build -t nw3-day2-lab1-app .
+
+# 이미지 태그
+docker tag nw3-day2-lab1-app:latest ${ECR_URL}:latest
+
+# 이미지 Push
+docker push ${ECR_URL}:latest
+
+cd ..
 ```
 
 ### ✅ Step 3 검증
