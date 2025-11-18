@@ -1,23 +1,12 @@
 {
-  "amazonQ.mcp": {
-    "servers": {
-      "filesystem": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-filesystem",
-          "d:\\github\\kdt_devops_lecture_2025"
-        ]
-      },
-      "sqlite": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-sqlite",
-          "--db-path",
-          "d:\\github\\kdt_devops_lecture_2025\\data\\lecture.db"
-        ]
-      }
-    }
-  }
+  "horrorExtension.enabled": true,
+  "horrorExtension.cursor.enabled": true,
+  "horrorExtension.scare.enabled": true,
+  "horrorExtension.scare.audioEnabled": true,
+  "horrorExtension.scare.audioVolume": 0.7,
+  "horrorExtension.scare.imageDuration": 1500,
+  "horrorExtension.ghost.enabled": true,
+  "horrorExtension.ghost.count": 4,
+  "horrorExtension.ghost.idleThreshold": 30,
+  "workbench.colorTheme": "Horror Theme"
 }

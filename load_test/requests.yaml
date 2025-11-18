@@ -1,6 +1,6 @@
 config:
-  workers: 40
-  iterations: 30000
+  workers: 50
+  iterations: 40000
   token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkODgzOTA2Yy01ZGY3LTQ5NjgtOWZiNi01ODFiMzg5YTU0NWMiLCJlbWFpbCI6Im5pY2VndXk2MUBuYXZlci5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MzEwMzY4MiwiZXhwIjoxNzYzNzA4NDgyfQ.7oRRnlK-evTsj_NYG1ws0XXS2XnLru4g-qqm_0nhqdM
 
 requests:

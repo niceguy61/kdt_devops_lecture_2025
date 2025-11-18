@@ -86,7 +86,6 @@ def print_results(results, total_time, config):
         print(f"      Median: {median:.3f}초 | p50: {p50:.3f}초")
         print(f"      p90: {p90:.3f}초 | p95: {p95:.3f}초 | p99: {p99:.3f}초")
         print(f"   📈 상태 코드: {dict(data['status'])}")
-        print()
 
 def run_load_test():
     config, reqs = load_config()

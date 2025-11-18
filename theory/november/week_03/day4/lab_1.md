@@ -302,16 +302,8 @@ resource "aws_route_table" "public" {
 
 # Private Route Tables
 resource "aws_route_table" "private" {
-  count  = var.enable_nat_gateway ? length(var.availability_zones) : 1
+  count  = length(var.availability_zones)
   vpc_id = aws_vpc.main.id
-  
-  dynamic "route" {
-    for_each = var.enable_nat_gateway ? [1] : []
-    content {
-      cidr_block     = "0.0.0.0/0"
-      nat_gateway_id = var.single_nat_gateway ? aws_nat_gateway.main[0].id : aws_nat_gateway.main[count.index].id
-    }
-  }
   
   tags = merge(
     {
@@ -320,6 +312,14 @@ resource "aws_route_table" "private" {
     },
     var.tags
   )
+}
+
+# Private Route (NAT Gateway 경유)
+resource "aws_route" "private_nat_gateway" {
+  count                  = var.enable_nat_gateway ? length(var.availability_zones) : 0
+  route_table_id         = aws_route_table.private[count.index].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = var.single_nat_gateway ? aws_nat_gateway.main[0].id : aws_nat_gateway.main[count.index].id
 }
 
 # Public Subnet Route Table Association
@@ -333,9 +333,14 @@ resource "aws_route_table_association" "public" {
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.private)
   subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = var.enable_nat_gateway ? (var.single_nat_gateway ? aws_route_table.private[0].id : aws_route_table.private[count.index].id) : aws_route_table.private[0].id
+  route_table_id = aws_route_table.private[count.index].id
 }
 ```
+
+**⚠️ 주요 개선 사항**:
+1. **Route Table 분리**: Private Route Table을 각 AZ별로 생성
+2. **Route 리소스 분리**: `aws_route`를 별도 리소스로 관리하여 NAT Gateway 의존성 명확화
+3. **Association 단순화**: 각 Private Subnet이 해당 AZ의 Route Table과 연결
 
 #### 1-4. Module 출력 정의 (modules/vpc/outputs.tf)
 ```hcl
@@ -434,6 +439,24 @@ module "vpc" {
 - [ ] main.tf 작성 완료
 - [ ] outputs.tf 작성 완료
 - [ ] README.md 작성 완료
+
+**🔍 코드 검증 포인트**:
+```bash
+# Module 구조 확인
+tree modules/vpc/
+
+# 예상 출력:
+# modules/vpc/
+# ├── main.tf
+# ├── variables.tf
+# ├── outputs.tf
+# └── README.md
+
+# Terraform 문법 검증
+cd modules/vpc
+terraform fmt -check
+terraform validate
+```
 
 ---
 
@@ -752,18 +775,46 @@ terraform workspace select dev
 for env in dev staging prod; do
   echo "=== $env Environment ==="
   aws ec2 describe-vpcs \
-    --filters "Name=tag:Environment,Values=$env" \
+    --filters "Name=tag:Environment,Values=$env" "Name=tag:Project,Values=nw3-day4-lab1" \
     --query 'Vpcs[0].[VpcId,CidrBlock,Tags[?Key==`Name`].Value|[0]]' \
     --output table
   echo ""
 done
+
+# NAT Gateway 개수 확인
+echo "=== NAT Gateway Count per Environment ==="
+for env in dev staging prod; do
+  count=$(aws ec2 describe-nat-gateways \
+    --filter "Name=tag:Environment,Values=$env" "Name=tag:Project,Values=nw3-day4-lab1" \
+    --query 'NatGateways[?State==`available`]' \
+    --output json | jq length)
+  echo "$env: $count NAT Gateway(s)"
+done
+```
+
+**예상 결과**:
+```
+=== dev Environment ===
+vpc-xxxxx | 10.0.0.0/16 | nw3-day4-lab1-dev-vpc
+
+=== staging Environment ===
+vpc-yyyyy | 10.1.0.0/16 | nw3-day4-lab1-staging-vpc
+
+=== prod Environment ===
+vpc-zzzzz | 10.2.0.0/16 | nw3-day4-lab1-prod-vpc
+
+=== NAT Gateway Count per Environment ===
+dev: 1 NAT Gateway(s)
+staging: 2 NAT Gateway(s)
+prod: 2 NAT Gateway(s)
 ```
 
 **체크리스트**:
 - [ ] 3개 Workspace 생성 (dev, staging, prod)
 - [ ] 각 환경별 VPC 배포 완료
-- [ ] 각 환경의 CIDR 블록 다름 확인
+- [ ] 각 환경의 CIDR 블록 다름 확인 (10.0.0.0/16, 10.1.0.0/16, 10.2.0.0/16)
 - [ ] NAT Gateway 개수 확인 (dev: 1개, staging/prod: 2개)
+- [ ] 각 환경의 Subnet 개수 확인 (Public 2개, Private 2개)
 
 ---
 
@@ -1089,11 +1140,15 @@ terraform state list
 
 **원인**:
 - 잘못된 Workspace에서 작업 중
+- 해당 Workspace에 리소스가 배포되지 않음
 
 **해결 방법**:
 ```bash
 # 현재 Workspace 확인
 terraform workspace show
+
+# 모든 Workspace 목록 확인
+terraform workspace list
 
 # 올바른 Workspace로 전환
 terraform workspace select dev
@@ -1105,7 +1160,12 @@ terraform state list
 ### 문제 2: Module을 찾을 수 없음
 **증상**:
 ```
-Error: Module not found
+Error: Module not installed
+│ 
+│   on main.tf line 20:
+│   20: module "vpc" {
+│ 
+│ This module is not yet installed. Run "terraform init" to install all modules required by this configuration.
 ```
 
 **원인**:
@@ -1119,19 +1179,101 @@ ls -la modules/vpc/
 
 # Terraform 재초기화
 terraform init
+
+# Module 설치 확인
+terraform get
 ```
 
 ### 문제 3: 환경별 설정이 적용되지 않음
 **증상**:
 - 모든 환경이 동일한 CIDR 사용
+- NAT Gateway 개수가 예상과 다름
 
 **원인**:
 - tfvars 파일을 지정하지 않음
+- 잘못된 tfvars 파일 사용
 
 **해결 방법**:
 ```bash
 # 반드시 -var-file 옵션 사용
-terraform apply -var-file=environments/dev.tfvars
+terraform plan -var-file=environments/dev.tfvars
+
+# 적용된 변수 확인
+terraform console -var-file=environments/dev.tfvars
+> var.vpc_cidr
+"10.0.0.0/16"
+> var.single_nat_gateway
+true
+```
+
+### 문제 4: NAT Gateway 생성 실패
+**증상**:
+```
+Error: Error creating NAT Gateway: InvalidAllocationID.NotFound
+```
+
+**원인**:
+- Elastic IP가 생성되지 않음
+- Internet Gateway 의존성 문제
+
+**해결 방법**:
+```bash
+# Elastic IP 확인
+aws ec2 describe-addresses \
+  --filters "Name=tag:Project,Values=nw3-day4-lab1"
+
+# Internet Gateway 확인
+aws ec2 describe-internet-gateways \
+  --filters "Name=tag:Project,Values=nw3-day4-lab1"
+
+# 리소스 재생성
+terraform destroy -var-file=environments/dev.tfvars -auto-approve
+terraform apply -var-file=environments/dev.tfvars -auto-approve
+```
+
+### 문제 5: State 파일 충돌
+**증상**:
+```
+Error: Error acquiring the state lock
+```
+
+**원인**:
+- 다른 터미널에서 동시에 terraform 실행 중
+- 이전 작업이 비정상 종료됨
+
+**해결 방법**:
+```bash
+# 실행 중인 terraform 프로세스 확인
+ps aux | grep terraform
+
+# Lock 강제 해제 (주의!)
+terraform force-unlock <LOCK_ID>
+
+# 또는 잠시 대기 후 재시도
+```
+
+### 문제 6: Data Source가 리소스를 찾지 못함
+**증상**:
+```
+Error: no matching VPC found
+```
+
+**원인**:
+- 태그 필터가 잘못됨
+- 리소스가 아직 생성되지 않음
+
+**해결 방법**:
+```bash
+# VPC 태그 확인
+aws ec2 describe-vpcs \
+  --filters "Name=tag:Project,Values=nw3-day4-lab1" \
+  --query 'Vpcs[].Tags'
+
+# Data Source 필터 수정
+# data-source-example.tf에서 태그 값 확인
+
+# 리소스 생성 확인
+terraform state list | grep vpc
 ```
 
 ---
