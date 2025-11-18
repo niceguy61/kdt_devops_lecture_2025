@@ -104,7 +104,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "Kubernetes Version"
   type        = string
-  default     = "1.28"
+  default     = "1.34"
 }
 
 variable "vpc_cidr" {
@@ -183,14 +183,21 @@ module "eks" {
     }
   }
 
-  # Cluster access entry
-  enable_cluster_creator_admin_permissions = true
-
   tags = {
     Environment = "demo"
     ManagedBy   = "terraform"
     Demo        = "november-week4-day1"
   }
+}
+
+# Current user access
+data "aws_caller_identity" "current" {}
+
+resource "aws_eks_access_entry" "admin" {
+  cluster_name      = module.eks.cluster_name
+  principal_arn     = data.aws_caller_identity.current.arn
+  kubernetes_groups = ["system:masters"]
+  type              = "STANDARD"
 }
 EOF
 
