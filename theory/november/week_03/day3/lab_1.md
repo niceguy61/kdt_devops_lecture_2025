@@ -227,6 +227,11 @@ terraform validate
 #### 2-1. VPC 리소스 (vpc.tf)
 ```hcl
 # vpc.tf
+# Data Source (먼저 정의)
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -330,11 +335,6 @@ resource "aws_route_table_association" "private" {
   count          = 2
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
-}
-
-# Data Source
-data "aws_availability_zones" "available" {
-  state = "available"
 }
 ```
 
@@ -505,6 +505,11 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 ```
+
+**💡 주의사항**:
+- IAM Role 이름은 계정 내에서 고유해야 함
+- `${var.environment}` 접두사로 환경별 분리
+- 기존 Role이 있다면 `terraform import` 사용
 
 #### 3-3. RDS 배포
 ```bash
