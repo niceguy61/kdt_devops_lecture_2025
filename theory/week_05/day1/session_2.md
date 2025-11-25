@@ -78,9 +78,9 @@ graph LR
 > **정의**: Amazon VPC는 AWS 클라우드에서 논리적으로 격리된 가상 네트워크를 제공하는 서비스
 
 **핵심 VPC 서비스**:
-- ![VPC](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Virtual-Private-Cloud_48.svg) **Amazon VPC**: 가상 네트워크
-- ![Internet Gateway](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_AWS-PrivateLink_48.svg) **Internet Gateway**: 인터넷 연결
-- ![NAT Gateway](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-VPC_48.svg) **NAT Gateway**: 아웃바운드 전용
+- ![VPC](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Virtual-Private-Cloud_48.svg) **Amazon VPC**: 가상 네트워크
+- ![Internet Gateway](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_AWS-PrivateLink_48.svg) **Internet Gateway**: 인터넷 연결
+- ![NAT Gateway](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-VPC_48.svg) **NAT Gateway**: 아웃바운드 전용
 
 #### 🏗️ VPC 생성 배경 (Why?)
 

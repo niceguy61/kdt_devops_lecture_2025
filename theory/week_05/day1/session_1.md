@@ -79,7 +79,7 @@ graph LR
 - **AWS Cloud**: 전 세계 분산 인프라
 - **Region**: 지리적으로 분리된 데이터센터 그룹 (현재 **38개 리전**)
 - **Availability Zone (AZ)**: Region 내 물리적으로 분리된 데이터센터 (**120개 AZ**)
-- **Edge Location**: ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (**700개 이상**)
+- **Edge Location**: ![CloudFront](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) 콘텐츠 전송 네트워크(CDN) 엣지 서버 (**700개 이상**)
 
 #### 🏗️ AWS 글로벌 인프라 구조
 
@@ -212,9 +212,9 @@ mindmap
 > **정의**: 클라우드 서비스는 제공하는 관리 수준에 따라 IaaS, PaaS, SaaS로 구분
 
 **AWS 서비스 모델 예시**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **IaaS**: Amazon EC2 (완전한 제어)
-- ![Elastic Beanstalk](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Elastic-Beanstalk_48.svg) **PaaS**: Elastic Beanstalk (플랫폼 관리)
-- ![WorkMail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Business-Applications/48/Arch_Amazon-WorkMail_48.svg) **SaaS**: WorkMail (즉시 사용)
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **IaaS**: Amazon EC2 (완전한 제어)
+- ![Elastic Beanstalk](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Elastic-Beanstalk_48.svg) **PaaS**: Elastic Beanstalk (플랫폼 관리)
+- ![WorkMail](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Business-Applications/48/Arch_Amazon-WorkMail_48.svg) **SaaS**: WorkMail (즉시 사용)
 
 #### ☁️ 클라우드 서비스 모델 비교
 
@@ -364,9 +364,9 @@ mindmap
 > **정의**: AWS 계정은 Root, IAM User, Role로 구성되며, 프리티어를 통해 무료로 학습 가능
 
 **핵심 보안 서비스**:
-- ![IAM](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Identity-and-Access-Management_48.svg) **IAM**: 권한 관리
-- ![Organizations](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-Organizations_48.svg) **Organizations**: 계정 관리
-- ![CloudTrail](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-CloudTrail_48.svg) **CloudTrail**: 감사 로그
+- ![IAM](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Identity-and-Access-Management_48.svg) **IAM**: 권한 관리
+- ![Organizations](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-Organizations_48.svg) **Organizations**: 계정 관리
+- ![CloudTrail](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_AWS-CloudTrail_48.svg) **CloudTrail**: 감사 로그
 
 #### 🔐 AWS 계정 구조
 
@@ -478,9 +478,9 @@ AWS는 2025년 7월 15일부터 신규 고객을 위한 프리티어 정책을 �
    - 프로덕션 환경 구축 가능
 
 **추가 크레딧 획득 방법** (각 활동당 $20):
-1. ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 인스턴스 실행 및 종료 학습
-2. ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **Amazon RDS**: 데이터베이스 기본 설정 학습
-3. ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 함수 URL로 웹 애플리케이션 구축
+1. ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 인스턴스 실행 및 종료 학습
+2. ![RDS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **Amazon RDS**: 데이터베이스 기본 설정 학습
+3. ![Lambda](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 함수 URL로 웹 애플리케이션 구축
 4. **Amazon Bedrock**: 텍스트 플레이그라운드에서 프롬프트 실행
 5. **AWS Budgets**: 예산 알림 설정
 
@@ -511,10 +511,10 @@ timeline
 ```
 
 **항상 무료 서비스** (신규/기존 고객 모두 적용):
-- ![Lambda](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 100만 요청/월 무료
-- ![DynamoDB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **Amazon DynamoDB**: 25GB 스토리지 무료
-- ![SNS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **Amazon SNS**: 100만 요청/월 무료
-- ![CloudWatch](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **Amazon CloudWatch**: 10개 커스텀 메트릭 무료
+- ![Lambda](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Lambda_48.svg) **AWS Lambda**: 100만 요청/월 무료
+- ![DynamoDB](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-DynamoDB_48.svg) **Amazon DynamoDB**: 25GB 스토리지 무료
+- ![SNS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg) **Amazon SNS**: 100만 요청/월 무료
+- ![CloudWatch](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **Amazon CloudWatch**: 10개 커스텀 메트릭 무료
 
 ```mermaid
 graph TB

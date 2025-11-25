@@ -104,15 +104,15 @@ Route 53 → CloudFront → ALB → Multi-AZ ASG → Internal ALB → App ASG �
 ### 🎯 핵심 AWS 서비스
 
 **로드 밸런싱**:
-- ![ALB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **Application Load Balancer**: L7 로드 밸런서
-- ![Target Group](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **Target Groups**: 트래픽 대상 그룹 관리
+- ![ALB](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **Application Load Balancer**: L7 로드 밸런서
+- ![Target Group](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **Target Groups**: 트래픽 대상 그룹 관리
 
 **자동 확장**:
-- ![ASG](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2-Auto-Scaling_48.svg) **Auto Scaling Groups**: 자동 서버 확장/축소
-- ![Launch Template](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Launch Template**: 서버 생성 템플릿
+- ![ASG](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2-Auto-Scaling_48.svg) **Auto Scaling Groups**: 자동 서버 확장/축소
+- ![Launch Template](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Launch Template**: 서버 생성 템플릿
 
 **컨테이너 레지스트리**:
-- ![ECR](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Containers/48/Arch_Amazon-Elastic-Container-Registry_48.svg) **Amazon ECR**: AWS 컨테이너 레지스트리
+- ![ECR](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Containers/48/Arch_Amazon-Elastic-Container-Registry_48.svg) **Amazon ECR**: AWS 컨테이너 레지스트리
 - **GitHub Container Registry**: GitHub 통합 레지스트리
 
 ## 📊 학습 성과 측정

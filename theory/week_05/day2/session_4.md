@@ -49,10 +49,10 @@
 **☁️ AWS 아키텍처**:
 
 **핵심 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 웹/앱 서버
-- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 데이터베이스 스토리지
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 상품 이미지
-- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 웹/앱 서버
+- ![EBS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 데이터베이스 스토리지
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 상품 이미지
+- ![CloudFront](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
 
 ```mermaid
 graph TB
@@ -88,9 +88,9 @@ pie title E-Commerce 플랫폼 구성 요소
 > **정의**: 확장 가능하고 안정적인 온라인 쇼핑몰 인프라 구조
 
 **핵심 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2**: 애플리케이션 서버
-- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS**: 관리형 데이터베이스 (향후 학습)
-- ![ElastiCache](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-ElastiCache_48.svg) **ElastiCache**: 세션/캐시 (향후 학습)
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **EC2**: 애플리케이션 서버
+- ![RDS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-RDS_48.svg) **RDS**: 관리형 데이터베이스 (향후 학습)
+- ![ElastiCache](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Database/48/Arch_Amazon-ElastiCache_48.svg) **ElastiCache**: 세션/캐시 (향후 학습)
 
 #### E-Commerce 아키텍처 진화
 
@@ -221,9 +221,9 @@ sequenceDiagram
 > **정의**: E-Commerce 데이터의 저장, 백업, 복구 전략
 
 **핵심 서비스**:
-- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **EBS**: 트랜잭션 데이터
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: 미디어 파일
-- ![Backup](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **AWS Backup**: 통합 백업
+- ![EBS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **EBS**: 트랜잭션 데이터
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: 미디어 파일
+- ![Backup](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **AWS Backup**: 통합 백업
 
 #### 데이터 분류 및 저장 전략
 
@@ -407,9 +407,9 @@ S3 Console → Buckets → 버킷 선택 → Management → Lifecycle rules
 > **정의**: 트래픽 증가에 대응하는 확장 전략
 
 **핵심 서비스**:
-- ![ALB](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **ALB**: 로드 밸런싱 (향후 학습)
-- ![Auto Scaling](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Auto-Scaling_48.svg) **Auto Scaling**: 자동 확장 (향후 학습)
-- ![CloudWatch](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **CloudWatch**: 모니터링
+- ![ALB](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg) **ALB**: 로드 밸런싱 (향후 학습)
+- ![Auto Scaling](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_AWS-Auto-Scaling_48.svg) **Auto Scaling**: 자동 확장 (향후 학습)
+- ![CloudWatch](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Management-Governance/48/Arch_Amazon-CloudWatch_48.svg) **CloudWatch**: 모니터링
 
 #### 확장 전략 로드맵
 

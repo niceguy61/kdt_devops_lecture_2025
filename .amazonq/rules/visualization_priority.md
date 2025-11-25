@@ -51,9 +51,9 @@ aws___read_documentation(url)
 ### 아키텍처 구성
 
 **사용된 AWS 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **Amazon EC2**: 가상 서버
-- ![VPC](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-Virtual-Private-Cloud_64.svg) **Amazon VPC**: 네트워크 격리
-- ![RDS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-RDS_64.svg) **Amazon RDS**: 관리형 데이터베이스
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/64/Arch_Amazon-EC2_64.svg) **Amazon EC2**: 가상 서버
+- ![VPC](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/64/Arch_Amazon-Virtual-Private-Cloud_64.svg) **Amazon VPC**: 네트워크 격리
+- ![RDS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Database/64/Arch_Amazon-RDS_64.svg) **Amazon RDS**: 관리형 데이터베이스
 ```
 
 **활용 방법**:

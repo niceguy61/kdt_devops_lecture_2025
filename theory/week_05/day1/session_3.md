@@ -77,9 +77,9 @@ graph LR
 > **정의**: Security Group은 인스턴스 레벨 방화벽, Network ACL은 Subnet 레벨 방화벽
 
 **핵심 보안 서비스**:
-- ![Security Group](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Shield_48.svg) **Security Group**: 인스턴스 방화벽
-- ![Network ACL](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Network-Firewall_48.svg) **Network ACL**: Subnet 방화벽
-- ![WAF](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-WAF_48.svg) **AWS WAF**: 애플리케이션 방화벽
+- ![Security Group](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Shield_48.svg) **Security Group**: 인스턴스 방화벽
+- ![Network ACL](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Network-Firewall_48.svg) **Network ACL**: Subnet 방화벽
+- ![WAF](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-WAF_48.svg) **AWS WAF**: 애플리케이션 방화벽
 
 #### 🛡️ Multi-AZ 보안 아키텍처
 
@@ -229,8 +229,8 @@ graph LR
 > **정의**: Amazon EC2는 클라우드에서 크기 조정 가능한 컴퓨팅 용량을 제공하는 가상 서버
 
 **핵심 EC2 서비스**:
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 가상 서버
-- ![AMI](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **AMI**: 서버 이미지
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: 가상 서버
+- ![AMI](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **AMI**: 서버 이미지
 - ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **EBS**: 블록 스토리지
 
 #### 💻 EC2 인스턴스 타입 분류

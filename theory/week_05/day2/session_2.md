@@ -48,9 +48,9 @@
 **☁️ AWS 아키텍처**:
 
 **핵심 서비스**:
-- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 블록 스토리지
-- ![Snapshot](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **EBS Snapshot**: 백업 및 복구
-- ![KMS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
+- ![EBS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 블록 스토리지
+- ![Snapshot](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **EBS Snapshot**: 백업 및 복구
+- ![KMS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
 
 ```mermaid
 graph TB
@@ -84,8 +84,8 @@ pie title EBS 볼륨 타입 사용 비율
 > **정의**: 워크로드 특성에 따라 최적화된 다양한 스토리지 옵션
 
 **핵심 서비스**:
-- ![EBS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 블록 스토리지 서비스
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: EBS 볼륨 연결 대상
+- ![EBS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg) **Amazon EBS**: 블록 스토리지 서비스
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Amazon EC2**: EBS 볼륨 연결 대상
 
 #### EBS 볼륨 타입 발전 과정
 
@@ -262,8 +262,8 @@ EC2 Console → Volumes → 볼륨 선택 → Actions → Modify volume
 > **정의**: 특정 시점의 EBS 볼륨 데이터를 S3에 백업하는 기능
 
 **핵심 서비스**:
-- ![Snapshot](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **EBS Snapshot**: 증분 백업
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 스냅샷 저장소
+- ![Snapshot](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_AWS-Backup_48.svg) **EBS Snapshot**: 증분 백업
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 스냅샷 저장소
 
 #### 스냅샷 동작 원리
 
@@ -436,8 +436,8 @@ EC2 Console → Elastic Block Store → Lifecycle Manager → Create lifecycle p
 > **정의**: AWS KMS를 사용하여 EBS 볼륨과 스냅샷을 자동으로 암호화
 
 **핵심 서비스**:
-- ![KMS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
-- ![EC2](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Nitro System**: 하드웨어 기반 암호화
+- ![KMS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
+- ![EC2](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Compute/48/Arch_Amazon-EC2_48.svg) **Nitro System**: 하드웨어 기반 암호화
 
 #### 암호화 아키텍처
 

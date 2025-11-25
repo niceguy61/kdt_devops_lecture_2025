@@ -48,9 +48,9 @@
 **☁️ AWS 아키텍처**:
 
 **핵심 서비스**:
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 객체 스토리지
-- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
-- ![Route53](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Route-53_48.svg) **Amazon Route 53**: DNS 관리
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 객체 스토리지
+- ![CloudFront](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
+- ![Route53](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Route-53_48.svg) **Amazon Route 53**: DNS 관리
 
 ```mermaid
 graph TB
@@ -85,8 +85,8 @@ pie title S3 사용 사례 분포
 > **정의**: 무제한 확장 가능한 객체 스토리지 서비스
 
 **핵심 서비스**:
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 객체 스토리지 서비스
-- ![Glacier](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-S3-Glacier_48.svg) **S3 Glacier**: 장기 아카이브
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **Amazon S3**: 객체 스토리지 서비스
+- ![Glacier](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-S3-Glacier_48.svg) **S3 Glacier**: 장기 아카이브
 
 #### S3 발전 과정
 
@@ -273,9 +273,9 @@ Expiration:
 > **정의**: S3 버킷의 접근 제어, 버전 관리, 암호화 설정
 
 **핵심 서비스**:
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3 Bucket**: 객체 컨테이너
-- ![IAM](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Identity-and-Access-Management_48.svg) **IAM**: 접근 제어
-- ![KMS](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3 Bucket**: 객체 컨테이너
+- ![IAM](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Identity-and-Access-Management_48.svg) **IAM**: 접근 제어
+- ![KMS](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Security-Identity-Compliance/48/Arch_AWS-Key-Management-Service_48.svg) **AWS KMS**: 암호화 키 관리
 
 #### S3 보안 계층
 
@@ -446,9 +446,9 @@ S3 Console → Buckets → 버킷 선택 → Properties → Default encryption
 > **정의**: 전 세계 엣지 로케이션을 통한 콘텐츠 배포 네트워크
 
 **핵심 서비스**:
-- ![CloudFront](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
-- ![S3](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: Origin 서버
-- ![Route53](../../../Asset-Package_01312023.d59bb3e1bf7860fb55d4d737779e7c6fce1e35ae/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Route-53_48.svg) **Route 53**: DNS 라우팅
+- ![CloudFront](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg) **Amazon CloudFront**: 글로벌 CDN
+- ![S3](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg) **S3**: Origin 서버
+- ![Route53](../../../Asset-Package/Architecture-Service-Icons_01312023/Arch_Networking-Content-Delivery/48/Arch_Amazon-Route-53_48.svg) **Route 53**: DNS 라우팅
 
 #### CloudFront 아키텍처
 
