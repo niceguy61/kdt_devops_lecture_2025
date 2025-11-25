@@ -17,11 +17,14 @@
 - GitHub Actions 워크플로우 작성 능력 습득
 - Docker 이미지 자동 빌드 및 푸시 구현
 - Kubernetes 자동 배포 파이프라인 구축
+- Terraform GitOps로 인프라 자동화
 
 ### 오늘의 성과물
 - GitHub Actions 워크플로우 이해
 - Docker 이미지 자동화 빌드
 - Helm을 활용한 자동 배포
+- ArgoCD GitOps 개념 이해
+- Terraform GitOps 구현 방법
 - 완전 자동화된 CI/CD 파이프라인
 
 ---
@@ -33,7 +36,8 @@
 09:00-09:40  Session 1: CI/CD 기초 (40분)
 09:40-10:20  Session 2: GitHub Actions (40분)
 10:20-11:00  Session 3: 자동 배포 파이프라인 (40분)
-11:00-12:00  강사 Demo: 전체 CI/CD 구축 (60분)
+11:00-11:40  Session 4: Terraform GitOps (40분)
+11:40-12:00  강사 Demo: 전체 CI/CD + Terraform 구축 (20분)
 ```
 
 ### 학습 방식
@@ -118,6 +122,31 @@ Health Check = 배포 검증
 - 롤백 시나리오
 
 **참조**: [Session 3 상세 내용](./session_3.md)
+
+---
+
+### Session 4: Terraform GitOps (11:00-11:40)
+
+**학습 내용**:
+- Terraform GitOps 개념
+- GitHub Actions + Terraform 통합
+- Terraform Cloud vs Atlantis 비교
+- 인프라 변경 관리 및 승인 프로세스
+
+**핵심 개념**:
+```
+Infrastructure as Code = 인프라를 코드로 관리
+GitOps = Git을 Single Source of Truth로
+terraform plan = 변경 사항 미리 확인
+terraform apply = 실제 인프라 변경
+```
+
+**실습 연계**:
+- Terraform 워크플로우 구성
+- PR 기반 인프라 변경
+- 비용 추정 및 보안 스캔
+
+**참조**: [Session 4 상세 내용](./session_4.md)
 
 ---
 
