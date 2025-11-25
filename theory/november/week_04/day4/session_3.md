@@ -322,7 +322,126 @@ spec:
     fi
 ```
 
-### 4. 롤백 전략 - 10분
+### 4. GitOps with ArgoCD - 10분
+
+**GitOps란?**:
+- **Git을 Single Source of Truth로**: 모든 배포 상태를 Git에 저장
+- **선언적 배포**: 원하는 상태를 선언하면 자동으로 동기화
+- **자동 동기화**: Git 변경 시 자동으로 클러스터 업데이트
+
+**ArgoCD 워크플로우**:
+
+![ArgoCD GitOps](./images/generated-diagrams/argocd_gitops.png)
+
+*그림: ArgoCD를 통한 GitOps 자동 배포 흐름*
+
+**ArgoCD Application 정의**:
+
+```yaml
+# argocd/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp
+  namespace: argocd
+spec:
+  project: default
+  
+  # Git 소스
+  source:
+    repoURL: https://github.com/myorg/myapp-manifests
+    targetRevision: main
+    path: kubernetes/production
+    
+    # Helm 사용 시
+    helm:
+      valueFiles:
+        - values-production.yaml
+  
+  # 배포 대상
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  
+  # 동기화 정책
+  syncPolicy:
+    automated:
+      prune: true      # 삭제된 리소스 자동 제거
+      selfHeal: true   # 수동 변경 시 자동 복구
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+```
+
+**GitHub Actions + ArgoCD 통합**:
+
+```yaml
+# .github/workflows/gitops.yml
+name: GitOps Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 이미지 빌드 및 푸시 (이전 단계)
+      - name: Build and push
+        # ... Docker 빌드 ...
+      
+      # 2. Manifest 저장소 체크아웃
+      - name: Checkout manifest repo
+        uses: actions/checkout@v3
+        with:
+          repository: myorg/myapp-manifests
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+      
+      # 3. 이미지 태그 업데이트
+      - name: Update image tag
+        run: |
+          cd kubernetes/production
+          yq eval '.image.tag = "${{ github.sha }}"' -i values.yaml
+      
+      # 4. Commit & Push
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image to ${{ github.sha }}"
+          git push
+      
+      # 5. ArgoCD가 자동으로 감지하고 배포
+```
+
+**ArgoCD vs 직접 배포 비교**:
+
+| 항목 | 직접 배포 (Helm) | ArgoCD (GitOps) |
+|------|------------------|-----------------|
+| **배포 방식** | Push (CI에서 직접) | Pull (ArgoCD가 감지) |
+| **상태 관리** | CI 워크플로우 | Git Repository |
+| **동기화** | 수동 | 자동 (지속적) |
+| **롤백** | Helm rollback | Git revert |
+| **감사** | CI 로그 | Git History |
+| **보안** | CI에 클러스터 접근 권한 필요 | ArgoCD만 접근 |
+| **복잡도** | 낮음 | 중간 |
+
+**언제 ArgoCD를 사용할까?**:
+- ✅ **여러 클러스터 관리**: 멀티 클러스터 환경
+- ✅ **엄격한 감사 요구**: 모든 변경 이력 추적 필요
+- ✅ **GitOps 문화**: 모든 것을 Git으로 관리
+- ✅ **자동 동기화**: 수동 변경 방지 및 자동 복구
+- ❌ **간단한 환경**: 단일 클러스터, 소규모 팀
+
+### 5. 롤백 전략 - 5분
 
 **자동 롤백 구현**:
 
