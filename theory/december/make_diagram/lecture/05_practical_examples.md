@@ -37,6 +37,7 @@ graph TD
     style L fill:#c8e6c9
     style P fill:#ffcdd2
 ```
+![생성한 예제](../generated-diagrams/github-actions-eks-argocd-slack.png)
 
 **설명 포인트** (2분):
 - 개발자 관점: 코드 커밋부터 배포까지의 자동화 흐름
@@ -82,136 +83,160 @@ sequenceDiagram
 
 ## 2. MCP Python Diagram 실전 예시 (8분)
 
-### 2.1 AWS 3-Tier 웹 애플리케이션 아키텍처
+### 2.1 MCP 설정 및 사용법
 
-실제 MCP 다이어그램을 생성해보겠습니다:
+**MCP (Model Context Protocol) 설정**:
 
-**Python 코드 예시**:
-```python
-from diagrams import Diagram, Cluster, Edge
-from diagrams.aws.compute import EC2
-from diagrams.aws.database import RDS
-from diagrams.aws.network import ALB
-from diagrams.aws.storage import S3
-
-with Diagram("3-Tier Web Application", show=False, direction="TB"):
-    # Load Balancer
-    alb = ALB("Application Load Balancer")
-    
-    # Web Tier
-    with Cluster("Web Tier (Public Subnet)"):
-        web_servers = [EC2("Web Server 1"), EC2("Web Server 2")]
-    
-    # Application Tier  
-    with Cluster("Application Tier (Private Subnet)"):
-        app_servers = [EC2("App Server 1"), EC2("App Server 2")]
-    
-    # Database Tier
-    with Cluster("Database Tier (Private Subnet)"):
-        primary_db = RDS("Primary DB")
-        replica_db = RDS("Read Replica")
-    
-    # Storage
-    s3 = S3("Static Assets & Backups")
-    
-    # Connections
-    alb >> web_servers
-    web_servers >> app_servers
-    app_servers >> primary_db
-    app_servers >> Edge(style="dashed") >> replica_db
-    web_servers >> Edge(color="blue") >> s3
+1. **MCP 서버 설정** (Claude Desktop 또는 호환 클라이언트):
+```json
+{
+  "mcpServers": {
+    "awslabs.aws-diagram-mcp-server": {
+      "command": "uv",
+      "args": [
+        "tool",
+        "run",
+        "--from",
+        "awslabs.aws-diagram-mcp-server",
+        "awslabs.aws-diagram-mcp-server.exe"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": [
+        "generate_diagram",
+        "generate_diagram",
+        "list_icons",
+        "get_diagram_examples"
+      ],
+      "disabled": false
+    }
+  }
+}
 ```
+
+2. **기본 사용 프롬프트**:
+```
+"Python diagrams 라이브러리를 사용해서 AWS 3-tier 웹 애플리케이션 아키텍처 다이어그램을 생성해줘. 
+- ALB 로드밸런서
+- 웹 서버 2대 (퍼블릭 서브넷)
+- 앱 서버 2대 (프라이빗 서브넷)  
+- RDS Primary/Replica (프라이빗 서브넷)
+- S3 스토리지
+파일명은 '3tier-web-app'으로 저장해줘."
+```
+
+### 2.2 실전 프롬프트 예시
+
+**시나리오 1: AWS 3-Tier 웹 애플리케이션**
+
+**프롬프트**:
+```
+AWS 3-tier 웹 애플리케이션 아키텍처를 Python diagrams로 생성해줘:
+
+구성요소:
+- Application Load Balancer (ALB)
+- Web Tier: EC2 웹서버 2대 (퍼블릭 서브넷)
+- App Tier: EC2 앱서버 2대 (프라이빗 서브넷)
+- DB Tier: RDS Primary + Read Replica (프라이빗 서브넷)
+- S3: 정적 자산 및 백업
+
+연결:
+- ALB → 웹서버들
+- 웹서버들 → 앱서버들
+- 앱서버들 → Primary DB
+- 앱서버들 → Read Replica (점선)
+- 웹서버들 → S3 (파란색 선)
+
+파일명: aws-3tier-webapp
+```
+![생성한 예제](../generated-diagrams/aws-3tier-webapp.png)
+
+**시나리오 2: GitHub Actions + EKS + ArgoCD 파이프라인**
+
+**프롬프트**:
+```
+GitHub Actions와 EKS, ArgoCD를 사용한 GitOps CI/CD 파이프라인을 그려줘:
+
+구성:
+1. GitHub Repository (소스코드)
+2. GitHub Actions Workflow:
+   - Checkout Code
+   - Build & Test  
+   - Build Docker Image
+   - Push to ECR
+   - Update K8s Manifest
+3. GitOps Repository (매니페스트)
+4. AWS EKS Cluster:
+   - ArgoCD
+   - App Deployment
+   - Service
+   - Ingress
+5. Slack 알림
+
+연결 플로우:
+GitHub Repo → GitHub Actions → ECR → GitOps Repo → ArgoCD → EKS → Slack
+
+파일명: gitops-pipeline
+```
+![생성한 예제](../generated-diagrams/gitops-pipeline.png)
+
+**시나리오 3: 마이크로서비스 아키텍처**
+
+**프롬프트**:
+```
+마이크로서비스 아키텍처를 그려줘:
+
+Frontend:
+- React App (CloudFront + S3)
+
+API Gateway:
+- ALB 또는 API Gateway
+
+Microservices (각각 별도 클러스터):
+- User Service (EC2 + RDS)
+- Order Service (EC2 + DynamoDB)  
+- Payment Service (Lambda + RDS)
+- Notification Service (SQS + SNS)
+
+공통 서비스:
+- Redis (캐시)
+- CloudWatch (모니터링)
+
+파일명: microservices-arch
+```
+![생성한 예제](../generated-diagrams/microservices-arch.png)
+
+### 2.3 MCP 활용 팁
+
+**효과적인 프롬프트 작성법**:
+
+1. **구체적인 구성요소 명시**:
+   - ❌ "웹 애플리케이션 그려줘"
+   - ✅ "ALB + EC2 2대 + RDS Primary/Replica 구조로 그려줘"
+
+2. **연결 관계 명확히 표현**:
+   - ❌ "연결해줘"
+   - ✅ "ALB → EC2들, EC2들 → RDS Primary, EC2들 → RDS Replica (점선)"
+
+3. **스타일링 요구사항**:
+   - 색상: "파란색 선", "빨간색 점선"
+   - 방향: "왼쪽에서 오른쪽으로", "위에서 아래로"
+   - 클러스터링: "Web Tier로 그룹핑"
+
+4. **파일명 지정**:
+   - 항상 파일명을 명시해서 관리 용이하게
 
 **실제 생성된 다이어그램 예시**:
 
-![마이크로서비스 보안 아키텍처](../../../generated-diagrams/baemin_security_arch.png)
-*복잡한 마이크로서비스 보안 아키텍처 - 실제 프로덕션 환경 예시*
+![3-Tier Web Service](../generated-diagrams/3-tier-web-service.png)
+*3-tier 웹 서비스 아키텍처*
 
-![간단한 마이크로서비스](../../../generated-diagrams/baemin_simple.png)
-*간소화된 마이크로서비스 구조 - 5분 설명 규칙 적용 예시*
+![GitHub Actions Pipeline](../generated-diagrams/github-actions-eks-argocd-slack.png)
+*GitHub Actions + EKS + ArgoCD GitOps 파이프라인*
 
-**설명 포인트** (3분):
-- **개발자 관점**: 애플리케이션 배포 위치와 데이터 플로우
-- **인프라 엔지니어 관점**: 네트워크 분리와 보안 그룹 설정
-- **운영팀 관점**: 로드밸런싱과 데이터베이스 복제 전략
-
-### 2.2 CI/CD 파이프라인 인프라
-
-**시나리오**: 컨테이너 기반 CI/CD 인프라 아키텍처
-
-```python
-with Diagram("CI/CD Pipeline Infrastructure", show=False, direction="LR"):
-    # Source Control
-    developer = User("Developer")
-    
-    with Cluster("Source & Build"):
-        github = Github("GitHub")
-        codebuild = Codebuild("CodeBuild")
-        ecr = ECR("Container Registry")
-    
-    with Cluster("Deployment Pipeline"):
-        codepipeline = Codepipeline("CodePipeline")
-        codedeploy = Codedeploy("CodeDeploy")
-    
-    with Cluster("Target Environment"):
-        with Cluster("EKS Cluster"):
-            eks = EKS("Kubernetes")
-            pods = [ECS("App Pod 1"), ECS("App Pod 2")]
-    
-    # Monitoring
-    cloudwatch = Cloudwatch("CloudWatch")
-    
-    # Flow
-    developer >> github >> codebuild >> ecr
-    ecr >> codepipeline >> codedeploy >> eks >> pods
-    pods >> cloudwatch
-```
-
-**실제 CI/CD 파이프라인 예시**:
-
-![CI/CD 파이프라인 아키텍처](../../../cicd_pipeline_architecture.png)
-*전체 CI/CD 파이프라인 아키텍처 - 소스부터 배포까지*
-
-![GitHub Actions 워크플로우](../../../github_actions_workflow.png)
-*GitHub Actions 기반 자동화 워크플로우*
-
-![ArgoCD GitOps](../../../argocd_gitops_workflow.png)
-*GitOps 방식의 배포 자동화*
-
-**활용 팁**:
-- 새로운 팀원에게 배포 프로세스 설명
-- 장애 발생 시 어느 단계에서 문제가 생겼는지 빠르게 파악
-- 보안 검토 시 각 단계별 권한과 접근 제어 확인
-
-### 2.3 마이크로서비스 모니터링 아키텍처
-
-```python
-with Diagram("Microservices Monitoring Stack", show=False):
-    # Applications
-    with Cluster("Microservices"):
-        services = [ECS("User Service"), ECS("Order Service"), ECS("Payment Service")]
-    
-    # Monitoring Stack
-    with Cluster("Observability"):
-        prometheus = EC2("Prometheus")
-        grafana = EC2("Grafana")
-        jaeger = EC2("Jaeger")
-    
-    # Logging
-    with Cluster("Logging"):
-        elasticsearch = ES("Elasticsearch")
-        kibana = EC2("Kibana")
-        logstash = EC2("Logstash")
-    
-    # Storage
-    s3_logs = S3("Log Archive")
-    
-    # Connections
-    services >> prometheus >> grafana
-    services >> jaeger
-    services >> logstash >> elasticsearch >> kibana
-    elasticsearch >> s3_logs
-```
+![Multi Environment](../generated-diagrams/multi-environment.png)
+*환경별 아키텍처 (Dev/Staging/Production)*
 
 **Kubernetes 및 Helm 배포 예시**:
 
