@@ -207,6 +207,7 @@ with Diagram("3-Tier Web Service", show=False):
     
     lb >> web_servers >> db_primary
 ```
+![생성한 예제](../generated-diagrams/3-tier-web-service.png)
 
 #### CI/CD 파이프라인 자동 생성
 ```python
@@ -222,6 +223,7 @@ with Diagram("CI/CD Pipeline", show=False, direction="LR"):
     
     source >> build >> test >> deploy >> lb >> instances
 ```
+![생성한 예제](../generated-diagrams/cicd-pipeline.png)
 
 #### 환경별 다이어그램 자동 생성
 ```python
@@ -236,6 +238,7 @@ for env in environments:
         
         lb >> app >> db
 ```
+![생성한 예제](../generated-diagrams/multi-environment.png)
 
 ### DevOps 사용 사례
 
