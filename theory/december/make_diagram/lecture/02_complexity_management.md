@@ -133,8 +133,6 @@ graph LR
     end
     
     style VPC fill:#e3f2fd
-    style SRC fill:#f3e5f5
-    style CODE fill:#e8f5e8
 ```
 ```
 🔍 데이터 플로우 다이어그램  
@@ -149,9 +147,7 @@ graph LR
         CLEAN --> STORE[Data Warehouse]
         STORE --> BI[BI Dashboard]
     end
-    style VPC fill:#e3f2fd
     style SRC fill:#f3e5f5
-    style CODE fill:#e8f5e8
 ```
 ```
 🔍 배포 다이어그램
@@ -166,8 +162,6 @@ graph LR
         TEST --> STAGE[Staging]
         STAGE --> PROD[Production]
     end
-    style VPC fill:#e3f2fd
-    style SRC fill:#f3e5f5
     style CODE fill:#e8f5e8
 ```
 
