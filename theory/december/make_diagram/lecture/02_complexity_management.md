@@ -51,7 +51,7 @@ graph TB
         U1[사용자] --> S1[서비스]
         S1 --> D1[데이터]
         S1 -.-> M1[성능 지표]
-    end
+    end    
     style U1 fill:#e1f5fe
     style S1 fill:#c8e6c9
     style D1 fill:#fff3e0
@@ -62,14 +62,15 @@ graph TB
 └── 로드밸런서, 캐시, 큐 포함
 ```
 ```mermaid
+graph TB
     subgraph "레벨 2: 시스템 관점"
-        U2[사용자] --> LB
-        LB --> FE
-        FE --> API
-        API --> BE
-        BE --> DB
-        BE --> C
-    end
+        U2[사용자] --> LB[로드밸런서]
+        LB --> FE[프론트엔드]
+        FE --> API[API 게이트웨이]
+        API --> BE[백엔드 서비스]
+        BE --> DB[데이터베이스]
+        BE --> C[캐시]
+    end    
     style U1 fill:#e1f5fe
     style S1 fill:#c8e6c9
     style D1 fill:#fff3e0
@@ -80,6 +81,7 @@ graph TB
 └── 함수, 클래스, 모듈 수준
 ```
 ```mermaid
+graph TB
     subgraph "레벨 3: 구현 관점"
         API3[API 엔드포인트] --> AUTH[인증 모듈]
         AUTH --> BL[비즈니스 로직]
@@ -243,36 +245,7 @@ graph TB
 - **배포 모듈**: Helm을 통한 애플리케이션 라이프사이클 관리에 집중
 - **패키징 모듈**: 차트 구조와 템플릿 관계에 집중
 - **독립성**: 각 모듈을 별도로 이해하고 관리 가능
-    with Cluster("Storage"):
-        s3_bucket = S3("Static Assets")
-        rds_db = RDS("Application DB")
-        
-    alb >> ec2_instances >> rds_db
-    ec2_instances >> s3_bucket
-
-# 운영 모듈만 집중한 다이어그램  
-with Diagram("Operations Module", show=False):
-    with Cluster("Monitoring Stack"):
-        cloudwatch = Cloudwatch("CloudWatch")
-        grafana = EC2("Grafana")
-        prometheus = EC2("Prometheus")
-        
-    with Cluster("Logging Stack"):
-        elasticsearch = ES("Elasticsearch")
-        logstash = EC2("Logstash")
-        kibana = EC2("Kibana")
-        
-    with Cluster("Security"):
-        iam = IAM("IAM Roles")
-        secrets = SecretsManager("Secrets")
-        
-    # Monitoring flow
-    prometheus >> grafana
-    cloudwatch >> grafana
-    
-    # Logging flow
-    logstash >> elasticsearch >> kibana
-```
+- **재사용성**: 모듈별로 다른 프로젝트에서 재활용 가능
 
 ## 3. 관계 유지 전략 (3분)
 
