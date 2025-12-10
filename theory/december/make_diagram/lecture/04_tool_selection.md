@@ -280,23 +280,23 @@ for env in environments:
 ### 의사결정 플로우차트
 
 ```
-시작
- │
- ├─ 비기술 이해관계자와 협업? ──Yes──► Draw.io
- │   │
- │   No
- │   │
- ├─ 문서에 직접 삽입 필요? ──Yes──► Mermaid
- │   │
- │   No
- │   │
- ├─ 자동화/대량 생성 필요? ──Yes──► Python Diagram
- │   │
- │   No
- │   │
- └─ 빠른 프로토타이핑? ──Yes──► Draw.io
-     │
-     No ──► 상황에 따라 선택
+```mermaid
+flowchart TD
+    A[시작] --> B{비기술 이해관계자와<br/>협업 필요?}
+    B -->|Yes| C[Draw.io<br/>시각적 편집기]
+    B -->|No| D{문서에 직접<br/>삽입 필요?}
+    D -->|Yes| E[Mermaid<br/>텍스트 기반]
+    D -->|No| F{자동화/대량<br/>생성 필요?}
+    F -->|Yes| G[Python Diagram<br/>프로그래밍 방식]
+    F -->|No| H{빠른<br/>프로토타이핑?}
+    H -->|Yes| C
+    H -->|No| I[상황에 따라 선택]
+    
+    style C fill:#e1f5fe
+    style E fill:#f3e5f5
+    style G fill:#e8f5e8
+    style I fill:#fff3e0
+```
 ```
 
 ### 실전 조합 전략
