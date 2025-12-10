@@ -63,12 +63,12 @@ graph TB
 ```
 ```mermaid
     subgraph "레벨 2: 시스템 관점"
-        U2[사용자] --> LB[로드밸런서]
-        LB --> FE[프론트엔드]
-        FE --> API[API 게이트웨이]
-        API --> BE[백엔드 서비스]
-        BE --> DB[데이터베이스]
-        BE --> C[캐시]
+        U2[사용자] --> LB
+        LB --> FE
+        FE --> API
+        API --> BE
+        BE --> DB
+        BE --> C
     end
     style U1 fill:#e1f5fe
     style S1 fill:#c8e6c9
