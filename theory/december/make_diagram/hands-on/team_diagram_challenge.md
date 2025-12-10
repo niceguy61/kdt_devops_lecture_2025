@@ -144,6 +144,8 @@ team_[A/B/C]_diagrams/
 ├── 05_business_logic.[png/svg/md]
 ├── 06_monitoring.[png/svg/md]
 └── README.md (팀 시나리오 및 설계 의도 설명)
+
+디스코드 각 조 채널에 압축된 파일로 올릴 것.
 ```
 
 ### README.md 필수 내용
