@@ -44,17 +44,7 @@
 레벨 1: 비즈니스 관점 (경영진용)
 ├── 사용자 → 서비스 → 데이터
 └── 비용, 성능, 가용성 지표
-
-레벨 2: 시스템 관점 (아키텍트용)  
-├── 프론트엔드 → API → 백엔드 → DB
-└── 로드밸런서, 캐시, 큐 포함
-
-레벨 3: 구현 관점 (개발자용)
-├── 각 서비스의 내부 구조
-└── 함수, 클래스, 모듈 수준
 ```
-
-**Mermaid 예시 - 레벨별 추상화**:
 ```mermaid
 graph TB
     subgraph "레벨 1: 비즈니스 관점"
@@ -62,7 +52,16 @@ graph TB
         S1 --> D1[데이터]
         S1 -.-> M1[성능 지표]
     end
-    
+    style U1 fill:#e1f5fe
+    style S1 fill:#c8e6c9
+    style D1 fill:#fff3e0
+```
+```
+레벨 2: 시스템 관점 (아키텍트용)  
+├── 프론트엔드 → API → 백엔드 → DB
+└── 로드밸런서, 캐시, 큐 포함
+```
+```mermaid
     subgraph "레벨 2: 시스템 관점"
         U2[사용자] --> LB[로드밸런서]
         LB --> FE[프론트엔드]
@@ -71,7 +70,16 @@ graph TB
         BE --> DB[데이터베이스]
         BE --> C[캐시]
     end
-    
+    style U1 fill:#e1f5fe
+    style S1 fill:#c8e6c9
+    style D1 fill:#fff3e0
+```
+```
+레벨 3: 구현 관점 (개발자용)
+├── 각 서비스의 내부 구조
+└── 함수, 클래스, 모듈 수준
+```
+```mermaid
     subgraph "레벨 3: 구현 관점"
         API3[API 엔드포인트] --> AUTH[인증 모듈]
         AUTH --> BL[비즈니스 로직]
@@ -235,7 +243,7 @@ graph TB
 - **배포 모듈**: Helm을 통한 애플리케이션 라이프사이클 관리에 집중
 - **패키징 모듈**: 차트 구조와 템플릿 관계에 집중
 - **독립성**: 각 모듈을 별도로 이해하고 관리 가능
--   with Cluster("Storage"):
+    with Cluster("Storage"):
         s3_bucket = S3("Static Assets")
         rds_db = RDS("Application DB")
         
