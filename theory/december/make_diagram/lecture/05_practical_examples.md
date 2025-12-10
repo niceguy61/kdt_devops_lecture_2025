@@ -1,11 +1,11 @@
-# 실전 다이어그램 예시 (20분)
+# 실전 다이어그램 예시
 
 ## 학습 목표
 - 실제 DevOps 시나리오에서 사용하는 다이어그램 작성법 습득
 - Mermaid, MCP Python Diagram, Draw.io 도구별 활용 사례 학습
 - 팀 협업을 위한 효과적인 시각화 기법 적용
 
-## 1. Mermaid 실전 예시 (7분)
+## 1. Mermaid 실전 예시
 
 ### 1.1 CI/CD 파이프라인 플로우
 
@@ -39,7 +39,7 @@ graph TD
 ```
 ![생성한 예제](../generated-diagrams/github-actions-eks-argocd-slack.png)
 
-**설명 포인트** (2분):
+**설명 포인트**:
 - 개발자 관점: 코드 커밋부터 배포까지의 자동화 흐름
 - 운영팀 관점: 승인 지점과 롤백 전략
 - 품질 관리: 테스트 게이트와 헬스체크
@@ -81,7 +81,7 @@ sequenceDiagram
 - 새로운 팀원에게 서비스 간 의존성 설명
 - API 응답 시간 최적화 지점 식별
 
-## 2. MCP Python Diagram 실전 예시 (8분)
+## 2. MCP Python Diagram 실전 예시
 
 ### 2.1 MCP 설정 및 사용법
 
@@ -249,7 +249,7 @@ Microservices (각각 별도 클러스터):
 ![Terraform GitOps](../../../terraform_gitops_workflow.png)
 *Terraform을 활용한 인프라 코드 관리*
 
-## 3. Draw.io 실전 예시 (5분)
+## 3. Draw.io 실전 예시
 
 ### 3.1 인프라 스케일링 시나리오 (애니메이션 활용)
 
@@ -278,7 +278,7 @@ Microservices (각각 별도 클러스터):
 4. **DNS 업데이트**: Route53이 새로운 엔드포인트로 라우팅
 5. **서비스 복구**: 애플리케이션 정상 동작 재개
 
-## 4. 도구별 활용 가이드라인 (3분)
+## 4. 도구별 활용 가이드라인
 
 ### 언제 어떤 도구를 사용할까?
 
@@ -313,7 +313,7 @@ style_critical = {"fillcolor": "#ffcdd2"}    # 빨강: 중요/장애
 - 관련 문서 링크 추가
 - 5분 설명 규칙 준수 여부 체크
 
-## 5. 실습 체크리스트 (2분)
+## 5. 실습 체크리스트
 
 ### 즉시 적용 가능한 액션 아이템
 
@@ -348,4 +348,4 @@ style_critical = {"fillcolor": "#ffcdd2"}    # 빨강: 중요/장애
 - 개선하고 싶은 기존 다이어그램 (있다면)
 
 ---
-*다음: [워크샵 - 실전 다이어그램 작성](../hands-on/README.md)*
+*다음: [워크샵 - 실전 다이어그램 작성](../hands-on/team_diagram_challenge.md)*
