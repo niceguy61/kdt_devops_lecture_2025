@@ -71,9 +71,9 @@ graph TB
         BE --> DB[데이터베이스]
         BE --> C[캐시]
     end    
-    style U1 fill:#e1f5fe
-    style S1 fill:#c8e6c9
-    style D1 fill:#fff3e0
+    style U2 fill:#e1f5fe
+    style LB fill:#c8e6c9
+    style FE fill:#fff3e0
 ```
 ```
 레벨 3: 구현 관점 (개발자용)
