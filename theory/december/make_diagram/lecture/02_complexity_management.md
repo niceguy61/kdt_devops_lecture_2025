@@ -74,6 +74,11 @@ graph TB
     style U2 fill:#e1f5fe
     style LB fill:#c8e6c9
     style FE fill:#fff3e0
+    style API fill:#c8e6c9
+    style DB fill:#c8e6c9
+    style C fill:#c8e6c9
+    style DB fill:#c8e6c9
+
 ```
 ```
 레벨 3: 구현 관점 (개발자용)
