@@ -279,7 +279,6 @@ for env in environments:
 
 ### 의사결정 플로우차트
 
-```
 ```mermaid
 flowchart TD
     A[시작] --> B{비기술 이해관계자와<br/>협업 필요?}
