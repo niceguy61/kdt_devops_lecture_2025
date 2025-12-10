@@ -103,11 +103,11 @@ graph TB
 
 **실제 복잡도 관리 예시**:
 
-![복잡한 마이크로서비스 아키텍처](../../../baemin_microservices_security_architecture.png)
-*레벨 3: 구현 관점 - 복잡도가 높은 상세 아키텍처 (5분 규칙 위반 사례)*
+![복잡한 마이크로서비스 아키텍처](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FEfhXO%2FbtsCUysDG34%2FAAAAAAAAAAAAAAAAAAAAAOmJ0A144L5PGUNAkrC-9JNxHq5UFKpK0F1xl3a36FLX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1767193199%26allow_ip%3D%26allow_referer%3D%26signature%3DLq7lNvM5QVFW8nMHLXLMY5v7pgw%253D)
+출처: https://server-engineer.tistory.com/930*
 
-![간소화된 보안 아키텍처](../../../baemin_microservices_security.png)
-*레벨 2: 시스템 관점 - 보안 관심사에 집중한 적절한 복잡도*
+![간소화된 보안 아키텍처](https://d1tcczg8b21j1t.cloudfront.net/strapi-assets/26_AWS_Security_Hub_2_3c6ab60dea.png)
+*출처: https://www.stormit.cloud/blog/aws-security-hub/*
 
 **복잡도 분석**:
 - **상단 이미지**: 너무 많은 세부사항으로 5분 내 설명 어려움
