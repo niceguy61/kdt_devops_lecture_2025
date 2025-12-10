@@ -119,17 +119,7 @@ graph TB
 🔍 네트워크 다이어그램
 ├── VPC, 서브넷, 보안그룹
 └── 트래픽 흐름과 방화벽 규칙
-
-🔍 데이터 플로우 다이어그램  
-├── 데이터 소스 → 처리 → 저장
-└── ETL 파이프라인과 데이터 변환
-
-🔍 배포 다이어그램
-├── CI/CD 파이프라인 단계
-└── 환경별 배포 전략
 ```
-
-**Mermaid 예시 - 관심사별 분해**:
 ```mermaid
 graph LR
     subgraph "네트워크 관심사"
@@ -142,20 +132,40 @@ graph LR
         SG2[App Security Group] -.-> PRIV
     end
     
+    style VPC fill:#e3f2fd
+    style SRC fill:#f3e5f5
+    style CODE fill:#e8f5e8
+```
+```
+🔍 데이터 플로우 다이어그램  
+├── 데이터 소스 → 처리 → 저장
+└── ETL 파이프라인과 데이터 변환
+```
+```mermaid
+graph LR
     subgraph "데이터 플로우 관심사"
         SRC[Data Source] --> ETL[ETL Process]
         ETL --> CLEAN[Data Cleaning]
         CLEAN --> STORE[Data Warehouse]
         STORE --> BI[BI Dashboard]
     end
-    
+    style VPC fill:#e3f2fd
+    style SRC fill:#f3e5f5
+    style CODE fill:#e8f5e8
+```
+```
+🔍 배포 다이어그램
+├── CI/CD 파이프라인 단계
+└── 환경별 배포 전략
+```
+```mermaid
+graph LR
     subgraph "배포 관심사"
         CODE[Source Code] --> BUILD[Build]
         BUILD --> TEST[Test]
         TEST --> STAGE[Staging]
         STAGE --> PROD[Production]
     end
-    
     style VPC fill:#e3f2fd
     style SRC fill:#f3e5f5
     style CODE fill:#e8f5e8
@@ -163,11 +173,11 @@ graph LR
 
 **관심사별 분해 실제 예시**:
 
-![CI/CD 파이프라인 아키텍처](../../../cicd_pipeline_architecture.png)
-*배포 관심사에 집중한 다이어그램 - 소스부터 프로덕션까지의 플로우*
+![CI/CD 파이프라인 아키텍처](https://raw.githubusercontent.com/stefanprodan/gh-actions-demo/master/docs/screens/github-actions-gitops.png)
+*배포 관심사에 집중한 다이어그램 - 소스부터 프로덕션까지의 플로우 (출처: https://github.com/stefanprodan/gh-actions-demo)*
 
-![Terraform GitOps 워크플로우](../../../terraform_gitops_workflow.png)
-*인프라 관심사에 집중한 다이어그램 - 코드형 인프라 관리*
+![Terraform GitOps 워크플로우](https://jeromedecoster.github.io/aws/gitops--terraform/img/architecture.svg)
+*인프라 관심사에 집중한 다이어그램 - 코드형 인프라 관리 (출처: https://jeromedecoster.github.io/aws/gitops--terraform/)*
 
 **관심사 분해의 장점**:
 - **배포 관심사**: CI/CD 파이프라인의 각 단계와 게이트웨이 명확히 표현
