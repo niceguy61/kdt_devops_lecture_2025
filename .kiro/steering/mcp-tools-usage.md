@@ -34,7 +34,7 @@ This project requires the use of specific MCP (Model Context Protocol) tools to 
 ## Integration Guidelines
 
 - **Always consider** using sequential thinking for complex decision-making processes
-- **Leverage web search** when you need current information about technologies, frameworks, or best practices
+- **Leverage web search** use web-search mcp when you need current information about technologies, frameworks, or best practices
 - **Utilize context7** to maintain consistency across the project lifecycle
 
 These tools should be used proactively throughout the development process to ensure high-quality, well-researched solutions.
