@@ -192,19 +192,7 @@ graph LR
 ├── 컴퓨팅 리소스 (EC2, 컨테이너)
 ├── 네트워킹 (VPC, 로드밸런서)
 └── 스토리지 (S3, EBS, RDS)
-
-📦 애플리케이션 모듈
-├── 프론트엔드 서비스
-├── API 게이트웨이
-└── 백엔드 마이크로서비스
-
-📦 운영 모듈
-├── 모니터링 (CloudWatch, Grafana)
-├── 로깅 (ELK Stack)
-└── 보안 (IAM, 보안그룹)
 ```
-
-**Mermaid 예시 - 모듈식 분해**:
 ```mermaid
 graph TB
     subgraph "인프라 모듈"
@@ -222,6 +210,18 @@ graph TB
         STORAGE --> RDS[RDS 데이터베이스]
     end
     
+    style COMPUTE fill:#e3f2fd
+    style FRONTEND fill:#e8f5e8
+    style MONITOR fill:#fff3e0
+```
+```
+📦 애플리케이션 모듈
+├── 프론트엔드 서비스
+├── API 게이트웨이
+└── 백엔드 마이크로서비스
+```
+```mermaid
+graph TB
     subgraph "애플리케이션 모듈"
         FRONTEND[프론트엔드]
         API[API 게이트웨이]
@@ -231,8 +231,19 @@ graph TB
         API --> GATEWAY[API Gateway]
         BACKEND --> MICRO1[사용자 서비스]
         BACKEND --> MICRO2[주문 서비스]
-    end
-    
+    end    
+    style COMPUTE fill:#e3f2fd
+    style FRONTEND fill:#e8f5e8
+    style MONITOR fill:#fff3e0
+```
+```
+📦 운영 모듈
+├── 모니터링 (CloudWatch, Grafana)
+├── 로깅 (ELK Stack)
+└── 보안 (IAM, 보안그룹)
+```
+```mermaid
+graph TB
     subgraph "운영 모듈"
         MONITOR[모니터링]
         LOGGING[로깅]
@@ -252,11 +263,8 @@ graph TB
 
 **모듈식 분해 실제 예시**:
 
-![Helm 아키텍처](../../../helm_architecture.png)
-*애플리케이션 배포 모듈 - Helm을 통한 Kubernetes 애플리케이션 관리*
-
-![Helm 차트 구조](../../../helm_chart_structure.png)
-*패키징 모듈 - Helm 차트의 내부 구조와 템플릿 관계*
+![Helm 아키텍처](https://images.ctfassets.net/il1yandlcjgk/4mpa9wPxoZ8GeAFCpoaryl/9b70f6c2bcd6a93f4692ed3806c4e30e/2023-03-16-image2.png?w=935&fm=webp&q=75)
+*애플리케이션 배포 모듈 - Helm을 통한 Kubernetes 애플리케이션 관리 (출처: https://circleci.com/blog/what-is-helm/)*
 
 **모듈식 분해의 효과**:
 - **배포 모듈**: Helm을 통한 애플리케이션 라이프사이클 관리에 집중
