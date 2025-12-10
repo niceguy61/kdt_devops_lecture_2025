@@ -297,7 +297,6 @@ flowchart TD
     style G fill:#e8f5e8
     style I fill:#fff3e0
 ```
-```
 
 ### 실전 조합 전략
 ```
