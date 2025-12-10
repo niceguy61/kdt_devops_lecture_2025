@@ -54,72 +54,160 @@
 ### 정보 계층 구조
 
 #### Z-패턴 레이아웃 (서구 문화권)
-```
-시작점 ────────────► 중요 정보
-│                        │
-│                        │
-▼                        ▼
-보조 정보 ────────────► 결론/결과
+```mermaid
+graph LR
+    A[시작점] --> B[중요 정보]
+    A --> C[보조 정보]
+    B --> D[결론/결과]
+    C --> D
+    
+    style A fill:#e1f5fe
+    style B fill:#c8e6c9
+    style D fill:#fff3e0
 ```
 
 #### DevOps 다이어그램 적용
-```
-사용자/요청 ──────────► 최종 결과/응답
-│                          │
-│ (처리 과정)                │
-▼                          ▼  
-인프라/서비스 ──────────► 데이터/로그
+```mermaid
+graph LR
+    A[사용자/요청] --> B[최종 결과/응답]
+    A --> C[인프라/서비스]
+    B --> D[데이터/로그]
+    C --> D
+    
+    style A fill:#e3f2fd
+    style B fill:#c8e6c9
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
 ```
 
 ### 그룹화 전략
 
 #### 1. 기능별 그룹화
-```
-┌─ 프론트엔드 ─┐  ┌─ 백엔드 ─┐  ┌─ 데이터 ─┐
-│ React App    │  │ API      │  │ Database │
-│ CDN          │  │ Lambda   │  │ Cache    │
-└──────────────┘  └──────────┘  └──────────┘
+```mermaid
+graph TB
+    subgraph "프론트엔드"
+        A1[React App]
+        A2[CDN]
+    end
+    
+    subgraph "백엔드"
+        B1[API]
+        B2[Lambda]
+    end
+    
+    subgraph "데이터"
+        C1[Database]
+        C2[Cache]
+    end
+    
+    A1 --> B1
+    B1 --> C1
+    B2 --> C2
 ```
 
 #### 2. 환경별 그룹화
-```
-┌─ 개발환경 ─┐  ┌─ 스테이징 ─┐  ┌─ 프로덕션 ─┐
-│ Dev API    │  │ Stage API  │  │ Prod API   │
-│ Test DB    │  │ Stage DB   │  │ Prod DB    │
-└────────────┘  └────────────┘  └─────────────┘
+```mermaid
+graph TB
+    subgraph "개발환경"
+        D1[Dev API]
+        D2[Test DB]
+    end
+    
+    subgraph "스테이징"
+        S1[Stage API]
+        S2[Stage DB]
+    end
+    
+    subgraph "프로덕션"
+        P1[Prod API]
+        P2[Prod DB]
+    end
+    
+    D1 --> S1 --> P1
+    D2 --> S2 --> P2
+    
+    style D1 fill:#e3f2fd
+    style S1 fill:#fff3e0
+    style P1 fill:#c8e6c9
 ```
 
 #### 3. 네트워크별 그룹화
-```
-┌─ 퍼블릭 서브넷 ─┐  ┌─ 프라이빗 서브넷 ─┐
-│ Load Balancer   │  │ App Servers      │
-│ NAT Gateway     │  │ Databases        │
-└─────────────────┘  └──────────────────┘
+```mermaid
+graph TB
+    subgraph "퍼블릭 서브넷"
+        PUB1[Load Balancer]
+        PUB2[NAT Gateway]
+    end
+    
+    subgraph "프라이빗 서브넷"
+        PRIV1[App Servers]
+        PRIV2[Databases]
+    end
+    
+    PUB1 --> PRIV1
+    PUB2 --> PRIV1
+    PRIV1 --> PRIV2
+    
+    style PUB1 fill:#e8f5e8
+    style PRIV1 fill:#f3e5f5
 ```
 
 ### 화살표와 연결선 사용법
 
 #### 화살표 의미 체계
-```
-──────► 데이터 플로우 (단방향)
-◄─────► 양방향 통신
-- - - ► 비동기/이벤트
-═════► 주요 경로 (굵은 선)
-┈┈┈┈► 선택적/조건부 경로
+```mermaid
+graph LR
+    A[시작] --> B[데이터 플로우<br/>단방향]
+    C[노드1] <--> D[양방향 통신]
+    E[이벤트] -.-> F[비동기/이벤트]
+    G[주요] ==> H[주요 경로<br/>굵은 선]
+    I[조건] -.- J[선택적/조건부]
+    
+    style B fill:#e1f5fe
+    style D fill:#c8e6c9
+    style F fill:#fff3e0
+    style H fill:#ffcdd2
+    style J fill:#f3e5f5
 ```
 
 #### DevOps 시나리오별 적용
+
+**CI/CD 파이프라인**:
+```mermaid
+graph LR
+    A[Source] --> B[Build]
+    B --> C[Test]
+    C --> D[Deploy]
+    
+    style A fill:#e3f2fd
+    style D fill:#c8e6c9
 ```
-🔄 CI/CD 파이프라인
-Source ──► Build ──► Test ──► Deploy
 
-🌐 API 호출
-Client ──► API Gateway ──► Lambda ──► Database
-       ◄──            ◄──        ◄──
+**API 호출 플로우**:
+```mermaid
+graph LR
+    A[Client] --> B[API Gateway]
+    B --> C[Lambda]
+    C --> D[Database]
+    D --> C
+    C --> B
+    B --> A
+    
+    style A fill:#e1f5fe
+    style D fill:#fff3e0
+```
 
-📊 모니터링 플로우  
-App ┈┈► Metrics ──► Dashboard
-    ┈┈► Logs ────► Alerting
+**모니터링 플로우**:
+```mermaid
+graph TB
+    A[App] -.-> B[Metrics]
+    A -.-> C[Logs]
+    B --> D[Dashboard]
+    C --> E[Alerting]
+    
+    style A fill:#e3f2fd
+    style D fill:#c8e6c9
+    style E fill:#ffcdd2
 ```
 
 ## 3. 접근성 고려사항 (3분)
@@ -168,15 +256,27 @@ App ┈┈► Metrics ──► Dashboard
 ```
 
 #### 3. ASCII 아트 금지
-```
-❌ 텍스트 기반 다이어그램
-    +-------+     +--------+
-    | Web   |---->| DB     |
-    +-------+     +--------+
 
-✅ 적절한 도구 사용
-    [웹서버 아이콘] ──► [DB 아이콘]
+**❌ 텍스트 기반 다이어그램 (피해야 할 방식)**:
 ```
++-------+     +--------+
+| Web   |---->| DB     |
++-------+     +--------+
+```
+
+**✅ 적절한 도구 사용 (권장 방식)**:
+```mermaid
+graph LR
+    A[🖥️ Web Server] --> B[🗄️ Database]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+```
+
+**개선 효과**:
+- 시각적 명확성 향상
+- 확장성과 유지보수성 개선
+- 다양한 출력 형식 지원 (PNG, SVG, PDF)
 
 ## 4. DevOps 시각 언어 표준화 (실습 준비)
 
