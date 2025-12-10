@@ -205,8 +205,6 @@ graph TB
     end
     
     style COMPUTE fill:#e3f2fd
-    style FRONTEND fill:#e8f5e8
-    style MONITOR fill:#fff3e0
 ```
 ```
 📦 애플리케이션 모듈
@@ -226,9 +224,7 @@ graph TB
         BACKEND --> MICRO1[사용자 서비스]
         BACKEND --> MICRO2[주문 서비스]
     end    
-    style COMPUTE fill:#e3f2fd
     style FRONTEND fill:#e8f5e8
-    style MONITOR fill:#fff3e0
 ```
 ```
 📦 운영 모듈
@@ -250,8 +246,6 @@ graph TB
         SECURITY --> IAM[IAM 역할]
     end
     
-    style COMPUTE fill:#e3f2fd
-    style FRONTEND fill:#e8f5e8
     style MONITOR fill:#fff3e0
 ```
 
