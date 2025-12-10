@@ -54,6 +54,49 @@
 └── 함수, 클래스, 모듈 수준
 ```
 
+**Mermaid 예시 - 레벨별 추상화**:
+```mermaid
+graph TB
+    subgraph "레벨 1: 비즈니스 관점"
+        U1[사용자] --> S1[서비스]
+        S1 --> D1[데이터]
+        S1 -.-> M1[성능 지표]
+    end
+    
+    subgraph "레벨 2: 시스템 관점"
+        U2[사용자] --> LB[로드밸런서]
+        LB --> FE[프론트엔드]
+        FE --> API[API 게이트웨이]
+        API --> BE[백엔드 서비스]
+        BE --> DB[데이터베이스]
+        BE --> C[캐시]
+    end
+    
+    subgraph "레벨 3: 구현 관점"
+        API3[API 엔드포인트] --> AUTH[인증 모듈]
+        AUTH --> BL[비즈니스 로직]
+        BL --> DAL[데이터 액세스]
+        DAL --> DB3[DB 커넥션]
+    end
+    
+    style U1 fill:#e1f5fe
+    style S1 fill:#c8e6c9
+    style D1 fill:#fff3e0
+```
+
+**실제 복잡도 관리 예시**:
+
+![복잡한 마이크로서비스 아키텍처](../../../baemin_microservices_security_architecture.png)
+*레벨 3: 구현 관점 - 복잡도가 높은 상세 아키텍처 (5분 규칙 위반 사례)*
+
+![간소화된 보안 아키텍처](../../../baemin_microservices_security.png)
+*레벨 2: 시스템 관점 - 보안 관심사에 집중한 적절한 복잡도*
+
+**복잡도 분석**:
+- **상단 이미지**: 너무 많은 세부사항으로 5분 내 설명 어려움
+- **하단 이미지**: 핵심 보안 요소만 표현하여 이해하기 쉬움
+- **교훈**: 목적에 맞는 추상화 레벨 선택이 중요
+
 #### 전략 2: 관심사별 분해
 ```
 🔍 네트워크 다이어그램
@@ -68,6 +111,51 @@
 ├── CI/CD 파이프라인 단계
 └── 환경별 배포 전략
 ```
+
+**Mermaid 예시 - 관심사별 분해**:
+```mermaid
+graph LR
+    subgraph "네트워크 관심사"
+        VPC[VPC] --> PUB[Public Subnet]
+        VPC --> PRIV[Private Subnet]
+        PUB --> IGW[Internet Gateway]
+        PRIV --> NAT[NAT Gateway]
+        
+        SG1[Web Security Group] -.-> PUB
+        SG2[App Security Group] -.-> PRIV
+    end
+    
+    subgraph "데이터 플로우 관심사"
+        SRC[Data Source] --> ETL[ETL Process]
+        ETL --> CLEAN[Data Cleaning]
+        CLEAN --> STORE[Data Warehouse]
+        STORE --> BI[BI Dashboard]
+    end
+    
+    subgraph "배포 관심사"
+        CODE[Source Code] --> BUILD[Build]
+        BUILD --> TEST[Test]
+        TEST --> STAGE[Staging]
+        STAGE --> PROD[Production]
+    end
+    
+    style VPC fill:#e3f2fd
+    style SRC fill:#f3e5f5
+    style CODE fill:#e8f5e8
+```
+
+**관심사별 분해 실제 예시**:
+
+![CI/CD 파이프라인 아키텍처](../../../cicd_pipeline_architecture.png)
+*배포 관심사에 집중한 다이어그램 - 소스부터 프로덕션까지의 플로우*
+
+![Terraform GitOps 워크플로우](../../../terraform_gitops_workflow.png)
+*인프라 관심사에 집중한 다이어그램 - 코드형 인프라 관리*
+
+**관심사 분해의 장점**:
+- **배포 관심사**: CI/CD 파이프라인의 각 단계와 게이트웨이 명확히 표현
+- **인프라 관심사**: Terraform을 통한 인프라 코드 관리 프로세스 집중
+- **효과**: 각 다이어그램이 특정 목적에 최적화되어 5분 내 설명 가능
 
 ### 모듈식 분해 (Modular Decomposition)
 
@@ -87,6 +175,95 @@
 ├── 모니터링 (CloudWatch, Grafana)
 ├── 로깅 (ELK Stack)
 └── 보안 (IAM, 보안그룹)
+```
+
+**Mermaid 예시 - 모듈식 분해**:
+```mermaid
+graph TB
+    subgraph "인프라 모듈"
+        COMPUTE[컴퓨팅 리소스]
+        NETWORK[네트워킹]
+        STORAGE[스토리지]
+        
+        COMPUTE --> EC2[EC2 인스턴스]
+        COMPUTE --> ECS[ECS 컨테이너]
+        
+        NETWORK --> VPC[VPC]
+        NETWORK --> ALB[로드밸런서]
+        
+        STORAGE --> S3[S3 버킷]
+        STORAGE --> RDS[RDS 데이터베이스]
+    end
+    
+    subgraph "애플리케이션 모듈"
+        FRONTEND[프론트엔드]
+        API[API 게이트웨이]
+        BACKEND[백엔드 서비스]
+        
+        FRONTEND --> REACT[React App]
+        API --> GATEWAY[API Gateway]
+        BACKEND --> MICRO1[사용자 서비스]
+        BACKEND --> MICRO2[주문 서비스]
+    end
+    
+    subgraph "운영 모듈"
+        MONITOR[모니터링]
+        LOGGING[로깅]
+        SECURITY[보안]
+        
+        MONITOR --> CW[CloudWatch]
+        MONITOR --> GRAFANA[Grafana]
+        
+        LOGGING --> ELK[ELK Stack]
+        SECURITY --> IAM[IAM 역할]
+    end
+    
+    style COMPUTE fill:#e3f2fd
+    style FRONTEND fill:#e8f5e8
+    style MONITOR fill:#fff3e0
+```
+
+**모듈식 분해 실제 예시**:
+
+![Helm 아키텍처](../../../helm_architecture.png)
+*애플리케이션 배포 모듈 - Helm을 통한 Kubernetes 애플리케이션 관리*
+
+![Helm 차트 구조](../../../helm_chart_structure.png)
+*패키징 모듈 - Helm 차트의 내부 구조와 템플릿 관계*
+
+**모듈식 분해의 효과**:
+- **배포 모듈**: Helm을 통한 애플리케이션 라이프사이클 관리에 집중
+- **패키징 모듈**: 차트 구조와 템플릿 관계에 집중
+- **독립성**: 각 모듈을 별도로 이해하고 관리 가능
+-   with Cluster("Storage"):
+        s3_bucket = S3("Static Assets")
+        rds_db = RDS("Application DB")
+        
+    alb >> ec2_instances >> rds_db
+    ec2_instances >> s3_bucket
+
+# 운영 모듈만 집중한 다이어그램  
+with Diagram("Operations Module", show=False):
+    with Cluster("Monitoring Stack"):
+        cloudwatch = Cloudwatch("CloudWatch")
+        grafana = EC2("Grafana")
+        prometheus = EC2("Prometheus")
+        
+    with Cluster("Logging Stack"):
+        elasticsearch = ES("Elasticsearch")
+        logstash = EC2("Logstash")
+        kibana = EC2("Kibana")
+        
+    with Cluster("Security"):
+        iam = IAM("IAM Roles")
+        secrets = SecretsManager("Secrets")
+        
+    # Monitoring flow
+    prometheus >> grafana
+    cloudwatch >> grafana
+    
+    # Logging flow
+    logstash >> elasticsearch >> kibana
 ```
 
 ## 3. 관계 유지 전략 (3분)
