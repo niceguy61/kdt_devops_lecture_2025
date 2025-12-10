@@ -94,9 +94,11 @@ graph TB
         DAL --> DB3[DB 커넥션]
     end
     
-    style U1 fill:#e1f5fe
-    style S1 fill:#c8e6c9
-    style D1 fill:#fff3e0
+    style API3 fill:#e1f5fe
+    style AUTH fill:#c8e6c9
+    style BL fill:#fff3e0
+    style DAL fill:#fff3e0
+    style DB3 fill:#fff3e0
 ```
 
 **실제 복잡도 관리 예시**:
