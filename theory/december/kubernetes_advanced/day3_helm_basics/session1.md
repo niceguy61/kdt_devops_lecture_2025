@@ -17,24 +17,7 @@
 Helm은 Kubernetes의 **패키지 매니저**로, 복잡한 애플리케이션을 쉽게 배포하고 관리할 수 있게 해줍니다.
 
 ### Helm의 필요성
-```mermaid
-graph TB
-    subgraph "Helm 없이"
-        A1[deployment.yaml] --> B1[복잡한 YAML 관리]
-        A2[service.yaml] --> B1
-        A3[configmap.yaml] --> B1
-        A4[secret.yaml] --> B1
-        B1 --> C1[환경별 중복 파일]
-        C1 --> D1[관리 복잡성 증가]
-    end
-    
-    subgraph "Helm 사용"
-        A5[Chart Template] --> B2[단일 패키지]
-        A6[Values 파일] --> B2
-        B2 --> C2[환경별 설정 분리]
-        C2 --> D2[간편한 배포 관리]
-    end
-```
+![Helm 아키텍처](https://images.ctfassets.net/il1yandlcjgk/4mpa9wPxoZ8GeAFCpoaryl/9b70f6c2bcd6a93f4692ed3806c4e30e/2023-03-16-image2.png?w=935&fm=webp&q=75)
 
 ### Helm 핵심 개념
 - **Chart**: Kubernetes 리소스를 정의하는 패키지
