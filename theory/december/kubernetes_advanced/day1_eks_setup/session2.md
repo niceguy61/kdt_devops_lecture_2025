@@ -86,7 +86,27 @@ aws iam list-attached-role-policies \
 - `AmazonEKS_CNI_Policy`
 - `AmazonEC2ContainerRegistryReadOnly`
 
-### 4. 기본 테스트 Pod 배포 (10분)
+### 4. 시스템 컴포넌트 확인 (5분)
+
+#### EKS 시스템 Pod 상태 확인
+```bash
+# kube-system 네임스페이스 전체 확인
+kubectl get all -n kube-system
+
+# VPC CNI (네트워킹) 확인
+kubectl get pods -n kube-system -l k8s-app=aws-node
+kubectl describe daemonset aws-node -n kube-system
+
+# CoreDNS (DNS) 확인  
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+kubectl describe deployment coredns -n kube-system
+
+# kube-proxy (서비스 프록시) 확인
+kubectl get pods -n kube-system -l k8s-app=kube-proxy
+kubectl describe daemonset kube-proxy -n kube-system
+```
+
+### 5. 기본 테스트 Pod 배포 (5분)
 
 #### 테스트 Pod 생성 및 확인
 ```bash

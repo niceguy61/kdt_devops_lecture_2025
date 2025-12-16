@@ -43,6 +43,16 @@ graph TB
 | **보안 패치** | 자동 적용 | 수동 적용 |
 | **비용** | 시간당 $0.10 + 인프라 | 인프라 비용만 |
 
+### EKS 시스템 컴포넌트
+**AWS 완전 관리 (Control Plane)**:
+- kube-apiserver, etcd, kube-scheduler
+- kube-controller-manager, cloud-controller-manager
+
+**Worker Node 자동 설치**:
+- VPC CNI (aws-node) - Pod 네트워킹
+- kube-proxy - 서비스 프록시  
+- CoreDNS - 클러스터 DNS
+
 ### 네트워킹 구조
 - **Public Subnet**: NAT Gateway, Load Balancer
 - **Private Subnet**: Worker Nodes (보안 강화)
