@@ -19,10 +19,10 @@ vpc:
 # 노드 그룹 설정
 nodeGroups:
   - name: worker-nodes
-    instanceType: t3.medium
-    desiredCapacity: 2
+    instanceType: t3.small
+    desiredCapacity: 1
     minSize: 1
-    maxSize: 4
+    maxSize: 2
     volumeSize: 20
     volumeType: gp3
     

@@ -152,10 +152,10 @@ eksctl get cluster --region ap-northeast-2
 
 #### 예상 비용 (참고용)
 - **EKS 클러스터**: $0.10/시간 ($72/월)
-- **EC2 인스턴스**: t3.medium 2대 (~$60/월)
+- **EC2 인스턴스**: t3.small 1대 (~$15/월)
 - **NAT Gateway**: $32/월 + 데이터 전송비
-- **EBS 볼륨**: 20GB x 2 (~$4/월)
-- **총 예상 비용**: ~$170/월
+- **EBS 볼륨**: 20GB x 1 (~$2/월)
+- **총 예상 비용**: ~$121/월
 
 ### 5. 클러스터 연결 확인 (10분)
 
@@ -185,7 +185,6 @@ kubectl get pods -n kube-system
 ```bash
 # kubectl get nodes
 NAME                                               STATUS   ROLES    AGE   VERSION
-ip-10-0-xx-xxx.ap-northeast-2.compute.internal   Ready    <none>   5m    v1.34.x
 ip-10-0-xx-xxx.ap-northeast-2.compute.internal   Ready    <none>   5m    v1.34.x
 
 # kubectl get pods -n kube-system
@@ -218,13 +217,12 @@ graph TB
             subgraph "AZ-2a"
                 PubSub1["Public Subnet<br/>10.0.0.0/19"]
                 PriSub1["Private Subnet<br/>10.0.64.0/19"]
-                Worker1["Worker Node 1<br/>t3.medium<br/>ip-10-0-64-xxx"]
+                Worker1["Worker Node 1<br/>t3.small<br/>ip-10-0-64-xxx"]
             end
             
             subgraph "AZ-2c"
                 PubSub2["Public Subnet<br/>10.0.32.0/19"]
                 PriSub2["Private Subnet<br/>10.0.96.0/19"]
-                Worker2["Worker Node 2<br/>t3.medium<br/>ip-10-0-96-xxx"]
             end
             
             IGW["Internet Gateway"]
@@ -260,18 +258,13 @@ graph TB
     NAT --> PriSub2
     
     Worker1 --> PriSub1
-    Worker2 --> PriSub2
     
     API --> Worker1
-    API --> Worker2
     
     Worker1 --> ECR
-    Worker2 --> ECR
     Worker1 --> CloudWatch
-    Worker2 --> CloudWatch
     
     ALB --> Worker1
-    ALB --> Worker2
     
     %% 스타일링
     classDef controlPlane fill:#ff9999
@@ -281,7 +274,7 @@ graph TB
     classDef local fill:#cc99ff
     
     class API,ETCD,Scheduler,Controller controlPlane
-    class Worker1,Worker2 worker
+    class Worker1 worker
     class PubSub1,PubSub2,PriSub1,PriSub2,IGW,NAT network
     class ECR,CloudWatch,ALB aws
     class kubectl,eksctl local
