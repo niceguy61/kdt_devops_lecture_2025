@@ -1,0 +1,57 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-cluster
+  region: ap-northeast-2
+  version: "1.33"
+
+# 기존 VPC 사용 설정 (VPC ID와 서브넷 ID를 실제 값으로 변경 필요)
+vpc:
+  id: "vpc-xxxxxxxxx"  # 기존 VPC ID
+  subnets:
+    private:
+      ap-northeast-2a:
+        id: "subnet-xxxxxxxxx"  # 기존 프라이빗 서브넷 ID
+      ap-northeast-2c:
+        id: "subnet-yyyyyyyyy"  # 기존 프라이빗 서브넷 ID
+    public:
+      ap-northeast-2a:
+        id: "subnet-zzzzzzzzz"  # 기존 퍼블릭 서브넷 ID
+      ap-northeast-2c:
+        id: "subnet-wwwwwwwww"  # 기존 퍼블릭 서브넷 ID
+
+# 노드 그룹 설정
+nodeGroups:
+  - name: worker-nodes
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    volumeSize: 20
+    volumeType: gp3
+    
+    # SSH 접근 허용 (디버깅용)
+    ssh:
+      allow: true
+    
+    # 노드 그룹 태그
+    tags:
+      Environment: "development"
+      Project: "kubernetes-advanced"
+    
+    # IAM 정책 (기본값 사용)
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        efs: true
+        albIngress: true
+        cloudWatch: true
+
+# 클러스터 태그
+tags:
+  Environment: "development"
+  Project: "kubernetes-advanced"
+  CreatedBy: "eksctl"
