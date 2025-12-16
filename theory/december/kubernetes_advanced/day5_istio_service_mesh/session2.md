@@ -11,6 +11,97 @@
 
 ---
 
+## 🏗️ Istio와 ALB 통합 아키텍처
+
+### 실제 운영 환경에서의 트래픽 흐름
+```mermaid
+graph TB
+    subgraph "AWS Load Balancer"
+        ALB["Application Load Balancer<br/>(AWS ALB)"]
+        NLB["Network Load Balancer<br/>(선택사항)"]
+    end
+    
+    subgraph "EKS Cluster"
+        subgraph "istio-system namespace"
+            IGW["Istio Ingress Gateway<br/>(LoadBalancer Service)"]
+        end
+        
+        subgraph "Istio Configuration"
+            Gateway["Gateway<br/>(Istio Resource)"]
+            VS["VirtualService<br/>(Routing Rules)"]
+            DR["DestinationRule<br/>(Load Balancing)"]
+        end
+        
+        subgraph "Application Pods"
+            Frontend["Frontend<br/>(with Envoy)"]
+            API["API Service<br/>(with Envoy)"]
+            DB["Database Service<br/>(with Envoy)"]
+        end
+    end
+    
+    Internet --> ALB
+    ALB --> IGW
+    IGW --> Gateway
+    Gateway --> VS
+    VS --> DR
+    DR --> Frontend
+    DR --> API
+    DR --> DB
+    
+    classDef aws fill:#ff9999
+    classDef istio fill:#99ccff
+    classDef app fill:#99ff99
+    
+    class ALB,NLB aws
+    class IGW,Gateway,VS,DR istio
+    class Frontend,API,DB app
+```
+
+### ALB + Istio 통합의 장점
+- **ALB**: SSL 종료, WAF, 인증서 관리, AWS 네이티브 기능
+- **Istio Gateway**: 세밀한 트래픽 제어, 서비스 메시 기능, 카나리 배포
+
+### 설정 방법 비교
+
+#### 방법 1: ALB → Istio Gateway (권장)
+```bash
+# ALB Ingress Controller로 Istio Gateway 노출
+cat > alb-istio-ingress.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istio-gateway-ingress
+  namespace: istio-system
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/cert-id
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  rules:
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: istio-ingressgateway
+            port:
+              number: 80
+EOF
+
+kubectl apply -f alb-istio-ingress.yaml
+```
+
+#### 방법 2: Istio Gateway만 사용 (현재 교육 과정)
+```bash
+# Istio Gateway를 LoadBalancer로 직접 노출
+kubectl get service istio-ingressgateway -n istio-system
+# TYPE: LoadBalancer (AWS에서 자동으로 CLB/NLB 생성)
+```
+
 ## 🛠️ 실습: Gateway 및 VirtualService 설정 (35분)
 
 ### 1. Gateway 설정 (10분)
@@ -298,7 +389,197 @@ istioctl proxy-status
 istioctl analyze -n production
 ```
 
-### 트래픽 흐름 확인
+### 트래픽 흐름 다이어그램
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant ALB as AWS ALB
+    participant IGW as Istio Gateway
+    participant VS as VirtualService
+    participant Frontend as Frontend Pod
+    participant API as API Pod
+    
+    Note over User,API: ALB + Istio 통합 흐름
+    User->>ALB: HTTPS 요청 (myapp.example.com)
+    ALB->>ALB: SSL 종료, WAF 검사
+    ALB->>IGW: HTTP 요청 전달
+    IGW->>VS: Gateway 규칙 적용
+    
+    alt Frontend 요청 (/)
+        VS->>Frontend: 라우팅 (/→Frontend)
+        Frontend->>VS: 응답
+    else API 요청 (/api/*)
+        VS->>API: 라우팅 (/api/*→API)
+        API->>VS: 응답
+    end
+    
+    VS->>IGW: 응답 전달
+    IGW->>ALB: 응답 전달
+    ALB->>User: HTTPS 응답
+```
+
+### 실제 운영 vs 교육 환경
+
+#### 실제 운영 환경 (ALB + Istio)
+```bash
+# 1. ALB Ingress Controller 설치
+helm repo add eks https://aws.github.io/eks-charts
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-eks-cluster
+
+# 2. Istio Gateway를 ClusterIP로 변경
+kubectl patch service istio-ingressgateway -n istio-system -p '{"spec":{"type":"ClusterIP"}}'
+
+# 3. ALB Ingress로 Istio Gateway 노출
+kubectl apply -f alb-istio-ingress.yaml
+```
+
+#### 교육 환경 (Istio Gateway만)
+```bash
+# Istio Gateway를 LoadBalancer로 직접 노출 (현재 방식)
+kubectl get service istio-ingressgateway -n istio-system
+# 자동으로 AWS Classic Load Balancer 생성됨
+```
+
+## 🌐 Route 53 도메인 연결 방법
+
+### 방법 1: Route 53 → Kubernetes (직접 연결)
+```mermaid
+graph LR
+    subgraph "DNS"
+        User["사용자<br/>myapp.example.com"]
+        R53["Route 53<br/>CNAME 레코드"]
+    end
+    
+    subgraph "EKS Cluster"
+        LB["AWS Load Balancer<br/>(자동 생성)"]
+        IGW["Istio Gateway"]
+        Pods["Application Pods"]
+    end
+    
+    User -->|"1. DNS 쿼리"| R53
+    R53 -->|"2. LB 주소 반환<br/>abc123.elb.amazonaws.com"| User
+    User -->|"3. HTTP 요청"| LB
+    LB --> IGW
+    IGW --> Pods
+    
+    classDef dns fill:#e1f5fe
+    classDef k8s fill:#99ccff
+    
+    class User,R53 dns
+    class LB,IGW,Pods k8s
+```
+
+**설정 방법**:
+```bash
+# 1. LoadBalancer 주소 확인
+kubectl get service istio-ingressgateway -n istio-system
+# EXTERNAL-IP: abc123-456789.ap-northeast-2.elb.amazonaws.com
+
+# 2. Route 53에서 CNAME 레코드 생성
+# myapp.example.com → abc123-456789.ap-northeast-2.elb.amazonaws.com
+
+# 3. 도메인으로 접근
+curl http://myapp.example.com/api/health
+```
+
+### 방법 2: Route 53 → ALB → Kubernetes (운영 환경)
+```mermaid
+graph LR
+    subgraph "DNS"
+        User["사용자<br/>myapp.example.com"]
+        R53["Route 53<br/>A 레코드"]
+    end
+    
+    subgraph "AWS"
+        ALB["Application<br/>Load Balancer"]
+    end
+    
+    subgraph "EKS Cluster"
+        IGW["Istio Gateway<br/>(ClusterIP)"]
+        Pods["Application Pods"]
+    end
+    
+    User -->|"1. DNS 쿼리"| R53
+    R53 -->|"2. ALB IP 반환"| User
+    User -->|"3. HTTPS 요청"| ALB
+    ALB -->|"4. HTTP 전달"| IGW
+    IGW --> Pods
+    
+    classDef dns fill:#e1f5fe
+    classDef aws fill:#ff9999
+    classDef k8s fill:#99ccff
+    
+    class User,R53 dns
+    class ALB aws
+    class IGW,Pods k8s
+```
+
+**설정 방법**:
+```bash
+# 1. ALB Ingress 생성 (도메인 포함)
+cat > alb-ingress.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istio-alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    external-dns.alpha.kubernetes.io/hostname: myapp.example.com
+spec:
+  rules:
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: istio-ingressgateway
+            port:
+              number: 80
+EOF
+
+# 2. External DNS가 자동으로 Route 53 레코드 생성
+kubectl apply -f alb-ingress.yaml
+
+# 3. HTTPS로 접근 (ALB에서 SSL 처리)
+curl https://myapp.example.com/api/health
+```
+
+### 자동화된 DNS 관리 (External DNS)
+```bash
+# External DNS 설치
+helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+helm install external-dns external-dns/external-dns \
+  --set provider=aws \
+  --set aws.zoneType=public \
+  --set txtOwnerId=my-cluster
+
+# 서비스에 어노테이션만 추가하면 자동으로 Route 53 레코드 생성
+kubectl annotate service istio-ingressgateway -n istio-system \
+  external-dns.alpha.kubernetes.io/hostname=myapp.example.com
+
+# 몇 분 후 자동으로 DNS 레코드 생성됨
+nslookup myapp.example.com
+```
+
+### 실습: 도메인 연결 테스트
+```bash
+# 현재 LoadBalancer 주소 확인
+INGRESS_HOST=$(kubectl get service istio-ingressgateway -n istio-system \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo "LoadBalancer 주소: $INGRESS_HOST"
+
+# 임시 도메인 테스트 (hosts 파일 수정)
+echo "# 임시 테스트용 - /etc/hosts에 추가"
+echo "$(nslookup $INGRESS_HOST | grep Address | tail -1 | cut -d' ' -f2) myapp.local"
+
+# 도메인으로 테스트
+curl -H "Host: myapp.local" http://$INGRESS_HOST/api/health
+```
 ```bash
 # 외부 → Gateway → VirtualService → Service 흐름 테스트
 echo "Testing traffic flow:"
