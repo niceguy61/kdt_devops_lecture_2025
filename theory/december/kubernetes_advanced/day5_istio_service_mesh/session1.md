@@ -49,6 +49,165 @@ graph TB
         B[App B] --> E2[Envoy Proxy]
         C[App C] --> E3[Envoy Proxy]
         E1 <--> E2
+        E2 <--> E3
+        E1 <--> E3
+    end
+    
+    subgraph "Control Plane"
+        Istiod[Istiod<br/>- Pilot<br/>- Citadel<br/>- Galley]
+    end
+    
+    E1 <--> Istiod
+    E2 <--> Istiod
+    E3 <--> Istiod
+    
+    classDef dataplane fill:#e3f2fd
+    classDef controlplane fill:#fff3e0
+    
+    class A,B,C,E1,E2,E3 dataplane
+    class Istiod controlplane
+```
+
+## 🌐 전체 트래픽 흐름 아키텍처
+
+### 완전한 서비스 연결 흐름
+```mermaid
+graph TB
+    subgraph "External"
+        User["👤 사용자<br/>myapp.example.com"]
+        Internet["🌐 Internet"]
+    end
+    
+    subgraph "AWS DNS"
+        R53["📍 Route 53<br/>DNS Resolution"]
+    end
+    
+    subgraph "AWS Load Balancer"
+        LB["⚖️ Load Balancer<br/>(CLB/NLB/ALB)"]
+    end
+    
+    subgraph "EKS Cluster"
+        subgraph "istio-system namespace"
+            IGW["🚪 Istio Ingress Gateway<br/>(LoadBalancer Service)"]
+        end
+        
+        subgraph "Istio Configuration"
+            Gateway["📋 Gateway<br/>(Istio Resource)"]
+            VS["🔀 VirtualService<br/>(Routing Rules)"]
+            DR["⚙️ DestinationRule<br/>(Load Balancing)"]
+        end
+        
+        subgraph "Application Layer"
+            subgraph "production namespace"
+                FrontendSvc["🌐 Frontend Service<br/>(ClusterIP)"]
+                APISvc["🔧 API Service<br/>(ClusterIP)"]
+                DBSvc["🗄️ Database Service<br/>(ClusterIP)"]
+            end
+            
+            subgraph "Pod Layer"
+                FrontendPod["📱 Frontend Pod<br/>(+ Envoy Sidecar)"]
+                APIPod["⚡ API Pod<br/>(+ Envoy Sidecar)"]
+                DBPod["💾 Database Pod<br/>(+ Envoy Sidecar)"]
+            end
+        end
+        
+        subgraph "Control Plane"
+            Istiod["🧠 Istiod<br/>(Configuration Management)"]
+        end
+    end
+    
+    %% 트래픽 흐름
+    User -->|"1. DNS Query"| R53
+    R53 -->|"2. LB Address"| User
+    User -->|"3. HTTP/HTTPS Request"| Internet
+    Internet --> LB
+    LB -->|"4. Forward to Gateway"| IGW
+    IGW -->|"5. Apply Gateway Rules"| Gateway
+    Gateway -->|"6. Route Traffic"| VS
+    VS -->|"7. Load Balance"| DR
+    
+    %% 서비스 라우팅
+    DR -->|"Frontend Traffic (/)"| FrontendSvc
+    DR -->|"API Traffic (/api/*)"| APISvc
+    DR -->|"Database Traffic"| DBSvc
+    
+    %% 서비스 → 파드
+    FrontendSvc --> FrontendPod
+    APISvc --> APIPod
+    DBSvc --> DBPod
+    
+    %% 파드 간 통신 (Service Mesh)
+    FrontendPod <-->|"mTLS"| APIPod
+    APIPod <-->|"mTLS"| DBPod
+    
+    %% Control Plane 관리
+    Istiod -.->|"Configuration"| Gateway
+    Istiod -.->|"Configuration"| VS
+    Istiod -.->|"Configuration"| DR
+    Istiod -.->|"Sidecar Config"| FrontendPod
+    Istiod -.->|"Sidecar Config"| APIPod
+    Istiod -.->|"Sidecar Config"| DBPod
+    
+    %% 스타일링
+    classDef external fill:#ffebee
+    classDef dns fill:#e8f5e8
+    classDef aws fill:#fff3e0
+    classDef istio fill:#e3f2fd
+    classDef k8s fill:#f3e5f5
+    classDef app fill:#e0f2f1
+    classDef control fill:#fce4ec
+    
+    class User,Internet external
+    class R53 dns
+    class LB aws
+    class IGW,Gateway,VS,DR istio
+    class FrontendSvc,APISvc,DBSvc k8s
+    class FrontendPod,APIPod,DBPod app
+    class Istiod control
+```
+
+### 트래픽 흐름 단계별 설명
+
+#### 1단계: DNS 해석
+```
+사용자 → Route 53 → Load Balancer 주소 반환
+```
+
+#### 2단계: 외부 트래픽 진입
+```
+사용자 → AWS Load Balancer → Istio Ingress Gateway
+```
+
+#### 3단계: Istio 라우팅
+```
+Gateway → VirtualService → DestinationRule → Kubernetes Service
+```
+
+#### 4단계: 서비스 메시 통신
+```
+Service → Pod (Envoy Sidecar) → 다른 Pod (mTLS)
+```
+
+### Service Mesh의 핵심 가치
+```mermaid
+graph LR
+    subgraph "기존 방식"
+        App1[Application] -.->|"직접 통신<br/>보안/모니터링 부족"| App2[Application]
+    end
+    
+    subgraph "Service Mesh 방식"
+        App3[Application] --> Proxy1[Envoy Proxy]
+        Proxy1 <-->|"mTLS, 로드밸런싱<br/>재시도, 모니터링"| Proxy2[Envoy Proxy]
+        Proxy2 --> App4[Application]
+    end
+    
+    classDef app fill:#e1f5fe
+    classDef proxy fill:#fff3e0
+    
+    class App1,App2,App3,App4 app
+    class Proxy1,Proxy2 proxy
+```
+        E1 <--> E2
         E1 <--> E3
         E2 <--> E3
     end

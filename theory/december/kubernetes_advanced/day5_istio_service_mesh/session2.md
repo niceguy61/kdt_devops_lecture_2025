@@ -375,6 +375,8 @@ pkill -f "kubectl port-forward"
 - [ ] Gateway를 통한 외부 트래픽 라우팅 성공
 - [ ] VirtualService로 API와 프론트엔드 트래픽 분리
 - [ ] DestinationRule을 통한 로드 밸런싱 설정
+- [ ] Route 53 도메인 연결 이해
+- [ ] HTTPS 설정 및 ACM 인증서 연동 (보너스)
 - [ ] Kiali 대시보드에서 서비스 메시 시각화 확인
 
 ### Istio 리소스 확인
@@ -579,6 +581,127 @@ echo "$(nslookup $INGRESS_HOST | grep Address | tail -1 | cut -d' ' -f2) myapp.l
 
 # 도메인으로 테스트
 curl -H "Host: myapp.local" http://$INGRESS_HOST/api/health
+```
+
+## 🔒 HTTPS 설정 (ACM 인증서 연동)
+
+### CLB + ACM 인증서 설정
+```bash
+# 1. ACM 인증서 생성 (사전 준비)
+aws acm request-certificate \
+  --domain-name myapp.example.com \
+  --validation-method DNS \
+  --region ap-northeast-2
+
+# 2. 인증서 ARN 확인
+CERT_ARN=$(aws acm list-certificates --region ap-northeast-2 \
+  --query 'CertificateSummaryList[0].CertificateArn' --output text)
+echo "Certificate ARN: $CERT_ARN"
+```
+
+### Istio Gateway Service에 SSL 설정 추가
+```bash
+# ACM 인증서를 CLB에 연결
+kubectl annotate service istio-ingressgateway -n istio-system \
+  service.beta.kubernetes.io/aws-load-balancer-ssl-cert=$CERT_ARN \
+  service.beta.kubernetes.io/aws-load-balancer-backend-protocol=http \
+  service.beta.kubernetes.io/aws-load-balancer-ssl-ports=https
+
+# HTTPS 포트 추가
+kubectl patch service istio-ingressgateway -n istio-system -p '{
+  "spec": {
+    "ports": [
+      {"name": "status-port", "port": 15021, "protocol": "TCP", "targetPort": 15021},
+      {"name": "http2", "port": 80, "protocol": "TCP", "targetPort": 8080},
+      {"name": "https", "port": 443, "protocol": "TCP", "targetPort": 8080}
+    ]
+  }
+}'
+```
+
+### Istio Gateway에 HTTPS 설정 추가
+```bash
+# HTTPS 지원 Gateway 생성
+cat > gateway-https.yaml << 'EOF'
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: frontend-gateway-https
+  namespace: production
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "myapp.example.com"
+    tls:
+      httpsRedirect: true  # HTTP → HTTPS 리다이렉트
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - "myapp.example.com"
+    tls:
+      mode: PASSTHROUGH  # CLB에서 SSL 종료
+EOF
+
+kubectl apply -f gateway-https.yaml
+```
+
+### SSL 종료 위치별 아키텍처
+```mermaid
+graph TB
+    subgraph "SSL Termination at CLB (권장)"
+        User1["사용자<br/>HTTPS"] --> CLB1["Classic LB<br/>SSL 종료<br/>(ACM 인증서)"]
+        CLB1 --> IGW1["Istio Gateway<br/>HTTP"]
+        IGW1 --> Pods1["Application Pods"]
+    end
+    
+    subgraph "SSL Termination at Istio"
+        User2["사용자<br/>HTTPS"] --> CLB2["Classic LB<br/>TCP 패스스루"]
+        CLB2 --> IGW2["Istio Gateway<br/>SSL 종료<br/>(Secret 인증서)"]
+        IGW2 --> Pods2["Application Pods"]
+    end
+    
+    classDef ssl fill:#ffcdd2
+    classDef http fill:#c8e6c9
+    
+    class User1,CLB1,User2,IGW2 ssl
+    class IGW1,Pods1,CLB2,Pods2 http
+```
+
+### HTTPS 접근 테스트
+```bash
+# LoadBalancer 주소 확인 (HTTPS 포트 포함)
+kubectl get service istio-ingressgateway -n istio-system
+
+# HTTPS로 접근 테스트 (인증서 검증 무시)
+HTTPS_URL="https://$INGRESS_HOST"
+curl -k "$HTTPS_URL/api/health" | jq .
+
+# HTTP → HTTPS 리다이렉트 테스트
+curl -I "http://$INGRESS_HOST/api/health"
+# 응답: HTTP/1.1 301 Moved Permanently
+# Location: https://...
+
+# 도메인으로 HTTPS 접근 (Route 53 설정 후)
+curl "https://myapp.example.com/api/health" | jq .
+```
+
+### 인증서 상태 확인
+```bash
+# CLB에 연결된 인증서 확인
+aws elbv2 describe-load-balancers --region ap-northeast-2 \
+  --query 'LoadBalancers[?contains(DNSName, `'$(echo $INGRESS_HOST | cut -d'-' -f1)'`)].{DNSName:DNSName,State:State}'
+
+# SSL 인증서 정보 확인
+openssl s_client -connect $INGRESS_HOST:443 -servername myapp.example.com < /dev/null 2>/dev/null | \
+  openssl x509 -noout -subject -dates
 ```
 ```bash
 # 외부 → Gateway → VirtualService → Service 흐름 테스트
