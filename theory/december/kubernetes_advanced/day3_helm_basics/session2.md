@@ -389,6 +389,144 @@ my-web-app/
     └── _helpers.tpl
 ```
 
+### Helm Chart 구성도
+```mermaid
+graph TB
+    subgraph "Helm Chart Structure"
+        Chart["Chart.yaml<br/>메타데이터"]
+        Values["values.yaml<br/>기본 설정"]
+        
+        subgraph "Environment Values"
+            DevValues["development.yaml<br/>개발 환경"]
+            StagValues["staging.yaml<br/>스테이징 환경"]
+            ProdValues["production.yaml<br/>운영 환경"]
+        end
+        
+        subgraph "Templates"
+            Deployment["deployment.yaml<br/>Pod 배포"]
+            Service["service.yaml<br/>서비스 노출"]
+            ConfigMap["configmap.yaml<br/>설정 관리"]
+            Helpers["_helpers.tpl<br/>공통 함수"]
+        end
+    end
+    
+    subgraph "Deployment Process"
+        HelmCmd["helm install/upgrade"]
+        Render["Template Rendering"]
+        K8sAPI["Kubernetes API"]
+        
+        subgraph "Created Resources"
+            K8sDeploy["Deployment"]
+            K8sService["Service"]
+            K8sConfigMap["ConfigMap"]
+            K8sPods["Pods"]
+        end
+    end
+    
+    %% Chart 구성 관계
+    Chart --> Render
+    Values --> Render
+    DevValues --> Render
+    StagValues --> Render
+    ProdValues --> Render
+    
+    Deployment --> Render
+    Service --> Render
+    ConfigMap --> Render
+    Helpers --> Deployment
+    Helpers --> Service
+    Helpers --> ConfigMap
+    
+    %% 배포 프로세스
+    HelmCmd --> Render
+    Render --> K8sAPI
+    K8sAPI --> K8sDeploy
+    K8sAPI --> K8sService
+    K8sAPI --> K8sConfigMap
+    K8sDeploy --> K8sPods
+    
+    %% 스타일링
+    classDef chart fill:#e1f5fe
+    classDef values fill:#f3e5f5
+    classDef templates fill:#e8f5e8
+    classDef k8s fill:#fff3e0
+    classDef process fill:#ffebee
+    
+    class Chart chart
+    class Values,DevValues,StagValues,ProdValues values
+    class Deployment,Service,ConfigMap,Helpers templates
+    class K8sDeploy,K8sService,K8sConfigMap,K8sPods k8s
+    class HelmCmd,Render,K8sAPI process
+```
+
+### Values 파일 우선순위
+```mermaid
+graph LR
+    subgraph "Values Priority (High to Low)"
+        SetFlag["--set flag<br/>(최우선)"]
+        SetFile["--set-file<br/>(파일 기반)"]
+        ValuesFlag["-f values.yaml<br/>(환경별)"]
+        DefaultValues["values.yaml<br/>(기본값)"]
+    end
+    
+    subgraph "Final Configuration"
+        MergedValues["Merged Values<br/>(최종 설정)"]
+    end
+    
+    SetFlag --> MergedValues
+    SetFile --> MergedValues
+    ValuesFlag --> MergedValues
+    DefaultValues --> MergedValues
+    
+    %% 우선순위 표시
+    SetFlag -.->|"1순위"| MergedValues
+    SetFile -.->|"2순위"| MergedValues
+    ValuesFlag -.->|"3순위"| MergedValues
+    DefaultValues -.->|"4순위"| MergedValues
+    
+    classDef high fill:#ffcdd2
+    classDef medium fill:#fff3e0
+    classDef low fill:#e8f5e8
+    classDef final fill:#e1f5fe
+    
+    class SetFlag high
+    class SetFile,ValuesFlag medium
+    class DefaultValues low
+    class MergedValues final
+```
+
+### 환경별 배포 플로우
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Helm as Helm CLI
+    participant K8s as Kubernetes API
+    participant Cluster as EKS Cluster
+    
+    Note over Dev,Cluster: Development Environment
+    Dev->>Helm: helm install my-app-dev -f development.yaml
+    Helm->>Helm: Merge values.yaml + development.yaml
+    Helm->>Helm: Render templates with merged values
+    Helm->>K8s: Apply rendered manifests
+    K8s->>Cluster: Create resources (1 replica, ClusterIP)
+    Cluster-->>Dev: Development app running
+    
+    Note over Dev,Cluster: Staging Environment
+    Dev->>Helm: helm install my-app-staging -f staging.yaml
+    Helm->>Helm: Merge values.yaml + staging.yaml
+    Helm->>Helm: Render templates with merged values
+    Helm->>K8s: Apply rendered manifests
+    K8s->>Cluster: Create resources (2 replicas, LoadBalancer)
+    Cluster-->>Dev: Staging app running
+    
+    Note over Dev,Cluster: Upgrade Process
+    Dev->>Helm: helm upgrade my-app-dev --set replicaCount=2
+    Helm->>Helm: Merge existing values + new values
+    Helm->>K8s: Apply updated manifests
+    K8s->>Cluster: Update deployment (scale to 2 replicas)
+    Cluster-->>Dev: Updated app running
+```
+
 ---
 
 ## 🔄 다음 세션 준비
