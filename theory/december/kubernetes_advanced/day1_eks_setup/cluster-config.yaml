@@ -1,0 +1,48 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-cluster
+  region: ap-northeast-2
+  version: "1.28"
+
+# VPC 설정
+vpc:
+  cidr: "10.0.0.0/16"
+  nat:
+    gateway: Single  # 비용 절약을 위해 단일 NAT Gateway 사용
+
+# 노드 그룹 설정
+nodeGroups:
+  - name: worker-nodes
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    volumeSize: 20
+    volumeType: gp3
+    
+    # SSH 접근 허용 (디버깅용)
+    ssh:
+      allow: true
+    
+    # 노드 그룹 태그
+    tags:
+      Environment: "development"
+      Project: "kubernetes-advanced"
+    
+    # IAM 정책 (기본값 사용)
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        efs: true
+        albIngress: true
+        cloudWatch: true
+
+# 클러스터 태그
+tags:
+  Environment: "development"
+  Project: "kubernetes-advanced"
+  CreatedBy: "eksctl"
