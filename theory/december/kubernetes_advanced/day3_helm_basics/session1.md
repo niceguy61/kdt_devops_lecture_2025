@@ -219,6 +219,156 @@ ls -la my-web-app/
 helm lint my-web-app/
 ```
 
+## 🏗️ 실제 운영 환경 배포 전략 이해
+
+### 환경 분리 전략 비교
+
+#### 1. 네임스페이스 기반 분리 (교육용)
+```mermaid
+graph TB
+    subgraph "Single EKS Cluster"
+        subgraph "development namespace"
+            DevApp["my-app-dev<br/>1 replica"]
+            DevSvc["ClusterIP Service"]
+        end
+        
+        subgraph "staging namespace"
+            StagApp["my-app-staging<br/>2 replicas"]
+            StagSvc["LoadBalancer Service"]
+        end
+        
+        subgraph "production namespace"
+            ProdApp["my-app-prod<br/>3 replicas"]
+            ProdSvc["LoadBalancer Service"]
+            ProdHPA["HPA enabled"]
+        end
+    end
+    
+    classDef dev fill:#e8f5e8
+    classDef staging fill:#fff3e0
+    classDef prod fill:#ffebee
+    
+    class DevApp,DevSvc dev
+    class StagApp,StagSvc staging
+    class ProdApp,ProdSvc,ProdHPA prod
+```
+
+**장점**: 비용 효율적, 리소스 공유, 관리 단순
+**단점**: 보안 격리 부족, 리소스 경합, 장애 전파 위험
+
+#### 2. 클러스터 기반 분리 (실제 운영)
+```mermaid
+graph TB
+    subgraph "Development Cluster"
+        subgraph "default namespace"
+            DevApp["my-app<br/>1 replica<br/>t3.small"]
+        end
+        DevVPC["VPC: 10.1.0.0/16"]
+    end
+    
+    subgraph "Staging Cluster"
+        subgraph "default namespace"
+            StagApp["my-app<br/>2 replicas<br/>t3.medium"]
+        end
+        StagVPC["VPC: 10.2.0.0/16"]
+    end
+    
+    subgraph "Production Cluster"
+        subgraph "default namespace"
+            ProdApp["my-app<br/>5 replicas<br/>m5.large"]
+            ProdHPA["HPA + VPA"]
+        end
+        ProdVPC["VPC: 10.3.0.0/16"]
+    end
+    
+    classDef dev fill:#e8f5e8
+    classDef staging fill:#fff3e0
+    classDef prod fill:#ffebee
+    
+    class DevApp,DevVPC dev
+    class StagApp,StagVPC staging
+    class ProdApp,ProdHPA,ProdVPC prod
+```
+
+**장점**: 완전한 격리, 독립적 스케일링, 보안 강화
+**단점**: 비용 증가, 관리 복잡성, 리소스 중복
+
+### 실제 운영에서의 Helm 사용법
+
+#### kubeconfig 컨텍스트 관리
+```bash
+# 각 클러스터의 kubeconfig 설정
+aws eks update-kubeconfig --region ap-northeast-2 --name dev-cluster --alias dev
+aws eks update-kubeconfig --region ap-northeast-2 --name staging-cluster --alias staging  
+aws eks update-kubeconfig --region us-east-1 --name prod-cluster --alias prod
+
+# 컨텍스트 확인 및 전환
+kubectl config get-contexts
+kubectl config use-context dev
+```
+
+#### 환경별 Values 파일 전략
+```bash
+# 실제 운영 Values 구조
+values/
+├── common.yaml              # 공통 설정
+├── environments/
+│   ├── dev.yaml            # 개발 환경
+│   ├── staging.yaml        # 스테이징 환경
+│   └── prod.yaml           # 운영 환경
+└── regions/
+    ├── ap-northeast-2.yaml # 서울 리전
+    └── us-east-1.yaml      # 버지니아 리전
+```
+
+### GitOps 기반 멀티 클러스터 배포
+```mermaid
+graph TB
+    subgraph "Git Repository"
+        Charts["Helm Charts"]
+        DevValues["values/dev.yaml"]
+        StagValues["values/staging.yaml"]
+        ProdValues["values/prod.yaml"]
+    end
+    
+    subgraph "ArgoCD/Flux"
+        GitOps["GitOps Controller"]
+    end
+    
+    subgraph "Development"
+        DevCluster["EKS Dev Cluster"]
+        DevArgo["ArgoCD Agent"]
+    end
+    
+    subgraph "Staging"
+        StagCluster["EKS Staging Cluster"]
+        StagArgo["ArgoCD Agent"]
+    end
+    
+    subgraph "Production"
+        ProdCluster["EKS Prod Cluster"]
+        ProdArgo["ArgoCD Agent"]
+    end
+    
+    Charts --> GitOps
+    DevValues --> GitOps
+    StagValues --> GitOps
+    ProdValues --> GitOps
+    
+    GitOps --> DevArgo
+    GitOps --> StagArgo
+    GitOps --> ProdArgo
+    
+    DevArgo --> DevCluster
+    StagArgo --> StagCluster
+    ProdArgo --> ProdCluster
+```
+
+### 💡 교육 과정에서의 접근법
+- **Session 1**: 개념 이해 (네임스페이스 vs 클러스터)
+- **Session 2**: 실습 (네임스페이스 기반으로 시작)
+- **고급 과정**: 멀티 클러스터 실제 구현
+
 ---
 
 ## 🔄 다음 세션 준비
