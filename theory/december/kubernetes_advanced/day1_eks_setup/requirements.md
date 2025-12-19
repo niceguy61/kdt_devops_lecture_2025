@@ -563,46 +563,108 @@ aws sts get-caller-identity
 aws sts assume-role --role-arn arn:aws:iam::ACCOUNT:role/ROLE-NAME --role-session-name test
 ```
 
-### 3. 네트워크 관련 문제
+### 3. AWS API 연결 문제
 
-#### 문제: 연결 시간 초과
+#### 문제: AWS API 엔드포인트 연결 시간 초과
+**증상**: `aws` 명령어 실행 시 "Connection timeout" 또는 "Unable to connect" 오류
+
 **해결방법**:
-1. 방화벽 설정 확인
-2. 프록시 설정 확인
-3. DNS 설정 확인
+1. **회사/기관 방화벽 확인**
+   - AWS API 엔드포인트 (*.amazonaws.com) 접근 허용 필요
+   - IT 관리자에게 AWS 도메인 화이트리스트 요청
+
+2. **프록시 설정 확인**
+   - 회사에서 프록시를 사용하는 경우 AWS CLI에 프록시 설정 필요
 
 **Linux/macOS**:
 ```bash
-# 프록시 설정 (필요한 경우)
+# 프록시 설정 (회사 프록시 사용 시)
 export HTTP_PROXY=http://proxy.company.com:8080
 export HTTPS_PROXY=http://proxy.company.com:8080
+
+# AWS CLI 프록시 설정 (영구 적용)
+aws configure set proxy.http http://proxy.company.com:8080
+aws configure set proxy.https http://proxy.company.com:8080
 ```
 
 **Windows (PowerShell)**:
 ```powershell
-# 프록시 설정 (필요한 경우)
+# 프록시 설정 (회사 프록시 사용 시)
 $env:HTTP_PROXY = "http://proxy.company.com:8080"
 $env:HTTPS_PROXY = "http://proxy.company.com:8080"
+
+# AWS CLI 프록시 설정 (영구 적용)
+aws configure set proxy.http http://proxy.company.com:8080
+aws configure set proxy.https http://proxy.company.com:8080
 ```
 
 **Windows (CMD)**:
 ```cmd
-# 프록시 설정 (필요한 경우)
+# 프록시 설정 (회사 프록시 사용 시)
 set HTTP_PROXY=http://proxy.company.com:8080
 set HTTPS_PROXY=http://proxy.company.com:8080
+
+# AWS CLI 프록시 설정 (영구 적용)
+aws configure set proxy.http http://proxy.company.com:8080
+aws configure set proxy.https http://proxy.company.com:8080
 ```
+
+3. **DNS 설정 확인**
+   - AWS 도메인 해석이 가능한지 확인
+   ```bash
+   # Linux/macOS
+   nslookup eks.ap-northeast-2.amazonaws.com
+   
+   # Windows
+   nslookup eks.ap-northeast-2.amazonaws.com
+   ```
+
+4. **VPN 연결 확인**
+   - 회사 VPN 사용 시 AWS 접근 정책 확인
+   - 개인 VPN 사용 시 일시적으로 해제 후 테스트
 
 ### 4. eksctl 관련 문제
 
 #### 문제: "no such host" 오류
+**증상**: eksctl 실행 시 "no such host" 또는 DNS 해석 실패
+
 **해결방법**:
 ```bash
-# 리전 설정 확인
+# 1. 리전 설정 확인
 aws configure get region
 
-# 올바른 리전으로 설정
+# 2. 올바른 리전으로 설정
 aws configure set region ap-northeast-2
+
+# 3. DNS 해석 테스트
+nslookup eks.ap-northeast-2.amazonaws.com
+
+# 4. 인터넷 연결 확인
+ping 8.8.8.8
 ```
+
+#### 문제: 회사/기관 네트워크 제한
+**증상**: 
+- AWS CLI 명령어가 매우 느리거나 시간 초과
+- "SSL certificate verify failed" 오류
+- 특정 AWS 서비스만 접근 불가
+
+**해결방법**:
+1. **IT 관리자에게 요청할 사항**:
+   - `*.amazonaws.com` 도메인 화이트리스트 추가
+   - HTTPS(443) 포트 아웃바운드 허용
+   - AWS IP 대역 허용 (선택사항)
+
+2. **임시 해결책**:
+   - 개인 핫스팟 사용하여 연결 테스트
+   - 회사 게스트 네트워크 사용 (가능한 경우)
+
+3. **SSL 인증서 문제**:
+   ```bash
+   # SSL 검증 비활성화 (임시, 보안상 권장하지 않음)
+   aws configure set ca_bundle ""
+   aws configure set cli_verify_ssl false
+   ```
 
 ---
 
