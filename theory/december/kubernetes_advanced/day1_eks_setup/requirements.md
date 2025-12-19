@@ -390,6 +390,8 @@ aws iam list-roles --max-items 5
 ## ✅ 환경 테스트 및 검증
 
 ### 1. 도구 설치 확인
+
+**Linux/macOS**:
 ```bash
 # 모든 도구 버전 확인
 echo "=== AWS CLI ==="
@@ -402,6 +404,22 @@ echo "=== kubectl ==="
 kubectl version --client
 
 echo "=== 자격 증명 ==="
+aws sts get-caller-identity
+```
+
+**Windows (PowerShell)**:
+```powershell
+# 모든 도구 버전 확인
+Write-Host "=== AWS CLI ==="
+aws --version
+
+Write-Host "=== eksctl ==="
+eksctl version
+
+Write-Host "=== kubectl ==="
+kubectl version --client
+
+Write-Host "=== 자격 증명 ==="
 aws sts get-caller-identity
 ```
 
@@ -425,11 +443,28 @@ aws cloudformation list-stacks --region ap-northeast-2 --max-items 1
 ```
 
 ### 3. 네트워크 연결 테스트
+
+**Linux/macOS**:
 ```bash
 # AWS API 엔드포인트 연결 테스트
 curl -I https://eks.ap-northeast-2.amazonaws.com
 
 # 예상 응답: HTTP/2 403 (정상 - 인증 오류이지만 연결은 성공)
+```
+
+**Windows (PowerShell)**:
+```powershell
+# AWS API 엔드포인트 연결 테스트
+try {
+    Invoke-WebRequest -Uri "https://eks.ap-northeast-2.amazonaws.com" -Method Head -TimeoutSec 10
+    Write-Host "연결 성공"
+} catch {
+    if ($_.Exception.Response.StatusCode -eq 403) {
+        Write-Host "연결 성공 (403 응답은 정상 - 인증 오류이지만 연결됨)"
+    } else {
+        Write-Host "연결 실패: $($_.Exception.Message)"
+    }
+}
 ```
 
 ---
@@ -440,6 +475,8 @@ curl -I https://eks.ap-northeast-2.amazonaws.com
 
 #### 문제: "aws: command not found"
 **해결방법**:
+
+**Linux/macOS**:
 ```bash
 # PATH 환경변수 확인
 echo $PATH
@@ -451,12 +488,58 @@ which aws
 export PATH=$PATH:/usr/local/bin
 ```
 
+**Windows (PowerShell)**:
+```powershell
+# PATH 환경변수 확인
+echo $env:PATH
+
+# AWS CLI 설치 위치 확인
+Get-Command aws -ErrorAction SilentlyContinue
+
+# PATH에 추가 (필요시)
+$env:PATH += ";C:\Program Files\Amazon\AWSCLIV2"
+```
+
+**Windows (CMD)**:
+```cmd
+# PATH 환경변수 확인
+echo %PATH%
+
+# AWS CLI 설치 위치 확인
+where aws
+
+# PATH에 추가 (필요시)
+set PATH=%PATH%;C:\Program Files\Amazon\AWSCLIV2
+```
+
 #### 문제: "Unable to locate credentials"
 **해결방법**:
+
+**Linux/macOS**:
 ```bash
 # 자격 증명 파일 확인
 cat ~/.aws/credentials
 cat ~/.aws/config
+
+# 다시 설정
+aws configure
+```
+
+**Windows (PowerShell)**:
+```powershell
+# 자격 증명 파일 확인
+type $env:USERPROFILE\.aws\credentials
+type $env:USERPROFILE\.aws\config
+
+# 다시 설정
+aws configure
+```
+
+**Windows (CMD)**:
+```cmd
+# 자격 증명 파일 확인
+type %USERPROFILE%\.aws\credentials
+type %USERPROFILE%\.aws\config
 
 # 다시 설정
 aws configure
@@ -488,10 +571,25 @@ aws sts assume-role --role-arn arn:aws:iam::ACCOUNT:role/ROLE-NAME --role-sessio
 2. 프록시 설정 확인
 3. DNS 설정 확인
 
+**Linux/macOS**:
 ```bash
 # 프록시 설정 (필요한 경우)
 export HTTP_PROXY=http://proxy.company.com:8080
 export HTTPS_PROXY=http://proxy.company.com:8080
+```
+
+**Windows (PowerShell)**:
+```powershell
+# 프록시 설정 (필요한 경우)
+$env:HTTP_PROXY = "http://proxy.company.com:8080"
+$env:HTTPS_PROXY = "http://proxy.company.com:8080"
+```
+
+**Windows (CMD)**:
+```cmd
+# 프록시 설정 (필요한 경우)
+set HTTP_PROXY=http://proxy.company.com:8080
+set HTTPS_PROXY=http://proxy.company.com:8080
 ```
 
 ### 4. eksctl 관련 문제
