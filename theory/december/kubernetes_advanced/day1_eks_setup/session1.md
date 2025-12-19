@@ -1,5 +1,19 @@
 # Session 1: EKS 기초 + 클러스터 생성 (50분)
 
+## 🚨 실습 전 필수 준비사항
+**⚠️ 중요**: 실습 시작 전에 반드시 아래 문서를 읽고 환경 설정을 완료해주세요!
+
+📖 **[requirements.md](./requirements.md) - EKS 실습 환경 설정 가이드**
+- AWS CLI, eksctl, kubectl 설치
+- AWS 자격 증명 및 IAM 권한 설정
+- 환경 체크 스크립트 실행
+
+🔧 **환경 체크 스크립트 실행**:
+```bash
+# Linux/macOS: ./check-environment.sh
+# Windows: .\check-environment.ps1
+```
+
 ## 🎯 세션 목표
 - EKS 아키텍처 핵심 개념 이해
 - eksctl을 사용한 실제 클러스터 생성
@@ -63,16 +77,41 @@ graph TB
 ## 🛠️ 실습: eksctl로 클러스터 생성 (30분)
 
 ### 1. 사전 준비 확인 (5분)
+
+⚠️ **중요**: 실습 시작 전에 반드시 [requirements.md](./requirements.md) 문서의 모든 설정을 완료해주세요.
+
+#### 자동 환경 체크 (권장)
 ```bash
-# AWS CLI 설정 확인
+# Linux/macOS 사용자
+chmod +x check-environment.sh
+./check-environment.sh
+
+# Windows 사용자 (PowerShell)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\check-environment.ps1
+```
+
+#### 수동 환경 확인
+```bash
+# 필수 도구 설치 확인
+echo "=== 도구 버전 확인 ==="
+aws --version
+eksctl version  
+kubectl version --client
+
+# AWS 자격 증명 및 권한 확인
+echo "=== AWS 계정 정보 ==="
 aws sts get-caller-identity
 
-# eksctl 설치 확인
-eksctl version
-
-# kubectl 설치 확인
-kubectl version --client
+echo "=== 기본 권한 테스트 ==="
+aws eks list-clusters --region ap-northeast-2
+aws ec2 describe-vpcs --region ap-northeast-2 --max-items 1
 ```
+
+#### 문제 발생 시
+- **권한 오류**: [requirements.md](./requirements.md)의 "IAM 권한 확인 및 설정" 섹션 참조
+- **도구 미설치**: [requirements.md](./requirements.md)의 "필수 도구 설치" 섹션 참조  
+- **자격 증명 오류**: [requirements.md](./requirements.md)의 "AWS 계정 및 자격 증명 설정" 섹션 참조
 
 ### 2. 클러스터 설정 파일 확인 (5분)
 제공된 `cluster-config.yaml` 파일 내용:

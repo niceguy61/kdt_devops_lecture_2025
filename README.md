@@ -153,6 +153,20 @@ graph TB
 
 **💡 특강**: Terraform IaC (Infrastructure as Code) - 별도 진행, AWS EKS 및 기타범위 관련 보강
 
+### 🚀 Kubernetes 고급 과정 (12월)
+**목표**: 실무 환경에서의 Kubernetes 운영 및 고급 기능 활용
+
+#### [Kubernetes Advanced: EKS 실습 과정](./theory/december/kubernetes_advanced/README.md)
+- **📋 사전 준비**: [EKS 실습 환경 설정 가이드](./theory/december/kubernetes_advanced/day1_eks_setup/requirements.md)
+  - AWS CLI, eksctl, kubectl 설치
+  - AWS 자격 증명 및 IAM 권한 설정
+  - 환경 체크 스크립트 제공
+- Day 1: [EKS 클러스터 생성 및 기본 설정](./theory/december/kubernetes_advanced/day1_eks_setup/)
+- Day 3: [Helm 패키지 관리자](./theory/december/kubernetes_advanced/day3_helm_basics/)
+- Day 5: [Istio 서비스 메시](./theory/december/kubernetes_advanced/day5_istio_service_mesh/)
+
+⚠️ **실습 전 필수 사항**: 모든 참가자는 실습 시작 전에 [requirements.md](./theory/december/kubernetes_advanced/day1_eks_setup/requirements.md) 문서를 참조하여 환경 설정을 완료해야 합니다.
+
 ## 🤝 협업 학습 시스템
 
 ### 🌍 전체 학습 생태계
