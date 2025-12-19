@@ -163,8 +163,10 @@ aws sts get-caller-identity
 5. **Access Key ID**와 **Secret Access Key** 복사 및 안전하게 보관
 
 #### 2-2. AWS CLI 설정
+
+**방법 1: Default 프로필 사용 (간단함)**
 ```bash
-# AWS 자격 증명 설정
+# 기본 프로필로 설정 (권장 - 초보자용)
 aws configure
 
 # 입력 정보:
@@ -174,19 +176,66 @@ aws configure
 # Default output format: json
 ```
 
-#### 2-3. 프로필 사용 (권장)
+**방법 2: Named 프로필 사용 (권장 - 여러 계정 사용자)**
 ```bash
-# 별도 프로필로 설정
+# 별도 프로필로 설정 (예: eks-lab)
 aws configure --profile eks-lab
 
-# 프로필 사용
-export AWS_PROFILE=eks-lab
-
-# 또는 명령어마다 지정
-aws sts get-caller-identity --profile eks-lab
+# 입력 정보는 동일
+# AWS Access Key ID: [YOUR_ACCESS_KEY_ID]
+# AWS Secret Access Key: [YOUR_SECRET_ACCESS_KEY]  
+# Default region name: ap-northeast-2
+# Default output format: json
 ```
 
+#### 2-3. 프로필 사용 방법
+
+**Default 프로필 사용 시**:
+```bash
+# 프로필 지정 없이 바로 사용 가능
+aws sts get-caller-identity
+aws eks list-clusters --region ap-northeast-2
+eksctl create cluster -f cluster-config.yaml
+```
+
+**Named 프로필 사용 시**:
+
+**옵션 A: 환경변수로 설정 (권장)**
+```bash
+# 환경변수로 프로필 설정 (세션 동안 유지)
+export AWS_PROFILE=eks-lab
+
+# 이후 모든 명령어에서 자동으로 해당 프로필 사용
+aws sts get-caller-identity
+eksctl create cluster -f cluster-config.yaml
+```
+
+**옵션 B: 명령어마다 프로필 지정**
+```bash
+# 각 명령어마다 --profile 옵션 사용
+aws sts get-caller-identity --profile eks-lab
+aws eks list-clusters --region ap-northeast-2 --profile eks-lab
+
+# eksctl의 경우
+eksctl create cluster -f cluster-config.yaml --profile eks-lab
+```
+
+#### 2-4. 프로필 선택 가이드
+
+**Default 프로필을 사용하는 경우**:
+- ✅ AWS 계정이 하나만 있는 경우
+- ✅ 실습용으로만 사용하는 경우
+- ✅ 간단하게 시작하고 싶은 경우
+
+**Named 프로필을 사용하는 경우**:
+- ✅ 여러 AWS 계정을 사용하는 경우
+- ✅ 회사 계정과 개인 계정을 구분하는 경우
+- ✅ 다른 리전별로 프로필을 나누고 싶은 경우
+- ✅ 보안상 프로필을 분리하고 싶은 경우
+
 ### 3. 자격 증명 확인
+
+**Default 프로필 사용 시**:
 ```bash
 # 설정된 자격 증명 확인
 aws configure list
@@ -196,6 +245,32 @@ aws sts get-caller-identity
 
 # 기본 리전 확인
 aws configure get region
+```
+
+**Named 프로필 사용 시**:
+```bash
+# 특정 프로필의 자격 증명 확인
+aws configure list --profile eks-lab
+
+# 계정 정보 재확인
+aws sts get-caller-identity --profile eks-lab
+
+# 또는 환경변수 설정 후
+export AWS_PROFILE=eks-lab
+aws sts get-caller-identity
+
+# 프로필별 리전 확인
+aws configure get region --profile eks-lab
+```
+
+**모든 프로필 확인**:
+```bash
+# 설정된 모든 프로필 목록 확인
+aws configure list-profiles
+
+# 각 프로필별 설정 확인
+aws configure list --profile default
+aws configure list --profile eks-lab
 ```
 
 ---
@@ -424,6 +499,8 @@ aws sts get-caller-identity
 ```
 
 ### 2. 권한 테스트
+
+**Default 프로필 사용 시**:
 ```bash
 # EKS 권한 테스트
 echo "=== EKS 권한 테스트 ==="
@@ -440,6 +517,44 @@ aws iam list-roles --max-items 1
 # CloudFormation 권한 테스트
 echo "=== CloudFormation 권한 테스트 ==="
 aws cloudformation list-stacks --region ap-northeast-2 --max-items 1
+```
+
+**Named 프로필 사용 시 (환경변수 설정)**:
+```bash
+# 프로필 환경변수 설정
+export AWS_PROFILE=eks-lab
+
+# 권한 테스트 (위와 동일한 명령어 사용)
+echo "=== 현재 프로필: $AWS_PROFILE ==="
+aws sts get-caller-identity
+
+echo "=== EKS 권한 테스트 ==="
+aws eks list-clusters --region ap-northeast-2
+
+echo "=== EC2 권한 테스트 ==="
+aws ec2 describe-vpcs --region ap-northeast-2 --max-items 1
+
+echo "=== IAM 권한 테스트 ==="
+aws iam list-roles --max-items 1
+
+echo "=== CloudFormation 권한 테스트 ==="
+aws cloudformation list-stacks --region ap-northeast-2 --max-items 1
+```
+
+**Named 프로필 사용 시 (명령어별 지정)**:
+```bash
+# 각 명령어마다 --profile 옵션 사용
+echo "=== EKS 권한 테스트 ==="
+aws eks list-clusters --region ap-northeast-2 --profile eks-lab
+
+echo "=== EC2 권한 테스트 ==="
+aws ec2 describe-vpcs --region ap-northeast-2 --max-items 1 --profile eks-lab
+
+echo "=== IAM 권한 테스트 ==="
+aws iam list-roles --max-items 1 --profile eks-lab
+
+echo "=== CloudFormation 권한 테스트 ==="
+aws cloudformation list-stacks --region ap-northeast-2 --max-items 1 --profile eks-lab
 ```
 
 ### 3. 네트워크 연결 테스트
@@ -679,7 +794,12 @@ ping 8.8.8.8
 
 ### AWS 자격 증명 확인
 - [ ] AWS Access Key 생성 완료
-- [ ] AWS CLI 설정 완료 (`aws configure`)
+- [ ] AWS CLI 설정 완료
+  - [ ] Default 프로필 사용: `aws configure` 완료
+  - [ ] Named 프로필 사용: `aws configure --profile [프로필명]` 완료
+- [ ] 프로필 설정 확인 완료
+  - [ ] Default 프로필: `aws configure list`
+  - [ ] Named 프로필: `aws configure list --profile [프로필명]` 또는 `export AWS_PROFILE=[프로필명]`
 - [ ] 계정 정보 확인 완료 (`aws sts get-caller-identity`)
 - [ ] 기본 리전 설정 완료 (ap-northeast-2)
 

@@ -201,7 +201,12 @@ eksctl get cluster --region ap-northeast-2
 #### kubeconfig 업데이트
 ```bash
 # EKS 클러스터에 연결하기 위한 kubeconfig 설정
-aws eks update-kubeconfig --region ap-northeast-2 --name my-eks-cluster --profile sso
+
+# Default 프로필 사용 시
+aws eks update-kubeconfig --region ap-northeast-2 --name my-eks-cluster
+
+# Named 프로필 사용 시 (예: eks-lab)
+aws eks update-kubeconfig --region ap-northeast-2 --name my-eks-cluster --profile eks-lab
 
 # 연결 확인
 kubectl get nodes
