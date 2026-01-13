@@ -1,6 +1,7 @@
-# Cloud Engineering 프로젝트 가이드라인
+# 케클업 실무 프로젝트 가이드라인
 
 ## 📋 목차
+0. [실무통합 프로젝트 가이드(notion)](https://www.notion.so/2e69e3e335cc81a0be88e520e45149f3)
 1. [PROJECT 1: Mind-Log - 초개인화 AI 멘탈케어 & 시각화 플랫폼](#project-1-mind-log)
 2. [PROJECT 2: Traffic-Master - AI 기반 대규모 티켓팅 플랫폼](#project-2-traffic-master)
 
