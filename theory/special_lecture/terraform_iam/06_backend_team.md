@@ -1,6 +1,6 @@
 # 6단계: 백엔드 팀 (Backend Team) 구성 및 최종 적용
 
-[< 이전 단계](./05_frontend_team.md) | [완료 및 요약 >](./walkthrough.md)
+[< 이전 단계](./05_frontend_team.md) | [다음 단계 >](./07_import.md)
 
 > **Terraform 공식 문서**: [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group) | [aws_iam_group_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_policy_attachment) | [terraform destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy)
 
@@ -154,10 +154,10 @@ resource "aws_iam_group_policy_attachment" "backend_rds" {
 
 ---
 
-## 수고하셨습니다!
-Terraform을 이용해 조직의 권한 구조(IAM)를 코드로 정의하고 배포하는 핸즈온을 완료했습니다.
-이 코드는 언제든 `terraform destroy` 명령어로 깔끔하게 삭제할 수 있습니다.
+## 팀 구성 완료!
+4개 팀(인프라, 보안, 프론트엔드, 백엔드)의 IAM 그룹과 정책 연결이 모두 완료되었습니다.
+다음 단계에서는 **AWS 콘솔에서 수동으로 만든 리소스를 Terraform에 편입(Import)**하고, **Drift(코드 밖의 변경)**를 직접 체험합니다.
 
 ---
 
-[< 이전 단계](./05_frontend_team.md) | [완료 및 요약 >](./walkthrough.md)
+[< 이전 단계](./05_frontend_team.md) | [다음 단계 >](./07_import.md)
