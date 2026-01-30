@@ -146,6 +146,42 @@ terraform apply
 # Enter a value: 프롬프트가 나오면 'yes' 입력
 ```
 
+### 4-4. 트러블슈팅: Permission Boundary 에러
+
+`terraform apply` 실행 시 아래와 같은 에러가 발생할 수 있습니다:
+
+```
+Error: creating IAM Group (infra-team): operation error IAM: CreateGroup,
+  api error AccessDenied: User: arn:aws:iam::XXXXXXXXXXXX:user/your-username
+  is not authorized to perform: iam:CreateGroup
+  because no permissions boundary allows the iam:CreateGroup action
+```
+
+**원인**: 사용자에게 `AdministratorAccess` 정책이 있더라도, **Permission Boundary(권한 경계)**가 설정되어 있으면 boundary가 허용하는 범위 내에서만 동작합니다. Boundary에 `iam:CreateGroup`이 포함되어 있지 않으면 위 에러가 발생합니다.
+
+> **Permission Boundary란?** 0단계에서 배운 가드레일 중 하나로, IAM 사용자가 가질 수 있는 **최대 권한의 상한선**입니다. 아무리 강력한 정책을 붙여도 boundary를 넘을 수 없습니다.
+
+**확인 방법**:
+```bash
+aws iam get-user --user-name <사용자이름>
+```
+출력에 `"PermissionsBoundary"` 항목이 있다면 boundary가 설정된 것입니다.
+
+**해결 방법** (루트 계정 또는 boundary 관리 권한 필요):
+```bash
+# Permission Boundary 제거
+aws iam delete-user-permissions-boundary --user-name <사용자이름>
+```
+
+또는 1단계에서 생성한 `terraform-admin` 사용자(boundary 없음)의 프로필을 사용하세요:
+```bash
+# main.tf의 profile이 올바른지 확인
+provider "aws" {
+  region  = "ap-northeast-2"
+  profile = "terraform-user"  # 1단계에서 설정한 프로필
+}
+```
+
 ---
 
 ## 5. 상태 파일 확인 (State Inspection)
