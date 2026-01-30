@@ -9,9 +9,59 @@
 ## 1. Terraform이란?
 Terraform은 HashiCorp가 개발한 오픈 소스 **IaC(Infrastructure as Code)** 도구입니다. 단순히 서버를 켜는 스크립트가 아니라, 클라우드 리소스의 **최종 상태(State)**를 코드로 정의하고 관리하는 도구입니다.
 
-### 핵심 철학: 선언적(Declarative) 구성
-"EC2를 생성해라"라는 명령(Imperative)이 아니라, "**나는 t3.micro 타입의 EC2가 하나 필요하다**"라는 상태(Declarative/State)를 코드에 적습니다.
-Terraform은 현재 상태와 코드를 비교하여, 없으면 생성하고, 다르면 수정하고, 필요 없으면 삭제합니다.
+### 핵심 철학: 선언적(Declarative) vs 명령형(Imperative)
+
+인프라를 코드로 관리하는 방식은 크게 두 가지로 나뉩니다.
+
+#### 명령형 (Imperative) — "**이 순서대로** 실행해라"
+Shell 스크립트나 AWS CLI처럼, **어떤 순서로 무엇을 해야 하는지** 단계별로 지시합니다.
+
+```bash
+# 명령형 예시: AWS CLI로 인프라 팀 그룹 만들기
+aws iam create-group --group-name infra-team
+aws iam attach-group-policy \
+  --group-name infra-team \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam create-user --user-name infra-member-01
+aws iam add-user-to-group --user-name infra-member-01 --group-name infra-team
+```
+
+**문제점**: 이 스크립트를 두 번 실행하면? `create-group`에서 *"이미 존재합니다"* 에러가 발생합니다.
+매번 "이미 있는지 확인 → 없으면 생성, 있으면 건너뛰기" 같은 분기 로직을 직접 작성해야 합니다.
+
+#### 선언적 (Declarative) — "**최종 상태는** 이래야 한다"
+Terraform(HCL)은 **원하는 결과**만 기술합니다. "어떻게" 만들지는 Terraform이 알아서 판단합니다.
+
+```hcl
+# 선언적 예시: Terraform HCL로 동일한 인프라 정의
+resource "aws_iam_group" "infra_team" {
+  name = "infra-team"
+}
+
+resource "aws_iam_group_policy_attachment" "infra_admin" {
+  group      = aws_iam_group.infra_team.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+```
+
+이 코드를 **몇 번이든** `terraform apply`해도 결과는 동일합니다. 이를 **멱등성(Idempotency)**이라 합니다.
+- 그룹이 없으면 → **생성**
+- 그룹이 이미 있고 코드와 동일하면 → **아무것도 안 함**
+- 그룹이 있지만 설정이 다르면 → **수정**
+- 코드에서 삭제하면 → **실제로도 삭제**
+
+#### 비교 요약
+
+| 항목 | 명령형 (Imperative) | 선언적 (Declarative) |
+| :--- | :--- | :--- |
+| **대표 도구** | AWS CLI, Shell Script, Ansible Ad-hoc | Terraform, CloudFormation, Kubernetes YAML |
+| **코드 내용** | "이 순서대로 실행해라" | "최종 상태는 이래야 한다" |
+| **중복 실행** | 에러 발생 가능 (분기 로직 필요) | 안전 (멱등성 보장) |
+| **현재 상태 추적** | 없음 (매번 직접 확인) | State 파일로 자동 추적 |
+| **변경 미리보기** | 불가능 | `terraform plan`으로 확인 |
+| **롤백** | 되돌리는 스크립트를 별도 작성 | 이전 코드로 `apply` |
+
+> **Terraform은 선언적 도구입니다.** "EC2를 생성해라"가 아니라, "**t3.micro 타입의 EC2가 하나 있어야 한다**"고 선언합니다. Terraform은 현재 상태와 코드를 비교하여, 없으면 생성하고, 다르면 수정하고, 필요 없으면 삭제합니다.
 
 ### 주요 장점 (Pros)
 -   **멀티 클라우드 지원**: AWS뿐만 아니라 Azure, GCP, Kubernetes, GitHub 등 수많은 서비스 제공자(Provider)를 동일한 문법(HCL)으로 관리할 수 있습니다.
