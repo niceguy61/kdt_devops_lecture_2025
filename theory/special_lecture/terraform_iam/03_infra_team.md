@@ -16,23 +16,23 @@
 # 프로젝트 루트(d:\special_lecture)에서 시작
 mkdir terraform
 cd terraform
-mkdir modules
+mkdir modules\iam
 ```
 
 **Linux / Mac (Bash)**:
 ```bash
-mkdir -p terraform/modules
+mkdir -p terraform/modules/iam
 cd terraform
 ```
 
-> **Module 폴더는 왜 만드나요?**
-> 지금은 메인 코드(`main.tf`)에 모든 것을 작성하지만, 나중에는 재사용 가능한 코드를 `modules` 폴더에 분리하여 관리하는 것이 표준입니다. (이번 실습에서는 구조만 잡아둡니다.)
+> **Module 구조는 왜 사용하나요?**
+> Terraform에서 모듈(Module)은 재사용 가능한 리소스 묶음입니다. `modules/iam/` 폴더에 IAM 관련 리소스를 분리하면, 루트 `main.tf`는 모듈만 호출하고, 실제 리소스 정의는 모듈 내부에서 관리됩니다. 이렇게 하면 코드가 깔끔하게 분리되고, 다른 프로젝트에서도 모듈을 재사용할 수 있습니다.
 
 ---
 
 ## 2. Terraform 기본 구성 (main.tf)
 
-Terraform이 AWS와 통신할 수 있도록 공급자(Provider)를 설정합니다.
+Terraform이 AWS와 통신할 수 있도록 공급자(Provider)를 설정하고, IAM 모듈을 호출합니다.
 `terraform` 폴더 안에 `main.tf` 파일을 생성하고 아래 내용을 작성하세요.
 
 **파일 경로**: `d:/special_lecture/terraform/main.tf`
@@ -48,31 +48,75 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-northeast-2"  # 서울 리전
+  region  = "ap-northeast-2"  # 서울 리전
   profile = "terraform-user"
 }
+
+# IAM 모듈 호출
+module "iam" {
+  source = "./modules/iam"
+}
 ```
+
+> **`module` 블록이란?**
+> `source`에 지정한 경로(`./modules/iam`)의 `.tf` 파일들을 하나의 묶음으로 실행합니다. 이후 단계에서 `modules/iam/` 폴더 안에 그룹과 정책 파일을 추가하면, `main.tf`는 수정 없이 자동으로 반영됩니다.
 
 ---
 
 ## 3. 인프라 팀(Infra Team) 리소스 추가
 
-가장 강력한 권한을 가진 인프라 팀 그룹을 생성합니다.
+가장 강력한 권한을 가진 인프라 팀 그룹을 모듈 안에 생성합니다.
 
-**파일 경로**: `d:/special_lecture/terraform/infra_team.tf` (새로 생성)
+**파일 경로**: `d:/special_lecture/terraform/modules/iam/groups.tf` (새로 생성)
 
 ```hcl
-# 1. 인프라 팀 그룹 생성
+# 인프라 팀 그룹 생성
 resource "aws_iam_group" "infra_team" {
   name = "infra-team"
 }
+```
 
-# 2. 관리자 권한 연결 (AdministratorAccess)
+**파일 경로**: `d:/special_lecture/terraform/modules/iam/policies.tf` (새로 생성)
+
+```hcl
+# 인프라 팀 - 관리자 권한 연결 (AdministratorAccess)
 resource "aws_iam_group_policy_attachment" "infra_admin" {
   group      = aws_iam_group.infra_team.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 ```
+
+이 시점에서 프로젝트 구조는 다음과 같습니다:
+```
+terraform/
+├── main.tf                  # Provider 설정 + 모듈 호출
+└── modules/
+    └── iam/
+        ├── groups.tf        # IAM 그룹 정의
+        └── policies.tf      # 그룹별 정책 연결
+```
+
+### `AdministratorAccess` 정책이란?
+이 정책의 실제 JSON은 다음과 같습니다:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+| 항목 | 값 | 의미 |
+| :--- | :--- | :--- |
+| **Action** | `*` | 모든 AWS 서비스의 모든 API 호출 허용 |
+| **Resource** | `*` | 계정 내 모든 리소스에 대해 적용 |
+
+> **주의**: 이 정책은 AWS에서 가장 강력한 권한입니다. EC2 삭제, S3 버킷 제거, IAM 사용자 생성/삭제 등 모든 작업이 가능합니다. 실제 운영 환경에서는 인프라 팀이라 하더라도 **특정 서비스에만 한정된 커스텀 정책**을 만드는 것이 권장됩니다.
 
 ---
 
@@ -93,6 +137,7 @@ terraform init
 terraform plan
 ```
 *결과: `Plan: 2 to add, 0 to change, 0 to destroy.` (그룹 1개 + 정책 연결 1개)*
+*리소스 이름이 `module.iam.aws_iam_group.infra_team`처럼 모듈 접두사가 붙어 있는 것을 확인하세요.*
 
 ### 4-3. 적용 (Apply)
 실제로 배포합니다.

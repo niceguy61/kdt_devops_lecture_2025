@@ -16,8 +16,8 @@
 
 ## 2. Terraform 코드 작성
 
-### 그룹 정의 (`groups.tf`)
-`groups.tf`에 다음 내용을 추가합니다.
+### 그룹 정의 (`modules/iam/groups.tf`)
+`modules/iam/groups.tf`에 다음 내용을 추가합니다.
 
 ```hcl
 resource "aws_iam_group" "backend_team" {
@@ -25,8 +25,8 @@ resource "aws_iam_group" "backend_team" {
 }
 ```
 
-### 권한 연결 (`policies.tf`)
-`policies.tf`에 다음 내용을 추가합니다.
+### 권한 연결 (`modules/iam/policies.tf`)
+`modules/iam/policies.tf`에 다음 내용을 추가합니다.
 
 ```hcl
 # 백엔드 팀 - EC2 및 RDS 권한
@@ -41,7 +41,91 @@ resource "aws_iam_group_policy_attachment" "backend_rds" {
 }
 ```
 
-## 3. 최종 배포 (Apply)
+## 3. 정책 심화 분석
+
+### `AmazonEC2FullAccess` 정책
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "elasticloadbalancing:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "cloudwatch:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "autoscaling:*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+| 항목 | 값 | 의미 |
+| :--- | :--- | :--- |
+| **ec2:\*** | 모든 EC2 액션 | 인스턴스 생성/종료, 보안 그룹 설정, EBS 볼륨 관리 등 |
+| **elasticloadbalancing:\*** | 로드밸런서 전체 | ALB/NLB 생성 및 대상 그룹 관리 |
+| **cloudwatch:\*** | 모니터링 전체 | EC2 메트릭 조회, 알람 설정 |
+| **autoscaling:\*** | Auto Scaling 전체 | 자동 확장/축소 그룹 설정 |
+
+> **참고**: EC2 정책은 단순히 가상 서버만이 아니라 **로드밸런서, 모니터링, 오토스케일링**까지 포함합니다. EC2 기반 인프라를 운영하는 데 필요한 관련 서비스를 한 묶음으로 제공합니다.
+
+### `AmazonRDSFullAccess` 정책
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:*",
+                "application-autoscaling:DeleteScalingPolicy",
+                "application-autoscaling:DeregisterScalableTarget",
+                "application-autoscaling:DescribeScalableTargets",
+                "application-autoscaling:DescribeScalingActivities",
+                "application-autoscaling:DescribeScalingPolicies",
+                "application-autoscaling:PutScalingPolicy",
+                "application-autoscaling:RegisterScalableTarget",
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:DeleteAlarms",
+                "logs:DescribeLogStreams",
+                "logs:GetLogEvents",
+                "sns:ListSubscriptions",
+                "sns:ListTopics",
+                "sns:Publish"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+| 항목 | 값 | 의미 |
+| :--- | :--- | :--- |
+| **rds:\*** | 모든 RDS 액션 | DB 인스턴스 생성/삭제, 스냅샷, 파라미터 그룹 관리 등 |
+| **application-autoscaling** | DB 자동 스케일링 | Aurora Serverless 등의 자동 용량 조절 |
+| **cloudwatch** | 모니터링 (일부) | DB 성능 메트릭 조회 및 알람 설정 |
+| **logs** | 로그 조회 | DB 느린 쿼리, 에러 로그 확인 |
+| **sns** | 알림 전송 | DB 이벤트 발생 시 SNS로 알림 전송 |
+
+> **참고**: RDS 정책은 데이터베이스 자체뿐만 아니라 **모니터링(CloudWatch), 로그(CloudWatch Logs), 알림(SNS)** 권한을 함께 포함합니다. DB 장애 감지와 성능 추적을 위해 필요합니다.
+
+---
+
+## 4. 최종 배포 (Apply)
 모든 코드가 작성되었습니다. 이제 AWS에 실제로 리소스를 생성합니다.
 
 1.  터미널에서 명령어 실행:
