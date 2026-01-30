@@ -77,10 +77,12 @@ terraform import module.iam.aws_iam_user.infra_member_01 infra-member-01
 *결과: `Import successful!`*
 
 ```bash
-# 2. 그룹 멤버십 import
-terraform import module.iam.aws_iam_user_group_membership.infra_member_01 infra-member-01
+# 2. 그룹 멤버십 import (형식: <user-name>/<group-name>)
+terraform import module.iam.aws_iam_user_group_membership.infra_member_01 infra-member-01/infra-team
 ```
 *결과: `Import successful!`*
+
+> **주의**: `aws_iam_user_group_membership`의 import ID는 `사용자이름/그룹이름` 형식입니다. 여러 그룹에 소속된 경우 `사용자이름/그룹1/그룹2`처럼 슬래시로 구분합니다.
 
 ### 3-3. Import 결과 확인
 ```bash
@@ -90,6 +92,41 @@ terraform plan
 **정상 결과**: `No changes. Your infrastructure matches the configuration.`
 
 이제 Terraform이 이 사용자를 "내가 관리하는 리소스"로 인식합니다.
+
+### 3-4. 트러블슈팅: Import 후 그룹 멤버십 변경 감지
+
+`terraform plan` 실행 시 아래와 같은 출력이 나올 수 있습니다:
+
+```
+# module.iam.aws_iam_user_group_membership.infra_member_01 will be updated in-place
+~ resource "aws_iam_user_group_membership" "infra_member_01" {
+    ~ groups = [
+        + "infra-team",
+      ]
+      id     = "terraform-20260130XXXXXXXXXXXXXX"
+      # (1 unchanged attribute hidden)
+  }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+```
+
+**원인**: `aws_iam_user_group_membership`는 import 시 `groups` 속성을 State에 완전히 기록하지 못하는 경우가 있습니다. State 내부에는 `groups = []`(빈 배열)로 저장되어 있고, 코드에는 `groups = ["infra-team"]`으로 정의되어 있어 Terraform이 "그룹을 추가해야 한다"고 판단하는 것입니다.
+
+**해결 방법**: `terraform apply`를 한 번 실행하면 State가 올바르게 동기화됩니다.
+
+```bash
+terraform apply
+# Enter a value: 프롬프트가 나오면 'yes' 입력
+```
+
+적용 후 다시 확인합니다:
+```bash
+terraform plan
+```
+
+**결과**: `No changes. Your infrastructure matches the configuration.`
+
+> **참고**: 이 현상은 import의 한계입니다. Import는 AWS에서 리소스 정보를 가져오지만, 모든 속성을 완벽하게 State에 기록하지 못할 수 있습니다. 이 경우 `apply`를 한 번 실행하여 코드 기준으로 State를 보정하면 해결됩니다. 실제 AWS 리소스에는 영향이 없으므로 안전합니다.
 
 ---
 
