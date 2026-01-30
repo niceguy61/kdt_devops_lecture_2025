@@ -2,6 +2,8 @@
 
 [다음 단계 >](./01_setup.md)
 
+> **Terraform 공식 문서**: [Terraform 소개](https://developer.hashicorp.com/terraform/intro) | [HCL 언어 문법](https://developer.hashicorp.com/terraform/language) | [Terraform 핵심 워크플로우](https://developer.hashicorp.com/terraform/intro/core-workflow)
+
 ---
 
 ## 1. Terraform이란?

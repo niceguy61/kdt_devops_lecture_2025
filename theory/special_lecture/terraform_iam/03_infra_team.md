@@ -2,6 +2,8 @@
 
 [< 이전 단계](./02_iam_design.md) | [다음 단계 >](./04_security_team.md)
 
+> **Terraform 공식 문서**: [terraform init](https://developer.hashicorp.com/terraform/cli/commands/init) | [terraform plan](https://developer.hashicorp.com/terraform/cli/commands/plan) | [terraform apply](https://developer.hashicorp.com/terraform/cli/commands/apply) | [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group)
+
 ---
 
 ## 1. 실습 환경 준비 (Project Initialization)
@@ -47,6 +49,7 @@ terraform {
 
 provider "aws" {
   region = "ap-northeast-2"  # 서울 리전
+  profile = "terraform-user"
 }
 ```
 

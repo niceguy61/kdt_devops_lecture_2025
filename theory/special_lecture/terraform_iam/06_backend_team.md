@@ -2,6 +2,8 @@
 
 [< 이전 단계](./05_frontend_team.md) | [완료 및 요약 >](./walkthrough.md)
 
+> **Terraform 공식 문서**: [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group) | [aws_iam_group_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_policy_attachment) | [terraform destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy)
+
 ---
 
 ## 1. 개요

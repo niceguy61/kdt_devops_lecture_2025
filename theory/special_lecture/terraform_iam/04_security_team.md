@@ -2,6 +2,8 @@
 
 [< 이전 단계](./03_infra_team.md) | [다음 단계 >](./05_frontend_team.md)
 
+> **Terraform 공식 문서**: [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group) | [aws_iam_group_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_policy_attachment) | [SecurityAudit 정책](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/SecurityAudit.html)
+
 ---
 
 ## 1. 개요

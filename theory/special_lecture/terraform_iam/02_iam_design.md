@@ -2,6 +2,8 @@
 
 [< 이전 단계](./01_setup.md) | [다음 단계 >](./03_infra_team.md)
 
+> **Terraform 공식 문서**: [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group) | [aws_iam_group_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_policy_attachment) | [AWS IAM 그룹 개념](https://docs.aws.amazon.com/ko_kr/IAM/latest/UserGuide/id_groups.html)
+
 ---
 
 ## 1. 조직 그룹 개요

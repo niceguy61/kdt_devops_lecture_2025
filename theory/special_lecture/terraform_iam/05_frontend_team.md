@@ -2,6 +2,8 @@
 
 [< 이전 단계](./04_security_team.md) | [다음 단계 >](./06_backend_team.md)
 
+> **Terraform 공식 문서**: [aws_iam_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group) | [aws_iam_group_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_policy_attachment) | [Amazon S3 IAM 정책](https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/userguide/security_iam_id-based-policy-examples.html)
+
 ---
 
 ## 1. 개요

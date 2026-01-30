@@ -2,6 +2,8 @@
 
 [< 이전 단계](./00_intro.md) | [다음 단계 >](./02_iam_design.md)
 
+> **Terraform 공식 문서**: [Terraform 설치](https://developer.hashicorp.com/terraform/install) | [AWS Provider 문서](https://registry.terraform.io/providers/hashicorp/aws/latest/docs) | [AWS IAM User 리소스](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user)
+
 ---
 
 ## 1. AWS 프리티어 계정 생성
